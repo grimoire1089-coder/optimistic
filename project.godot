@@ -18,6 +18,7 @@ config/icon="res://icon.svg"
 [autoload]
 
 SceneRouter="*uid://d3dum2wt1mbeq"
+AudioSettings="*uid://bde05i1gmmns0"
 
 [physics]
 

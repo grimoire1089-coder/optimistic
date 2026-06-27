@@ -1,0 +1,134 @@
+[gd_scene format=3 uid="uid://iqk0ojpmgrh1"]
+
+[ext_resource type="Script" uid="uid://reasyixheria" path="res://Scripts/UI/Options/AudioSettingsPanel.gd" id="1_audio_panel_script"]
+
+[node name="AudioSettingsPanel" type="PanelContainer" unique_id=1999446201]
+custom_minimum_size = Vector2(520, 360)
+script = ExtResource("1_audio_panel_script")
+
+[node name="MarginContainer" type="MarginContainer" parent="." unique_id=1704614753]
+layout_mode = 2
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 24
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer" unique_id=87752362]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="TitleLabel" type="Label" parent="MarginContainer/VBoxContainer" unique_id=1215608764]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "音量設定"
+horizontal_alignment = 1
+
+[node name="BGMRow" type="HBoxContainer" parent="MarginContainer/VBoxContainer" unique_id=464040168]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="BGMLabel" type="Label" parent="MarginContainer/VBoxContainer/BGMRow" unique_id=1663450494]
+custom_minimum_size = Vector2(96, 0)
+layout_mode = 2
+text = "BGM"
+vertical_alignment = 1
+
+[node name="BGMSlider" type="HSlider" parent="MarginContainer/VBoxContainer/BGMRow" unique_id=2038153236]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+max_value = 1.0
+step = 0.01
+value = 0.8
+
+[node name="BGMValueLabel" type="Label" parent="MarginContainer/VBoxContainer/BGMRow" unique_id=846871471]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(56, 0)
+layout_mode = 2
+text = "80%"
+horizontal_alignment = 2
+vertical_alignment = 1
+
+[node name="SFXRow" type="HBoxContainer" parent="MarginContainer/VBoxContainer" unique_id=1337494938]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="SFXLabel" type="Label" parent="MarginContainer/VBoxContainer/SFXRow" unique_id=1125626014]
+custom_minimum_size = Vector2(96, 0)
+layout_mode = 2
+text = "効果音"
+vertical_alignment = 1
+
+[node name="SFXSlider" type="HSlider" parent="MarginContainer/VBoxContainer/SFXRow" unique_id=214649483]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+max_value = 1.0
+step = 0.01
+value = 0.8
+
+[node name="SFXValueLabel" type="Label" parent="MarginContainer/VBoxContainer/SFXRow" unique_id=1060719528]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(56, 0)
+layout_mode = 2
+text = "80%"
+horizontal_alignment = 2
+vertical_alignment = 1
+
+[node name="AmbienceRow" type="HBoxContainer" parent="MarginContainer/VBoxContainer" unique_id=2115039060]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="AmbienceLabel" type="Label" parent="MarginContainer/VBoxContainer/AmbienceRow" unique_id=105151771]
+custom_minimum_size = Vector2(96, 0)
+layout_mode = 2
+text = "環境音"
+vertical_alignment = 1
+
+[node name="AmbienceSlider" type="HSlider" parent="MarginContainer/VBoxContainer/AmbienceRow" unique_id=1215891565]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+max_value = 1.0
+step = 0.01
+value = 0.8
+
+[node name="AmbienceValueLabel" type="Label" parent="MarginContainer/VBoxContainer/AmbienceRow" unique_id=673335161]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(56, 0)
+layout_mode = 2
+text = "80%"
+horizontal_alignment = 2
+vertical_alignment = 1
+
+[node name="VoiceRow" type="HBoxContainer" parent="MarginContainer/VBoxContainer" unique_id=2099949971]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="VoiceLabel" type="Label" parent="MarginContainer/VBoxContainer/VoiceRow" unique_id=451830641]
+custom_minimum_size = Vector2(96, 0)
+layout_mode = 2
+text = "ボイス"
+vertical_alignment = 1
+
+[node name="VoiceSlider" type="HSlider" parent="MarginContainer/VBoxContainer/VoiceRow" unique_id=1333537671]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+max_value = 1.0
+step = 0.01
+value = 0.8
+
+[node name="VoiceValueLabel" type="Label" parent="MarginContainer/VBoxContainer/VoiceRow" unique_id=468948986]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(56, 0)
+layout_mode = 2
+text = "80%"
+horizontal_alignment = 2
+vertical_alignment = 1
+
+[node name="ResetButton" type="Button" parent="MarginContainer/VBoxContainer" unique_id=1060928727]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+text = "初期値に戻す"
