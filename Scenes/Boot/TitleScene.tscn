@@ -1,0 +1,51 @@
+[gd_scene load_steps=2 format=3 uid="uid://title_scene_boot"]
+
+[ext_resource type="Script" path="res://Scripts/Scenes/Boot/TitleScene.gd" id="1_title_script"]
+
+[node name="TitleScene" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_title_script")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.0352941, 0.0392157, 0.054902, 1)
+
+[node name="CenterContainer" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="CenterBox" type="VBoxContainer" parent="CenterContainer"]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+theme_override_constants/separation = 16
+
+[node name="TitleLabel" type="Label" parent="CenterContainer/CenterBox"]
+layout_mode = 2
+text = "DECANDENCE GAME"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 42
+
+[node name="StartButton" type="Button" parent="CenterContainer/CenterBox"]
+custom_minimum_size = Vector2(280, 56)
+layout_mode = 2
+text = "はじめる"
+
+[node name="ExitButton" type="Button" parent="CenterContainer/CenterBox"]
+custom_minimum_size = Vector2(280, 56)
+layout_mode = 2
+text = "おわる"

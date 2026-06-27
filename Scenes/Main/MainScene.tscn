@@ -1,0 +1,15 @@
+[gd_scene format=3 uid="uid://mk1ctmvwoywn"]
+
+[ext_resource type="Script" uid="uid://g87b50guc8nn" path="res://Scripts/Scenes/Main/MainScene.gd" id="1_main_script"]
+
+[node name="MainScene" type="Node2D" unique_id=1488982029]
+script = ExtResource("1_main_script")
+
+[node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=295553793]
+
+[node name="DebugLabel" type="Label" parent="CanvasLayer" unique_id=210733485]
+offset_left = 24.0
+offset_top = 24.0
+offset_right = 280.0
+offset_bottom = 55.0
+text = "Main Scene 起動完了"
