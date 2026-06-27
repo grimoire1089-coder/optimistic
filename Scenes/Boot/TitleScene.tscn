@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://bslnjolxwbpoa"]
 
 [ext_resource type="Script" uid="uid://bfmmcogyfgb1w" path="res://Scripts/Scenes/Boot/TitleScene.gd" id="1_title_script"]
+[ext_resource type="AudioStream" uid="uid://630wj3bbflrg" path="res://Assets/Audio/BGM/Room BGM 001.ogg" id="2_opdry"]
 
 [node name="TitleScene" type="Control" unique_id=93271587]
 layout_mode = 3
@@ -10,6 +11,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_title_script")
+title_bgm = ExtResource("2_opdry")
 
 [node name="Background" type="ColorRect" parent="." unique_id=2115422969]
 layout_mode = 1
