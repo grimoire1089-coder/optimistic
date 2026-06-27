@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://bfmmcogyfgb1w" path="res://Scripts/Scenes/Boot/TitleScene.gd" id="1_title_script"]
 [ext_resource type="AudioStream" uid="uid://630wj3bbflrg" path="res://Assets/Audio/BGM/Room BGM 001.ogg" id="2_opdry"]
+[ext_resource type="PackedScene" uid="uid://iqk0ojpmgrh1" path="res://Scenes/UI/Options/AudioSettingsPanel.tscn" id="3_audio_panel"]
 
 [node name="TitleScene" type="Control" unique_id=93271587]
 layout_mode = 3
@@ -47,7 +48,46 @@ custom_minimum_size = Vector2(280, 56)
 layout_mode = 2
 text = "はじめる"
 
+[node name="OptionsButton" type="Button" parent="CenterContainer/CenterBox"]
+custom_minimum_size = Vector2(280, 56)
+layout_mode = 2
+text = "設定"
+
 [node name="ExitButton" type="Button" parent="CenterContainer/CenterBox" unique_id=925156011]
 custom_minimum_size = Vector2(280, 56)
 layout_mode = 2
 text = "おわる"
+
+[node name="AudioSettingsLayer" type="CanvasLayer" parent="."]
+visible = false
+layer = 10
+
+[node name="DimBackground" type="ColorRect" parent="AudioSettingsLayer"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+color = Color(0, 0, 0, 0.55)
+
+[node name="CenterContainer" type="CenterContainer" parent="AudioSettingsLayer"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="OverlayBox" type="VBoxContainer" parent="AudioSettingsLayer/CenterContainer"]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+theme_override_constants/separation = 12
+
+[node name="AudioSettingsPanel" parent="AudioSettingsLayer/CenterContainer/OverlayBox" instance=ExtResource("3_audio_panel")]
+layout_mode = 2
+
+[node name="CloseOptionsButton" type="Button" parent="AudioSettingsLayer/CenterContainer/OverlayBox"]
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+text = "閉じる"
