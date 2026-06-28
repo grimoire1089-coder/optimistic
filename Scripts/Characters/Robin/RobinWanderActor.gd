@@ -17,6 +17,8 @@ func _ready() -> void:
 func _physics_process(delta: float) -> void:
 	velocity = wander_module.get_velocity(delta)
 	move_and_slide()
+	if wander_module.clamp_body_to_movement_area():
+		velocity = Vector2.ZERO
 	walk_animator.update_animation(velocity, wander_module.get_facing_direction(), delta)
 
 
