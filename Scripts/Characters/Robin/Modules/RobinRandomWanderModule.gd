@@ -68,7 +68,33 @@ func get_movement_area() -> Rect2:
 		min_pos.y = center.y
 		max_pos.y = center.y
 
-	return Rect2(min_pos, max_pos - min_pos)
+	var available_size := max_pos - min_pos
+	available_size.x = maxf(available_size.x, 0.0)
+	available_size.y = maxf(available_size.y, 0.0)
+
+	var square_size := minf(available_size.x, available_size.y)
+	var square_area_size := Vector2(square_size, square_size)
+	var square_area_position := min_pos + (available_size - square_area_size) * 0.5
+	return Rect2(square_area_position, square_area_size)
+
+
+func clamp_body_to_movement_area() -> bool:
+	if _body == null:
+		return false
+
+	var movement_area := get_movement_area()
+	var area_end := movement_area.end
+	var current_position := _body.global_position
+	var clamped_position := Vector2(
+		clampf(current_position.x, movement_area.position.x, area_end.x),
+		clampf(current_position.y, movement_area.position.y, area_end.y)
+	)
+
+	if current_position.distance_squared_to(clamped_position) <= 0.001:
+		return false
+
+	_body.global_position = clamped_position
+	return true
 
 
 func _setup_walk_directions() -> void:
