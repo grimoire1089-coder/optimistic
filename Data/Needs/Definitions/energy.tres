@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="NeedDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Systems/Needs/NeedDefinition.gd" id="1_energy"]
+
+[resource]
+script = ExtResource("1_energy")
+need_id = &"energy"
+display_name = "休息"
+max_value = 100.0
+start_value = 90.0
+decay_per_game_minute = 0.045
+low_threshold = 30.0
+critical_threshold = 10.0
