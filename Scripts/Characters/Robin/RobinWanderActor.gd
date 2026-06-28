@@ -18,3 +18,7 @@ func _physics_process(delta: float) -> void:
 	velocity = wander_module.get_velocity(delta)
 	move_and_slide()
 	walk_animator.update_animation(velocity, wander_module.get_facing_direction(), delta)
+
+
+func get_movement_area() -> Rect2:
+	return wander_module.get_movement_area()
