@@ -1,0 +1,19 @@
+[remap]
+
+importer="oggvorbisstr"
+type="AudioStreamOggVorbis"
+uid="uid://f1s6ati8ijmy"
+path="res://.godot/imported/Room BGM 002.ogg-54eb49beaec18497bd712d6f228c7400.oggvorbisstr"
+
+[deps]
+
+source_file="res://Assets/Audio/BGM/Room BGM 002.ogg"
+dest_files=["res://.godot/imported/Room BGM 002.ogg-54eb49beaec18497bd712d6f228c7400.oggvorbisstr"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4
