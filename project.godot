@@ -20,6 +20,7 @@ config/icon="res://icon.svg"
 SceneRouter="*uid://d3dum2wt1mbeq"
 AudioSettings="*uid://bde05i1gmmns0"
 AudioPlayer="*uid://dtm1jv0vp0lus"
+GameClock="*res://Scripts/Systems/Time/GameClock.gd"
 
 [physics]
 
