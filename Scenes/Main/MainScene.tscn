@@ -1,8 +1,9 @@
-[gd_scene format=3 uid="uid://mk1ctmvwoywn"]
+[gd_scene load_steps=5 format=3 uid="uid://mk1ctmvwoywn"]
 
 [ext_resource type="Script" uid="uid://g87b50guc8nn" path="res://Scripts/Scenes/Main/MainScene.gd" id="1_main_script"]
 [ext_resource type="PackedScene" path="res://Scenes/Characters/Robin/RobinWanderActor.tscn" id="2_robin"]
 [ext_resource type="Script" path="res://Scripts/Scenes/Main/Modules/CanvasGlowEnvironmentModule.gd" id="3_canvas_glow"]
+[ext_resource type="PackedScene" path="res://Scenes/UI/HUD/ClockDisplay.tscn" id="4_clock_display"]
 
 [node name="MainScene" type="Node2D" unique_id=1488982029]
 script = ExtResource("1_main_script")
@@ -25,3 +26,5 @@ offset_top = 24.0
 offset_right = 360.0
 offset_bottom = 55.0
 text = "Main Scene 起動完了"
+
+[node name="ClockDisplay" parent="CanvasLayer" instance=ExtResource("4_clock_display")]
