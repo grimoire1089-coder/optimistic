@@ -3,6 +3,7 @@ class_name RobinRandomWanderModule
 
 @export var walk_speed: float = 80.0
 @export var screen_margin: float = 96.0
+@export var side_ui_margin: float = 280.0
 @export var idle_chance: float = 0.25
 @export var idle_time_range: Vector2 = Vector2(0.4, 1.0)
 @export var walk_time_range: Vector2 = Vector2(1.0, 2.2)
@@ -30,7 +31,7 @@ func get_velocity(delta: float) -> Vector2:
 	if _timer <= 0.0:
 		_pick_next_action()
 
-	_keep_inside_screen()
+	_keep_inside_movement_area()
 
 	if _is_idle:
 		return Vector2.ZERO
@@ -40,6 +41,14 @@ func get_velocity(delta: float) -> Vector2:
 
 func get_facing_direction() -> Vector2:
 	return _direction
+
+
+func get_movement_center() -> Vector2:
+	if _body == null:
+		return Vector2.ZERO
+
+	var movement_area := _get_movement_area()
+	return movement_area.position + movement_area.size * 0.5
 
 
 func _setup_walk_directions() -> void:
@@ -70,10 +79,10 @@ func _pick_next_action() -> void:
 	_direction = _walk_directions[_rng.randi_range(0, _walk_directions.size() - 1)]
 
 
-func _keep_inside_screen() -> void:
-	var rect := _body.get_viewport().get_visible_rect()
-	var min_pos := rect.position + Vector2(screen_margin, screen_margin)
-	var max_pos := rect.end - Vector2(screen_margin, screen_margin)
+func _keep_inside_movement_area() -> void:
+	var movement_area := _get_movement_area()
+	var min_pos := movement_area.position
+	var max_pos := movement_area.end
 	var position := _body.global_position
 	var target_direction := Vector2.ZERO
 
@@ -91,3 +100,20 @@ func _keep_inside_screen() -> void:
 		_direction = target_direction.normalized()
 		_is_idle = false
 		_timer = max(_timer, 0.35)
+
+
+func _get_movement_area() -> Rect2:
+	var rect := _body.get_viewport().get_visible_rect()
+	var min_pos := rect.position + Vector2(side_ui_margin, screen_margin)
+	var max_pos := rect.end - Vector2(side_ui_margin, screen_margin)
+	var center := rect.position + rect.size * 0.5
+
+	if min_pos.x > max_pos.x:
+		min_pos.x = center.x
+		max_pos.x = center.x
+
+	if min_pos.y > max_pos.y:
+		min_pos.y = center.y
+		max_pos.y = center.y
+
+	return Rect2(min_pos, max_pos - min_pos)
