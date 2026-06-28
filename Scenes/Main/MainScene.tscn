@@ -1,24 +1,21 @@
-[gd_scene load_steps=7 format=3 uid="uid://mk1ctmvwoywn"]
+[gd_scene format=3 uid="uid://mk1ctmvwoywn"]
 
 [ext_resource type="Script" uid="uid://g87b50guc8nn" path="res://Scripts/Scenes/Main/MainScene.gd" id="1_main_script"]
-[ext_resource type="PackedScene" path="res://Scenes/Characters/Robin/RobinWanderActor.tscn" id="2_robin"]
-[ext_resource type="Script" path="res://Scripts/Scenes/Main/Modules/CanvasGlowEnvironmentModule.gd" id="3_canvas_glow"]
+[ext_resource type="PackedScene" uid="uid://cb0fyv6e2f40m" path="res://Scenes/Characters/Robin/RobinWanderActor.tscn" id="2_robin"]
+[ext_resource type="Script" uid="uid://cst0ytwwy48v" path="res://Scripts/Scenes/Main/Modules/CanvasGlowEnvironmentModule.gd" id="3_canvas_glow"]
 [ext_resource type="PackedScene" path="res://Scenes/UI/HUD/ClockDisplay.tscn" id="4_clock_display"]
+[ext_resource type="AudioStream" uid="uid://84310p8voyjn" path="res://Assets/Audio/SFX/UI/UI_Click_001.ogg" id="4_ctt6t"]
 [ext_resource type="PackedScene" path="res://Scenes/UI/HUD/CreditPanel.tscn" id="5_credit_panel"]
 [ext_resource type="PackedScene" path="res://Scenes/UI/HUD/AICharacterHud.tscn" id="6_ai_character_hud"]
 
 [node name="MainScene" type="Node2D" unique_id=1488982029]
 script = ExtResource("1_main_script")
 
-[node name="CanvasGlowEnvironment" type="WorldEnvironment" parent="."]
+[node name="CanvasGlowEnvironment" type="WorldEnvironment" parent="." unique_id=678791057]
 script = ExtResource("3_canvas_glow")
-glow_intensity = 1.0
-glow_strength = 1.25
-glow_hdr_threshold = 1.0
-glow_bloom = 0.08
 
-[node name="Robin" parent="." instance=ExtResource("2_robin")]
-position = Vector2(576, 360)
+[node name="Robin" parent="." unique_id=892635706 instance=ExtResource("2_robin")]
+click_sfx = ExtResource("4_ctt6t")
 
 [node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=295553793]
 
@@ -29,8 +26,8 @@ offset_right = 360.0
 offset_bottom = 55.0
 text = "Main Scene 起動完了"
 
-[node name="ClockDisplay" parent="CanvasLayer" instance=ExtResource("4_clock_display")]
+[node name="ClockDisplay" parent="CanvasLayer" unique_id=630380914 instance=ExtResource("4_clock_display")]
 
-[node name="CreditPanel" parent="CanvasLayer" instance=ExtResource("5_credit_panel")]
+[node name="CreditPanel" parent="CanvasLayer" unique_id=1025226136 instance=ExtResource("5_credit_panel")]
 
-[node name="AICharacterHud" parent="CanvasLayer" instance=ExtResource("6_ai_character_hud")]
+[node name="AICharacterHud" parent="CanvasLayer" unique_id=1693042289 instance=ExtResource("6_ai_character_hud")]
