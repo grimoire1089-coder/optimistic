@@ -1,7 +1,10 @@
 extends CharacterBody2D
 class_name RobinWanderActor
 
+signal selected(actor: RobinWanderActor)
+
 @export var start_at_movement_area_center: bool = true
+@export var display_name: String = "ロビン"
 
 @onready var needs_bundle: Node = $AICharacterNeedsBundle
 @onready var needs_module: CharacterNeedsModule = $AICharacterNeedsBundle/CharacterNeedsModule
@@ -11,6 +14,7 @@ class_name RobinWanderActor
 
 
 func _ready() -> void:
+	input_pickable = true
 	wander_module.setup(self)
 	if start_at_movement_area_center:
 		global_position = wander_module.get_movement_center()
@@ -23,6 +27,14 @@ func _physics_process(delta: float) -> void:
 	if wander_module.clamp_body_to_movement_area():
 		velocity = Vector2.ZERO
 	walk_animator.update_animation(velocity, wander_module.get_facing_direction(), delta)
+
+
+func _input_event(_viewport: Viewport, event: InputEvent, _shape_idx: int) -> void:
+	if event is InputEventMouseButton:
+		var mouse_event := event as InputEventMouseButton
+		if mouse_event.button_index == MOUSE_BUTTON_LEFT and mouse_event.pressed:
+			selected.emit(self)
+			get_viewport().set_input_as_handled()
 
 
 func get_movement_area() -> Rect2:
