@@ -43,6 +43,11 @@ func _on_start_button_pressed() -> void:
 	if start_button_sfx != null:
 		AudioPlayer.play_sfx(start_button_sfx)
 
+	var game_clock := get_node_or_null("/root/GameClock") as GameClockSystem
+	if game_clock != null:
+		game_clock.reset_time()
+		game_clock.start()
+
 	SceneRouter.go_to_main()
 
 
