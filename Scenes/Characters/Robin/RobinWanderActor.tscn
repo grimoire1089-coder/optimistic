@@ -1,0 +1,32 @@
+[gd_scene load_steps=6 format=3 uid="uid://cb0fyv6e2f40m"]
+
+[ext_resource type="Script" path="res://Scripts/Characters/Robin/RobinWanderActor.gd" id="1_actor"]
+[ext_resource type="Texture2D" path="res://Assets/Characters/Robin/Walk/robin_8dir_walk_3frame.png" id="2_walk_texture"]
+[ext_resource type="Script" path="res://Scripts/Characters/Robin/Modules/RobinRandomWanderModule.gd" id="3_wander_module"]
+[ext_resource type="Script" path="res://Scripts/Characters/Robin/Modules/RobinWalkSpriteAnimator.gd" id="4_animator"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_robin"]
+radius = 24.0
+
+[node name="Robin" type="CharacterBody2D"]
+position = Vector2(576, 360)
+motion_mode = 1
+script = ExtResource("1_actor")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture = ExtResource("2_walk_texture")
+hframes = 3
+vframes = 8
+frame = 1
+centered = true
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, 48)
+shape = SubResource("CircleShape2D_robin")
+
+[node name="RobinRandomWanderModule" type="Node" parent="."]
+script = ExtResource("3_wander_module")
+
+[node name="RobinWalkSpriteAnimator" type="Node" parent="."]
+script = ExtResource("4_animator")
+sprite_path = NodePath("../Sprite2D")
