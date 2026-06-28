@@ -3,25 +3,33 @@ class_name RobinWalkSpriteAnimator
 
 @export var sprite_path: NodePath = NodePath("../Sprite2D")
 @export var frames_per_second: float = 6.0
-@export var idle_frame: int = 1
+@export var moving_bob_amount: float = 5.0
+@export var moving_rotation_degrees: float = 2.0
+@export var moving_scale_amount: float = 0.025
 
 var _sprite: Sprite2D
-var _frame_timer: float = 0.0
-var _walk_frame: int = 1
 var _last_direction: Vector2 = Vector2.DOWN
-var _direction_rows: Array[Dictionary] = []
+var _direction_cells: Dictionary = {}
+var _base_position: Vector2 = Vector2.ZERO
+var _base_scale: Vector2 = Vector2.ONE
+var _base_rotation: float = 0.0
+var _motion_time: float = 0.0
 
 
 func setup() -> void:
-	_setup_direction_rows()
+	_setup_direction_cells()
 	_sprite = get_node_or_null(sprite_path) as Sprite2D
 	if _sprite == null:
 		push_warning("RobinWalkSpriteAnimator: Sprite2D が見つかりません。")
 		return
 
-	_sprite.hframes = 3
-	_sprite.vframes = 8
-	_apply_frame(idle_frame, 0)
+	_sprite.hframes = 2
+	_sprite.vframes = 4
+	_base_position = _sprite.position
+	_base_scale = _sprite.scale
+	_base_rotation = _sprite.rotation
+	_apply_direction_frame(Vector2.DOWN)
+	_reset_motion_offsets()
 
 
 func update_animation(move_velocity: Vector2, fallback_direction: Vector2, delta: float) -> void:
@@ -30,62 +38,105 @@ func update_animation(move_velocity: Vector2, fallback_direction: Vector2, delta
 
 	var is_moving := move_velocity.length_squared() > 1.0
 	var direction := fallback_direction
+
 	if is_moving:
 		direction = move_velocity.normalized()
 		_last_direction = direction
-	elif direction.length_squared() <= 0.001:
+	elif direction.length_squared() > 0.001:
+		direction = direction.normalized()
+		_last_direction = direction
+	else:
 		direction = _last_direction
 
-	var row := _direction_to_row(direction)
+	_apply_direction_frame(direction)
 
 	if not is_moving:
-		_apply_frame(idle_frame, row)
+		_motion_time = 0.0
+		_reset_motion_offsets()
 		return
 
-	_frame_timer += delta
-	var frame_duration: float = 1.0 / maxf(frames_per_second, 0.1)
-	if _frame_timer >= frame_duration:
-		_frame_timer = 0.0
-		_walk_frame = (_walk_frame + 1) % 3
-
-	_apply_frame(_walk_frame, row)
+	_motion_time += delta * maxf(frames_per_second, 0.1)
+	_apply_motion_offsets(direction)
 
 
-func _setup_direction_rows() -> void:
-	if not _direction_rows.is_empty():
-		return
-
-	_direction_rows = [
-		{"direction": Vector2.DOWN, "row": 0},
-		{"direction": Vector2(1.0, 1.0).normalized(), "row": 1},
-		{"direction": Vector2.RIGHT, "row": 2},
-		{"direction": Vector2(1.0, -1.0).normalized(), "row": 3},
-		{"direction": Vector2.UP, "row": 4},
-		{"direction": Vector2(-1.0, -1.0).normalized(), "row": 5},
-		{"direction": Vector2.LEFT, "row": 6},
-		{"direction": Vector2(-1.0, 1.0).normalized(), "row": 7},
-	]
+func _setup_direction_cells() -> void:
+	_direction_cells = {
+		"down": Vector2i(0, 0),
+		"up": Vector2i(1, 0),
+		"right": Vector2i(0, 1),
+		"left": Vector2i(1, 1),
+		"down_right": Vector2i(0, 2),
+		"down_left": Vector2i(1, 2),
+		"up_right": Vector2i(0, 3),
+		"up_left": Vector2i(1, 3),
+	}
 
 
-func _apply_frame(frame_index: int, row: int) -> void:
-	_sprite.frame_coords = Vector2i(clampi(frame_index, 0, 2), clampi(row, 0, 7))
+func _apply_direction_frame(direction: Vector2) -> void:
+	var key := _direction_to_key(direction)
+	var coords: Vector2i = _direction_cells.get(key, Vector2i(0, 0))
+	_sprite.frame_coords = coords
 
 
-func _direction_to_row(direction: Vector2) -> int:
-	_setup_direction_rows()
+func _apply_motion_offsets(direction: Vector2) -> void:
+	var bob := sin(_motion_time * TAU) * moving_bob_amount
+	var tilt_sign := 1.0
+	if absf(direction.x) > 0.15:
+		tilt_sign = sign(direction.x)
 
+	var rotation_offset := sin(_motion_time * TAU) * deg_to_rad(moving_rotation_degrees) * tilt_sign
+	var scale_offset := cos(_motion_time * TAU * 2.0) * moving_scale_amount
+
+	_sprite.position = _base_position + Vector2(0.0, bob)
+	_sprite.rotation = _base_rotation + rotation_offset
+	_sprite.scale = Vector2(
+		_base_scale.x * (1.0 - scale_offset),
+		_base_scale.y * (1.0 + scale_offset)
+	)
+
+
+func _reset_motion_offsets() -> void:
+	_sprite.position = _base_position
+	_sprite.rotation = _base_rotation
+	_sprite.scale = _base_scale
+
+
+func _direction_to_key(direction: Vector2) -> String:
 	if direction.length_squared() <= 0.001:
-		direction = Vector2.DOWN
+		return "down"
 
 	var normalized_direction := direction.normalized()
-	var best_row := 0
-	var best_dot: float = -999.0
+	var x := 0
+	var y := 0
 
-	for item in _direction_rows:
-		var row_direction: Vector2 = item["direction"]
-		var dot_value := normalized_direction.dot(row_direction)
-		if dot_value > best_dot:
-			best_dot = dot_value
-			best_row = item["row"]
+	if normalized_direction.x > 0.35:
+		x = 1
+	elif normalized_direction.x < -0.35:
+		x = -1
 
-	return best_row
+	if normalized_direction.y > 0.35:
+		y = 1
+	elif normalized_direction.y < -0.35:
+		y = -1
+
+	if x == 0 and y == 1:
+		return "down"
+	elif x == 0 and y == -1:
+		return "up"
+	elif x == 1 and y == 0:
+		return "right"
+	elif x == -1 and y == 0:
+		return "left"
+	elif x == 1 and y == 1:
+		return "down_right"
+	elif x == -1 and y == 1:
+		return "down_left"
+	elif x == 1 and y == -1:
+		return "up_right"
+	elif x == -1 and y == -1:
+		return "up_left"
+
+	if absf(normalized_direction.y) >= absf(normalized_direction.x):
+		return "down" if normalized_direction.y >= 0.0 else "up"
+
+	return "right" if normalized_direction.x >= 0.0 else "left"
