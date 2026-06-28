@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="NeedDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Systems/Needs/NeedDefinition.gd" id="1_social"]
+
+[resource]
+script = ExtResource("1_social")
+need_id = &"social"
+display_name = "交流度"
+max_value = 100.0
+start_value = 80.0
+decay_per_game_minute = 0.03
+low_threshold = 30.0
+critical_threshold = 10.0
