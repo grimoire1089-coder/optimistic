@@ -12,22 +12,13 @@ var _rng := RandomNumberGenerator.new()
 var _timer: float = 0.0
 var _is_idle: bool = false
 var _direction: Vector2 = Vector2.DOWN
-
-const WALK_DIRECTIONS: Array[Vector2] = [
-	Vector2.DOWN,
-	Vector2(1.0, 1.0).normalized(),
-	Vector2.RIGHT,
-	Vector2(1.0, -1.0).normalized(),
-	Vector2.UP,
-	Vector2(-1.0, -1.0).normalized(),
-	Vector2.LEFT,
-	Vector2(-1.0, 1.0).normalized(),
-]
+var _walk_directions: Array[Vector2] = []
 
 
 func setup(body: Node2D) -> void:
 	_body = body
 	_rng.randomize()
+	_setup_walk_directions()
 	_pick_next_action()
 
 
@@ -51,7 +42,24 @@ func get_facing_direction() -> Vector2:
 	return _direction
 
 
+func _setup_walk_directions() -> void:
+	if not _walk_directions.is_empty():
+		return
+
+	_walk_directions = [
+		Vector2.DOWN,
+		Vector2(1.0, 1.0).normalized(),
+		Vector2.RIGHT,
+		Vector2(1.0, -1.0).normalized(),
+		Vector2.UP,
+		Vector2(-1.0, -1.0).normalized(),
+		Vector2.LEFT,
+		Vector2(-1.0, 1.0).normalized(),
+	]
+
+
 func _pick_next_action() -> void:
+	_setup_walk_directions()
 	_is_idle = _rng.randf() < idle_chance
 
 	if _is_idle:
@@ -59,7 +67,7 @@ func _pick_next_action() -> void:
 		return
 
 	_timer = _rng.randf_range(walk_time_range.x, walk_time_range.y)
-	_direction = WALK_DIRECTIONS[_rng.randi_range(0, WALK_DIRECTIONS.size() - 1)]
+	_direction = _walk_directions[_rng.randi_range(0, _walk_directions.size() - 1)]
 
 
 func _keep_inside_screen() -> void:
