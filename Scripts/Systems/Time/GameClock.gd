@@ -101,7 +101,7 @@ func set_time(new_day: int, new_hour: int, new_minute: int) -> void:
 
 
 func get_hour() -> int:
-	return int(minute_of_day / 60)
+	return floori(float(minute_of_day) / 60.0)
 
 
 func get_minute() -> int:
