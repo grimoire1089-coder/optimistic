@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3 uid="uid://cb0fyv6e2f40m"]
+[gd_scene load_steps=9 format=3 uid="uid://cb0fyv6e2f40m"]
 
 [ext_resource type="Script" path="res://Scripts/Characters/Robin/RobinWanderActor.gd" id="1_actor"]
 [ext_resource type="Texture2D" path="res://Assets/Characters/Robin/Walk/robin_8dir_standing.png" id="2_standing_texture"]
@@ -9,6 +9,9 @@
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_robin"]
 radius = 12.0
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_click_area"]
+size = Vector2(84, 112)
 
 [node name="Robin" type="CharacterBody2D"]
 position = Vector2(576, 360)
@@ -27,6 +30,13 @@ scale = Vector2(0.5, 0.5)
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 position = Vector2(0, 24)
 shape = SubResource("CircleShape2D_robin")
+
+[node name="ClickArea2D" type="Area2D" parent="."]
+input_pickable = true
+
+[node name="ClickCollisionShape2D" type="CollisionShape2D" parent="ClickArea2D"]
+position = Vector2(0, 4)
+shape = SubResource("RectangleShape2D_click_area")
 
 [node name="AICharacterNeedsBundle" parent="." instance=ExtResource("6_needs_bundle")]
 
