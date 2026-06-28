@@ -2,9 +2,17 @@
 
 [ext_resource type="Script" uid="uid://g87b50guc8nn" path="res://Scripts/Scenes/Main/MainScene.gd" id="1_main_script"]
 [ext_resource type="PackedScene" path="res://Scenes/Characters/Robin/RobinWanderActor.tscn" id="2_robin"]
+[ext_resource type="Script" path="res://Scripts/Scenes/Main/Modules/CanvasGlowEnvironmentModule.gd" id="3_canvas_glow"]
 
 [node name="MainScene" type="Node2D" unique_id=1488982029]
 script = ExtResource("1_main_script")
+
+[node name="CanvasGlowEnvironment" type="WorldEnvironment" parent="."]
+script = ExtResource("3_canvas_glow")
+glow_intensity = 1.0
+glow_strength = 1.25
+glow_hdr_threshold = 1.0
+glow_bloom = 0.08
 
 [node name="Robin" parent="." instance=ExtResource("2_robin")]
 position = Vector2(576, 360)
