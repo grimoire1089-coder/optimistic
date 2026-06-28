@@ -40,9 +40,10 @@ moving_bob_amount = 2.0
 moving_rotation_degrees = 0.8
 moving_scale_amount = 0.008
 
-[node name="RobinMovementAreaFrame" type="Node2D" parent="."]
+[node name="RobinMovementAreaFrame" type="Control" parent="."]
 script = ExtResource("5_movement_area_frame")
 actor_path = NodePath("..")
-outer_glow_width = 18.0
-middle_glow_width = 10.0
+raw_modulate_color = Color(1, 2.8, 2.8, 1)
+outer_glow_width = 24.0
+middle_glow_width = 12.0
 core_line_width = 4.0
