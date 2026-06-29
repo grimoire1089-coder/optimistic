@@ -56,6 +56,10 @@ func get_movement_area() -> Rect2:
 	return wander_module.get_movement_area()
 
 
+func get_visual_movement_area() -> Rect2:
+	return wander_module.get_visual_movement_area()
+
+
 func get_needs_module() -> CharacterNeedsModule:
 	return needs_module
 
