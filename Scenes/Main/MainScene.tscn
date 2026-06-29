@@ -7,6 +7,7 @@
 [ext_resource type="AudioStream" uid="uid://84310p8voyjn" path="res://Assets/Audio/SFX/UI/UI_Click_001.ogg" id="4_ctt6t"]
 [ext_resource type="PackedScene" path="res://Scenes/UI/HUD/CreditPanel.tscn" id="5_credit_panel"]
 [ext_resource type="PackedScene" path="res://Scenes/UI/HUD/AICharacterHud.tscn" id="6_ai_character_hud"]
+[ext_resource type="PackedScene" path="res://Scenes/UI/HUD/WorkCreditButton.tscn" id="7_work_credit_button"]
 
 [sub_resource type="Environment" id="Environment_ctt6t"]
 glow_enabled = true
@@ -35,3 +36,5 @@ text = "Main Scene 起動完了"
 [node name="CreditPanel" parent="CanvasLayer" unique_id=1025226136 instance=ExtResource("5_credit_panel")]
 
 [node name="AICharacterHud" parent="CanvasLayer" unique_id=1693042289 instance=ExtResource("6_ai_character_hud")]
+
+[node name="WorkCreditButton" parent="CanvasLayer" instance=ExtResource("7_work_credit_button")]
