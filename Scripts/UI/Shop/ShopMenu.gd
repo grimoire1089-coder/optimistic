@@ -149,18 +149,18 @@ func _on_buy_pressed(entry: ShopItemData) -> void:
 
 	var total_price := entry.get_total_price()
 	if not _spend_credits(total_price, entry):
-		detail_label.text = "クレジットが足りません。必要: %d / 所持: %d" % [total_price, _get_wallet_credits()]
 		_refresh()
+		detail_label.text = "クレジットが足りません。必要: %d / 所持: %d" % [total_price, _get_wallet_credits()]
 		return
 
 	if not _add_entry_to_inventory(entry):
 		_refund_credits(total_price, entry)
-		detail_label.text = "インベントリに空きがありません。購入を取り消しました。"
 		_refresh()
+		detail_label.text = "インベントリに空きがありません。購入を取り消しました。"
 		return
 
-	detail_label.text = "購入しました: %s x%d" % [entry.get_display_name(), max(entry.amount, 1)]
 	_refresh()
+	detail_label.text = "購入しました: %s x%d" % [entry.get_display_name(), max(entry.amount, 1)]
 
 
 func _spend_credits(amount: int, entry: ShopItemData) -> bool:
