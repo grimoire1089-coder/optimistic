@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="FoodItemData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Items/Food/FoodItemData.gd" id="1_food_data"]
+[ext_resource type="Texture2D" path="res://Assets/Items/Icons/Food/Food_0001.png" id="2_food_icon"]
+
+[resource]
+script = ExtResource("1_food_data")
+item_id = &"food_0001"
+display_name = "肉まん"
+description = "ふかふかの生地で肉餡を包んだ、定番の温かい食品。"
+icon = ExtResource("2_food_icon")
+category_id = &"foods"
+stack_max = 99
+buy_price = 120
+sell_price = 60
