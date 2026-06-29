@@ -184,7 +184,8 @@ func _get_provider_visual_map_rect() -> Rect2:
 		return Rect2()
 	if not _movement_area_provider.has_method("get_visual_map_rect"):
 		return Rect2()
-	return _movement_area_provider.call("get_visual_map_rect") as Rect2
+	var provider_area: Rect2 = _movement_area_provider.call("get_visual_map_rect")
+	return provider_area
 
 
 func _resolve_movement_area_provider() -> void:
