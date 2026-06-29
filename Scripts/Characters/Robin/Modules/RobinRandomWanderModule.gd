@@ -4,6 +4,7 @@ class_name RobinRandomWanderModule
 @export var walk_speed: float = 80.0
 @export var screen_margin: float = 96.0
 @export var side_ui_margin: float = 280.0
+@export var movement_area_provider_path: NodePath
 @export var idle_chance: float = 0.25
 @export var idle_time_range: Vector2 = Vector2(0.4, 1.0)
 @export var walk_time_range: Vector2 = Vector2(1.0, 2.2)
@@ -14,6 +15,7 @@ class_name RobinRandomWanderModule
 @export var keep_visual_inside_frame: bool = true
 
 var _body: Node2D
+var _movement_area_provider: Node
 var _rng := RandomNumberGenerator.new()
 var _timer: float = 0.0
 var _is_idle: bool = false
@@ -23,6 +25,7 @@ var _walk_directions: Array[Vector2] = []
 
 func setup(body: Node2D) -> void:
 	_body = body
+	_resolve_movement_area_provider()
 	_rng.randomize()
 	_setup_walk_directions()
 	_pick_next_action()
@@ -57,6 +60,10 @@ func get_movement_center() -> Vector2:
 
 
 func get_visual_movement_area() -> Rect2:
+	var provider_area := _get_provider_visual_map_rect()
+	if provider_area.size.x > 0.0 and provider_area.size.y > 0.0:
+		return provider_area
+
 	if _body == null:
 		return Rect2()
 
@@ -169,3 +176,26 @@ func _keep_inside_movement_area() -> void:
 		_direction = target_direction.normalized()
 		_is_idle = false
 		_timer = max(_timer, 0.35)
+
+
+func _get_provider_visual_map_rect() -> Rect2:
+	_resolve_movement_area_provider()
+	if _movement_area_provider == null:
+		return Rect2()
+	if not _movement_area_provider.has_method("get_visual_map_rect"):
+		return Rect2()
+	return _movement_area_provider.call("get_visual_map_rect") as Rect2
+
+
+func _resolve_movement_area_provider() -> void:
+	if _movement_area_provider != null:
+		return
+	if movement_area_provider_path.is_empty():
+		return
+
+	_movement_area_provider = get_node_or_null(movement_area_provider_path)
+	if _movement_area_provider != null:
+		return
+
+	if _body != null:
+		_movement_area_provider = _body.get_node_or_null(movement_area_provider_path)
