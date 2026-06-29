@@ -68,10 +68,10 @@ func _load_default_click_sfx_if_needed() -> void:
 
 
 func _apply_square_button_layout() -> void:
-	custom_minimum_size = Vector2(72.0, 72.0)
-	offset_left = -272.0
-	offset_top = -96.0
-	offset_right = -200.0
+	custom_minimum_size = Vector2(64.0, 64.0)
+	offset_left = -232.0
+	offset_top = -88.0
+	offset_right = -168.0
 	offset_bottom = -24.0
 	mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	_add_rounded_button_styles()
