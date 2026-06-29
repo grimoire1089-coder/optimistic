@@ -9,10 +9,10 @@
 [ext_resource type="Script" path="res://Scripts/Characters/Robin/Modules/RobinInventoryModule.gd" id="7_inventory_module"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_robin"]
-radius = 12.0
+radius = 10.0
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_click_area"]
-size = Vector2(180, 220)
+size = Vector2(136, 168)
 
 [node name="Robin" type="CharacterBody2D"]
 position = Vector2(576, 360)
@@ -26,10 +26,10 @@ hframes = 2
 vframes = 4
 frame = 0
 centered = true
-scale = Vector2(0.5, 0.5)
+scale = Vector2(0.38, 0.38)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
-position = Vector2(0, 24)
+position = Vector2(0, 18)
 shape = SubResource("CircleShape2D_robin")
 
 [node name="ClickArea2D" type="Area2D" parent="."]
@@ -49,6 +49,7 @@ script = ExtResource("3_wander_module")
 screen_margin = 96.0
 side_ui_margin = 280.0
 movement_area_provider_path = NodePath("../RobinRoomMap")
+visual_half_extents = Vector2(36, 58)
 
 [node name="RobinWalkSpriteAnimator" type="Node" parent="."]
 script = ExtResource("4_animator")
