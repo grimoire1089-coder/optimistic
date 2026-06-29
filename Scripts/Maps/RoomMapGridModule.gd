@@ -8,6 +8,8 @@ signal map_rect_changed(visual_rect: Rect2, grid_rect: Rect2, grid_size: Vector2
 @export var screen_margin: float = 96.0
 @export var side_ui_margin: float = 280.0
 @export var cell_size: Vector2 = Vector2(48.0, 48.0)
+@export var fixed_grid_size: Vector2i = Vector2i.ZERO
+@export var fit_cell_size_to_visual_rect: bool = false
 @export var show_grid: bool = true
 @export var show_neon_frame: bool = false
 @export var grid_line_width: float = 1.0
@@ -59,6 +61,9 @@ func get_visual_map_rect() -> Rect2:
 
 
 func get_grid_size() -> Vector2i:
+	if fixed_grid_size.x > 0 and fixed_grid_size.y > 0:
+		return fixed_grid_size
+
 	var visual_rect := get_visual_map_rect()
 	var safe_cell_size := _get_safe_cell_size()
 	return Vector2i(
@@ -206,4 +211,17 @@ func _sync_map_state(force_emit: bool) -> void:
 
 
 func _get_safe_cell_size() -> Vector2:
-	return Vector2(maxf(cell_size.x, 1.0), maxf(cell_size.y, 1.0))
+	var safe_base_cell_size := Vector2(maxf(cell_size.x, 1.0), maxf(cell_size.y, 1.0))
+	if not fit_cell_size_to_visual_rect:
+		return safe_base_cell_size
+	if fixed_grid_size.x <= 0 or fixed_grid_size.y <= 0:
+		return safe_base_cell_size
+
+	var visual_rect := get_visual_map_rect()
+	if visual_rect.size.x <= 0.0 or visual_rect.size.y <= 0.0:
+		return safe_base_cell_size
+
+	return Vector2(
+		maxf(visual_rect.size.x / float(fixed_grid_size.x), 1.0),
+		maxf(visual_rect.size.y / float(fixed_grid_size.y), 1.0)
+	)
