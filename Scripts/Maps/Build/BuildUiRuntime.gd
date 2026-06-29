@@ -2,6 +2,7 @@ extends RefCounted
 class_name BuildUiRuntime
 
 const PANEL_PATH := "res://Scenes/UI/Build/FurnitureBuildInventory.tscn"
+const PLACEMENT_PREVIEW_SCRIPT_PATH := "res://Scripts/Maps/Build/BuildFurniturePlacementPreview.gd"
 
 
 static func setup(button: Button, room_ok: bool) -> BuildModeController:
@@ -48,12 +49,19 @@ static func _ensure_placement_preview(root: Node) -> void:
 	if root.get_node_or_null("BuildFurniturePlacementPreview") != null:
 		return
 
-	var preview := BuildFurniturePlacementPreview.new()
+	var preview_script := load(PLACEMENT_PREVIEW_SCRIPT_PATH) as Script
+	if preview_script == null:
+		return
+
+	var preview := preview_script.new() as Node2D
+	if preview == null:
+		return
+
 	preview.name = "BuildFurniturePlacementPreview"
 	preview.z_index = 30
-	preview.room_map_path = NodePath("../RobinRoomMap")
-	preview.build_mode_controller_path = NodePath("../BuildModeController")
-	preview.furniture_placement_module_path = NodePath("../FurniturePlacementModule")
+	preview.set("room_map_path", NodePath("../RobinRoomMap"))
+	preview.set("build_mode_controller_path", NodePath("../BuildModeController"))
+	preview.set("furniture_placement_module_path", NodePath("../FurniturePlacementModule"))
 	root.add_child.call_deferred(preview)
 
 
