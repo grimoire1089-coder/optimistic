@@ -165,6 +165,21 @@ func get_furniture_root() -> Node2D:
 	return _furniture_root
 
 
+func sync_furniture_to_room_grid(furniture: Node2D) -> void:
+	_resolve_refs()
+	if furniture == null or _room_map == null:
+		return
+
+	var room_cell_size := _room_map.get_cell_size()
+	if furniture.has_method("set_grid_cell_size"):
+		furniture.call("set_grid_cell_size", room_cell_size)
+		return
+
+	if _has_property(furniture, &"cell_size"):
+		furniture.set("cell_size", room_cell_size)
+		furniture.queue_redraw()
+
+
 func clear_furniture() -> void:
 	for furniture in _get_unique_furniture_nodes():
 		if furniture != null:
@@ -182,6 +197,7 @@ func _register_furniture(
 	if furniture == null or _room_map == null:
 		return
 
+	sync_furniture_to_room_grid(furniture)
 	furniture.global_position = _room_map.grid_to_world_area_center(grid_position, footprint)
 	furniture.set_meta("grid_position", grid_position)
 	furniture.set_meta("grid_footprint", footprint)
@@ -230,6 +246,17 @@ func _get_furniture_footprint(furniture: Node2D, fallback_footprint: Vector2i = 
 
 func _grid_key(grid_position: Vector2i) -> String:
 	return "%d,%d" % [grid_position.x, grid_position.y]
+
+
+func _has_property(object: Object, property_name: StringName) -> bool:
+	if object == null:
+		return false
+	for property_info in object.get_property_list():
+		if not property_info.has("name"):
+			continue
+		if StringName(property_info["name"]) == property_name:
+			return true
+	return false
 
 
 func _resolve_refs() -> void:
