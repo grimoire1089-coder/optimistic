@@ -80,6 +80,16 @@ func add_item(category_id: StringName, item_id: StringName, display_name: String
 	return true
 
 
+func add_food_item(food_data: FoodItemData, amount: int = 1) -> bool:
+	if food_data == null:
+		push_warning("食品データが空です。")
+		return false
+	if food_data.item_id == &"":
+		push_warning("食品IDが空です。")
+		return false
+	return add_item(food_data.category_id, food_data.item_id, food_data.display_name, amount, food_data.get_icon_path())
+
+
 func remove_item(category_id: StringName, item_id: StringName, amount: int = 1) -> bool:
 	if amount <= 0:
 		return false
