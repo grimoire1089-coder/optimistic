@@ -65,7 +65,7 @@ func place_furniture_scene_auto(
 		instance.queue_free()
 		return null
 
-	var footprint := _get_furniture_footprint(furniture, Vector2i(1, 1))
+	var footprint := get_furniture_footprint(furniture, Vector2i(1, 1))
 	if not can_place_at(grid_position, footprint):
 		furniture.queue_free()
 		return null
@@ -99,7 +99,7 @@ func place_existing_furniture_auto(
 	grid_position: Vector2i,
 	furniture_id: StringName = &""
 ) -> bool:
-	var footprint := _get_furniture_footprint(furniture, Vector2i(1, 1))
+	var footprint := get_furniture_footprint(furniture, Vector2i(1, 1))
 	return place_existing_furniture(furniture, grid_position, footprint, furniture_id)
 
 
@@ -109,7 +109,7 @@ func move_furniture_to(furniture: Node2D, grid_position: Vector2i, footprint: Ve
 
 	var old_grid_position: Vector2i = furniture.get_meta("grid_position", Vector2i.ZERO)
 	var old_footprint: Vector2i = furniture.get_meta("grid_footprint", Vector2i(1, 1))
-	var furniture_id: StringName = furniture.get_meta("furniture_id", &"")
+	var furniture_id: StringName = get_furniture_id(furniture)
 
 	_unregister_furniture(furniture)
 	if not can_place_at(grid_position, footprint):
@@ -130,11 +130,29 @@ func remove_furniture_at(grid_position: Vector2i) -> bool:
 	return true
 
 
+func take_furniture_at(grid_position: Vector2i) -> Node2D:
+	var furniture := get_furniture_at(grid_position)
+	if furniture == null:
+		return null
+	_unregister_furniture(furniture)
+	return furniture
+
+
 func get_furniture_at(grid_position: Vector2i) -> Node2D:
 	var key := _grid_key(grid_position)
 	if not _occupied_cells.has(key):
 		return null
 	return _occupied_cells[key] as Node2D
+
+
+func get_furniture_footprint(furniture: Node2D, fallback_footprint: Vector2i = Vector2i(1, 1)) -> Vector2i:
+	return _get_furniture_footprint(furniture, fallback_footprint)
+
+
+func get_furniture_id(furniture: Node2D) -> StringName:
+	if furniture == null:
+		return &""
+	return furniture.get_meta("furniture_id", &"") as StringName
 
 
 func get_room_map() -> RoomMapGridModule:
