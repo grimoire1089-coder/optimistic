@@ -38,6 +38,6 @@ text = "Main Scene 起動完了"
 
 [node name="AICharacterHud" parent="CanvasLayer" unique_id=1693042289 instance=ExtResource("6_ai_character_hud")]
 
-[node name="WorkMenu" parent="CanvasLayer" instance=ExtResource("8_work_menu")]
+[node name="WorkMenu" parent="CanvasLayer" unique_id=603449311 instance=ExtResource("8_work_menu")]
 
-[node name="WorkCreditButton" parent="CanvasLayer" instance=ExtResource("7_work_credit_button")]
+[node name="WorkCreditButton" parent="CanvasLayer" unique_id=44562355 instance=ExtResource("7_work_credit_button")]
