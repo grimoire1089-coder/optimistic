@@ -41,6 +41,6 @@ text = "Main Scene 起動完了"
 
 [node name="WorkMenu" parent="CanvasLayer" unique_id=603449311 instance=ExtResource("8_work_menu")]
 
-[node name="InventoryButton" parent="CanvasLayer" instance=ExtResource("9_inventory_button")]
+[node name="InventoryButton" parent="CanvasLayer" unique_id=1250666909 instance=ExtResource("9_inventory_button")]
 
 [node name="WorkCreditButton" parent="CanvasLayer" unique_id=44562355 instance=ExtResource("7_work_credit_button")]
