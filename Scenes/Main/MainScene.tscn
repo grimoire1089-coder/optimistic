@@ -14,6 +14,8 @@
 [ext_resource type="Script" path="res://Scripts/Maps/RoomMapGridModule.gd" id="11_room_map_grid"]
 [ext_resource type="Script" path="res://Scripts/Maps/Furniture/FurniturePlacementModule.gd" id="12_furniture_placement"]
 [ext_resource type="PackedScene" path="res://Scenes/UI/HUD/BuildModeButton.tscn" id="13_build_mode_button"]
+[ext_resource type="PackedScene" path="res://Scenes/UI/HUD/ShopButton.tscn" id="14_shop_button"]
+[ext_resource type="PackedScene" path="res://Scenes/UI/Shop/ShopMenu.tscn" id="15_shop_menu"]
 
 [sub_resource type="Environment" id="Environment_ctt6t"]
 glow_enabled = true
@@ -63,7 +65,11 @@ text = "Main Scene 起動完了"
 
 [node name="WorkMenu" parent="CanvasLayer" unique_id=603449311 instance=ExtResource("8_work_menu")]
 
+[node name="ShopMenu" parent="CanvasLayer" instance=ExtResource("15_shop_menu")]
+
 [node name="InventoryUI" parent="CanvasLayer" instance=ExtResource("10_inventory_ui")]
+
+[node name="ShopButton" parent="CanvasLayer" instance=ExtResource("14_shop_button")]
 
 [node name="InventoryButton" parent="CanvasLayer" instance=ExtResource("9_inventory_button")]
 
