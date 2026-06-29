@@ -27,7 +27,10 @@ func _ready() -> void:
 
 
 func get_categories() -> Array[Dictionary]:
-	return _categories.duplicate(true)
+	var result: Array[Dictionary] = []
+	for category in _categories:
+		result.append((category as Dictionary).duplicate(true))
+	return result
 
 
 func get_slots_per_category() -> int:
@@ -36,9 +39,15 @@ func get_slots_per_category() -> int:
 
 func get_items(category_id: StringName) -> Array[Dictionary]:
 	_setup_empty_categories()
+	var result: Array[Dictionary] = []
 	if not _items_by_category.has(category_id):
-		return []
-	return (_items_by_category[category_id] as Array).duplicate(true)
+		return result
+
+	var items := _items_by_category[category_id] as Array
+	for item in items:
+		if item is Dictionary:
+			result.append((item as Dictionary).duplicate(true))
+	return result
 
 
 func add_item(category_id: StringName, item_id: StringName, display_name: String, amount: int = 1, icon_path: String = "") -> bool:
@@ -105,4 +114,5 @@ func _setup_empty_categories() -> void:
 	for category in _categories:
 		var category_id := category.get("id", &"") as StringName
 		if not _items_by_category.has(category_id):
-			_items_by_category[category_id] = []
+			var empty_items: Array[Dictionary] = []
+			_items_by_category[category_id] = empty_items
