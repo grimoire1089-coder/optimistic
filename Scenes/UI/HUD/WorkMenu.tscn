@@ -16,7 +16,6 @@ offset_bottom = -112.0
 grow_horizontal = 0
 grow_vertical = 0
 script = ExtResource("1_work_menu")
-first_job_name = "Job001"
 first_job_minutes = 480
 
 [node name="MarginContainer" type="MarginContainer" parent="."]
