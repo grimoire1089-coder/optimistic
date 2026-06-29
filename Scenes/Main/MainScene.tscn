@@ -9,6 +9,7 @@
 [ext_resource type="PackedScene" path="res://Scenes/UI/HUD/AICharacterHud.tscn" id="6_ai_character_hud"]
 [ext_resource type="PackedScene" path="res://Scenes/UI/HUD/WorkCreditButton.tscn" id="7_work_credit_button"]
 [ext_resource type="PackedScene" path="res://Scenes/UI/HUD/WorkMenu.tscn" id="8_work_menu"]
+[ext_resource type="PackedScene" path="res://Scenes/UI/HUD/InventoryButton.tscn" id="9_inventory_button"]
 
 [sub_resource type="Environment" id="Environment_ctt6t"]
 glow_enabled = true
@@ -41,3 +42,7 @@ text = "Main Scene 起動完了"
 [node name="WorkMenu" parent="CanvasLayer" unique_id=603449311 instance=ExtResource("8_work_menu")]
 
 [node name="WorkCreditButton" parent="CanvasLayer" unique_id=44562355 instance=ExtResource("7_work_credit_button")]
+offset_left = -224.0
+offset_right = -128.0
+
+[node name="InventoryButton" parent="CanvasLayer" instance=ExtResource("9_inventory_button")]
