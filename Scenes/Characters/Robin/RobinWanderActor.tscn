@@ -48,6 +48,7 @@ script = ExtResource("7_inventory_module")
 script = ExtResource("3_wander_module")
 screen_margin = 96.0
 side_ui_margin = 280.0
+movement_area_provider_path = NodePath("../RobinRoomMap")
 
 [node name="RobinWalkSpriteAnimator" type="Node" parent="."]
 script = ExtResource("4_animator")
