@@ -6,10 +6,12 @@ const DEFAULT_CLICK_SFX_PATH := "res://Assets/Audio/SFX/UI/UI_Click_001.ogg"
 @export var label_text: String = "ビルド"
 @export var active_label_text: String = "ビルド中"
 @export var room_map_path: NodePath = NodePath("../../RobinRoomMap")
+@export var fallback_room_is_buildable: bool = true
 @export var click_sfx: AudioStream
 @export var click_sfx_volume_db: float = 0.0
 
-var _room_map: RoomMapGridModule
+var _room_map: Node
+var _local_build_mode_enabled: bool = false
 
 
 func _ready() -> void:
@@ -27,21 +29,17 @@ func _process(_delta: float) -> void:
 func _on_pressed() -> void:
 	_play_click_sfx()
 	_resolve_room_map()
-	if _room_map == null:
-		button_pressed = false
-		push_warning("Room map not found: %s" % room_map_path)
-		return
-	if not _room_map.is_buildable():
-		button_pressed = false
+	if not _can_build_in_current_room():
+		_set_build_mode_enabled(false)
 		return
 
-	_room_map.set_build_mode_enabled(button_pressed)
+	_set_build_mode_enabled(button_pressed)
 	_sync_button_state()
 
 
 func _sync_button_state() -> void:
 	_resolve_room_map()
-	var can_build := _room_map != null and _room_map.is_buildable()
+	var can_build := _can_build_in_current_room()
 	disabled = not can_build
 
 	if not can_build:
@@ -50,7 +48,7 @@ func _sync_button_state() -> void:
 		tooltip_text = "この場所ではビルドできません"
 		return
 
-	if _room_map.is_build_mode_enabled():
+	if _is_build_mode_enabled():
 		button_pressed = true
 		text = active_label_text
 		tooltip_text = "ビルドモード中"
@@ -60,12 +58,37 @@ func _sync_button_state() -> void:
 		tooltip_text = "ビルドモードを開始"
 
 
+func _can_build_in_current_room() -> bool:
+	if _room_map == null:
+		return fallback_room_is_buildable
+	if _room_map.has_method("is_buildable"):
+		return _room_map.call("is_buildable") as bool
+	if _room_map.has_meta("buildable"):
+		return _room_map.get_meta("buildable", fallback_room_is_buildable) as bool
+	return fallback_room_is_buildable
+
+
+func _is_build_mode_enabled() -> bool:
+	if _room_map != null and _room_map.has_method("is_build_mode_enabled"):
+		return _room_map.call("is_build_mode_enabled") as bool
+	return _local_build_mode_enabled
+
+
+func _set_build_mode_enabled(enabled: bool) -> void:
+	var next_enabled := enabled and _can_build_in_current_room()
+	if _room_map != null and _room_map.has_method("set_build_mode_enabled"):
+		_room_map.call("set_build_mode_enabled", next_enabled)
+	else:
+		_local_build_mode_enabled = next_enabled
+	button_pressed = next_enabled
+
+
 func _resolve_room_map() -> void:
 	if _room_map != null:
 		return
 	if room_map_path.is_empty():
 		return
-	_room_map = get_node_or_null(room_map_path) as RoomMapGridModule
+	_room_map = get_node_or_null(room_map_path)
 
 
 func _play_click_sfx() -> void:
