@@ -1,0 +1,58 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/UI/HUD/WorkMenu.gd" id="1_work_menu"]
+
+[node name="WorkMenu" type="PanelContainer"]
+custom_minimum_size = Vector2(320, 0)
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -360.0
+offset_top = -270.0
+offset_right = -24.0
+offset_bottom = -112.0
+grow_horizontal = 0
+grow_vertical = 0
+script = ExtResource("1_work_menu")
+first_job_name = "Job001"
+first_job_minutes = 480
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 10
+
+[node name="Rows" type="VBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Header" type="HBoxContainer" parent="MarginContainer/Rows"]
+layout_mode = 2
+
+[node name="TitleLabel" type="Label" parent="MarginContainer/Rows/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Work"
+theme_override_font_sizes/font_size = 18
+
+[node name="CloseButton" type="Button" parent="MarginContainer/Rows/Header"]
+custom_minimum_size = Vector2(32, 28)
+layout_mode = 2
+text = "X"
+
+[node name="JobList" type="VBoxContainer" parent="MarginContainer/Rows"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Job001Button" type="Button" parent="MarginContainer/Rows/JobList"]
+custom_minimum_size = Vector2(280, 56)
+layout_mode = 2
+text = "Job001\n8h"
+
+[node name="DetailLabel" type="Label" parent="MarginContainer/Rows"]
+layout_mode = 2
+text = "Job001: advances game time by 8 hours."
