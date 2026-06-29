@@ -1,15 +1,21 @@
 extends Button
 class_name InventoryButton
 
+const DEFAULT_CLICK_SFX_PATH := "res://Assets/Audio/SFX/UI/UI_Click_001.ogg"
+
 @export var inventory_ui_path: NodePath = NodePath("../InventoryUI")
 @export var fallback_group_name: StringName = &"inventory_ui"
+@export var click_sfx: AudioStream
+@export var click_sfx_volume_db: float = 0.0
 
 
 func _ready() -> void:
+	_load_default_click_sfx_if_needed()
 	pressed.connect(_on_pressed)
 
 
 func _on_pressed() -> void:
+	_play_click_sfx()
 	var inventory_ui := _find_inventory_ui()
 	if inventory_ui == null:
 		push_warning("インベントリUIが見つかりません: %s" % inventory_ui_path)
@@ -45,3 +51,16 @@ func _open_or_toggle_inventory(inventory_ui: Node) -> void:
 		return
 
 	push_warning("インベントリUIを開く方法が見つかりません: %s" % inventory_ui.name)
+
+
+func _play_click_sfx() -> void:
+	if click_sfx == null:
+		return
+	AudioPlayer.play_sfx(click_sfx, 1.0, click_sfx_volume_db)
+
+
+func _load_default_click_sfx_if_needed() -> void:
+	if click_sfx != null:
+		return
+	if ResourceLoader.exists(DEFAULT_CLICK_SFX_PATH):
+		click_sfx = load(DEFAULT_CLICK_SFX_PATH) as AudioStream
