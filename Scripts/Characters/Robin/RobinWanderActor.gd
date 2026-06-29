@@ -24,6 +24,7 @@ const DEFAULT_CLICK_SFX_PATHS := [
 @onready var need_planner: NeedDrivenAIPlanner = $AICharacterNeedsBundle/NeedDrivenAIPlanner
 @onready var inventory_module: RobinInventoryModule = $RobinInventoryModule
 @onready var wander_module: RobinRandomWanderModule = $RobinRandomWanderModule
+@onready var sleep_behavior_module: AICharacterSleepBehaviorModule = $AICharacterSleepBehaviorModule
 @onready var walk_animator: RobinWalkSpriteAnimator = $RobinWalkSpriteAnimator
 
 
@@ -32,6 +33,7 @@ func _ready() -> void:
 	_setup_click_area()
 	_load_default_click_sfx_if_needed()
 	wander_module.setup(self)
+	sleep_behavior_module.setup(self)
 	if start_at_movement_area_center:
 		global_position = wander_module.get_movement_center()
 	walk_animator.setup()
@@ -46,11 +48,23 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _physics_process(delta: float) -> void:
+	var facing_direction := wander_module.get_facing_direction()
+	if sleep_behavior_module != null:
+		var sleep_velocity := sleep_behavior_module.get_velocity(delta)
+		if sleep_behavior_module.is_active():
+			velocity = sleep_velocity
+			facing_direction = sleep_behavior_module.get_facing_direction()
+			move_and_slide()
+			if wander_module.clamp_body_to_movement_area():
+				velocity = Vector2.ZERO
+			walk_animator.update_animation(velocity, facing_direction, delta)
+			return
+
 	velocity = wander_module.get_velocity(delta)
 	move_and_slide()
 	if wander_module.clamp_body_to_movement_area():
 		velocity = Vector2.ZERO
-	walk_animator.update_animation(velocity, wander_module.get_facing_direction(), delta)
+	walk_animator.update_animation(velocity, facing_direction, delta)
 
 
 func get_movement_area() -> Rect2:
