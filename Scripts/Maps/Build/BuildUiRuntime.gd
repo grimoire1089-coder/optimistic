@@ -9,27 +9,46 @@ static func setup(button: Button, room_ok: bool) -> BuildModeController:
 	if root == null:
 		return null
 
-	var controller := root.get_node_or_null("BuildModeController") as BuildModeController
-	if controller == null:
-		controller = BuildModeController.new()
-		controller.name = "BuildModeController"
-		controller.room_map_path = NodePath("../RobinRoomMap")
-		controller.fallback_room_is_buildable = room_ok
-		root.add_child(controller)
-
-	var overlay := root.get_node_or_null("BuildGridHighlightOverlay")
-	if overlay == null:
-		var new_overlay := BuildGridHighlightOverlay.new()
-		new_overlay.name = "BuildGridHighlightOverlay"
-		new_overlay.z_index = -20
-		new_overlay.room_map_path = NodePath("../RobinRoomMap")
-		new_overlay.build_mode_controller_path = NodePath("../BuildModeController")
-		root.add_child(new_overlay)
-
-	var canvas := button.get_parent()
-	if canvas != null and canvas.get_node_or_null("FurnitureBuildInventory") == null:
-		var panel_scene := load(PANEL_PATH) as PackedScene
-		if panel_scene != null:
-			canvas.add_child(panel_scene.instantiate())
-
+	var controller := _get_or_create_controller(root, room_ok)
+	_ensure_grid_overlay(root)
+	_ensure_furniture_inventory(button)
 	return controller
+
+
+static func _get_or_create_controller(root: Node, room_ok: bool) -> BuildModeController:
+	var controller := root.get_node_or_null("BuildModeController") as BuildModeController
+	if controller != null:
+		return controller
+
+	controller = BuildModeController.new()
+	controller.name = "BuildModeController"
+	controller.room_map_path = NodePath("../RobinRoomMap")
+	controller.fallback_room_is_buildable = room_ok
+	root.add_child.call_deferred(controller)
+	return controller
+
+
+static func _ensure_grid_overlay(root: Node) -> void:
+	if root.get_node_or_null("BuildGridHighlightOverlay") != null:
+		return
+
+	var overlay := BuildGridHighlightOverlay.new()
+	overlay.name = "BuildGridHighlightOverlay"
+	overlay.z_index = -20
+	overlay.room_map_path = NodePath("../RobinRoomMap")
+	overlay.build_mode_controller_path = NodePath("../BuildModeController")
+	root.add_child.call_deferred(overlay)
+
+
+static func _ensure_furniture_inventory(button: Button) -> void:
+	var canvas := button.get_parent()
+	if canvas == null:
+		return
+	if canvas.get_node_or_null("FurnitureBuildInventory") != null:
+		return
+
+	var panel_scene := load(PANEL_PATH) as PackedScene
+	if panel_scene == null:
+		return
+	var panel := panel_scene.instantiate()
+	canvas.add_child.call_deferred(panel)
