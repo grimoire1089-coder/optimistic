@@ -30,6 +30,8 @@ z_index = -30
 script = ExtResource("11_room_map_grid")
 map_display_name = "ロビンの部屋"
 cell_size = Vector2(48, 48)
+fixed_grid_size = Vector2i(15, 15)
+fit_cell_size_to_visual_rect = true
 show_grid = true
 show_neon_frame = false
 
