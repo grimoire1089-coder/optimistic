@@ -1,17 +1,12 @@
-[gd_resource type="Resource" script_class="ShopData" load_steps=5 format=3]
+[gd_resource type="Resource" script_class="ShopData" format=3 uid="uid://b5d1bc3ov556r"]
 
-[ext_resource type="Script" path="res://Scripts/Shops/ShopData.gd" id="1_shop_data"]
-[ext_resource type="Script" path="res://Scripts/Shops/ShopItemData.gd" id="2_shop_item"]
-[ext_resource type="Resource" path="res://Data/Items/Food/Food_0001_Nikuman.tres" id="3_nikuman"]
+[ext_resource type="Script" uid="uid://dik32ehksmive" path="res://Scripts/Shops/ShopData.gd" id="1_shop_data"]
+[ext_resource type="Script" uid="uid://8a0d3nyywiao" path="res://Scripts/Shops/ShopItemData.gd" id="2_shop_item"]
+[ext_resource type="Resource" uid="uid://khpl6knsr1ao" path="res://Data/Items/Food/Food_0001_Nikuman.tres" id="3_nikuman"]
 
 [sub_resource type="Resource" id="ShopItemData_nikuman"]
 script = ExtResource("2_shop_item")
 item_data = ExtResource("3_nikuman")
-amount = 1
-price_override = -1
-custom_display_name = ""
-custom_description = ""
-is_available = true
 
 [resource]
 script = ExtResource("1_shop_data")
