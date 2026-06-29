@@ -11,6 +11,7 @@ class_name AICharacterSleepBehaviorModule
 @export var arrival_distance: float = 8.0
 @export var wake_ratio: float = 0.98
 @export var energy_recovery_per_game_minute: float = 0.31
+@export var pause_sleep_need_decay_while_sleeping: bool = true
 
 var _body: CharacterBody2D
 var _needs_module: CharacterNeedsModule
@@ -19,6 +20,7 @@ var _furniture_root: Node
 var _target_bedding: Node2D
 var _is_active := false
 var _is_sleeping := false
+var _sleep_need_was_disabled_by_sleep := false
 var _facing_direction := Vector2.DOWN
 
 
@@ -65,7 +67,7 @@ func get_velocity(delta: float) -> Vector2:
 		return _facing_direction * walk_speed
 
 	_body.global_position = target_position
-	_is_sleeping = true
+	_start_sleeping()
 	_facing_direction = Vector2.DOWN
 	_recover_energy(delta)
 	return Vector2.ZERO
@@ -78,6 +80,11 @@ func _should_sleep_now() -> bool:
 	if _need_planner == null:
 		return false
 	return _need_planner.get_next_action_id() == sleep_action_id
+
+
+func _start_sleeping() -> void:
+	_is_sleeping = true
+	_set_sleep_need_decay_enabled(false)
 
 
 func _recover_energy(delta: float) -> void:
@@ -105,9 +112,31 @@ func _get_energy_ratio() -> float:
 
 
 func _stop_sleeping() -> void:
+	_set_sleep_need_decay_enabled(true)
 	_is_active = false
 	_is_sleeping = false
 	_target_bedding = null
+
+
+func _set_sleep_need_decay_enabled(enabled: bool) -> void:
+	if not pause_sleep_need_decay_while_sleeping:
+		return
+	if _needs_module == null:
+		return
+	var sleep_need := _needs_module.get_need(sleep_need_id)
+	if sleep_need == null:
+		return
+
+	if not enabled:
+		if not sleep_need.enabled:
+			return
+		sleep_need.enabled = false
+		_sleep_need_was_disabled_by_sleep = true
+		return
+
+	if _sleep_need_was_disabled_by_sleep:
+		sleep_need.enabled = true
+		_sleep_need_was_disabled_by_sleep = false
 
 
 func _find_nearest_bedding() -> Node2D:
