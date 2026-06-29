@@ -22,6 +22,7 @@ const DEFAULT_CLICK_SFX_PATHS := [
 @onready var needs_bundle: Node = $AICharacterNeedsBundle
 @onready var needs_module: CharacterNeedsModule = $AICharacterNeedsBundle/CharacterNeedsModule
 @onready var need_planner: NeedDrivenAIPlanner = $AICharacterNeedsBundle/NeedDrivenAIPlanner
+@onready var inventory_module: RobinInventoryModule = $RobinInventoryModule
 @onready var wander_module: RobinRandomWanderModule = $RobinRandomWanderModule
 @onready var walk_animator: RobinWalkSpriteAnimator = $RobinWalkSpriteAnimator
 
@@ -66,6 +67,10 @@ func get_needs_module() -> CharacterNeedsModule:
 
 func get_need_planner() -> NeedDrivenAIPlanner:
 	return need_planner
+
+
+func get_inventory_module() -> RobinInventoryModule:
+	return inventory_module
 
 
 func get_current_need_action_id() -> StringName:
