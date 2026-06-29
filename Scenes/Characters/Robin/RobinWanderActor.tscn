@@ -11,7 +11,7 @@
 radius = 12.0
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_click_area"]
-size = Vector2(84, 112)
+size = Vector2(180, 220)
 
 [node name="Robin" type="CharacterBody2D"]
 position = Vector2(576, 360)
@@ -35,7 +35,7 @@ shape = SubResource("CircleShape2D_robin")
 input_pickable = true
 
 [node name="ClickCollisionShape2D" type="CollisionShape2D" parent="ClickArea2D"]
-position = Vector2(0, 4)
+position = Vector2(0, 0)
 shape = SubResource("RectangleShape2D_click_area")
 
 [node name="AICharacterNeedsBundle" parent="." instance=ExtResource("6_needs_bundle")]
