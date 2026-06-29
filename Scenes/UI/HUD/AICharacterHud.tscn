@@ -4,13 +4,13 @@
 [ext_resource type="PackedScene" path="res://Scenes/UI/CharacterNeeds/CharacterNeedsPanel.tscn" id="2_needs_panel"]
 
 [node name="AICharacterHud" type="PanelContainer"]
-custom_minimum_size = Vector2(360, 0)
+custom_minimum_size = Vector2(344, 0)
 anchors_preset = 3
 anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -384.0
+offset_left = -368.0
 offset_top = -330.0
 offset_right = -24.0
 offset_bottom = -110.0
