@@ -11,6 +11,8 @@
 [ext_resource type="PackedScene" path="res://Scenes/UI/HUD/WorkMenu.tscn" id="8_work_menu"]
 [ext_resource type="PackedScene" path="res://Scenes/UI/HUD/InventoryButton.tscn" id="9_inventory_button"]
 [ext_resource type="PackedScene" path="res://Scenes/UI/Inventory/RobinInventoryUI.tscn" id="10_inventory_ui"]
+[ext_resource type="Script" path="res://Scripts/Maps/RoomMapGridModule.gd" id="11_room_map_grid"]
+[ext_resource type="Script" path="res://Scripts/Maps/Furniture/FurniturePlacementModule.gd" id="12_furniture_placement"]
 
 [sub_resource type="Environment" id="Environment_ctt6t"]
 glow_enabled = true
@@ -21,6 +23,22 @@ script = ExtResource("1_main_script")
 [node name="CanvasGlowEnvironment" type="WorldEnvironment" parent="." unique_id=678791057]
 environment = SubResource("Environment_ctt6t")
 script = ExtResource("3_canvas_glow")
+
+[node name="RobinRoomMap" type="Node2D" parent="."]
+z_index = -30
+script = ExtResource("11_room_map_grid")
+map_display_name = "ロビンの部屋"
+cell_size = Vector2(48, 48)
+show_grid = true
+show_neon_frame = false
+
+[node name="FurnitureRoot" type="Node2D" parent="RobinRoomMap"]
+z_index = 1
+
+[node name="FurniturePlacementModule" type="Node" parent="."]
+script = ExtResource("12_furniture_placement")
+room_map_path = NodePath("../RobinRoomMap")
+furniture_root_path = NodePath("../RobinRoomMap/FurnitureRoot")
 
 [node name="Robin" parent="." unique_id=892635706 instance=ExtResource("2_robin")]
 click_sfx = ExtResource("4_ctt6t")
