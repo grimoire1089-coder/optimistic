@@ -50,6 +50,31 @@ func place_furniture_scene(
 	return furniture
 
 
+func place_furniture_scene_auto(
+	furniture_scene: PackedScene,
+	grid_position: Vector2i,
+	furniture_id: StringName = &""
+) -> Node2D:
+	_resolve_refs()
+	if furniture_scene == null or _room_map == null or _furniture_root == null:
+		return null
+
+	var instance := furniture_scene.instantiate()
+	var furniture := instance as Node2D
+	if furniture == null:
+		instance.queue_free()
+		return null
+
+	var footprint := _get_furniture_footprint(furniture, Vector2i(1, 1))
+	if not can_place_at(grid_position, footprint):
+		furniture.queue_free()
+		return null
+
+	_furniture_root.add_child(furniture)
+	_register_furniture(furniture, grid_position, footprint, furniture_id)
+	return furniture
+
+
 func place_existing_furniture(
 	furniture: Node2D,
 	grid_position: Vector2i,
@@ -67,6 +92,15 @@ func place_existing_furniture(
 
 	_register_furniture(furniture, grid_position, footprint, furniture_id)
 	return true
+
+
+func place_existing_furniture_auto(
+	furniture: Node2D,
+	grid_position: Vector2i,
+	furniture_id: StringName = &""
+) -> bool:
+	var footprint := _get_furniture_footprint(furniture, Vector2i(1, 1))
+	return place_existing_furniture(furniture, grid_position, footprint, furniture_id)
 
 
 func move_furniture_to(furniture: Node2D, grid_position: Vector2i, footprint: Vector2i = Vector2i(1, 1)) -> bool:
@@ -162,6 +196,18 @@ func _get_cells_in_footprint(grid_position: Vector2i, footprint: Vector2i = Vect
 		for x in range(safe_footprint.x):
 			cells.append(grid_position + Vector2i(x, y))
 	return cells
+
+
+func _get_furniture_footprint(furniture: Node2D, fallback_footprint: Vector2i = Vector2i(1, 1)) -> Vector2i:
+	if furniture == null:
+		return fallback_footprint
+	if furniture.has_method("get_grid_footprint"):
+		var method_footprint: Vector2i = furniture.call("get_grid_footprint")
+		return Vector2i(maxi(method_footprint.x, 1), maxi(method_footprint.y, 1))
+	if furniture.has_meta("grid_footprint"):
+		var meta_footprint: Vector2i = furniture.get_meta("grid_footprint", fallback_footprint)
+		return Vector2i(maxi(meta_footprint.x, 1), maxi(meta_footprint.y, 1))
+	return Vector2i(maxi(fallback_footprint.x, 1), maxi(fallback_footprint.y, 1))
 
 
 func _grid_key(grid_position: Vector2i) -> String:
