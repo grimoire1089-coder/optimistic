@@ -73,14 +73,16 @@ func move_furniture_to(furniture: Node2D, grid_position: Vector2i, footprint: Ve
 	if furniture == null:
 		return false
 
+	var old_grid_position: Vector2i = furniture.get_meta("grid_position", Vector2i.ZERO)
+	var old_footprint: Vector2i = furniture.get_meta("grid_footprint", Vector2i(1, 1))
+	var furniture_id: StringName = furniture.get_meta("furniture_id", &"")
+
 	_unregister_furniture(furniture)
 	if not can_place_at(grid_position, footprint):
-		var old_grid_position: Variant = furniture.get_meta("grid_position", Vector2i.ZERO)
-		var old_footprint: Variant = furniture.get_meta("grid_footprint", Vector2i(1, 1))
-		_register_furniture(furniture, old_grid_position as Vector2i, old_footprint as Vector2i, furniture.get_meta("furniture_id", &"") as StringName)
+		_register_furniture(furniture, old_grid_position, old_footprint, furniture_id)
 		return false
 
-	_register_furniture(furniture, grid_position, footprint, furniture.get_meta("furniture_id", &"") as StringName)
+	_register_furniture(furniture, grid_position, footprint, furniture_id)
 	return true
 
 
