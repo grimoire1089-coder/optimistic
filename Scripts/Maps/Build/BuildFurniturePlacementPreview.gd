@@ -131,5 +131,7 @@ func _resolve_refs() -> void:
 		_room_map = get_node_or_null(room_map_path) as RoomMapGridModule
 	if _build_mode_controller == null and not build_mode_controller_path.is_empty():
 		_build_mode_controller = get_node_or_null(build_mode_controller_path) as BuildModeController
+	if _build_mode_controller == null:
+		_build_mode_controller = get_tree().get_first_node_in_group(&"build_mode_controller") as BuildModeController
 	if _furniture_placement_module == null and not furniture_placement_module_path.is_empty():
 		_furniture_placement_module = get_node_or_null(furniture_placement_module_path) as FurniturePlacementModule
