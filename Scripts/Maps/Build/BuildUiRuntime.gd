@@ -11,6 +11,7 @@ static func setup(button: Button, room_ok: bool) -> BuildModeController:
 
 	var controller := _get_or_create_controller(root, room_ok)
 	_ensure_grid_overlay(root)
+	_ensure_placement_preview(root)
 	_ensure_furniture_inventory(button)
 	return controller
 
@@ -38,6 +39,19 @@ static func _ensure_grid_overlay(root: Node) -> void:
 	overlay.room_map_path = NodePath("../RobinRoomMap")
 	overlay.build_mode_controller_path = NodePath("../BuildModeController")
 	root.add_child.call_deferred(overlay)
+
+
+static func _ensure_placement_preview(root: Node) -> void:
+	if root.get_node_or_null("BuildFurniturePlacementPreview") != null:
+		return
+
+	var preview := BuildFurniturePlacementPreview.new()
+	preview.name = "BuildFurniturePlacementPreview"
+	preview.z_index = 30
+	preview.room_map_path = NodePath("../RobinRoomMap")
+	preview.build_mode_controller_path = NodePath("../BuildModeController")
+	preview.furniture_placement_module_path = NodePath("../FurniturePlacementModule")
+	root.add_child.call_deferred(preview)
 
 
 static func _ensure_furniture_inventory(button: Button) -> void:
