@@ -3,7 +3,7 @@ class_name SimpleMattressFurniture
 
 @export var display_name: String = "シンプルマットレス"
 @export var furniture_id: StringName = &"simple_mattress"
-@export var grid_footprint: Vector2i = Vector2i(4, 2)
+@export var grid_footprint: Vector2i = Vector2i(2, 4)
 @export var cell_size: Vector2 = Vector2(48.0, 48.0)
 @export var sprite_path: NodePath = NodePath("Sprite2D")
 @export var use_sprite_when_available: bool = true
