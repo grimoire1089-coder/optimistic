@@ -57,9 +57,10 @@ func _connect_controller_signals() -> void:
 func _resolve_controller() -> void:
 	if _build_mode_controller != null:
 		return
-	if build_mode_controller_path.is_empty():
-		return
-	_build_mode_controller = get_node_or_null(build_mode_controller_path) as BuildModeController
+	if not build_mode_controller_path.is_empty():
+		_build_mode_controller = get_node_or_null(build_mode_controller_path) as BuildModeController
+	if _build_mode_controller == null:
+		_build_mode_controller = get_tree().get_first_node_in_group(&"build_mode_controller") as BuildModeController
 	_connect_controller_signals()
 
 
