@@ -1,0 +1,25 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/UI/HUD/WorkCreditButton.gd" id="1_work_button"]
+
+[node name="WorkCreditButton" type="Button"]
+custom_minimum_size = Vector2(96, 72)
+layout_mode = 3
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -120.0
+offset_top = -96.0
+offset_right = -24.0
+offset_bottom = -24.0
+grow_horizontal = 0
+grow_vertical = 0
+mouse_default_cursor_shape = 2
+text = "仕事\n+25 CR"
+script = ExtResource("1_work_button")
+reward_amount = 25
+reward_reason = "work_button"
+cooldown_seconds = 1.0
+label_text = "仕事"
