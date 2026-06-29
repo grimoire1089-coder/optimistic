@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3 uid="uid://cb0fyv6e2f40m"]
+[gd_scene load_steps=11 format=3 uid="uid://cb0fyv6e2f40m"]
 
 [ext_resource type="Script" path="res://Scripts/Characters/Robin/RobinWanderActor.gd" id="1_actor"]
 [ext_resource type="Texture2D" path="res://Assets/Characters/Robin/Walk/robin_8dir_standing.png" id="2_standing_texture"]
@@ -7,6 +7,7 @@
 [ext_resource type="Script" path="res://Scripts/Characters/Robin/Modules/RobinMovementAreaFrame.gd" id="5_movement_area_frame"]
 [ext_resource type="PackedScene" path="res://Scenes/Characters/Modules/AICharacterNeedsBundle.tscn" id="6_needs_bundle"]
 [ext_resource type="Script" path="res://Scripts/Characters/Robin/Modules/RobinInventoryModule.gd" id="7_inventory_module"]
+[ext_resource type="Script" path="res://Scripts/Characters/Modules/AICharacterSleepBehaviorModule.gd" id="8_sleep_behavior"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_robin"]
 radius = 8.0
@@ -51,6 +52,13 @@ screen_margin = 96.0
 side_ui_margin = 280.0
 movement_area_provider_path = NodePath("../RobinRoomMap")
 visual_half_extents = Vector2(35, 70)
+
+[node name="AICharacterSleepBehaviorModule" type="Node" parent="."]
+script = ExtResource("8_sleep_behavior")
+needs_module_path = NodePath("../AICharacterNeedsBundle/CharacterNeedsModule")
+need_planner_path = NodePath("../AICharacterNeedsBundle/NeedDrivenAIPlanner")
+furniture_root_path = NodePath("../../RobinRoomMap/FurnitureRoot")
+energy_recovery_per_game_minute = 0.31
 
 [node name="RobinWalkSpriteAnimator" type="Node" parent="."]
 script = ExtResource("4_animator")
