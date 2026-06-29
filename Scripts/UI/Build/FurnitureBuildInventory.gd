@@ -68,8 +68,8 @@ func _on_simple_mattress_pressed() -> void:
 	_resolve_controller()
 	if _build_mode_controller == null or simple_mattress_scene == null:
 		return
-	_build_mode_controller.select_furniture_scene(simple_mattress_scene, &"simple_mattress", Vector2i(4, 2), true, 1)
-	_update_detail_text("選択中: シンプルマットレス / 2 x 4 / Rで回転")
+	_build_mode_controller.select_furniture_scene(simple_mattress_scene, &"simple_mattress", Vector2i(4, 2), true, 0)
+	_update_detail_text("選択中: シンプルマットレス / 4 x 2 / Rで回転")
 
 
 func _on_build_mode_changed(enabled: bool) -> void:
