@@ -61,7 +61,7 @@ theme_override_constants/separation = 6
 [node name="SimpleMattressButton" type="Button" parent="MarginContainer/Rows/ItemList"]
 custom_minimum_size = Vector2(280, 52)
 layout_mode = 2
-text = "シンプルマットレス\n2 x 4 / Rで回転"
+text = "シンプルマットレス\n4 x 2 / Rで回転"
 
 [node name="DetailLabel" type="Label" parent="MarginContainer/Rows"]
 layout_mode = 2
