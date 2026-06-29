@@ -8,6 +8,11 @@ class_name RobinRandomWanderModule
 @export var idle_time_range: Vector2 = Vector2(0.4, 1.0)
 @export var walk_time_range: Vector2 = Vector2(1.0, 2.2)
 
+# 枠線からキャラクター画像がはみ出さないよう、原点の移動範囲を内側へ縮める量です。
+# 物理コリジョンではなく、見た目サイズ用の余白です。
+@export var visual_half_extents: Vector2 = Vector2(48.0, 76.0)
+@export var keep_visual_inside_frame: bool = true
+
 var _body: Node2D
 var _rng := RandomNumberGenerator.new()
 var _timer: float = 0.0
@@ -51,7 +56,7 @@ func get_movement_center() -> Vector2:
 	return movement_area.position + movement_area.size * 0.5
 
 
-func get_movement_area() -> Rect2:
+func get_visual_movement_area() -> Rect2:
 	if _body == null:
 		return Rect2()
 
@@ -78,6 +83,14 @@ func get_movement_area() -> Rect2:
 	return Rect2(square_area_position, square_area_size)
 
 
+func get_movement_area() -> Rect2:
+	var visual_area := get_visual_movement_area()
+	if not keep_visual_inside_frame:
+		return visual_area
+
+	return _get_inset_area_for_actor_origin(visual_area)
+
+
 func clamp_body_to_movement_area() -> bool:
 	if _body == null:
 		return false
@@ -95,6 +108,16 @@ func clamp_body_to_movement_area() -> bool:
 
 	_body.global_position = clamped_position
 	return true
+
+
+func _get_inset_area_for_actor_origin(area: Rect2) -> Rect2:
+	var inset_x := minf(visual_half_extents.x, area.size.x * 0.5)
+	var inset_y := minf(visual_half_extents.y, area.size.y * 0.5)
+	var inset_position := area.position + Vector2(inset_x, inset_y)
+	var inset_size := area.size - Vector2(inset_x * 2.0, inset_y * 2.0)
+	inset_size.x = maxf(inset_size.x, 0.0)
+	inset_size.y = maxf(inset_size.y, 0.0)
+	return Rect2(inset_position, inset_size)
 
 
 func _setup_walk_directions() -> void:
