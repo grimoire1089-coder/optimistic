@@ -1,8 +1,15 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://Scripts/Maps/Furniture/SimpleMattressFurniture.gd" id="1_simple_mattress"]
+[ext_resource type="Texture2D" path="res://Assets/Maps/Furniture/Bedroom/Mattress_simple .png" id="2_mattress_texture"]
 
 [node name="SimpleMattressFurniture" type="Node2D"]
 script = ExtResource("1_simple_mattress")
 grid_footprint = Vector2i(4, 2)
 cell_size = Vector2(48, 48)
+sprite_path = NodePath("Sprite2D")
+use_sprite_when_available = true
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture = ExtResource("2_mattress_texture")
+centered = true
