@@ -1,0 +1,49 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://Scripts/UI/Build/FurnitureBuildInventory.gd" id="1_furniture_inventory"]
+[ext_resource type="PackedScene" path="res://Scenes/Maps/Furniture/SimpleMattressFurniture.tscn" id="2_simple_mattress"]
+
+[node name="FurnitureBuildInventory" type="PanelContainer"]
+custom_minimum_size = Vector2(320, 160)
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -392.0
+offset_top = -280.0
+offset_right = -24.0
+offset_bottom = -112.0
+grow_horizontal = 0
+grow_vertical = 0
+script = ExtResource("1_furniture_inventory")
+simple_mattress_scene = ExtResource("2_simple_mattress")
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 10
+
+[node name="Rows" type="VBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="TitleLabel" type="Label" parent="MarginContainer/Rows"]
+layout_mode = 2
+text = "家具インベントリ"
+theme_override_font_sizes/font_size = 18
+
+[node name="ItemList" type="VBoxContainer" parent="MarginContainer/Rows"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="SimpleMattressButton" type="Button" parent="MarginContainer/Rows/ItemList"]
+custom_minimum_size = Vector2(280, 52)
+layout_mode = 2
+text = "シンプルマットレス\n4 x 2"
+
+[node name="DetailLabel" type="Label" parent="MarginContainer/Rows"]
+layout_mode = 2
+text = "家具を選んでください"
