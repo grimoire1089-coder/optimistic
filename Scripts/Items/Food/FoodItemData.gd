@@ -15,3 +15,17 @@ func get_icon_path() -> String:
 	if icon == null:
 		return ""
 	return icon.resource_path
+
+
+func to_inventory_entry(amount: int = 1) -> Dictionary:
+	return {
+		"id": item_id,
+		"category_id": category_id,
+		"display_name": display_name,
+		"amount": max(amount, 1),
+		"icon_path": get_icon_path(),
+		"stack_max": stack_max,
+		"description": description,
+		"buy_price": buy_price,
+		"sell_price": sell_price,
+	}
