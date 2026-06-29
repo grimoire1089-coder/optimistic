@@ -8,10 +8,14 @@
 [ext_resource type="PackedScene" path="res://Scenes/UI/HUD/CreditPanel.tscn" id="5_credit_panel"]
 [ext_resource type="PackedScene" path="res://Scenes/UI/HUD/AICharacterHud.tscn" id="6_ai_character_hud"]
 
+[sub_resource type="Environment" id="Environment_ctt6t"]
+glow_enabled = true
+
 [node name="MainScene" type="Node2D" unique_id=1488982029]
 script = ExtResource("1_main_script")
 
 [node name="CanvasGlowEnvironment" type="WorldEnvironment" parent="." unique_id=678791057]
+environment = SubResource("Environment_ctt6t")
 script = ExtResource("3_canvas_glow")
 
 [node name="Robin" parent="." unique_id=892635706 instance=ExtResource("2_robin")]
