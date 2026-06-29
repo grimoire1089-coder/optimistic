@@ -13,6 +13,7 @@
 [ext_resource type="PackedScene" path="res://Scenes/UI/Inventory/RobinInventoryUI.tscn" id="10_inventory_ui"]
 [ext_resource type="Script" path="res://Scripts/Maps/RoomMapGridModule.gd" id="11_room_map_grid"]
 [ext_resource type="Script" path="res://Scripts/Maps/Furniture/FurniturePlacementModule.gd" id="12_furniture_placement"]
+[ext_resource type="PackedScene" path="res://Scenes/UI/HUD/BuildModeButton.tscn" id="13_build_mode_button"]
 
 [sub_resource type="Environment" id="Environment_ctt6t"]
 glow_enabled = true
@@ -63,5 +64,7 @@ text = "Main Scene 起動完了"
 [node name="InventoryUI" parent="CanvasLayer" instance=ExtResource("10_inventory_ui")]
 
 [node name="InventoryButton" parent="CanvasLayer" instance=ExtResource("9_inventory_button")]
+
+[node name="BuildModeButton" parent="CanvasLayer" instance=ExtResource("13_build_mode_button")]
 
 [node name="WorkCreditButton" parent="CanvasLayer" unique_id=44562355 instance=ExtResource("7_work_credit_button")]
