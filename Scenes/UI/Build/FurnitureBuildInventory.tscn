@@ -4,14 +4,14 @@
 [ext_resource type="PackedScene" path="res://Scenes/Maps/Furniture/SimpleMattressFurniture.tscn" id="2_simple_mattress"]
 
 [node name="FurnitureBuildInventory" type="PanelContainer"]
-custom_minimum_size = Vector2(320, 160)
+custom_minimum_size = Vector2(320, 220)
 anchors_preset = 3
 anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = -392.0
-offset_top = -280.0
+offset_top = -340.0
 offset_right = -24.0
 offset_bottom = -112.0
 grow_horizontal = 0
@@ -35,6 +35,25 @@ layout_mode = 2
 text = "家具インベントリ"
 theme_override_font_sizes/font_size = 18
 
+[node name="ModeButtons" type="HBoxContainer" parent="MarginContainer/Rows"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="PlaceModeButton" type="Button" parent="MarginContainer/Rows/ModeButtons"]
+custom_minimum_size = Vector2(88, 36)
+layout_mode = 2
+text = "配置"
+
+[node name="MoveModeButton" type="Button" parent="MarginContainer/Rows/ModeButtons"]
+custom_minimum_size = Vector2(88, 36)
+layout_mode = 2
+text = "移動"
+
+[node name="StoreModeButton" type="Button" parent="MarginContainer/Rows/ModeButtons"]
+custom_minimum_size = Vector2(88, 36)
+layout_mode = 2
+text = "しまう"
+
 [node name="ItemList" type="VBoxContainer" parent="MarginContainer/Rows"]
 layout_mode = 2
 theme_override_constants/separation = 6
@@ -42,7 +61,7 @@ theme_override_constants/separation = 6
 [node name="SimpleMattressButton" type="Button" parent="MarginContainer/Rows/ItemList"]
 custom_minimum_size = Vector2(280, 52)
 layout_mode = 2
-text = "シンプルマットレス\n4 x 2"
+text = "シンプルマットレス\n2 x 4 / Rで回転"
 
 [node name="DetailLabel" type="Label" parent="MarginContainer/Rows"]
 layout_mode = 2
