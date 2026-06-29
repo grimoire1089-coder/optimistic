@@ -93,11 +93,23 @@ func grid_to_world_cell_position(grid_position: Vector2i) -> Vector2:
 	return get_grid_cell_rect(grid_position).position
 
 
+func grid_to_world_area_center(grid_position: Vector2i, footprint: Vector2i = Vector2i(1, 1)) -> Vector2:
+	var area_rect := get_grid_area_rect(grid_position, footprint)
+	return area_rect.position + area_rect.size * 0.5
+
+
 func get_grid_cell_rect(grid_position: Vector2i) -> Rect2:
 	var grid_origin := get_grid_origin()
 	var safe_cell_size := _get_safe_cell_size()
 	var cell_position := grid_origin + Vector2(float(grid_position.x), float(grid_position.y)) * safe_cell_size
 	return Rect2(cell_position, safe_cell_size)
+
+
+func get_grid_area_rect(grid_position: Vector2i, footprint: Vector2i = Vector2i(1, 1)) -> Rect2:
+	var safe_footprint := Vector2i(maxi(footprint.x, 1), maxi(footprint.y, 1))
+	var area_position := grid_to_world_cell_position(grid_position)
+	var area_size := Vector2(float(safe_footprint.x), float(safe_footprint.y)) * _get_safe_cell_size()
+	return Rect2(area_position, area_size)
 
 
 func world_to_grid(world_position: Vector2) -> Vector2i:
