@@ -2,6 +2,11 @@ extends PanelContainer
 class_name CharacterNeedsPanel
 
 @export var bar_width: float = 180.0
+@export var high_value_color: Color = Color(0.20, 0.85, 0.28, 1.0)
+@export var middle_value_color: Color = Color(0.95, 0.82, 0.18, 1.0)
+@export var low_value_color: Color = Color(0.95, 0.22, 0.18, 1.0)
+@export_range(0.0, 1.0, 0.01) var high_value_threshold: float = 0.66
+@export_range(0.0, 1.0, 0.01) var middle_value_threshold: float = 0.33
 
 @onready var _rows: VBoxContainer = $MarginContainer/Rows
 
@@ -103,7 +108,31 @@ func _update_row(need_id: StringName) -> void:
 	var value_label: Label = row_data["value_label"]
 	bar.max_value = need.definition.max_value
 	bar.value = need.value
+	_apply_bar_color(bar, _get_need_ratio(need))
 	value_label.text = str(roundi(need.value))
+
+func _get_need_ratio(need: NeedInstance) -> float:
+	if need == null or need.definition == null:
+		return 0.0
+	if need.definition.max_value <= 0.0:
+		return 0.0
+	return clampf(need.value / need.definition.max_value, 0.0, 1.0)
+
+func _apply_bar_color(bar: ProgressBar, ratio: float) -> void:
+	if bar == null:
+		return
+	var fill_color := _get_bar_color(ratio)
+	var fill_style := StyleBoxFlat.new()
+	fill_style.bg_color = fill_color
+	fill_style.set_corner_radius_all(4)
+	bar.add_theme_stylebox_override("fill", fill_style)
+
+func _get_bar_color(ratio: float) -> Color:
+	if ratio >= high_value_threshold:
+		return high_value_color
+	if ratio >= middle_value_threshold:
+		return middle_value_color
+	return low_value_color
 
 func _on_need_changed(need_id: StringName, _old_value: float, _new_value: float) -> void:
 	_update_row(need_id)
