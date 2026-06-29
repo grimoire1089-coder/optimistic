@@ -13,9 +13,11 @@ const DEFAULT_CLICK_SFX_PATHS := [
 
 @export var start_at_movement_area_center: bool = true
 @export var display_name: String = "ロビン"
+@export var sprite_click_padding: Vector2 = Vector2(24.0, 24.0)
 @export var click_sfx: AudioStream
 @export var click_sfx_volume_db: float = 0.0
 
+@onready var sprite: Sprite2D = $Sprite2D
 @onready var click_area: Area2D = $ClickArea2D
 @onready var needs_bundle: Node = $AICharacterNeedsBundle
 @onready var needs_module: CharacterNeedsModule = $AICharacterNeedsBundle/CharacterNeedsModule
@@ -32,6 +34,14 @@ func _ready() -> void:
 	if start_at_movement_area_center:
 		global_position = wander_module.get_movement_center()
 	walk_animator.setup()
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton:
+		var mouse_event := event as InputEventMouseButton
+		if mouse_event.button_index == MOUSE_BUTTON_LEFT and mouse_event.pressed:
+			if _is_mouse_inside_sprite_click_rect(mouse_event.global_position):
+				_select_actor()
 
 
 func _physics_process(delta: float) -> void:
@@ -80,6 +90,19 @@ func _on_click_area_input_event(_viewport: Viewport, event: InputEvent, _shape_i
 		var mouse_event := event as InputEventMouseButton
 		if mouse_event.button_index == MOUSE_BUTTON_LEFT and mouse_event.pressed:
 			_select_actor()
+
+
+func _is_mouse_inside_sprite_click_rect(global_mouse_position: Vector2) -> bool:
+	if sprite == null:
+		return false
+	var local_position := sprite.to_local(global_mouse_position)
+	var rect := sprite.get_rect().grow_individual(
+		sprite_click_padding.x,
+		sprite_click_padding.y,
+		sprite_click_padding.x,
+		sprite_click_padding.y
+	)
+	return rect.has_point(local_position)
 
 
 func _select_actor() -> void:
