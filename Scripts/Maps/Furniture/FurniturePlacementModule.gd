@@ -130,7 +130,7 @@ func _register_furniture(
 	if furniture == null or _room_map == null:
 		return
 
-	furniture.global_position = _room_map.grid_to_world_cell_center(grid_position)
+	furniture.global_position = _room_map.grid_to_world_area_center(grid_position, footprint)
 	furniture.set_meta("grid_position", grid_position)
 	furniture.set_meta("grid_footprint", footprint)
 	if furniture_id != &"":
