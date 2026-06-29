@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="ShopData" load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Shops/ShopData.gd" id="1_shop_data"]
+[ext_resource type="Script" path="res://Scripts/Shops/ShopItemData.gd" id="2_shop_item"]
+[ext_resource type="Resource" path="res://Data/Items/Food/Food_0001_Nikuman.tres" id="3_nikuman"]
+
+[sub_resource type="Resource" id="ShopItemData_nikuman"]
+script = ExtResource("2_shop_item")
+item_data = ExtResource("3_nikuman")
+amount = 1
+price_override = -1
+custom_display_name = ""
+custom_description = ""
+is_available = true
+
+[resource]
+script = ExtResource("1_shop_data")
+shop_id = &"basic_food"
+display_name = "食品ショップ"
+description = "手軽に食べられる食品を扱う基本ショップ。"
+items = Array[ExtResource("2_shop_item")]([SubResource("ShopItemData_nikuman")])
