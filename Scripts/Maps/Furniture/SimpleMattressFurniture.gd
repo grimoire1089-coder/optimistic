@@ -5,19 +5,28 @@ class_name SimpleMattressFurniture
 @export var furniture_id: StringName = &"simple_mattress"
 @export var grid_footprint: Vector2i = Vector2i(4, 2)
 @export var cell_size: Vector2 = Vector2(48.0, 48.0)
+@export var sprite_path: NodePath = NodePath("Sprite2D")
+@export var use_sprite_when_available: bool = true
 @export var base_color: Color = Color(0.86, 0.92, 0.98, 1.0)
 @export var edge_color: Color = Color(0.28, 0.74, 0.92, 1.0)
 @export var seam_color: Color = Color(0.50, 0.82, 0.95, 0.72)
 @export var pillow_color: Color = Color(0.96, 0.98, 1.0, 1.0)
 @export var fill_grid_preview: bool = true
 
+var _sprite: Sprite2D
+
 
 func _ready() -> void:
 	z_as_relative = true
+	_resolve_sprite()
+	_fit_sprite_to_grid_size()
 	queue_redraw()
 
 
 func _draw() -> void:
+	if _should_use_sprite():
+		return
+
 	var furniture_size := get_pixel_size()
 	var rect := Rect2(-furniture_size * 0.5, furniture_size)
 	var inset_rect := rect.grow(-4.0)
@@ -52,6 +61,32 @@ func get_pixel_size() -> Vector2:
 	var safe_footprint := Vector2i(maxi(grid_footprint.x, 1), maxi(grid_footprint.y, 1))
 	var safe_cell_size := Vector2(maxf(cell_size.x, 1.0), maxf(cell_size.y, 1.0))
 	return Vector2(float(safe_footprint.x), float(safe_footprint.y)) * safe_cell_size
+
+
+func _fit_sprite_to_grid_size() -> void:
+	if _sprite == null or _sprite.texture == null:
+		return
+
+	_sprite.centered = true
+	var texture_size := Vector2(float(_sprite.texture.get_width()), float(_sprite.texture.get_height()))
+	if texture_size.x <= 0.0 or texture_size.y <= 0.0:
+		return
+
+	_sprite.scale = get_pixel_size() / texture_size
+	_sprite.position = Vector2.ZERO
+
+
+func _should_use_sprite() -> bool:
+	_resolve_sprite()
+	return use_sprite_when_available and _sprite != null and _sprite.texture != null
+
+
+func _resolve_sprite() -> void:
+	if _sprite != null:
+		return
+	if sprite_path.is_empty():
+		return
+	_sprite = get_node_or_null(sprite_path) as Sprite2D
 
 
 func _draw_footprint_guide(rect: Rect2) -> void:
