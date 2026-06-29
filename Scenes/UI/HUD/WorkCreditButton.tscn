@@ -3,21 +3,21 @@
 [ext_resource type="Script" path="res://Scripts/UI/HUD/WorkCreditButton.gd" id="1_work_button"]
 
 [node name="WorkCreditButton" type="Button"]
-custom_minimum_size = Vector2(96, 72)
+custom_minimum_size = Vector2(72, 72)
 layout_mode = 3
 anchors_preset = 3
 anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -120.0
+offset_left = -96.0
 offset_top = -96.0
 offset_right = -24.0
 offset_bottom = -24.0
 grow_horizontal = 0
 grow_vertical = 0
 mouse_default_cursor_shape = 2
-text = "仕事"
+text = "Work"
 script = ExtResource("1_work_button")
-label_text = "仕事"
+label_text = "Work"
 work_menu_path = NodePath("../WorkMenu")
