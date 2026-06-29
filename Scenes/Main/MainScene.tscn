@@ -8,6 +8,7 @@
 [ext_resource type="PackedScene" path="res://Scenes/UI/HUD/CreditPanel.tscn" id="5_credit_panel"]
 [ext_resource type="PackedScene" path="res://Scenes/UI/HUD/AICharacterHud.tscn" id="6_ai_character_hud"]
 [ext_resource type="PackedScene" path="res://Scenes/UI/HUD/WorkCreditButton.tscn" id="7_work_credit_button"]
+[ext_resource type="PackedScene" path="res://Scenes/UI/HUD/WorkMenu.tscn" id="8_work_menu"]
 
 [sub_resource type="Environment" id="Environment_ctt6t"]
 glow_enabled = true
@@ -36,5 +37,7 @@ text = "Main Scene 起動完了"
 [node name="CreditPanel" parent="CanvasLayer" unique_id=1025226136 instance=ExtResource("5_credit_panel")]
 
 [node name="AICharacterHud" parent="CanvasLayer" unique_id=1693042289 instance=ExtResource("6_ai_character_hud")]
+
+[node name="WorkMenu" parent="CanvasLayer" instance=ExtResource("8_work_menu")]
 
 [node name="WorkCreditButton" parent="CanvasLayer" instance=ExtResource("7_work_credit_button")]
