@@ -3,8 +3,8 @@ class_name BuildModeButton
 
 const DEFAULT_CLICK_SFX_PATH := "res://Assets/Audio/SFX/UI/UI_Click_001.ogg"
 
-@export var label_text: String = "\u30d3\u30eb\u30c9"
-@export var active_label_text: String = "\u30d3\u30eb\u30c9\u4e2d"
+@export var label_text: String = "ビルド"
+@export var active_label_text: String = "ビルド中"
 @export var build_mode_controller_path: NodePath = NodePath("../../BuildModeController")
 @export var room_map_path: NodePath = NodePath("../../RobinRoomMap")
 @export var fallback_room_is_buildable: bool = true
@@ -96,13 +96,13 @@ func _connect_controller() -> void:
 
 
 func _apply_layout() -> void:
-	custom_minimum_size = Vector2(72.0, 72.0)
-	offset_left = -184.0
-	offset_top = -96.0
-	offset_right = -112.0
+	custom_minimum_size = Vector2(64.0, 64.0)
+	offset_left = -160.0
+	offset_top = -88.0
+	offset_right = -96.0
 	offset_bottom = -24.0
 	mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	add_theme_font_size_override("font_size", 13)
+	add_theme_font_size_override("font_size", 12)
 	add_theme_stylebox_override("normal", _style(Color(0.10, 0.10, 0.12, 0.95), Color(0.26, 0.28, 0.32, 1.0), 1))
 	add_theme_stylebox_override("hover", _style(Color(0.15, 0.15, 0.18, 0.98), Color(0.0, 1.65, 1.65, 0.95), 2))
 	add_theme_stylebox_override("pressed", _style(Color(0.04, 0.20, 0.22, 1.0), Color(0.25, 2.4, 2.4, 1.0), 2))
