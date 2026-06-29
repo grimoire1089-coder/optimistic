@@ -62,15 +62,15 @@ func _can_build_in_current_room() -> bool:
 	if _room_map == null:
 		return fallback_room_is_buildable
 	if _room_map.has_method("is_buildable"):
-		return _room_map.call("is_buildable") as bool
+		return _room_map.call("is_buildable") == true
 	if _room_map.has_meta("buildable"):
-		return _room_map.get_meta("buildable", fallback_room_is_buildable) as bool
+		return _room_map.get_meta("buildable", fallback_room_is_buildable) == true
 	return fallback_room_is_buildable
 
 
 func _is_build_mode_enabled() -> bool:
 	if _room_map != null and _room_map.has_method("is_build_mode_enabled"):
-		return _room_map.call("is_build_mode_enabled") as bool
+		return _room_map.call("is_build_mode_enabled") == true
 	return _local_build_mode_enabled
 
 
