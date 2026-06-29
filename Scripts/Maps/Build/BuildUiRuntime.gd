@@ -19,12 +19,15 @@ static func setup(button: Button, room_ok: bool) -> BuildModeController:
 static func _get_or_create_controller(root: Node, room_ok: bool) -> BuildModeController:
 	var controller := root.get_node_or_null("BuildModeController") as BuildModeController
 	if controller != null:
+		if not controller.is_in_group(&"build_mode_controller"):
+			controller.add_to_group(&"build_mode_controller")
 		return controller
 
 	controller = BuildModeController.new()
 	controller.name = "BuildModeController"
 	controller.room_map_path = NodePath("../RobinRoomMap")
 	controller.fallback_room_is_buildable = room_ok
+	controller.add_to_group(&"build_mode_controller")
 	root.add_child.call_deferred(controller)
 	return controller
 
