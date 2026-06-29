@@ -1,8 +1,9 @@
 [gd_scene format=3 uid="uid://bslnjolxwbpoa"]
 
 [ext_resource type="Script" uid="uid://bfmmcogyfgb1w" path="res://Scripts/Scenes/Boot/TitleScene.gd" id="1_title_script"]
-[ext_resource type="AudioStream" uid="uid://630wj3bbflrg" path="res://Assets/Audio/BGM/Room BGM 001.ogg" id="2_opdry"]
+[ext_resource type="AudioStream" uid="uid://cnyhts81jjlyj" path="res://Assets/Audio/BGM/星の海 星の夢.ogg" id="2_37y7t"]
 [ext_resource type="PackedScene" uid="uid://iqk0ojpmgrh1" path="res://Scenes/UI/Options/AudioSettingsPanel.tscn" id="3_audio_panel"]
+[ext_resource type="AudioStream" uid="uid://84310p8voyjn" path="res://Assets/Audio/SFX/UI/UI_Click_001.ogg" id="3_cy5ji"]
 
 [node name="TitleScene" type="Control" unique_id=93271587]
 layout_mode = 3
@@ -12,7 +13,9 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_title_script")
-title_bgm = ExtResource("2_opdry")
+title_bgm = ExtResource("2_37y7t")
+start_button_sfx = ExtResource("3_cy5ji")
+exit_button_sfx = ExtResource("3_cy5ji")
 
 [node name="Background" type="ColorRect" parent="." unique_id=2115422969]
 layout_mode = 1

@@ -27,4 +27,3 @@ res://Assets/Items/Icons/Food/
 
 - UIボタンやUI専用アイコンは `res://Assets/UI/Icons/`
 - 食品・食材・料理の画像は `res://Assets/Items/Icons/Food/`
-
