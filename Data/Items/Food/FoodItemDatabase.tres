@@ -1,0 +1,8 @@
+[gd_resource type="Resource" script_class="FoodItemDatabase" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Items/Food/FoodItemDatabase.gd" id="1_food_database"]
+[ext_resource type="Resource" path="res://Data/Items/Food/Food_0001_Nikuman.tres" id="2_food_0001"]
+
+[resource]
+script = ExtResource("1_food_database")
+foods = Array[ExtResource("1_food_database")("foods", 24, "FoodItemData", 0, null)]([ExtResource("2_food_0001")])
