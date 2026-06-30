@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=3 uid="uid://cb0fyv6e2f40m"]
+[gd_scene load_steps=12 format=3 uid="uid://cb0fyv6e2f40m"]
 
 [ext_resource type="Script" path="res://Scripts/Characters/Robin/RobinWanderActor.gd" id="1_actor"]
 [ext_resource type="Texture2D" path="res://Assets/Characters/Robin/Walk/robin_8dir_standing.png" id="2_standing_texture"]
@@ -8,6 +8,7 @@
 [ext_resource type="PackedScene" path="res://Scenes/Characters/Modules/AICharacterNeedsBundle.tscn" id="6_needs_bundle"]
 [ext_resource type="Script" path="res://Scripts/Characters/Robin/Modules/RobinInventoryModule.gd" id="7_inventory_module"]
 [ext_resource type="Script" path="res://Scripts/Characters/Modules/AICharacterSleepBehaviorModule.gd" id="8_sleep_behavior"]
+[ext_resource type="Script" path="res://Scripts/Characters/Modules/AICharacterHydrateBehaviorModule.gd" id="9_hydrate_behavior"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_robin"]
 radius = 8.0
@@ -59,6 +60,18 @@ needs_module_path = NodePath("../AICharacterNeedsBundle/CharacterNeedsModule")
 need_planner_path = NodePath("../AICharacterNeedsBundle/NeedDrivenAIPlanner")
 furniture_root_path = NodePath("../../RobinRoomMap/FurnitureRoot")
 energy_recovery_per_game_minute = 0.31
+
+[node name="AICharacterHydrateBehaviorModule" type="Node" parent="."]
+script = ExtResource("9_hydrate_behavior")
+needs_module_path = NodePath("../AICharacterNeedsBundle/CharacterNeedsModule")
+need_planner_path = NodePath("../AICharacterNeedsBundle/NeedDrivenAIPlanner")
+inventory_module_path = NodePath("../RobinInventoryModule")
+furniture_root_path = NodePath("../../RobinRoomMap/FurnitureRoot")
+furniture_placement_module_path = NodePath("../../FurniturePlacementModule")
+room_map_path = NodePath("../../RobinRoomMap")
+water_bottle_item_path = "res://Data/Items/Food/Food_0008_WaterBottle.tres"
+hydrate_request_ratio = 0.33
+apply_need_effect_after_refill = true
 
 [node name="RobinWalkSpriteAnimator" type="Node" parent="."]
 script = ExtResource("4_animator")
