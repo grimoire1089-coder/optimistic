@@ -43,6 +43,18 @@ func resume_bgm() -> void:
 	_bgm_player.stream_paused = false
 
 
+func get_current_bgm() -> AudioStream:
+	return _current_bgm
+
+
+func get_bgm_playback_position() -> float:
+	if _bgm_player == null:
+		return 0.0
+	if not _bgm_player.playing:
+		return 0.0
+	return _bgm_player.get_playback_position()
+
+
 func play_ambience(stream: AudioStream, from_position: float = 0.0, restart_if_same: bool = false) -> void:
 	if stream == null:
 		return
