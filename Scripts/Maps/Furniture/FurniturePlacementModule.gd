@@ -1,6 +1,8 @@
 extends Node
 class_name FurniturePlacementModule
 
+const BUILD_LOCK_META := &"build_locked_by_sleep"
+
 @export var room_map_path: NodePath
 @export var furniture_root_path: NodePath
 
@@ -106,6 +108,8 @@ func place_existing_furniture_auto(
 func move_furniture_to(furniture: Node2D, grid_position: Vector2i, footprint: Vector2i = Vector2i(1, 1)) -> bool:
 	if furniture == null:
 		return false
+	if not can_modify_furniture(furniture):
+		return false
 
 	var old_grid_position: Vector2i = furniture.get_meta("grid_position", Vector2i.ZERO)
 	var old_footprint: Vector2i = furniture.get_meta("grid_footprint", Vector2i(1, 1))
@@ -124,6 +128,8 @@ func remove_furniture_at(grid_position: Vector2i) -> bool:
 	var furniture := get_furniture_at(grid_position)
 	if furniture == null:
 		return false
+	if not can_modify_furniture(furniture):
+		return false
 
 	_unregister_furniture(furniture)
 	furniture.queue_free()
@@ -133,6 +139,8 @@ func remove_furniture_at(grid_position: Vector2i) -> bool:
 func take_furniture_at(grid_position: Vector2i) -> Node2D:
 	var furniture := get_furniture_at(grid_position)
 	if furniture == null:
+		return null
+	if not can_modify_furniture(furniture):
 		return null
 	_unregister_furniture(furniture)
 	return furniture
@@ -153,6 +161,20 @@ func get_furniture_id(furniture: Node2D) -> StringName:
 	if furniture == null:
 		return &""
 	return furniture.get_meta("furniture_id", &"") as StringName
+
+
+func can_modify_furniture(furniture: Node2D) -> bool:
+	return not is_furniture_build_locked(furniture)
+
+
+func is_furniture_build_locked(furniture: Node2D) -> bool:
+	if furniture == null:
+		return false
+	if furniture.has_method("is_build_locked") and furniture.call("is_build_locked") == true:
+		return true
+	if furniture.has_meta(BUILD_LOCK_META):
+		return bool(furniture.get_meta(BUILD_LOCK_META, false))
+	return false
 
 
 func get_room_map() -> RoomMapGridModule:
