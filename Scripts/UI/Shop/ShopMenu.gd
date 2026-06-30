@@ -11,11 +11,11 @@ class_name ShopMenu
 @onready var shop_list_view: VBoxContainer = $MarginContainer/Rows/ShopListView
 @onready var guide_label: Label = $MarginContainer/Rows/ShopListView/GuideLabel
 @onready var shop_list: VBoxContainer = $MarginContainer/Rows/ShopListView/ShopListScroll/ShopList
-@onready var shop_detail_view: VBoxContainer = $MarginContainer/Rows/ShopDetailView
-@onready var portrait_rect: TextureRect = $MarginContainer/Rows/ShopDetailView/ShopTopArea/PortraitFrame/Portrait
-@onready var shop_name_label: Label = $MarginContainer/Rows/ShopDetailView/ShopTopArea/ShopInfo/ShopNameLabel
-@onready var description_label: Label = $MarginContainer/Rows/ShopDetailView/ShopTopArea/ShopInfo/DescriptionLabel
-@onready var item_list: VBoxContainer = $MarginContainer/Rows/ShopDetailView/ItemScroll/ItemList
+@onready var shop_detail_view: BoxContainer = $MarginContainer/Rows/ShopDetailView
+@onready var portrait_rect: TextureRect = $MarginContainer/Rows/ShopDetailView/OwnerFrame/Portrait
+@onready var shop_name_label: Label = $MarginContainer/Rows/ShopDetailView/ShopContent/ShopInfo/ShopNameLabel
+@onready var description_label: Label = $MarginContainer/Rows/ShopDetailView/ShopContent/ShopInfo/DescriptionLabel
+@onready var item_list: VBoxContainer = $MarginContainer/Rows/ShopDetailView/ShopContent/ItemScroll/ItemList
 @onready var detail_label: Label = $MarginContainer/Rows/DetailLabel
 
 var _inventory_module: RobinInventoryModule
@@ -207,27 +207,87 @@ func _refresh_item_list(shop: ShopData) -> void:
 
 	var credits := _get_wallet_credits()
 	for entry in entries:
-		item_list.add_child(_create_item_button(entry, credits))
+		item_list.add_child(_create_item_card(entry, credits))
 
 	detail_label.text = "所持クレジット: %d" % credits
 
 
-func _create_item_button(entry: ShopItemData, credits: int) -> Button:
+func _create_item_card(entry: ShopItemData, credits: int) -> Button:
 	var button := Button.new()
-	button.custom_minimum_size = Vector2(0, 58)
+	button.custom_minimum_size = Vector2(0, 76)
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	button.focus_mode = Control.FOCUS_NONE
 	button.clip_text = true
+	button.text = ""
 
 	var total_price := entry.get_total_price()
-	button.text = "%s x%d\n%d C" % [entry.get_display_name(), max(entry.amount, 1), total_price]
 	button.tooltip_text = entry.get_description()
 	button.disabled = not entry.is_available or total_price > credits
 	if total_price > credits:
 		button.tooltip_text = "クレジットが足りません。必要: %d / 所持: %d" % [total_price, credits]
 	button.pressed.connect(Callable(self, "_on_buy_pressed").bind(entry))
+
+	var row := HBoxContainer.new()
+	row.set_anchors_preset(Control.PRESET_FULL_RECT)
+	row.offset_left = 10.0
+	row.offset_top = 8.0
+	row.offset_right = -10.0
+	row.offset_bottom = -8.0
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.theme_override_constants["separation"] = 10
+	button.add_child(row)
+
+	var icon_rect := TextureRect.new()
+	icon_rect.custom_minimum_size = Vector2(56, 56)
+	icon_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	icon_rect.texture = _load_entry_icon(entry)
+	row.add_child(icon_rect)
+
+	var text_box := VBoxContainer.new()
+	text_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	text_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	text_box.theme_override_constants["separation"] = 2
+	row.add_child(text_box)
+
+	var name_label := Label.new()
+	name_label.text = "%s x%d" % [entry.get_display_name(), max(entry.amount, 1)]
+	name_label.clip_text = true
+	name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	name_label.add_theme_font_size_override("font_size", 15)
+	text_box.add_child(name_label)
+
+	var description := entry.get_description()
+	if description != "":
+		var description_label_card := Label.new()
+		description_label_card.text = description
+		description_label_card.clip_text = true
+		description_label_card.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		description_label_card.add_theme_font_size_override("font_size", 11)
+		text_box.add_child(description_label_card)
+
+	var price_label := Label.new()
+	price_label.custom_minimum_size = Vector2(88, 0)
+	price_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	price_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	price_label.text = "%d C" % total_price
+	price_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	price_label.add_theme_font_size_override("font_size", 15)
+	row.add_child(price_label)
+
 	return button
+
+
+func _load_entry_icon(entry: ShopItemData) -> Texture2D:
+	if entry == null:
+		return null
+	var icon_path := entry.get_icon_path()
+	if icon_path == "":
+		return null
+	var resource := load(icon_path)
+	return resource as Texture2D
 
 
 func _on_shop_selected(shop_index: int) -> void:
