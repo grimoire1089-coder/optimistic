@@ -25,6 +25,8 @@ func get_action_id_for_need(need_id: StringName) -> StringName:
 	match need_id:
 		CharacterNeedIds.HUNGER:
 			return CharacterNeedActionIds.EAT
+		CharacterNeedIds.WATER:
+			return CharacterNeedActionIds.HYDRATE
 		CharacterNeedIds.ENERGY:
 			return CharacterNeedActionIds.REST
 		CharacterNeedIds.HYGIENE:
@@ -54,5 +56,5 @@ func get_current_need_id() -> StringName:
 func _get_module() -> CharacterNeedsModule:
 	if _needs_module != null:
 		return _needs_module
-	_needs_module = get_node_or_null(needs_module_path) as CharacterNeedsModule
+	_needs_module = get_node_or_null(needs_module_path) as NeedDrivenAIPlanner
 	return _needs_module
