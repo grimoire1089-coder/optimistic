@@ -1,5 +1,7 @@
 extends Node2D
 
+const INFRASTRUCTURE_ROOM_MAP_SCENE_PATH := "res://Scenes/Maps/InfrastructureRoomMap.tscn"
+
 @onready var debug_label: Label = $CanvasLayer/DebugLabel
 @onready var robin_room_map: RoomMapGridModule = $RobinRoomMap
 @onready var furniture_placement_module: FurniturePlacementModule = $FurniturePlacementModule
@@ -56,6 +58,27 @@ func _ensure_infrastructure_room_map() -> void:
 	if robin_room_map == null:
 		return
 
+	var infrastructure_room_map := _instantiate_infrastructure_room_map_scene()
+	if infrastructure_room_map == null:
+		infrastructure_room_map = _create_infrastructure_room_map_fallback()
+	if infrastructure_room_map == null:
+		return
+
+	add_child(infrastructure_room_map)
+	move_child(infrastructure_room_map, robin_room_map.get_index() + 1)
+
+
+func _instantiate_infrastructure_room_map_scene() -> RoomMapGridModule:
+	if not ResourceLoader.exists(INFRASTRUCTURE_ROOM_MAP_SCENE_PATH):
+		return null
+	var scene := load(INFRASTRUCTURE_ROOM_MAP_SCENE_PATH) as PackedScene
+	if scene == null:
+		return null
+	var instance := scene.instantiate() as RoomMapGridModule
+	return instance
+
+
+func _create_infrastructure_room_map_fallback() -> RoomMapGridModule:
 	var infrastructure_room_map := RoomMapGridModule.new()
 	infrastructure_room_map.name = "InfrastructureRoomMap"
 	infrastructure_room_map.visible = false
@@ -77,13 +100,12 @@ func _ensure_infrastructure_room_map() -> void:
 	infrastructure_room_map.frame_outer_glow_width = robin_room_map.frame_outer_glow_width
 	infrastructure_room_map.frame_middle_glow_width = robin_room_map.frame_middle_glow_width
 	infrastructure_room_map.frame_core_line_width = robin_room_map.frame_core_line_width
-	add_child(infrastructure_room_map)
-	move_child(infrastructure_room_map, robin_room_map.get_index() + 1)
 
 	var furniture_root := Node2D.new()
 	furniture_root.name = "FurnitureRoot"
 	furniture_root.z_index = 1
 	infrastructure_room_map.add_child(furniture_root)
+	return infrastructure_room_map
 
 
 func _ensure_map_travel_buttons() -> void:
