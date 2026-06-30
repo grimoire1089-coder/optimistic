@@ -14,29 +14,30 @@ var _body: Node2D
 var _hydrate_behavior: Node
 var _sleep_behavior: Node
 var _bar: ProgressBar
+var _bar_add_deferred := false
 
 
 func _ready() -> void:
 	_body = get_parent() as Node2D
 	_resolve_refs()
-	_ensure_bar()
+	_request_bar()
 	set_process(true)
 
 
 func setup(body: Node2D) -> void:
 	_body = body
 	_resolve_refs()
-	_ensure_bar()
+	_request_bar()
 
 
 func _process(_delta: float) -> void:
 	_resolve_refs()
-	_ensure_bar()
+	_request_bar()
 	_update_bar()
 
 
 func _update_bar() -> void:
-	if _bar == null:
+	if _bar == null or not is_instance_valid(_bar):
 		return
 	var source := _get_active_progress_source()
 	if source == null:
@@ -66,10 +67,23 @@ func _should_show_source(source: Node) -> bool:
 	return source.call("is_action_progress_visible") == true
 
 
-func _ensure_bar() -> void:
+func _request_bar() -> void:
 	if _bar != null and is_instance_valid(_bar):
 		return
+	if _bar_add_deferred:
+		return
 	if _body == null:
+		return
+	_bar_add_deferred = true
+	call_deferred("_ensure_bar_deferred")
+
+
+func _ensure_bar_deferred() -> void:
+	_bar_add_deferred = false
+	_resolve_refs()
+	if _bar != null and is_instance_valid(_bar):
+		return
+	if _body == null or not is_instance_valid(_body):
 		return
 
 	_bar = ProgressBar.new()
