@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://main_scene_map_travel_module"]
+
+[ext_resource type="Script" path="res://Scripts/Scenes/Main/Modules/MainSceneMapTravelModule.gd" id="1_map_travel"]
+
+[node name="MainSceneMapTravelModule" type="Node"]
+script = ExtResource("1_map_travel")
