@@ -2,6 +2,7 @@ extends Resource
 class_name ShopItemData
 
 @export var item_data: Resource
+@export var shop_tab_id: StringName = &""
 @export_range(1, 999, 1) var amount: int = 1
 @export_range(-1, 999999, 1) var price_override: int = -1
 @export var custom_display_name: String = ""
@@ -27,6 +28,12 @@ func get_category_id() -> StringName:
 	if value == null:
 		return &"foods"
 	return StringName(String(value))
+
+
+func get_shop_tab_id() -> StringName:
+	if shop_tab_id != &"":
+		return shop_tab_id
+	return get_category_id()
 
 
 func get_display_name() -> String:
