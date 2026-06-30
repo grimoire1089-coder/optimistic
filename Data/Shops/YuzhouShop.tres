@@ -1,0 +1,64 @@
+[gd_resource type="Resource" script_class="ShopData" load_steps=13 format=3]
+
+[ext_resource type="Script" uid="uid://dik32ehksmive" path="res://Scripts/Shops/ShopData.gd" id="1_shop_data"]
+[ext_resource type="Script" uid="uid://8a0d3nyywiao" path="res://Scripts/Shops/ShopItemData.gd" id="2_shop_item"]
+[ext_resource type="Texture2D" path="res://Assets/Characters/Yuzhou/Portraits/Yuzhou_Game_0001.png" id="3_yuzhou_portrait"]
+[ext_resource type="Resource" uid="uid://khpl6knsr1ao" path="res://Data/Items/Food/Food_0001_Nikuman.tres" id="4_nikuman"]
+[ext_resource type="Resource" path="res://Data/Items/Food/Food_1001_ChineseCongee.tres" id="5_congee"]
+[ext_resource type="Resource" path="res://Data/Items/Food/Food_1002_ShengjianXiaolongbao.tres" id="6_xiaolongbao"]
+[ext_resource type="Resource" path="res://Data/Items/Food/Food_1003_StarlightSesameDango.tres" id="7_sesame_dango"]
+[ext_resource type="Resource" path="res://Data/Items/Food/Food_1005_StarlightCake.tres" id="8_starlight_cake"]
+[ext_resource type="Resource" path="res://Data/Items/Food/Drink_1001_LycheeSoda.tres" id="9_lychee_soda"]
+[ext_resource type="Resource" path="res://Data/Items/Food/Drink_1002_OolongTea.tres" id="10_oolong_tea"]
+
+[sub_resource type="Resource" id="ShopItemData_nikuman"]
+script = ExtResource("2_shop_item")
+item_data = ExtResource("4_nikuman")
+amount = 1
+price_override = 120
+
+[sub_resource type="Resource" id="ShopItemData_congee"]
+script = ExtResource("2_shop_item")
+item_data = ExtResource("5_congee")
+amount = 1
+price_override = 90
+
+[sub_resource type="Resource" id="ShopItemData_xiaolongbao"]
+script = ExtResource("2_shop_item")
+item_data = ExtResource("6_xiaolongbao")
+amount = 1
+price_override = 150
+
+[sub_resource type="Resource" id="ShopItemData_sesame_dango"]
+script = ExtResource("2_shop_item")
+item_data = ExtResource("7_sesame_dango")
+amount = 1
+price_override = 110
+
+[sub_resource type="Resource" id="ShopItemData_starlight_cake"]
+script = ExtResource("2_shop_item")
+item_data = ExtResource("8_starlight_cake")
+amount = 1
+price_override = 140
+custom_display_name = "月餅"
+custom_description = "丸い月のような形をした、星灯小館の甘い焼き菓子。"
+
+[sub_resource type="Resource" id="ShopItemData_lychee_soda"]
+script = ExtResource("2_shop_item")
+item_data = ExtResource("9_lychee_soda")
+amount = 1
+price_override = 100
+
+[sub_resource type="Resource" id="ShopItemData_oolong_tea"]
+script = ExtResource("2_shop_item")
+item_data = ExtResource("10_oolong_tea")
+amount = 1
+price_override = 80
+
+[resource]
+script = ExtResource("1_shop_data")
+shop_id = &"yuzhou_xingdeng"
+display_name = "星灯小館"
+description = "ユージョウが切り盛りする、ネオン路地裏の小さな中華飯店。温かい料理と茶で、少しだけ心の重力を軽くしてくれる。"
+portrait = ExtResource("3_yuzhou_portrait")
+items = Array[ExtResource("2_shop_item")]([SubResource("ShopItemData_nikuman"), SubResource("ShopItemData_congee"), SubResource("ShopItemData_xiaolongbao"), SubResource("ShopItemData_sesame_dango"), SubResource("ShopItemData_starlight_cake"), SubResource("ShopItemData_lychee_soda"), SubResource("ShopItemData_oolong_tea")])
