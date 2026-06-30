@@ -1,21 +1,14 @@
 extends Control
 class_name MarqueeLabel
 
-@export var text: String = "":
-	set(value):
-		text = value
-		_apply_text()
-
-@export_range(8, 48, 1) var font_size: int = 13:
-	set(value):
-		font_size = value
-		_apply_font_size()
-
+@export var initial_text: String = ""
+@export_range(8, 48, 1) var font_size: int = 13
 @export_range(4.0, 240.0, 1.0) var scroll_speed: float = 28.0
 @export_range(0.0, 4.0, 0.1) var edge_wait_seconds: float = 0.8
 @export_range(8.0, 128.0, 1.0) var restart_gap: float = 32.0
 
 var _label: Label
+var _display_text: String = ""
 var _scroll_offset: float = 0.0
 var _wait_timer: float = 0.0
 
@@ -23,6 +16,8 @@ var _wait_timer: float = 0.0
 func _ready() -> void:
 	clip_contents = true
 	_ensure_label()
+	if _display_text == "" and initial_text != "":
+		_display_text = initial_text
 	_apply_text()
 	_apply_font_size()
 	resized.connect(_reset_scroll)
@@ -30,7 +25,13 @@ func _ready() -> void:
 
 
 func set_display_text(value: String) -> void:
-	text = value
+	_display_text = value
+	_apply_text()
+
+
+func set_display_font_size(value: int) -> void:
+	font_size = value
+	_apply_font_size()
 
 
 func _process(delta: float) -> void:
@@ -73,7 +74,7 @@ func _ensure_label() -> void:
 
 func _apply_text() -> void:
 	_ensure_label()
-	_label.text = text
+	_label.text = _display_text
 	_reset_scroll()
 
 
