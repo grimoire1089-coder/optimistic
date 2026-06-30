@@ -31,6 +31,17 @@ func setup(body: Node2D) -> void:
 	_pick_next_action()
 
 
+func set_movement_area_provider_path(next_provider_path: NodePath) -> void:
+	if movement_area_provider_path == next_provider_path:
+		_resolve_movement_area_provider()
+		return
+	movement_area_provider_path = next_provider_path
+	_movement_area_provider = null
+	_resolve_movement_area_provider()
+	_pick_next_action()
+	clamp_body_to_movement_area()
+
+
 func get_velocity(delta: float) -> Vector2:
 	if _body == null:
 		return Vector2.ZERO
