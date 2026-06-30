@@ -1,0 +1,79 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://Scripts/UI/HUD/MessageLogPanel.gd" id="1_message_log"]
+[ext_resource type="AudioStream" path="res://Assets/Audio/SFX/UI/UI_Notice_001.ogg" id="2_notice_sfx"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_message_log_panel"]
+bg_color = Color(0.015, 0.018, 0.028, 0.78)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.12, 0.62, 0.82, 0.82)
+corner_radius_top_left = 14
+corner_radius_top_right = 14
+corner_radius_bottom_right = 14
+corner_radius_bottom_left = 14
+
+[node name="MessageLogPanel" type="PanelContainer"]
+custom_minimum_size = Vector2(404, 512)
+anchors_preset = 0
+offset_left = 16.0
+offset_top = 88.0
+offset_right = 420.0
+offset_bottom = 600.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_message_log_panel")
+script = ExtResource("1_message_log")
+notice_sfx = ExtResource("2_notice_sfx")
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 12
+
+[node name="Rows" type="VBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Header" type="HBoxContainer" parent="MarginContainer/Rows"]
+layout_mode = 2
+
+[node name="TitleLabel" type="Label" parent="MarginContainer/Rows/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Message Log"
+theme_override_colors/font_color = Color(0.86, 0.98, 1, 1)
+theme_override_font_sizes/font_size = 16
+
+[node name="CountLabel" type="Label" parent="MarginContainer/Rows/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "0/100"
+horizontal_alignment = 2
+theme_override_colors/font_color = Color(0.58, 0.9, 1, 0.9)
+theme_override_font_sizes/font_size = 13
+
+[node name="EmptyLabel" type="Label" parent="MarginContainer/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "まだログはありません"
+autowrap_mode = 3
+theme_override_colors/font_color = Color(0.62, 0.74, 0.82, 0.82)
+theme_override_font_sizes/font_size = 13
+
+[node name="ScrollContainer" type="ScrollContainer" parent="MarginContainer/Rows"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 440)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="MessageList" type="VBoxContainer" parent="MarginContainer/Rows/ScrollContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
