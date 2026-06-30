@@ -82,12 +82,11 @@ func _refresh() -> void:
 	if _clock == null:
 		return
 
-	time_label.text = "%s  %s" % [
-		_clock.get_day_text(),
+	time_label.text = _clock.get_day_text()
+	phase_label.text = "%s  %s" % [
+		_clock.get_phase_display_name(),
 		_clock.get_time_text(),
 	]
-
-	phase_label.text = _clock.get_phase_display_name()
 
 
 func _on_time_changed(_day: int, _hour: int, _minute: int) -> void:
