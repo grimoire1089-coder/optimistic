@@ -6,6 +6,7 @@ class_name ShopData
 @export_multiline var description: String = ""
 @export var portrait: Texture2D
 @export var shop_bgm: AudioStream
+@export var tabs: Array[ShopTabData] = []
 @export var items: Array[ShopItemData] = []
 
 
@@ -17,6 +18,28 @@ func get_available_items() -> Array[ShopItemData]:
 		if not item.is_available:
 			continue
 		result.append(item)
+	return result
+
+
+func get_available_items_for_tab(tab_id: StringName) -> Array[ShopItemData]:
+	if tab_id == &"":
+		return get_available_items()
+
+	var result: Array[ShopItemData] = []
+	for item in get_available_items():
+		if item.get_shop_tab_id() == tab_id:
+			result.append(item)
+	return result
+
+
+func get_tabs() -> Array[ShopTabData]:
+	var result: Array[ShopTabData] = []
+	for tab in tabs:
+		if tab == null:
+			continue
+		if not tab.is_valid():
+			continue
+		result.append(tab)
 	return result
 
 
