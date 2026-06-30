@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="FoodItemData" format=3]
+
+[ext_resource type="Script" uid="uid://cgyi4b7bbmqn" path="res://Scripts/Items/Food/FoodItemData.gd" id="1_food_data"]
+
+[resource]
+script = ExtResource("1_food_data")
+item_id = &"recipe_1002"
+display_name = "焼き小籠包のレシピ"
+description = "香ばしい焼き小籠包を調理できるようになるレシピメモ。"
+category_id = &"recipes"
+buy_price = 650
+sell_price = 325
