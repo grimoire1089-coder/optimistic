@@ -70,6 +70,9 @@ horizontal_scroll_mode = 0
 
 [node name="MessageList" type="VBoxContainer" parent="MarginContainer/Rows/ScrollContainer"]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 440)
 layout_mode = 2
 size_flags_horizontal = 3
+size_flags_vertical = 3
 theme_override_constants/separation = 8
+alignment = 2
