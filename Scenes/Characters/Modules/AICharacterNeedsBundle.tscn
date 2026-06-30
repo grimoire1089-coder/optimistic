@@ -1,8 +1,9 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://Scripts/Systems/Needs/CharacterNeedsModule.gd" id="1_needs_module"]
 [ext_resource type="Script" path="res://Scripts/Systems/Needs/GameClockNeedsBridge.gd" id="2_clock_bridge"]
 [ext_resource type="Script" path="res://Scripts/Systems/Needs/NeedDrivenAIPlanner.gd" id="3_planner"]
+[ext_resource type="Script" path="res://Scripts/Systems/Mood/CharacterMoodModule.gd" id="4_state"]
 
 [node name="AICharacterNeedsBundle" type="Node"]
 
@@ -16,3 +17,6 @@ needs_module_path = NodePath("../CharacterNeedsModule")
 [node name="NeedDrivenAIPlanner" type="Node" parent="."]
 script = ExtResource("3_planner")
 needs_module_path = NodePath("../CharacterNeedsModule")
+
+[node name="CharacterMoodModule" type="Node" parent="."]
+script = ExtResource("4_state")
