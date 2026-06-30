@@ -71,8 +71,6 @@ func _process(delta: float) -> void:
 		return
 	_refresh_timer = 0.25
 	_update_action_label()
-	if mood_panel != null:
-		mood_panel.refresh()
 
 func _setup_tabs() -> void:
 	if tab_container == null:
