@@ -315,14 +315,15 @@ func _create_item_card(entry: ShopItemData, credits: int) -> Control:
 	price_label.add_theme_font_size_override("font_size", 14)
 	card.add_child(price_label)
 
+	var base_amount: int = maxi(entry.amount, 1)
 	var buy_button := Button.new()
 	buy_button.custom_minimum_size = Vector2(0, 30)
 	buy_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	buy_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	buy_button.focus_mode = Control.FOCUS_NONE
-	buy_button.text = "x%d" % max(entry.amount, 1)
-	buy_button.tooltip_text = "購入数: 通常 x%d / Shift x%d / Ctrl x%d" % [max(entry.amount, 1), max(entry.amount, 1) * 10, max(entry.amount, 1) * 100]
-	buy_button.disabled = not entry.is_available or entry.get_total_price() > credits
+	buy_button.text = "x%d" % base_amount
+	buy_button.tooltip_text = "購入数: 通常 x%d / Shift x%d / Ctrl x%d" % [base_amount, base_amount * 10, base_amount * 100]
+	buy_button.disabled = not entry.is_available or entry.get_unit_price() * base_amount > credits
 	buy_button.pressed.connect(Callable(self, "_on_buy_pressed").bind(entry))
 	buy_button.mouse_entered.connect(Callable(self, "_show_item_popup").bind(entry, card_panel))
 	buy_button.mouse_exited.connect(_hide_item_popup)
@@ -403,7 +404,7 @@ func _show_item_popup(entry: ShopItemData, anchor: Control) -> void:
 		return
 	_setup_item_popup()
 
-	var base_amount := max(entry.amount, 1)
+	var base_amount: int = maxi(entry.amount, 1)
 	_item_popup_name_label.text = entry.get_display_name()
 	_item_popup_description_label.text = entry.get_description()
 	_item_popup_price_label.text = "単価: %d C\n購入: x%d / Shift x%d / Ctrl x%d" % [entry.get_unit_price(), base_amount, base_amount * 10, base_amount * 100]
@@ -465,8 +466,8 @@ func _on_buy_pressed(entry: ShopItemData) -> void:
 		detail_label.text = "購入先のインベントリが見つかりません。"
 		return
 
-	var purchase_amount := _get_purchase_amount(entry)
-	var total_price := entry.get_unit_price() * purchase_amount
+	var purchase_amount: int = _get_purchase_amount(entry)
+	var total_price: int = entry.get_unit_price() * purchase_amount
 	if not _spend_credits(total_price, entry):
 		_refresh_current_shop_detail()
 		detail_label.text = "クレジットが足りません。必要: %d / 所持: %d" % [total_price, _get_wallet_credits()]
@@ -483,7 +484,7 @@ func _on_buy_pressed(entry: ShopItemData) -> void:
 
 
 func _get_purchase_amount(entry: ShopItemData) -> int:
-	return max(entry.amount, 1) * _get_purchase_multiplier()
+	return maxi(entry.amount, 1) * _get_purchase_multiplier()
 
 
 func _get_purchase_multiplier() -> int:
@@ -530,7 +531,7 @@ func _add_entry_to_inventory(entry: ShopItemData, purchase_amount: int) -> bool:
 		entry.get_category_id(),
 		entry.get_item_id(),
 		entry.get_display_name(),
-		max(purchase_amount, 1),
+		maxi(purchase_amount, 1),
 		entry.get_icon_path()
 	) == true
 
