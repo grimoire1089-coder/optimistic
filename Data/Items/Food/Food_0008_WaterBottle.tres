@@ -1,16 +1,15 @@
-[gd_resource type="Resource" script_class="FoodItemData" load_steps=4 format=3]
+[gd_resource type="Resource" script_class="FoodItemData" format=3 uid="uid://bbcfo6cl1qi0"]
 
-[ext_resource type="Script" path="res://Scripts/Items/Food/FoodItemData.gd" id="1_food_data"]
-[ext_resource type="Texture2D" path="res://Assets/Items/Icons/Food/Food_0008.png" id="2_food_icon"]
+[ext_resource type="Script" uid="uid://cgyi4b7bbmqn" path="res://Scripts/Items/Food/FoodItemData.gd" id="1_food_data"]
+[ext_resource type="Texture2D" uid="uid://ckthp0uwht7av" path="res://Assets/Items/Icons/Food/Food_0008.png" id="2_food_icon"]
 [ext_resource type="Resource" path="res://Data/Needs/Effects/need_effect_water_full.tres" id="3_water_full_effect"]
 
 [resource]
 script = ExtResource("1_food_data")
 item_id = &"food_0008_water_bottle"
 display_name = "水入りボトル"
-description = "キッチンモジュールから補充できる、水分をしっかり回復するボトル。"
+description = "濾過水入りのボトル。"
 icon = ExtResource("2_food_icon")
 category_id = &"drinks"
-stack_max = 99
 sell_price = 10
 need_effect = ExtResource("3_water_full_effect")
