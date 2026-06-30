@@ -2,6 +2,8 @@ extends Node
 class_name AICharacterSleepBehaviorModule
 
 const INVALID_GRID_POSITION := Vector2i(-999999, -999999)
+const BUILD_LOCK_META := &"build_locked_by_sleep"
+const BUILD_LOCK_REASON_META := &"build_lock_reason"
 
 @export var needs_module_path: NodePath = NodePath("../AICharacterNeedsBundle/CharacterNeedsModule")
 @export var need_planner_path: NodePath = NodePath("../AICharacterNeedsBundle/NeedDrivenAIPlanner")
@@ -36,6 +38,7 @@ var _furniture_root: Node
 var _furniture_placement_module: Node
 var _room_map: RoomMapGridModule
 var _target_bedding: Node2D
+var _sleeping_bedding: Node2D
 var _floor_sleep_mood_entry: CharacterMoodEntryData
 var _is_active := false
 var _is_sleeping := false
@@ -133,12 +136,15 @@ func _should_floor_sleep_now() -> bool:
 
 
 func _start_bedding_sleep() -> void:
-	if _body != null and _target_bedding != null:
-		_body.global_position = _get_bedding_center_sleep_position(_target_bedding)
+	var bedding := _target_bedding
+	if _body != null and bedding != null:
+		_body.global_position = _get_bedding_center_sleep_position(bedding)
+	_set_sleeping_bedding(bedding)
 	_start_sleeping(false)
 
 
 func _start_floor_sleep() -> void:
+	_set_sleeping_bedding(null)
 	_start_sleeping(true)
 	_apply_floor_sleep_mood_entry()
 
@@ -178,6 +184,7 @@ func _get_energy_ratio() -> float:
 
 
 func _stop_sleeping() -> void:
+	_clear_sleeping_bedding_lock()
 	_set_sleep_need_decay_enabled(true)
 	_is_active = false
 	_is_sleeping = false
@@ -217,6 +224,28 @@ func _is_stuck_trying_to_reach_bedding(delta: float) -> bool:
 func _reset_stuck_watch() -> void:
 	_last_walk_position = Vector2(INF, INF)
 	_stuck_timer = 0.0
+
+
+func _set_sleeping_bedding(bedding: Node2D) -> void:
+	if _sleeping_bedding == bedding:
+		return
+	_clear_sleeping_bedding_lock()
+	_sleeping_bedding = bedding
+	if _sleeping_bedding == null:
+		return
+	_sleeping_bedding.set_meta(BUILD_LOCK_META, true)
+	_sleeping_bedding.set_meta(BUILD_LOCK_REASON_META, "睡眠中")
+
+
+func _clear_sleeping_bedding_lock() -> void:
+	if _sleeping_bedding == null:
+		return
+	if is_instance_valid(_sleeping_bedding):
+		if _sleeping_bedding.has_meta(BUILD_LOCK_META):
+			_sleeping_bedding.remove_meta(BUILD_LOCK_META)
+		if _sleeping_bedding.has_meta(BUILD_LOCK_REASON_META):
+			_sleeping_bedding.remove_meta(BUILD_LOCK_REASON_META)
+	_sleeping_bedding = null
 
 
 func _apply_floor_sleep_mood_entry() -> void:
