@@ -87,7 +87,8 @@ func _update_action_label() -> void:
 		return
 	var need_id := _actor.get_current_lowest_need_id()
 	var action_id := _actor.get_current_need_action_id()
-	action_label.text = "最低欲求: %s / 行動: %s" % [String(need_id), String(action_id)]
+	var action_text := _actor.get_current_action_display_text()
+	action_label.text = "最低欲求: %s / 行動: %s" % [String(need_id), action_text]
 	_log_ai_action_if_changed(need_id, action_id)
 
 func _log_ai_action_if_changed(need_id: StringName, action_id: StringName) -> void:
