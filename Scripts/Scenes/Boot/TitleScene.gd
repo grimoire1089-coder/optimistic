@@ -48,6 +48,10 @@ func _on_start_button_pressed() -> void:
 		game_clock.reset_time()
 		game_clock.start()
 
+	var basic_income := get_node_or_null("/root/BasicIncome")
+	if basic_income != null and basic_income.has_method("reset_for_new_game"):
+		basic_income.call("reset_for_new_game")
+
 	SceneRouter.go_to_main()
 
 
