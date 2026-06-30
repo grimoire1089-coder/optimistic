@@ -26,6 +26,7 @@ const DEFAULT_CLICK_SFX_PATHS := [
 @onready var inventory_module: RobinInventoryModule = $RobinInventoryModule
 @onready var wander_module: RobinRandomWanderModule = $RobinRandomWanderModule
 @onready var sleep_behavior_module: AICharacterSleepBehaviorModule = $AICharacterSleepBehaviorModule
+@onready var hydrate_behavior_module: AICharacterHydrateBehaviorModule = $AICharacterHydrateBehaviorModule
 @onready var walk_animator: RobinWalkSpriteAnimator = $RobinWalkSpriteAnimator
 
 
@@ -35,6 +36,7 @@ func _ready() -> void:
 	_load_default_click_sfx_if_needed()
 	wander_module.setup(self)
 	sleep_behavior_module.setup(self)
+	hydrate_behavior_module.setup(self)
 	if start_at_movement_area_center:
 		global_position = wander_module.get_movement_center()
 	walk_animator.setup()
@@ -57,6 +59,16 @@ func _physics_process(delta: float) -> void:
 			facing_direction = sleep_behavior_module.get_facing_direction()
 			move_and_slide()
 			if not sleep_behavior_module.is_sleeping() and wander_module.clamp_body_to_movement_area():
+				velocity = Vector2.ZERO
+			walk_animator.update_animation(velocity, facing_direction, delta)
+			return
+	if hydrate_behavior_module != null:
+		var hydrate_velocity := hydrate_behavior_module.get_velocity(delta)
+		if hydrate_behavior_module.is_active():
+			velocity = hydrate_velocity
+			facing_direction = hydrate_behavior_module.get_facing_direction()
+			move_and_slide()
+			if wander_module.clamp_body_to_movement_area():
 				velocity = Vector2.ZERO
 			walk_animator.update_animation(velocity, facing_direction, delta)
 			return
