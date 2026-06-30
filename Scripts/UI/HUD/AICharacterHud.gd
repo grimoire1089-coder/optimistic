@@ -86,13 +86,13 @@ func _get_message_log() -> MessageLogPanel:
 	return null
 
 func _push_debug_message(source: String, message: String) -> void:
-	var log := _get_message_log()
-	if log == null:
+	var message_log := _get_message_log()
+	if message_log == null:
 		return
-	log.add_debug_message("[%s] %s" % [source, message])
+	message_log.add_debug_message("[%s] %s" % [source, message])
 
 func _push_debug_result(source: String, action: String, success: bool, detail: String = "") -> void:
-	var log := _get_message_log()
-	if log == null:
+	var message_log := _get_message_log()
+	if message_log == null:
 		return
-	log.add_debug_result(source, action, success, detail)
+	message_log.add_debug_result(source, action, success, detail)
