@@ -7,7 +7,7 @@ const INVALID_GRID_POSITION := Vector2i(-999999, -999999)
 @export var screen_margin: float = 96.0
 @export var side_ui_margin: float = 280.0
 @export var movement_area_provider_path: NodePath
-@export var furniture_placement_module_path: NodePath
+@export var furniture_placement_module_path: NodePath = NodePath("../../FurniturePlacementModule")
 @export var idle_chance: float = 0.65
 @export var idle_time_range: Vector2 = Vector2(2.5, 5.5)
 @export var walk_time_range: Vector2 = Vector2(1.0, 2.2)
