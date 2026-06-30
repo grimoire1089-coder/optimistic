@@ -42,7 +42,8 @@ func _connect_systems() -> void:
 	if not _clock.day_changed.is_connected(_on_day_changed):
 		_clock.day_changed.connect(_on_day_changed)
 
-	_try_grant_income_for_current_day()
+	if grant_on_first_period_start and _clock.get_season_period_index() == 1:
+		_try_grant_income_for_current_day()
 
 
 func to_save_data() -> Dictionary:
