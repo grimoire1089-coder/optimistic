@@ -3,6 +3,7 @@
 [ext_resource type="Script" uid="uid://dik32ehksmive" path="res://Scripts/Shops/ShopData.gd" id="1_shop_data"]
 [ext_resource type="Script" uid="uid://8a0d3nyywiao" path="res://Scripts/Shops/ShopItemData.gd" id="2_shop_item"]
 [ext_resource type="Resource" uid="uid://khpl6knsr1ao" path="res://Data/Items/Food/Food_0001_Nikuman.tres" id="3_nikuman"]
+[ext_resource type="Script" path="res://Scripts/Shops/ShopTabData.gd" id="4_j2ce4"]
 
 [sub_resource type="Resource" id="ShopItemData_nikuman"]
 script = ExtResource("2_shop_item")

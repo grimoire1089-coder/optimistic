@@ -11,12 +11,12 @@
 [ext_resource type="PackedScene" path="res://Scenes/UI/HUD/WorkMenu.tscn" id="8_work_menu"]
 [ext_resource type="PackedScene" path="res://Scenes/UI/HUD/InventoryButton.tscn" id="9_inventory_button"]
 [ext_resource type="PackedScene" path="res://Scenes/UI/Inventory/RobinInventoryUI.tscn" id="10_inventory_ui"]
-[ext_resource type="Script" path="res://Scripts/Maps/RoomMapGridModule.gd" id="11_room_map_grid"]
-[ext_resource type="Script" path="res://Scripts/Maps/Furniture/FurniturePlacementModule.gd" id="12_furniture_placement"]
+[ext_resource type="Script" uid="uid://bxdnukpc8qvur" path="res://Scripts/Maps/RoomMapGridModule.gd" id="11_room_map_grid"]
+[ext_resource type="Script" uid="uid://cqjckxpi47vh" path="res://Scripts/Maps/Furniture/FurniturePlacementModule.gd" id="12_furniture_placement"]
 [ext_resource type="PackedScene" path="res://Scenes/UI/HUD/BuildModeButton.tscn" id="13_build_mode_button"]
 [ext_resource type="PackedScene" path="res://Scenes/UI/HUD/ShopButton.tscn" id="14_shop_button"]
 [ext_resource type="PackedScene" path="res://Scenes/UI/Shop/ShopMenu.tscn" id="15_shop_menu"]
-[ext_resource type="Script" path="res://Scripts/Scenes/Main/Modules/RobinRoomBgmListModule.gd" id="16_robin_room_bgm"]
+[ext_resource type="Script" uid="uid://bs7g8isgeu778" path="res://Scripts/Scenes/Main/Modules/RobinRoomBgmListModule.gd" id="16_robin_room_bgm"]
 [ext_resource type="PackedScene" path="res://Scenes/UI/HUD/MessageLogPanel.tscn" id="17_message_log"]
 
 [sub_resource type="Environment" id="Environment_ctt6t"]
@@ -29,24 +29,20 @@ script = ExtResource("1_main_script")
 environment = SubResource("Environment_ctt6t")
 script = ExtResource("3_canvas_glow")
 
-[node name="RobinRoomBgmListModule" type="Node" parent="."]
+[node name="RobinRoomBgmListModule" type="Node" parent="." unique_id=638603961]
 script = ExtResource("16_robin_room_bgm")
 bgm_paths = PackedStringArray("res://Assets/Audio/BGM/Room BGM 001.ogg", "res://Assets/Audio/BGM/Room BGM 002.ogg")
 
-[node name="RobinRoomMap" type="Node2D" parent="."]
+[node name="RobinRoomMap" type="Node2D" parent="." unique_id=723162854]
 z_index = -30
 script = ExtResource("11_room_map_grid")
-map_display_name = "ロビンの部屋"
-cell_size = Vector2(48, 48)
 fixed_grid_size = Vector2i(15, 15)
 fit_cell_size_to_visual_rect = true
-show_grid = true
-show_neon_frame = false
 
-[node name="FurnitureRoot" type="Node2D" parent="RobinRoomMap"]
+[node name="FurnitureRoot" type="Node2D" parent="RobinRoomMap" unique_id=1746896953]
 z_index = 1
 
-[node name="FurniturePlacementModule" type="Node" parent="."]
+[node name="FurniturePlacementModule" type="Node" parent="." unique_id=1308546083]
 script = ExtResource("12_furniture_placement")
 room_map_path = NodePath("../RobinRoomMap")
 furniture_root_path = NodePath("../RobinRoomMap/FurnitureRoot")
@@ -63,7 +59,7 @@ offset_right = 360.0
 offset_bottom = 55.0
 text = "Main Scene 起動完了"
 
-[node name="MessageLogPanel" parent="CanvasLayer" instance=ExtResource("17_message_log")]
+[node name="MessageLogPanel" parent="CanvasLayer" unique_id=2086590989 instance=ExtResource("17_message_log")]
 
 [node name="ClockDisplay" parent="CanvasLayer" unique_id=630380914 instance=ExtResource("4_clock_display")]
 
@@ -73,14 +69,15 @@ text = "Main Scene 起動完了"
 
 [node name="WorkMenu" parent="CanvasLayer" unique_id=603449311 instance=ExtResource("8_work_menu")]
 
-[node name="ShopMenu" parent="CanvasLayer" instance=ExtResource("15_shop_menu")]
+[node name="ShopMenu" parent="CanvasLayer" unique_id=1933516205 instance=ExtResource("15_shop_menu")]
 
-[node name="InventoryUI" parent="CanvasLayer" instance=ExtResource("10_inventory_ui")]
+[node name="InventoryUI" parent="CanvasLayer" unique_id=520989565 instance=ExtResource("10_inventory_ui")]
+anchors_preset = 8
 
-[node name="ShopButton" parent="CanvasLayer" instance=ExtResource("14_shop_button")]
+[node name="ShopButton" parent="CanvasLayer" unique_id=2139128007 instance=ExtResource("14_shop_button")]
 
-[node name="InventoryButton" parent="CanvasLayer" instance=ExtResource("9_inventory_button")]
+[node name="InventoryButton" parent="CanvasLayer" unique_id=15107441 instance=ExtResource("9_inventory_button")]
 
-[node name="BuildModeButton" parent="CanvasLayer" instance=ExtResource("13_build_mode_button")]
+[node name="BuildModeButton" parent="CanvasLayer" unique_id=1853070945 instance=ExtResource("13_build_mode_button")]
 
 [node name="WorkCreditButton" parent="CanvasLayer" unique_id=44562355 instance=ExtResource("7_work_credit_button")]
