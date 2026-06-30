@@ -6,6 +6,7 @@ signal inventory_changed
 const CATEGORY_TOOLS := &"tools"
 const CATEGORY_FOODS := &"foods"
 const CATEGORY_DRINKS := &"drinks"
+const CATEGORY_RECIPES := &"recipes"
 const CATEGORY_MATERIALS := &"materials"
 const CATEGORY_INGREDIENTS := &"ingredients"
 
@@ -15,6 +16,7 @@ var _categories: Array[Dictionary] = [
 	{"id": CATEGORY_TOOLS, "display_name": "ツール"},
 	{"id": CATEGORY_FOODS, "display_name": "食品"},
 	{"id": CATEGORY_DRINKS, "display_name": "飲料"},
+	{"id": CATEGORY_RECIPES, "display_name": "レシピ"},
 	{"id": CATEGORY_MATERIALS, "display_name": "素材"},
 	{"id": CATEGORY_INGREDIENTS, "display_name": "食材"},
 ]
@@ -122,7 +124,8 @@ func has_category(category_id: StringName) -> bool:
 
 func _setup_empty_categories() -> void:
 	for category in _categories:
-		var category_id := category.get("id", &"") as StringName
+		var category_id: StringName = category.get("id", &"")
+		if category_id == &"":
+			continue
 		if not _items_by_category.has(category_id):
-			var empty_items: Array[Dictionary] = []
-			_items_by_category[category_id] = empty_items
+			_items_by_category[category_id] = []
