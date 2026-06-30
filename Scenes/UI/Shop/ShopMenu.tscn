@@ -4,14 +4,14 @@
 [ext_resource type="Resource" path="res://Data/Shops/ShopDatabase.tres" id="2_shop_database"]
 
 [node name="ShopMenu" type="PanelContainer"]
-custom_minimum_size = Vector2(520, 440)
+custom_minimum_size = Vector2(620, 520)
 anchors_preset = 3
 anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -544.0
-offset_top = -560.0
+offset_left = -644.0
+offset_top = -640.0
 offset_right = -24.0
 offset_bottom = -112.0
 grow_horizontal = 0
@@ -36,29 +36,82 @@ layout_mode = 2
 [node name="TitleLabel" type="Label" parent="MarginContainer/Rows/Header"]
 layout_mode = 2
 size_flags_horizontal = 3
-text = "ショップ"
+text = "Shop"
 theme_override_font_sizes/font_size = 18
+
+[node name="BackButton" type="Button" parent="MarginContainer/Rows/Header"]
+custom_minimum_size = Vector2(72, 28)
+layout_mode = 2
+text = "Back"
 
 [node name="CloseButton" type="Button" parent="MarginContainer/Rows/Header"]
 custom_minimum_size = Vector2(32, 28)
 layout_mode = 2
 text = "X"
 
-[node name="TabBar" type="TabBar" parent="MarginContainer/Rows"]
+[node name="ShopListView" type="VBoxContainer" parent="MarginContainer/Rows"]
 layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 8
 
-[node name="DescriptionLabel" type="Label" parent="MarginContainer/Rows"]
+[node name="GuideLabel" type="Label" parent="MarginContainer/Rows/ShopListView"]
 layout_mode = 2
 autowrap_mode = 3
-text = "ショップ説明"
+text = "Select shop"
 
-[node name="ScrollContainer" type="ScrollContainer" parent="MarginContainer/Rows"]
-custom_minimum_size = Vector2(0, 292)
+[node name="ShopListScroll" type="ScrollContainer" parent="MarginContainer/Rows/ShopListView"]
+custom_minimum_size = Vector2(0, 392)
 layout_mode = 2
 size_flags_vertical = 3
 horizontal_scroll_mode = 0
 
-[node name="ItemList" type="VBoxContainer" parent="MarginContainer/Rows/ScrollContainer"]
+[node name="ShopList" type="VBoxContainer" parent="MarginContainer/Rows/ShopListView/ShopListScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 6
+
+[node name="ShopDetailView" type="VBoxContainer" parent="MarginContainer/Rows"]
+visible = false
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 8
+
+[node name="ShopTopArea" type="HBoxContainer" parent="MarginContainer/Rows/ShopDetailView"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="PortraitFrame" type="PanelContainer" parent="MarginContainer/Rows/ShopDetailView/ShopTopArea"]
+custom_minimum_size = Vector2(132, 132)
+layout_mode = 2
+
+[node name="Portrait" type="TextureRect" parent="MarginContainer/Rows/ShopDetailView/ShopTopArea/PortraitFrame"]
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ShopInfo" type="VBoxContainer" parent="MarginContainer/Rows/ShopDetailView/ShopTopArea"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 6
+
+[node name="ShopNameLabel" type="Label" parent="MarginContainer/Rows/ShopDetailView/ShopTopArea/ShopInfo"]
+layout_mode = 2
+text = "Shop name"
+theme_override_font_sizes/font_size = 20
+
+[node name="DescriptionLabel" type="Label" parent="MarginContainer/Rows/ShopDetailView/ShopTopArea/ShopInfo"]
+layout_mode = 2
+size_flags_vertical = 3
+autowrap_mode = 3
+text = "Description"
+
+[node name="ItemScroll" type="ScrollContainer" parent="MarginContainer/Rows/ShopDetailView"]
+custom_minimum_size = Vector2(0, 270)
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="ItemList" type="VBoxContainer" parent="MarginContainer/Rows/ShopDetailView/ItemScroll"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 6
