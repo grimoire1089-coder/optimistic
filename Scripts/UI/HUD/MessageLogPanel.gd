@@ -7,6 +7,9 @@ const DEFAULT_NOTICE_SFX_PATH := "res://Assets/Audio/SFX/UI/UI_Notice_001.ogg"
 @export var notice_sfx: AudioStream
 @export var notice_sfx_volume_db: float = 0.0
 @export var auto_scroll_to_latest: bool = true
+@export var card_height: float = 58.0
+@export var card_enter_offset_y: float = 18.0
+@export var card_enter_duration: float = 0.22
 @export var card_background_color: Color = Color(0.035, 0.04, 0.06, 0.96)
 @export var card_border_color: Color = Color(0.14, 0.8, 0.95, 0.9)
 @export var card_text_color: Color = Color(0.92, 0.98, 1.0, 1.0)
@@ -23,6 +26,7 @@ var _messages: Array[String] = []
 func _ready() -> void:
 	add_to_group(&"message_log")
 	_load_default_notice_sfx_if_needed()
+	_apply_bottom_stack_layout()
 	_update_header()
 	_update_empty_state()
 
@@ -63,10 +67,38 @@ func get_messages() -> PackedStringArray:
 	return result
 
 
+func _apply_bottom_stack_layout() -> void:
+	if message_list == null:
+		return
+	message_list.alignment = BoxContainer.ALIGNMENT_END
+
+
 func _create_message_card(message: String) -> void:
+	var holder := Control.new()
+	holder.clip_contents = true
+	holder.custom_minimum_size = Vector2(0.0, 0.0)
+	holder.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+
+	var card := _make_card_node(message)
+	holder.add_child(card)
+	message_list.add_child(holder)
+
+	call_deferred("_animate_message_card", holder, card)
+
+
+func _make_card_node(message: String) -> PanelContainer:
 	var card := PanelContainer.new()
-	card.custom_minimum_size = Vector2(0.0, 58.0)
+	card.custom_minimum_size = Vector2(0.0, card_height)
 	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	card.anchor_left = 0.0
+	card.anchor_top = 1.0
+	card.anchor_right = 1.0
+	card.anchor_bottom = 1.0
+	card.offset_left = 0.0
+	card.offset_top = -card_height + card_enter_offset_y
+	card.offset_right = 0.0
+	card.offset_bottom = card_enter_offset_y
+	card.modulate.a = 0.0
 	card.add_theme_stylebox_override("panel", _make_card_style())
 
 	var margin := MarginContainer.new()
@@ -85,7 +117,21 @@ func _create_message_card(message: String) -> void:
 	label.add_theme_font_size_override("font_size", 14)
 	margin.add_child(label)
 
-	message_list.add_child(card)
+	return card
+
+
+func _animate_message_card(holder: Control, card: PanelContainer) -> void:
+	if not is_instance_valid(holder) or not is_instance_valid(card):
+		return
+
+	var tween := create_tween()
+	tween.set_parallel(true)
+	tween.set_trans(Tween.TRANS_CUBIC)
+	tween.set_ease(Tween.EASE_OUT)
+	tween.tween_property(holder, "custom_minimum_size:y", card_height, card_enter_duration)
+	tween.tween_property(card, "offset_top", -card_height, card_enter_duration)
+	tween.tween_property(card, "offset_bottom", 0.0, card_enter_duration)
+	tween.tween_property(card, "modulate:a", 1.0, card_enter_duration)
 
 
 func _trim_old_messages() -> void:
@@ -97,9 +143,9 @@ func _trim_old_messages() -> void:
 func _remove_oldest_card() -> void:
 	if message_list.get_child_count() <= 0:
 		return
-	var oldest_card := message_list.get_child(0)
-	message_list.remove_child(oldest_card)
-	oldest_card.queue_free()
+	var oldest_card_holder := message_list.get_child(0)
+	message_list.remove_child(oldest_card_holder)
+	oldest_card_holder.queue_free()
 
 
 func _update_header() -> void:
