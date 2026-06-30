@@ -166,8 +166,11 @@ func _create_shop_button(shop: ShopData, index: int) -> Button:
 	card.add_child(sticker_rect)
 
 	var name_label := Label.new()
+	name_label.custom_minimum_size = Vector2(0, 30)
+	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	name_label.text = shop.display_name
 	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	name_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	name_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	name_label.clip_text = true
 	name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
