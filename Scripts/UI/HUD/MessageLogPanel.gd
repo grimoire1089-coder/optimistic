@@ -11,7 +11,7 @@ enum LogChannel { NORMAL, DEBUG }
 @export var auto_scroll_to_latest: bool = true
 ## 旧設定との互換用。デバッグログはコード側で常に無音にする。
 @export var play_notice_sfx_for_debug: bool = false
-@export_range(0.0, 10.0, 0.1) var queued_message_delay_seconds: float = 1.0
+@export_range(0.0, 10.0, 0.1) var queued_message_delay_seconds: float = 2.0
 @export var card_height: float = 58.0
 @export var card_enter_offset_y: float = 18.0
 @export var card_enter_duration: float = 0.22
