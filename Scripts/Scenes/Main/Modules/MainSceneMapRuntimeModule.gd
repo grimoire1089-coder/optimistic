@@ -68,6 +68,7 @@ func _create_infrastructure_room_map_fallback() -> RoomMapGridModule:
 	infrastructure_room_map.map_display_name = "インフラルーム"
 	infrastructure_room_map.buildable = false
 	infrastructure_room_map.screen_margin = _robin_room_map.screen_margin
+	infrastructure_room_map.bottom_reserved_margin = _robin_room_map.bottom_reserved_margin
 	infrastructure_room_map.side_ui_margin = _robin_room_map.side_ui_margin
 	infrastructure_room_map.cell_size = _robin_room_map.cell_size
 	infrastructure_room_map.fixed_grid_size = _robin_room_map.fixed_grid_size
