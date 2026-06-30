@@ -235,7 +235,7 @@ func _create_item_card(entry: ShopItemData, credits: int) -> Button:
 	row.offset_right = -10.0
 	row.offset_bottom = -8.0
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	row.theme_override_constants["separation"] = 10
+	row.add_theme_constant_override("separation", 10)
 	button.add_child(row)
 
 	var icon_rect := TextureRect.new()
@@ -249,7 +249,7 @@ func _create_item_card(entry: ShopItemData, credits: int) -> Button:
 	var text_box := VBoxContainer.new()
 	text_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	text_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	text_box.theme_override_constants["separation"] = 2
+	text_box.add_theme_constant_override("separation", 2)
 	row.add_child(text_box)
 
 	var name_label := Label.new()
