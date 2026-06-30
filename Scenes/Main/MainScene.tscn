@@ -31,7 +31,7 @@ script = ExtResource("3_canvas_glow")
 
 [node name="RobinRoomBgmListModule" type="Node" parent="." unique_id=638603961]
 script = ExtResource("16_robin_room_bgm")
-bgm_paths = PackedStringArray("res://Assets/Audio/BGM/Room BGM 001.ogg", "res://Assets/Audio/BGM/Room BGM 002.ogg", "res://Assets/Audio/BGM/Room BGM 003.ogg")
+bgm_paths = PackedStringArray("res://Assets/Audio/BGM/Room BGM 001.ogg", "res://Assets/Audio/BGM/Room BGM 002.ogg", "res://Assets/Audio/BGM/Room BGM 003.ogg", "res://Assets/Audio/BGM/Room BGM 004.ogg")
 
 [node name="RobinRoomMap" type="Node2D" parent="." unique_id=723162854]
 z_index = -30
