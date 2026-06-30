@@ -5,6 +5,7 @@ signal map_rect_changed(visual_rect: Rect2, grid_rect: Rect2, grid_size: Vector2
 
 @export var map_id: StringName = &"robin_room"
 @export var map_display_name: String = "ロビンの部屋"
+@export var buildable: bool = true
 @export var screen_margin: float = 96.0
 @export var side_ui_margin: float = 280.0
 @export var cell_size: Vector2 = Vector2(48.0, 48.0)
@@ -34,6 +35,10 @@ func _ready() -> void:
 func _process(_delta: float) -> void:
 	_sync_map_state(false)
 	queue_redraw()
+
+
+func is_buildable() -> bool:
+	return buildable
 
 
 func get_visual_map_rect() -> Rect2:

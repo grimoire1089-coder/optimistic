@@ -24,6 +24,16 @@ func _process(_delta: float) -> void:
 	queue_redraw()
 
 
+func set_room_map_path(next_room_map_path: NodePath) -> void:
+	if room_map_path == next_room_map_path:
+		_resolve_refs()
+		return
+	room_map_path = next_room_map_path
+	_room_map = null
+	_resolve_refs()
+	queue_redraw()
+
+
 func _draw() -> void:
 	if not _is_build_mode_enabled():
 		return

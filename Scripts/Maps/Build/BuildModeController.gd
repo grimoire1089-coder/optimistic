@@ -27,6 +27,20 @@ func _ready() -> void:
 	_resolve_room_map()
 
 
+func set_room_map_path(next_room_map_path: NodePath) -> void:
+	if room_map_path == next_room_map_path:
+		_resolve_room_map()
+		if not is_buildable():
+			set_build_mode_enabled(false)
+		return
+
+	room_map_path = next_room_map_path
+	_room_map = null
+	_resolve_room_map()
+	if not is_buildable():
+		set_build_mode_enabled(false)
+
+
 func is_buildable() -> bool:
 	_resolve_room_map()
 	if _room_map == null:
