@@ -4,6 +4,7 @@ class_name ShopData
 @export var shop_id: StringName = &""
 @export var display_name: String = "ショップ"
 @export_multiline var description: String = ""
+@export var portrait: Texture2D
 @export var items: Array[ShopItemData] = []
 
 
@@ -16,6 +17,12 @@ func get_available_items() -> Array[ShopItemData]:
 			continue
 		result.append(item)
 	return result
+
+
+func get_portrait_path() -> String:
+	if portrait == null:
+		return ""
+	return portrait.resource_path
 
 
 func is_empty() -> bool:
