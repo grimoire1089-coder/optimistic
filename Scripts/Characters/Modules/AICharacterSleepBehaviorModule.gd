@@ -62,6 +62,15 @@ func is_sleeping() -> bool:
 	return _is_sleeping
 
 
+func is_action_progress_visible() -> bool:
+	return _is_active
+
+
+func get_action_progress_ratio() -> float:
+	var safe_wake_ratio := maxf(wake_ratio, 0.01)
+	return clampf(_get_energy_ratio() / safe_wake_ratio, 0.0, 1.0)
+
+
 func get_facing_direction() -> Vector2:
 	return _facing_direction
 
