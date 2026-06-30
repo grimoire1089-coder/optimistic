@@ -23,6 +23,7 @@ var _inventory_module: RobinInventoryModule
 var _shops: Array[ShopData] = []
 var _selected_shop_index: int = -1
 var _current_shop_tab_index: int = 0
+var _is_setting_item_tabs: bool = false
 var _previous_bgm: AudioStream
 var _previous_bgm_position: float = 0.0
 var _has_previous_bgm: bool = false
@@ -160,11 +161,13 @@ func _apply_shop_portrait(shop: ShopData) -> void:
 
 
 func _setup_item_tabs(shop: ShopData) -> void:
+	_is_setting_item_tabs = true
 	item_tab_bar.clear_tabs()
 	var tabs := shop.get_tabs()
 	if tabs.is_empty():
 		item_tab_bar.visible = false
 		_current_shop_tab_index = 0
+		_is_setting_item_tabs = false
 		return
 
 	item_tab_bar.visible = true
@@ -173,6 +176,7 @@ func _setup_item_tabs(shop: ShopData) -> void:
 
 	_current_shop_tab_index = clampi(_current_shop_tab_index, 0, tabs.size() - 1)
 	item_tab_bar.current_tab = _current_shop_tab_index
+	_is_setting_item_tabs = false
 
 
 func _get_current_shop_tab_id(shop: ShopData) -> StringName:
@@ -316,6 +320,8 @@ func _on_back_pressed() -> void:
 
 
 func _on_item_tab_changed(tab_index: int) -> void:
+	if _is_setting_item_tabs:
+		return
 	_current_shop_tab_index = tab_index
 	_refresh_current_shop_detail()
 
