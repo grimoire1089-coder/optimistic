@@ -11,6 +11,7 @@ class_name BuildFurniturePlacementPreview
 @export var invalid_border_color: Color = Color(2.5, 0.12, 0.08, 0.98)
 @export var store_fill_color: Color = Color(1.0, 0.45, 0.0, 0.28)
 @export var store_border_color: Color = Color(2.8, 0.75, 0.05, 1.0)
+@export var locked_furniture_message: String = "使用中の家具は動かせません。"
 @export var area_border_width: float = 3.0
 
 var _room_map: RoomMapGridModule
@@ -134,7 +135,7 @@ func _left_click() -> void:
 		BuildModeController.TOOL_MODE_MOVE:
 			_move_click()
 		BuildModeController.TOOL_MODE_STORE:
-			_placement.remove_furniture_at(_grid)
+			_store_click()
 
 
 func _place_selected() -> void:
@@ -150,6 +151,15 @@ func _place_selected() -> void:
 		node.set_meta("rotation_steps", _controller.get_selected_rotation_steps())
 
 
+func _store_click() -> void:
+	var node := _placement.get_furniture_at(_grid)
+	if node != null and not _can_modify_node(node):
+		_push_build_message(locked_furniture_message)
+		return
+	if not _placement.remove_furniture_at(_grid) and node != null:
+		_push_build_message(locked_furniture_message)
+
+
 func _move_click() -> void:
 	if _moving == null:
 		_start_move()
@@ -158,6 +168,10 @@ func _move_click() -> void:
 
 
 func _start_move() -> void:
+	var target := _placement.get_furniture_at(_grid)
+	if target != null and not _can_modify_node(target):
+		_push_build_message(locked_furniture_message)
+		return
 	var node := _placement.take_furniture_at(_grid)
 	if node == null:
 		return
@@ -208,8 +222,9 @@ func _draw_store_area() -> void:
 	var pos: Vector2i = node.get_meta("grid_position", _grid)
 	var fp: Vector2i = node.get_meta("grid_footprint", Vector2i(1, 1))
 	var rect := _room_map.get_grid_area_rect(pos, fp)
-	draw_rect(rect, store_fill_color, true)
-	draw_rect(rect, store_border_color, false, area_border_width)
+	var can_store := _can_modify_node(node)
+	draw_rect(rect, store_fill_color if can_store else invalid_fill_color, true)
+	draw_rect(rect, store_border_color if can_store else invalid_border_color, false, area_border_width)
 
 
 func _rebuild_preview(scene: PackedScene) -> void:
@@ -235,6 +250,21 @@ func _clear_move() -> void:
 	_moving_id = &""
 	_moving_rotation = 0
 	_moving_modulate = Color.WHITE
+
+
+func _can_modify_node(node: Node2D) -> bool:
+	if _placement == null:
+		return true
+	if not _placement.has_method("can_modify_furniture"):
+		return true
+	return _placement.call("can_modify_furniture", node) == true
+
+
+func _push_build_message(message: String) -> void:
+	var message_log := get_tree().get_first_node_in_group(&"message_log") as MessageLogPanel
+	if message_log == null:
+		return
+	message_log.add_message(message)
 
 
 func _active() -> bool:
