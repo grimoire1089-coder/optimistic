@@ -14,6 +14,7 @@ const TRAVEL_BUTTONS_ROOT_SCENE_PATH := "res://Scenes/Main/Modules/MainSceneTrav
 func _ready() -> void:
 	_push_debug_message("System", "MainScene _ready 開始")
 	_ensure_runtime_children()
+	_apply_reserved_bottom_hud_layout()
 	var startup_debug_text := _get_startup_debug_text()
 	debug_label.text = startup_debug_text
 	_connect_robin_selection()
@@ -120,6 +121,31 @@ func _ensure_map_travel_button(parent: Control, button_name: String, text_value:
 	button.visible = visible_on_start
 	parent.add_child(button)
 	return button
+
+
+func _apply_reserved_bottom_hud_layout() -> void:
+	if canvas_layer == null:
+		return
+
+	_place_top_right_control(canvas_layer.get_node_or_null("ShopButton") as Control, Vector2(-304.0, 176.0), Vector2(64.0, 64.0))
+	_place_top_right_control(canvas_layer.get_node_or_null("InventoryButton") as Control, Vector2(-232.0, 176.0), Vector2(64.0, 64.0))
+	_place_top_right_control(canvas_layer.get_node_or_null("BuildModeButton") as Control, Vector2(-160.0, 176.0), Vector2(64.0, 64.0))
+	_place_top_right_control(canvas_layer.get_node_or_null("WorkCreditButton") as Control, Vector2(-88.0, 176.0), Vector2(64.0, 64.0))
+	_place_top_right_control(canvas_layer.get_node_or_null("AICharacterHud") as Control, Vector2(-368.0, 260.0), Vector2(344.0, 220.0))
+	_place_top_right_control(canvas_layer.get_node_or_null("WorkMenu") as Control, Vector2(-360.0, 260.0), Vector2(336.0, 158.0))
+
+
+func _place_top_right_control(control: Control, top_right_offset: Vector2, control_size: Vector2) -> void:
+	if control == null:
+		return
+	control.anchor_left = 1.0
+	control.anchor_top = 0.0
+	control.anchor_right = 1.0
+	control.anchor_bottom = 0.0
+	control.offset_left = top_right_offset.x
+	control.offset_top = top_right_offset.y
+	control.offset_right = top_right_offset.x + control_size.x
+	control.offset_bottom = top_right_offset.y + control_size.y
 
 
 func _push_startup_message(message: String) -> void:

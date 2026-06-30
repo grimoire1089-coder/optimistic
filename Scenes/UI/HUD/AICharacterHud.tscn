@@ -5,15 +5,13 @@
 
 [node name="AICharacterHud" type="PanelContainer"]
 custom_minimum_size = Vector2(344, 0)
-anchors_preset = 3
+anchors_preset = 1
 anchor_left = 1.0
-anchor_top = 1.0
 anchor_right = 1.0
-anchor_bottom = 1.0
 offset_left = -368.0
-offset_top = -330.0
+offset_top = 260.0
 offset_right = -24.0
-offset_bottom = -110.0
+offset_bottom = 480.0
 grow_horizontal = 0
 grow_vertical = 0
 script = ExtResource("1_hud_script")
