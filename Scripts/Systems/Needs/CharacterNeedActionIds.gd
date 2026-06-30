@@ -2,6 +2,7 @@ extends RefCounted
 class_name CharacterNeedActionIds
 
 const EAT := &"need_action_eat"
+const HYDRATE := &"need_action_hydrate"
 const REST := &"need_action_rest"
 const MAINTAIN := &"need_action_maintain"
 const PLAY := &"need_action_play"
