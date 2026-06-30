@@ -36,13 +36,13 @@ func show_actor(actor: RobinWanderActor) -> void:
 	if _actor == null:
 		title_label.text = "AI Character"
 		needs_panel.set_character_needs(null)
-		mood_panel.set_character_needs(null)
+		mood_panel.set_mood_module(null)
 		_update_action_label()
 		_push_debug_result("AI HUD", "show_actor", false, "actor が null です")
 		return
 	title_label.text = _actor.display_name
 	needs_panel.set_needs_module(_actor.get_needs_module())
-	mood_panel.set_needs_module(_actor.get_needs_module())
+	mood_panel.set_mood_module(_actor.get_mood_module())
 	_update_action_label()
 	_push_debug_result("AI HUD", "show_actor", true, "target=%s" % _actor.display_name)
 
@@ -58,7 +58,7 @@ func clear_actor() -> void:
 	_last_logged_need_id = &""
 	_last_logged_action_id = &""
 	needs_panel.set_character_needs(null)
-	mood_panel.set_character_needs(null)
+	mood_panel.set_mood_module(null)
 	_update_action_label()
 	hide_hud()
 	_push_debug_result("AI HUD", "clear_actor", true, "previous=%s" % previous_actor_name)
