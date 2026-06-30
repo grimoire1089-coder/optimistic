@@ -3,64 +3,67 @@ class_name CharacterMoodPanel
 
 @onready var _rows: VBoxContainer = $MarginContainer/Rows
 
-var _needs: CharacterNeeds
+var _mood_module: CharacterMoodModule
 
 func _ready() -> void:
-	if _needs != null:
+	if _mood_module != null:
 		_rebuild()
 
-func set_character_needs(needs: CharacterNeeds) -> void:
-	_disconnect_needs()
-	_needs = needs
-	_connect_needs()
+func set_mood_module(module: CharacterMoodModule) -> void:
+	_disconnect_mood_module()
+	_mood_module = module
+	_connect_mood_module()
 	if is_node_ready():
 		_rebuild()
 
-func set_needs_module(module: CharacterNeedsModule) -> void:
-	if module == null:
-		set_character_needs(null)
-		return
-	set_character_needs(module.get_character_needs())
+func set_character_needs(_needs: CharacterNeeds) -> void:
+	set_mood_module(null)
+
+func set_needs_module(_module: CharacterNeedsModule) -> void:
+	set_mood_module(null)
 
 func refresh() -> void:
 	if is_node_ready():
 		_rebuild()
 
-func _connect_needs() -> void:
-	if _needs == null:
+func _connect_mood_module() -> void:
+	if _mood_module == null:
 		return
-	var callable := Callable(self, "_on_need_changed")
-	if not _needs.need_changed.is_connected(callable):
-		_needs.need_changed.connect(callable)
+	var mood_callable := Callable(self, "_on_mood_changed")
+	if not _mood_module.mood_changed.is_connected(mood_callable):
+		_mood_module.mood_changed.connect(mood_callable)
+	var entries_callable := Callable(self, "_on_entries_changed")
+	if not _mood_module.entries_changed.is_connected(entries_callable):
+		_mood_module.entries_changed.connect(entries_callable)
 
-func _disconnect_needs() -> void:
-	if _needs == null:
+func _disconnect_mood_module() -> void:
+	if _mood_module == null:
 		return
-	var callable := Callable(self, "_on_need_changed")
-	if _needs.need_changed.is_connected(callable):
-		_needs.need_changed.disconnect(callable)
+	var mood_callable := Callable(self, "_on_mood_changed")
+	if _mood_module.mood_changed.is_connected(mood_callable):
+		_mood_module.mood_changed.disconnect(mood_callable)
+	var entries_callable := Callable(self, "_on_entries_changed")
+	if _mood_module.entries_changed.is_connected(entries_callable):
+		_mood_module.entries_changed.disconnect(entries_callable)
 
 func _rebuild() -> void:
 	_clear_rows()
 	if _rows == null:
 		return
-	if _needs == null:
-		_add_message_row("気分データなし")
+	if _mood_module == null:
+		_add_message_row("No mood data")
 		return
 
-	var mood_count := 0
-	for need in _needs.needs:
-		if need == null or need.definition == null:
-			continue
-		if need.is_critical():
-			_add_mood_row("危険", _get_mood_text(need, true))
-			mood_count += 1
-		elif need.is_low():
-			_add_mood_row("低下", _get_mood_text(need, false))
-			mood_count += 1
+	_add_summary_row()
+	var entries := _mood_module.get_entries()
+	if entries.is_empty():
+		_add_message_row("No mood entries")
+		return
 
-	if mood_count <= 0:
-		_add_message_row("落ち着いています")
+	for entry in entries:
+		if entry == null:
+			continue
+		_add_entry_row(entry)
 
 func _clear_rows() -> void:
 	if _rows == null:
@@ -68,37 +71,32 @@ func _clear_rows() -> void:
 	for child in _rows.get_children():
 		child.queue_free()
 
+func _add_summary_row() -> void:
+	var value := _mood_module.get_mood_value()
+	var total := _mood_module.get_total_points()
+	var label := Label.new()
+	label.text = "Mood: %d / 100   Total: %s" % [value, _get_signed_point_text(total)]
+	_rows.add_child(label)
+
 func _add_message_row(text: String) -> void:
 	var label := Label.new()
 	label.text = text
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_rows.add_child(label)
 
-func _add_mood_row(state_text: String, mood_text: String) -> void:
-	var row := HBoxContainer.new()
-	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_rows.add_child(row)
+func _add_entry_row(entry: CharacterMoodEntryInstance) -> void:
+	var label := Label.new()
+	label.text = "%s  %s" % [_get_signed_point_text(entry.get_point()), entry.get_display_name()]
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_rows.add_child(label)
 
-	var state_label := Label.new()
-	state_label.text = state_text
-	state_label.custom_minimum_size = Vector2(44.0, 0.0)
-	row.add_child(state_label)
+func _get_signed_point_text(point: int) -> String:
+	if point > 0:
+		return "+%d" % point
+	return str(point)
 
-	var mood_label := Label.new()
-	mood_label.text = mood_text
-	mood_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	mood_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_child(mood_label)
+func _on_mood_changed(_old_value: int, _new_value: int) -> void:
+	_rebuild()
 
-func _get_mood_text(need: NeedInstance, critical: bool) -> String:
-	if need == null or need.definition == null:
-		return ""
-	var mood_id := need.definition.critical_mood_id if critical else need.definition.low_mood_id
-	if mood_id != &"":
-		return String(mood_id)
-	if critical:
-		return "%s がかなり不足しています" % need.definition.display_name
-	return "%s が不足気味です" % need.definition.display_name
-
-func _on_need_changed(_need_id: StringName, _old_value: float, _new_value: float) -> void:
+func _on_entries_changed() -> void:
 	_rebuild()
