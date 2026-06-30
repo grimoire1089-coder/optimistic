@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="FoodItemData" format=3]
+
+[ext_resource type="Script" uid="uid://cgyi4b7bbmqn" path="res://Scripts/Items/Food/FoodItemData.gd" id="1_food_data"]
+
+[resource]
+script = ExtResource("1_food_data")
+item_id = &"food_1003"
+display_name = "星灯ゴマ団子"
+description = "ころりと丸い甘いゴマ団子。揚げた皮の香ばしさと餡の甘みが広がる。"
+category_id = &"foods"
+buy_price = 110
+sell_price = 55
