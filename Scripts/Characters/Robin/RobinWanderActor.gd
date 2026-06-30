@@ -21,6 +21,7 @@ const DEFAULT_CLICK_SFX_PATHS := [
 @onready var click_area: Area2D = $ClickArea2D
 @onready var needs_bundle: Node = $AICharacterNeedsBundle
 @onready var needs_module: CharacterNeedsModule = $AICharacterNeedsBundle/CharacterNeedsModule
+@onready var mood_module: CharacterMoodModule = $AICharacterNeedsBundle/CharacterMoodModule
 @onready var need_planner: NeedDrivenAIPlanner = $AICharacterNeedsBundle/NeedDrivenAIPlanner
 @onready var inventory_module: RobinInventoryModule = $RobinInventoryModule
 @onready var wander_module: RobinRandomWanderModule = $RobinRandomWanderModule
@@ -77,6 +78,10 @@ func get_visual_movement_area() -> Rect2:
 
 func get_needs_module() -> CharacterNeedsModule:
 	return needs_module
+
+
+func get_mood_module() -> CharacterMoodModule:
+	return mood_module
 
 
 func get_need_planner() -> NeedDrivenAIPlanner:
