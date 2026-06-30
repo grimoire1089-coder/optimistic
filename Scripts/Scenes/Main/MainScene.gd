@@ -9,30 +9,55 @@ extends Node2D
 
 
 func _ready() -> void:
+	_push_debug_message("System", "MainScene _ready 開始")
 	var startup_debug_text := _get_startup_debug_text()
 	debug_label.text = startup_debug_text
 	_connect_robin_selection()
 	_push_startup_message(startup_debug_text)
+	_push_debug_result("System", "MainScene 初期化", true, startup_debug_text)
 
 
 func _connect_robin_selection() -> void:
 	if robin == null:
+		_push_debug_result("System", "Robin selected signal 接続", false, "Robin が見つかりません")
 		return
 	var callable := Callable(self, "_on_robin_selected")
 	if not robin.selected.is_connected(callable):
 		robin.selected.connect(callable)
+		_push_debug_result("System", "Robin selected signal 接続", true, "接続しました")
+		return
+	_push_debug_result("System", "Robin selected signal 接続", true, "すでに接続済み")
 
 
 func _on_robin_selected(actor: RobinWanderActor) -> void:
+	var actor_name := "AI Character"
+	if actor != null:
+		actor_name = actor.display_name
+	_push_debug_message("AI:%s" % actor_name, "選択されました。HUD表示を試行します")
+
 	if ai_character_hud == null:
+		_push_debug_result("AI HUD", "show_actor", false, "AICharacterHud が見つかりません")
 		return
 	ai_character_hud.show_actor(actor)
+	_push_debug_result("AI HUD", "show_actor", true, "target=%s" % actor_name)
 
 
 func _push_startup_message(message: String) -> void:
 	if message_log == null:
 		return
 	message_log.add_message(message)
+
+
+func _push_debug_message(source: String, message: String) -> void:
+	if message_log == null:
+		return
+	message_log.add_debug_message("[%s] %s" % [source, message])
+
+
+func _push_debug_result(source: String, action: String, success: bool, detail: String = "") -> void:
+	if message_log == null:
+		return
+	message_log.add_debug_result(source, action, success, detail)
 
 
 func _get_startup_debug_text() -> String:
