@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="ShopData" load_steps=13 format=3]
+[gd_resource type="Resource" script_class="ShopData" load_steps=19 format=3]
 
 [ext_resource type="Script" uid="uid://dik32ehksmive" path="res://Scripts/Shops/ShopData.gd" id="1_shop_data"]
 [ext_resource type="Script" uid="uid://8a0d3nyywiao" path="res://Scripts/Shops/ShopItemData.gd" id="2_shop_item"]
@@ -10,6 +10,7 @@
 [ext_resource type="Resource" path="res://Data/Items/Food/Food_1005_StarlightCake.tres" id="8_starlight_cake"]
 [ext_resource type="Resource" path="res://Data/Items/Food/Drink_1001_LycheeSoda.tres" id="9_lychee_soda"]
 [ext_resource type="Resource" path="res://Data/Items/Food/Drink_1002_OolongTea.tres" id="10_oolong_tea"]
+[ext_resource type="AudioStream" path="res://Assets/Audio/BGM/Yuzhou.ogg" id="11_yuzhou_bgm"]
 
 [sub_resource type="Resource" id="ShopItemData_nikuman"]
 script = ExtResource("2_shop_item")
@@ -61,4 +62,5 @@ shop_id = &"yuzhou_xingdeng"
 display_name = "星灯小館"
 description = "ユージョウが切り盛りする、ネオン路地裏の小さな中華飯店。温かい料理と茶で、少しだけ心の重力を軽くしてくれる。"
 portrait = ExtResource("3_yuzhou_portrait")
+shop_bgm = ExtResource("11_yuzhou_bgm")
 items = Array[ExtResource("2_shop_item")]([SubResource("ShopItemData_nikuman"), SubResource("ShopItemData_congee"), SubResource("ShopItemData_xiaolongbao"), SubResource("ShopItemData_sesame_dango"), SubResource("ShopItemData_starlight_cake"), SubResource("ShopItemData_lychee_soda"), SubResource("ShopItemData_oolong_tea")])
