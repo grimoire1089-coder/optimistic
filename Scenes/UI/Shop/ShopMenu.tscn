@@ -90,10 +90,12 @@ layout_mode = 2
 size_flags_vertical = 3
 horizontal_scroll_mode = 0
 
-[node name="ShopList" type="VBoxContainer" parent="MarginContainer/Rows/ShopListView/ShopListScroll"]
+[node name="ShopList" type="GridContainer" parent="MarginContainer/Rows/ShopListView/ShopListScroll"]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_constants/separation = 6
+columns = 3
+theme_override_constants/h_separation = 10
+theme_override_constants/v_separation = 10
 
 [node name="ShopDetailView" type="HBoxContainer" parent="MarginContainer/Rows"]
 visible = false
