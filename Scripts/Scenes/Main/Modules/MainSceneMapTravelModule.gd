@@ -15,6 +15,7 @@ const MAP_ID_INFRASTRUCTURE_ROOM: StringName = &"infrastructure_room"
 @export var build_grid_overlay_path: NodePath = NodePath("../BuildGridHighlightOverlay")
 @export var build_preview_path: NodePath = NodePath("../BuildFurniturePlacementPreview")
 @export var floor_placement_module_path: NodePath = NodePath("../FloorPlacementModule")
+@export var location_background_path: NodePath = NodePath("../LocationBackground")
 @export var move_robin_to_map_center_on_travel: bool = true
 
 var _robin_room_map: RoomMapGridModule
@@ -190,6 +191,14 @@ func _sync_runtime_build_nodes() -> void:
 		else:
 			floor_placement.set("floor_root_path", active_floor_root_path)
 			floor_placement.set("_floor_root", null)
+
+	var location_background := get_node_or_null(location_background_path)
+	if location_background != null:
+		if location_background.has_method("set_room_map_path"):
+			location_background.call("set_room_map_path", active_map_path)
+		else:
+			location_background.set("room_map_path", active_map_path)
+			location_background.set("_room_map", null)
 
 
 func _sync_travel_buttons() -> void:
