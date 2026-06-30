@@ -1,0 +1,24 @@
+# Normalize Godot text assets to LF so Windows Git does not rewrite them to CRLF.
+*.gd text eol=lf
+*.gd.uid text eol=lf
+*.tscn text eol=lf
+*.tscn.uid text eol=lf
+*.tres text eol=lf
+*.tres.uid text eol=lf
+*.res text eol=lf
+*.godot text eol=lf
+*.import text eol=lf
+*.cfg text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+
+# Keep binary assets untouched.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.ogg binary
+*.wav binary
+*.mp3 binary
+*.ttf binary
+*.otf binary
