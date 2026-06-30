@@ -51,12 +51,11 @@ func _process(delta: float) -> void:
 		return
 
 	_scroll_offset += scroll_speed * delta
-	var limit := label_width - available_width + restart_gap
-	if _scroll_offset >= limit:
+	var loop_distance := available_width + label_width + restart_gap
+	if _scroll_offset >= loop_distance:
 		_scroll_offset = 0.0
-		_wait_timer = edge_wait_seconds
 
-	_label.position.x = -_scroll_offset
+	_label.position.x = -label_width - restart_gap + _scroll_offset
 
 
 func _ensure_label() -> void:
@@ -88,4 +87,4 @@ func _reset_scroll() -> void:
 	_scroll_offset = 0.0
 	_wait_timer = edge_wait_seconds
 	if _label != null:
-		_label.position.x = 0.0
+		_label.position.x = -_label.get_combined_minimum_size().x - restart_gap
