@@ -12,7 +12,7 @@ dest_files=["res://.godot/imported/Yuzhou.ogg-a84648c7f396fb12466dd8a02c5554e8.o
 
 [params]
 
-loop=false
+loop=true
 loop_offset=0
 bpm=0
 beat_count=0
