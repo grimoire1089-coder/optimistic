@@ -264,25 +264,15 @@ func _refresh_item_grid(shop: ShopData) -> void:
 	detail_label.text = "所持クレジット: %d" % credits
 
 
-func _create_item_card(entry: ShopItemData, credits: int) -> Button:
-	var button := Button.new()
-	button.custom_minimum_size = Vector2(124, 176)
-	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	button.focus_mode = Control.FOCUS_NONE
-	button.clip_text = true
-	button.text = ""
-
-	var total_price := entry.get_total_price()
-	button.tooltip_text = entry.get_description()
-	button.disabled = not entry.is_available or total_price > credits
-	if total_price > credits:
-		button.tooltip_text = "クレジットが足りません。必要: %d / 所持: %d" % [total_price, credits]
-	button.pressed.connect(Callable(self, "_on_buy_pressed").bind(entry))
-	button.mouse_entered.connect(Callable(self, "_show_item_popup").bind(entry, button))
-	button.mouse_exited.connect(_hide_item_popup)
-	button.focus_entered.connect(Callable(self, "_show_item_popup").bind(entry, button))
-	button.focus_exited.connect(_hide_item_popup)
+func _create_item_card(entry: ShopItemData, credits: int) -> Control:
+	var card_panel := PanelContainer.new()
+	card_panel.custom_minimum_size = Vector2(124, 176)
+	card_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	card_panel.mouse_filter = Control.MOUSE_FILTER_STOP
+	card_panel.tooltip_text = entry.get_description()
+	card_panel.add_theme_stylebox_override("panel", _create_item_card_style())
+	card_panel.mouse_entered.connect(Callable(self, "_show_item_popup").bind(entry, card_panel))
+	card_panel.mouse_exited.connect(_hide_item_popup)
 
 	var card := VBoxContainer.new()
 	card.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -292,7 +282,7 @@ func _create_item_card(entry: ShopItemData, credits: int) -> Button:
 	card.offset_bottom = -8.0
 	card.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	card.add_theme_constant_override("separation", 5)
-	button.add_child(card)
+	card_panel.add_child(card)
 
 	var icon_rect := TextureRect.new()
 	icon_rect.custom_minimum_size = Vector2(72, 72)
@@ -315,17 +305,45 @@ func _create_item_card(entry: ShopItemData, credits: int) -> Button:
 	name_marquee.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	name_marquee.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	name_marquee.font_size = 13
-	name_marquee.set_display_text("%s x%d" % [entry.get_display_name(), max(entry.amount, 1)])
+	name_marquee.set_display_text(entry.get_display_name())
 	name_frame.add_child(name_marquee)
 
 	var price_label := Label.new()
-	price_label.text = "%d C" % total_price
+	price_label.text = "%d C" % entry.get_unit_price()
 	price_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	price_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	price_label.add_theme_font_size_override("font_size", 14)
 	card.add_child(price_label)
 
-	return button
+	var buy_button := Button.new()
+	buy_button.custom_minimum_size = Vector2(0, 30)
+	buy_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	buy_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	buy_button.focus_mode = Control.FOCUS_NONE
+	buy_button.text = "x%d" % max(entry.amount, 1)
+	buy_button.tooltip_text = "購入数: 通常 x%d / Shift x%d / Ctrl x%d" % [max(entry.amount, 1), max(entry.amount, 1) * 10, max(entry.amount, 1) * 100]
+	buy_button.disabled = not entry.is_available or entry.get_total_price() > credits
+	buy_button.pressed.connect(Callable(self, "_on_buy_pressed").bind(entry))
+	buy_button.mouse_entered.connect(Callable(self, "_show_item_popup").bind(entry, card_panel))
+	buy_button.mouse_exited.connect(_hide_item_popup)
+	card.add_child(buy_button)
+
+	return card_panel
+
+
+func _create_item_card_style() -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.035, 0.04, 0.055, 1.0)
+	style.border_color = Color(0.08, 0.18, 0.22, 1.0)
+	style.border_width_left = 1
+	style.border_width_top = 1
+	style.border_width_right = 1
+	style.border_width_bottom = 1
+	style.corner_radius_top_left = 6
+	style.corner_radius_top_right = 6
+	style.corner_radius_bottom_left = 6
+	style.corner_radius_bottom_right = 6
+	return style
 
 
 func _create_name_frame_style() -> StyleBoxFlat:
@@ -385,13 +403,14 @@ func _show_item_popup(entry: ShopItemData, anchor: Control) -> void:
 		return
 	_setup_item_popup()
 
-	_item_popup_name_label.text = "%s x%d" % [entry.get_display_name(), max(entry.amount, 1)]
+	var base_amount := max(entry.amount, 1)
+	_item_popup_name_label.text = entry.get_display_name()
 	_item_popup_description_label.text = entry.get_description()
-	_item_popup_price_label.text = "%d C" % entry.get_total_price()
+	_item_popup_price_label.text = "単価: %d C\n購入: x%d / Shift x%d / Ctrl x%d" % [entry.get_unit_price(), base_amount, base_amount * 10, base_amount * 100]
 
 	var global_rect := anchor.get_global_rect()
 	var viewport_size := get_viewport_rect().size
-	var popup_size := Vector2i(304, 150)
+	var popup_size := Vector2i(304, 160)
 	var popup_pos := Vector2i(
 		int(global_rect.position.x + global_rect.size.x + 12.0),
 		int(global_rect.position.y)
@@ -446,20 +465,33 @@ func _on_buy_pressed(entry: ShopItemData) -> void:
 		detail_label.text = "購入先のインベントリが見つかりません。"
 		return
 
-	var total_price := entry.get_total_price()
+	var purchase_amount := _get_purchase_amount(entry)
+	var total_price := entry.get_unit_price() * purchase_amount
 	if not _spend_credits(total_price, entry):
 		_refresh_current_shop_detail()
 		detail_label.text = "クレジットが足りません。必要: %d / 所持: %d" % [total_price, _get_wallet_credits()]
 		return
 
-	if not _add_entry_to_inventory(entry):
+	if not _add_entry_to_inventory(entry, purchase_amount):
 		_refund_credits(total_price, entry)
 		_refresh_current_shop_detail()
 		detail_label.text = "インベントリに空きがありません。購入を取り消しました。"
 		return
 
 	_refresh_current_shop_detail()
-	detail_label.text = "購入しました: %s x%d" % [entry.get_display_name(), max(entry.amount, 1)]
+	detail_label.text = "購入しました: %s x%d" % [entry.get_display_name(), purchase_amount]
+
+
+func _get_purchase_amount(entry: ShopItemData) -> int:
+	return max(entry.amount, 1) * _get_purchase_multiplier()
+
+
+func _get_purchase_multiplier() -> int:
+	if Input.is_key_pressed(KEY_CTRL):
+		return 100
+	if Input.is_key_pressed(KEY_SHIFT):
+		return 10
+	return 1
 
 
 func _refresh_current_shop_detail() -> void:
@@ -488,7 +520,7 @@ func _refund_credits(amount: int, entry: ShopItemData) -> void:
 	wallet.call("add", amount, "shop_refund:%s" % entry.get_item_id())
 
 
-func _add_entry_to_inventory(entry: ShopItemData) -> bool:
+func _add_entry_to_inventory(entry: ShopItemData, purchase_amount: int) -> bool:
 	if _inventory_module == null:
 		return false
 	if not _inventory_module.has_method("add_item"):
@@ -498,7 +530,7 @@ func _add_entry_to_inventory(entry: ShopItemData) -> bool:
 		entry.get_category_id(),
 		entry.get_item_id(),
 		entry.get_display_name(),
-		max(entry.amount, 1),
+		max(purchase_amount, 1),
 		entry.get_icon_path()
 	) == true
 
