@@ -1,6 +1,8 @@
 extends Node
 class_name CharacterMoodModule
 
+const MINUTES_PER_DAY := 24 * 60
+
 signal mood_changed(old_value: int, new_value: int)
 signal entries_changed()
 
@@ -59,6 +61,12 @@ func refresh_season_limited_entries() -> void:
 		return
 	character_mood.update_for_season(String(clock.call("get_season_id")), int(clock.call("get_season_year")))
 
+func refresh_timed_entries() -> void:
+	var clock := _get_game_clock()
+	if clock == null:
+		return
+	character_mood.update_for_absolute_minute(_get_absolute_minute(clock))
+
 func _ensure_character_mood() -> void:
 	if character_mood != null:
 		return
@@ -100,20 +108,33 @@ func _connect_game_clock() -> void:
 	var clock := _get_game_clock()
 	if clock == null:
 		return
-	if not clock.has_signal("season_changed"):
-		return
-	var callable := Callable(self, "_on_season_changed")
-	if not clock.season_changed.is_connected(callable):
-		clock.season_changed.connect(callable)
+	if clock.has_signal("season_changed"):
+		var season_callable := Callable(self, "_on_season_changed")
+		if not clock.season_changed.is_connected(season_callable):
+			clock.season_changed.connect(season_callable)
+	if clock.has_signal("minute_changed"):
+		var minute_callable := Callable(self, "_on_minute_changed")
+		if not clock.minute_changed.is_connected(minute_callable):
+			clock.minute_changed.connect(minute_callable)
 
 func _get_game_clock() -> Node:
 	if _game_clock == null:
 		_resolve_game_clock()
 	return _game_clock
 
+func _get_absolute_minute(clock: Node) -> int:
+	if clock == null:
+		return 0
+	var day_value := int(clock.get("day"))
+	var minute_value := int(clock.get("minute_of_day"))
+	return maxi(day_value - 1, 0) * MINUTES_PER_DAY + minute_value
+
 func _on_season_changed(season_id: String, _season_day: int, season_year: int) -> void:
 	_ensure_character_mood()
 	character_mood.update_for_season(season_id, season_year)
+
+func _on_minute_changed(_day: int, _hour: int, _minute: int) -> void:
+	refresh_timed_entries()
 
 func _on_mood_changed(old_value: int, new_value: int) -> void:
 	mood_changed.emit(old_value, new_value)
