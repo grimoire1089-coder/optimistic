@@ -13,10 +13,23 @@
 - `Scenes/Characters/Modules/AICharacterNeedsBundle.tscn`
 - `Scenes/UI/CharacterNeeds/CharacterNeedsPanel.tscn`
 
+## Default needs
+
+`CharacterNeedIds.DEFAULT_DEFINITION_PATHS` の順番で UI に表示されます。
+水分は `hunger.tres` の直後に読み込むため、CharacterNeedsPanel では満腹度の下に表示されます。
+
+- 体力: `energy`
+- 満腹度: `hunger`
+- 水分: `water`
+- 清潔度: `hygiene`
+- 娯楽度: `fun`
+- 交流度: `social`
+
 ## Basic call
 
 ```gdscript
 needs_module.add_need_value(CharacterNeedIds.HUNGER, 25.0)
+needs_module.add_need_value(CharacterNeedIds.WATER, 25.0)
 var lowest := needs_module.get_lowest_need_id()
 ```
 
