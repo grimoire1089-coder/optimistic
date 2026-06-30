@@ -87,12 +87,20 @@ func _add_message_row(text: String) -> void:
 func _add_entry_row(entry: CharacterMoodEntryInstance) -> void:
 	var row := VBoxContainer.new()
 	_rows.add_child(row)
-	var title := Label.new()
-	title.text = "%s  %s" % [_get_signed_point_text(entry.get_point()), entry.get_display_name()]
-	row.add_child(title)
-	var info := Label.new()
-	info.text = "Open this entry later."
-	row.add_child(info)
+
+	var detail_label := Label.new()
+	detail_label.text = entry.get_detail_text()
+	detail_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	detail_label.visible = false
+
+	var button := CheckButton.new()
+	button.text = "%s  %s" % [_get_signed_point_text(entry.get_point()), entry.get_display_name()]
+	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	button.toggled.connect(Callable(detail_label, "set_visible"))
+	row.add_child(button)
+	row.add_child(detail_label)
 
 func _get_signed_point_text(point: int) -> String:
 	if point > 0:
