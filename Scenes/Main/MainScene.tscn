@@ -36,6 +36,8 @@ bgm_paths = PackedStringArray("res://Assets/Audio/BGM/Room BGM 001.ogg", "res://
 [node name="RobinRoomMap" type="Node2D" parent="." unique_id=723162854]
 z_index = -30
 script = ExtResource("11_room_map_grid")
+screen_margin = 64.0
+bottom_reserved_margin = 192.0
 fixed_grid_size = Vector2i(15, 15)
 fit_cell_size_to_visual_rect = true
 
