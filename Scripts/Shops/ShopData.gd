@@ -5,6 +5,7 @@ class_name ShopData
 @export var display_name: String = "ショップ"
 @export_multiline var description: String = ""
 @export var portrait: Texture2D
+@export var shop_bgm: AudioStream
 @export var items: Array[ShopItemData] = []
 
 
@@ -23,6 +24,12 @@ func get_portrait_path() -> String:
 	if portrait == null:
 		return ""
 	return portrait.resource_path
+
+
+func get_bgm_path() -> String:
+	if shop_bgm == null:
+		return ""
+	return shop_bgm.resource_path
 
 
 func is_empty() -> bool:
