@@ -60,7 +60,7 @@ needs_module_path = NodePath("../AICharacterNeedsBundle/CharacterNeedsModule")
 need_planner_path = NodePath("../AICharacterNeedsBundle/NeedDrivenAIPlanner")
 furniture_root_path = NodePath("../../RobinRoomMap/FurnitureRoot")
 energy_recovery_per_game_minute = 0.31
-floor_sleep_energy_ratio = -1.0
+floor_sleep_energy_ratio = 0.01
 
 [node name="AICharacterHydrateBehaviorModule" type="Node" parent="."]
 script = ExtResource("9_hydrate_behavior")
