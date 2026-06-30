@@ -44,7 +44,17 @@ func get_pixel_size() -> Vector2:
 	return Vector2(float(safe_footprint.x), float(safe_footprint.y)) * safe_cell_size
 
 
+func set_grid_cell_size(next_cell_size: Vector2) -> void:
+	var safe_cell_size := Vector2(maxf(next_cell_size.x, 1.0), maxf(next_cell_size.y, 1.0))
+	if cell_size.is_equal_approx(safe_cell_size):
+		return
+	cell_size = safe_cell_size
+	_fit_sprite_to_grid_size()
+	queue_redraw()
+
+
 func _fit_sprite_to_grid_size() -> void:
+	_resolve_sprite()
 	if _sprite == null or _sprite.texture == null:
 		return
 
