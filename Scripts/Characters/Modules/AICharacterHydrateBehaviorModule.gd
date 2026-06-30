@@ -66,6 +66,16 @@ func get_action_progress_ratio() -> float:
 	return clampf(_action_progress_ratio, 0.0, 1.0)
 
 
+func is_action_item_display_visible() -> bool:
+	return _is_drinking and _drink_food_data != null
+
+
+func get_action_item_icon_path() -> String:
+	if _drink_food_data == null:
+		return ""
+	return _drink_food_data.get_icon_path()
+
+
 func get_facing_direction() -> Vector2:
 	return _facing_direction
 
@@ -81,6 +91,7 @@ func get_velocity(delta: float) -> Vector2:
 
 	if _is_drinking:
 		_is_active = true
+		_facing_direction = Vector2.DOWN
 		_update_drinking(delta)
 		return Vector2.ZERO
 
