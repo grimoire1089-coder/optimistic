@@ -9,6 +9,7 @@ class_name ShopMenu
 @onready var back_button: Button = $MarginContainer/Rows/Header/BackButton
 @onready var close_button: Button = $MarginContainer/Rows/Header/CloseButton
 @onready var shop_list_view: VBoxContainer = $MarginContainer/Rows/ShopListView
+@onready var guide_label: Label = $MarginContainer/Rows/ShopListView/GuideLabel
 @onready var shop_list: VBoxContainer = $MarginContainer/Rows/ShopListView/ShopListScroll/ShopList
 @onready var shop_detail_view: VBoxContainer = $MarginContainer/Rows/ShopDetailView
 @onready var portrait_rect: TextureRect = $MarginContainer/Rows/ShopDetailView/ShopTopArea/PortraitFrame/Portrait
@@ -25,6 +26,9 @@ var _selected_shop_index: int = -1
 func _ready() -> void:
 	visible = false
 	add_to_group(&"shop_menu")
+	back_button.text = "戻る"
+	close_button.text = "X"
+	guide_label.text = "行きたいお店を選んでください。"
 	back_button.pressed.connect(_on_back_pressed)
 	close_button.pressed.connect(close_menu)
 	_connect_wallet_signal()
