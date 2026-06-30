@@ -28,6 +28,7 @@ const DEFAULT_CLICK_SFX_PATHS := [
 @onready var sleep_behavior_module: AICharacterSleepBehaviorModule = $AICharacterSleepBehaviorModule
 @onready var hydrate_behavior_module: AICharacterHydrateBehaviorModule = $AICharacterHydrateBehaviorModule
 @onready var action_progress_bar_module: AICharacterActionProgressBarModule = $AICharacterActionProgressBarModule
+@onready var action_item_display_module: AICharacterActionItemDisplayModule = $AICharacterActionItemDisplayModule
 @onready var walk_animator: RobinWalkSpriteAnimator = $RobinWalkSpriteAnimator
 
 
@@ -39,6 +40,7 @@ func _ready() -> void:
 	sleep_behavior_module.setup(self)
 	hydrate_behavior_module.setup(self)
 	action_progress_bar_module.setup(self)
+	action_item_display_module.setup(self)
 	if start_at_movement_area_center:
 		global_position = wander_module.get_movement_center()
 	walk_animator.setup()
