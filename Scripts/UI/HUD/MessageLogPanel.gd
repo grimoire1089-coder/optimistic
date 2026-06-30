@@ -9,7 +9,9 @@ enum LogChannel { NORMAL, DEBUG }
 @export var notice_sfx: AudioStream
 @export var notice_sfx_volume_db: float = 0.0
 @export var auto_scroll_to_latest: bool = true
+## 旧設定との互換用。デバッグログはコード側で常に無音にする。
 @export var play_notice_sfx_for_debug: bool = false
+@export_range(0.0, 10.0, 0.1) var queued_message_delay_seconds: float = 1.0
 @export var card_height: float = 58.0
 @export var card_enter_offset_y: float = 18.0
 @export var card_enter_duration: float = 0.22
@@ -29,7 +31,11 @@ enum LogChannel { NORMAL, DEBUG }
 
 var _normal_messages: Array[String] = []
 var _debug_messages: Array[String] = []
+var _queued_normal_messages: Array[Dictionary] = []
+var _queued_debug_messages: Array[Dictionary] = []
 var _current_channel: int = LogChannel.NORMAL
+var _is_processing_normal_queue: bool = false
+var _is_processing_debug_queue: bool = false
 
 
 func _ready() -> void:
@@ -43,11 +49,11 @@ func _ready() -> void:
 
 
 func add_message(message: String) -> void:
-	_add_message_to_channel(message, LogChannel.NORMAL, true)
+	_queue_message_to_channel(message, LogChannel.NORMAL, true)
 
 
 func add_debug_message(message: String) -> void:
-	_add_message_to_channel(message, LogChannel.DEBUG, play_notice_sfx_for_debug)
+	_queue_message_to_channel(message, LogChannel.DEBUG, false)
 
 
 func add_debug_result(source: String, action: String, success: bool, detail: String = "") -> void:
@@ -69,6 +75,7 @@ func add_debug_messages(messages: PackedStringArray) -> void:
 
 
 func clear_messages() -> void:
+	_queued_normal_messages.clear()
 	_normal_messages.clear()
 	if _current_channel == LogChannel.NORMAL:
 		_rebuild_visible_messages(false)
@@ -77,6 +84,7 @@ func clear_messages() -> void:
 
 
 func clear_debug_messages() -> void:
+	_queued_debug_messages.clear()
 	_debug_messages.clear()
 	if _current_channel == LogChannel.DEBUG:
 		_rebuild_visible_messages(false)
@@ -85,6 +93,8 @@ func clear_debug_messages() -> void:
 
 
 func clear_all_messages() -> void:
+	_queued_normal_messages.clear()
+	_queued_debug_messages.clear()
 	_normal_messages.clear()
 	_debug_messages.clear()
 	_rebuild_visible_messages(false)
@@ -108,10 +118,57 @@ func switch_to_debug_log() -> void:
 	_set_current_channel(LogChannel.DEBUG)
 
 
-func _add_message_to_channel(message: String, channel: int, should_play_sfx: bool) -> void:
+func _queue_message_to_channel(message: String, channel: int, should_play_sfx: bool) -> void:
 	var trimmed_message := message.strip_edges()
 	if trimmed_message.is_empty():
 		return
+
+	if channel == LogChannel.DEBUG:
+		should_play_sfx = false
+
+	var queue := _get_queued_messages_for_channel(channel)
+	queue.append({
+		"message": trimmed_message,
+		"should_play_sfx": should_play_sfx,
+	})
+
+	_start_queue_processor(channel)
+
+
+func _start_queue_processor(channel: int) -> void:
+	if _is_processing_queue(channel):
+		return
+
+	_set_processing_queue(channel, true)
+	call_deferred("_process_message_queue", channel)
+
+
+func _process_message_queue(channel: int) -> void:
+	while is_inside_tree() and not _get_queued_messages_for_channel(channel).is_empty():
+		var queue := _get_queued_messages_for_channel(channel)
+		var entry: Dictionary = queue.pop_front()
+		_add_message_to_channel_immediate(
+			str(entry.get("message", "")),
+			channel,
+			bool(entry.get("should_play_sfx", false))
+		)
+
+		if not _get_queued_messages_for_channel(channel).is_empty() and queued_message_delay_seconds > 0.0:
+			await get_tree().create_timer(queued_message_delay_seconds).timeout
+
+	_set_processing_queue(channel, false)
+
+	if is_inside_tree() and not _get_queued_messages_for_channel(channel).is_empty():
+		_start_queue_processor(channel)
+
+
+func _add_message_to_channel_immediate(message: String, channel: int, should_play_sfx: bool) -> void:
+	var trimmed_message := message.strip_edges()
+	if trimmed_message.is_empty():
+		return
+
+	if channel == LogChannel.DEBUG:
+		should_play_sfx = false
 
 	var messages := _get_messages_for_channel(channel)
 	messages.append(trimmed_message)
@@ -309,6 +366,25 @@ func _get_messages_for_channel(channel: int) -> Array[String]:
 	if channel == LogChannel.DEBUG:
 		return _debug_messages
 	return _normal_messages
+
+
+func _get_queued_messages_for_channel(channel: int) -> Array[Dictionary]:
+	if channel == LogChannel.DEBUG:
+		return _queued_debug_messages
+	return _queued_normal_messages
+
+
+func _is_processing_queue(channel: int) -> bool:
+	if channel == LogChannel.DEBUG:
+		return _is_processing_debug_queue
+	return _is_processing_normal_queue
+
+
+func _set_processing_queue(channel: int, processing: bool) -> void:
+	if channel == LogChannel.DEBUG:
+		_is_processing_debug_queue = processing
+		return
+	_is_processing_normal_queue = processing
 
 
 func _to_packed_string_array(messages: Array[String]) -> PackedStringArray:
