@@ -40,22 +40,32 @@ func _process(delta: float) -> void:
 
 	var available_width := size.x
 	var label_width := _label.get_combined_minimum_size().x
+	if available_width <= 0.0 or label_width <= 0.0:
+		return
+
 	if label_width <= available_width:
-		_label.position.x = max((available_width - label_width) * 0.5, 0.0)
+		_label.position.x = _get_centered_label_x(label_width, available_width)
 		_scroll_offset = 0.0
 		_wait_timer = 0.0
 		return
 
 	if _wait_timer > 0.0:
+		_label.position.x = _get_centered_label_x(label_width, available_width)
 		_wait_timer = max(_wait_timer - delta, 0.0)
 		return
 
 	_scroll_offset += scroll_speed * delta
 	var loop_distance := available_width + label_width + restart_gap
 	if _scroll_offset >= loop_distance:
-		_scroll_offset = 0.0
+		_scroll_offset = fmod(_scroll_offset, loop_distance)
 
-	_label.position.x = -label_width - restart_gap + _scroll_offset
+	var centered_x := _get_centered_label_x(label_width, available_width)
+	var label_x := centered_x - _scroll_offset
+	if label_x + label_width < 0.0:
+		var overrun := -(label_x + label_width)
+		label_x = available_width + restart_gap - overrun
+
+	_label.position.x = label_x
 
 
 func _ensure_label() -> void:
@@ -83,8 +93,14 @@ func _apply_font_size() -> void:
 	_reset_scroll()
 
 
+func _get_centered_label_x(label_width: float, available_width: float) -> float:
+	return (available_width - label_width) * 0.5
+
+
 func _reset_scroll() -> void:
 	_scroll_offset = 0.0
 	_wait_timer = edge_wait_seconds
 	if _label != null:
-		_label.position.x = -_label.get_combined_minimum_size().x - restart_gap
+		var available_width := size.x
+		var label_width := _label.get_combined_minimum_size().x
+		_label.position.x = _get_centered_label_x(label_width, available_width)
