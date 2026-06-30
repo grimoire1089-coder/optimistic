@@ -63,6 +63,18 @@ func update_for_season(season_id: String, season_year: int) -> void:
 		entries_changed.emit()
 		_emit_mood_changed_if_needed(old_value)
 
+func update_for_absolute_minute(current_absolute_minute: int) -> void:
+	var old_value := get_mood_value()
+	var changed := false
+	for i in range(entries.size() - 1, -1, -1):
+		var entry := entries[i]
+		if entry == null or entry.should_end_at_absolute_minute(current_absolute_minute):
+			entries.remove_at(i)
+			changed = true
+	if changed:
+		entries_changed.emit()
+		_emit_mood_changed_if_needed(old_value)
+
 func _emit_mood_changed_if_needed(old_value: int) -> void:
 	var new_value := get_mood_value()
 	if old_value == new_value:
