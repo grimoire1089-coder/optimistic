@@ -1,7 +1,8 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://Scripts/UI/HUD/AICharacterHud.gd" id="1_hud_script"]
 [ext_resource type="PackedScene" path="res://Scenes/UI/CharacterNeeds/CharacterNeedsPanel.tscn" id="2_needs_panel"]
+[ext_resource type="PackedScene" path="res://Scenes/UI/CharacterNeeds/CharacterMoodPanel.tscn" id="3_mood_panel"]
 
 [node name="AICharacterHud" type="PanelContainer"]
 custom_minimum_size = Vector2(344, 0)
@@ -11,7 +12,7 @@ anchor_right = 1.0
 offset_left = -368.0
 offset_top = 260.0
 offset_right = -24.0
-offset_bottom = 480.0
+offset_bottom = 560.0
 grow_horizontal = 0
 grow_vertical = 0
 script = ExtResource("1_hud_script")
@@ -45,5 +46,21 @@ text = "×"
 layout_mode = 2
 text = "状態行動: -"
 
-[node name="CharacterNeedsPanel" parent="MarginContainer/Rows" instance=ExtResource("2_needs_panel")]
+[node name="Tabs" type="TabContainer" parent="MarginContainer/Rows"]
+custom_minimum_size = Vector2(0, 206)
+layout_mode = 2
+size_flags_vertical = 3
+current_tab = 0
+
+[node name="NeedsTab" type="MarginContainer" parent="MarginContainer/Rows/Tabs"]
+layout_mode = 2
+
+[node name="CharacterNeedsPanel" parent="MarginContainer/Rows/Tabs/NeedsTab" instance=ExtResource("2_needs_panel")]
+layout_mode = 2
+
+[node name="MoodTab" type="MarginContainer" parent="MarginContainer/Rows/Tabs"]
+visible = false
+layout_mode = 2
+
+[node name="CharacterMoodPanel" parent="MarginContainer/Rows/Tabs/MoodTab" instance=ExtResource("3_mood_panel")]
 layout_mode = 2
