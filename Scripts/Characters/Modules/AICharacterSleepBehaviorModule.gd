@@ -133,6 +133,8 @@ func _should_floor_sleep_now() -> bool:
 
 
 func _start_bedding_sleep() -> void:
+	if _body != null and _target_bedding != null:
+		_body.global_position = _get_bedding_center_sleep_position(_target_bedding)
 	_start_sleeping(false)
 
 
@@ -298,6 +300,10 @@ func _get_bedding_sleep_position(bedding: Node2D) -> Vector2:
 	var side_position := _get_bedding_side_sleep_position(bedding)
 	if side_position.x != INF and side_position.y != INF:
 		return side_position
+	return _get_bedding_center_sleep_position(bedding)
+
+
+func _get_bedding_center_sleep_position(bedding: Node2D) -> Vector2:
 	if bedding == null:
 		return Vector2.ZERO
 	if bedding.has_method("get_sleep_target_global_position"):
