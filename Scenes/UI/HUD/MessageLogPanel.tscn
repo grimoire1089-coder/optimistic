@@ -4,23 +4,19 @@
 [ext_resource type="AudioStream" path="res://Assets/Audio/SFX/UI/UI_Notice_001.ogg" id="2_notice_sfx"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_message_log_panel"]
-bg_color = Color(0.015, 0.018, 0.028, 0.78)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.12, 0.62, 0.82, 0.82)
+bg_color = Color(0.015, 0.018, 0.028, 0)
+border_color = Color(0.12, 0.62, 0.82, 0)
 corner_radius_top_left = 14
 corner_radius_top_right = 14
 corner_radius_bottom_right = 14
 corner_radius_bottom_left = 14
 
 [node name="MessageLogPanel" type="PanelContainer"]
-custom_minimum_size = Vector2(404, 512)
+custom_minimum_size = Vector2(356, 512)
 anchors_preset = 0
 offset_left = 16.0
 offset_top = 88.0
-offset_right = 420.0
+offset_right = 372.0
 offset_bottom = 600.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_message_log_panel")
 script = ExtResource("1_message_log")
