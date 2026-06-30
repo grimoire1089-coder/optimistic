@@ -17,6 +17,7 @@
 [ext_resource type="PackedScene" path="res://Scenes/UI/HUD/ShopButton.tscn" id="14_shop_button"]
 [ext_resource type="PackedScene" path="res://Scenes/UI/Shop/ShopMenu.tscn" id="15_shop_menu"]
 [ext_resource type="Script" path="res://Scripts/Scenes/Main/Modules/RobinRoomBgmListModule.gd" id="16_robin_room_bgm"]
+[ext_resource type="PackedScene" path="res://Scenes/UI/HUD/MessageLogPanel.tscn" id="17_message_log"]
 
 [sub_resource type="Environment" id="Environment_ctt6t"]
 glow_enabled = true
@@ -61,6 +62,8 @@ offset_top = 24.0
 offset_right = 360.0
 offset_bottom = 55.0
 text = "Main Scene 起動完了"
+
+[node name="MessageLogPanel" parent="CanvasLayer" instance=ExtResource("17_message_log")]
 
 [node name="ClockDisplay" parent="CanvasLayer" unique_id=630380914 instance=ExtResource("4_clock_display")]
 
