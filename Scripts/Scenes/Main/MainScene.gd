@@ -3,6 +3,8 @@ extends Node2D
 const MAP_RUNTIME_MODULE_SCENE_PATH := "res://Scenes/Main/Modules/MainSceneMapRuntimeModule.tscn"
 const MAP_TRAVEL_MODULE_SCENE_PATH := "res://Scenes/Main/Modules/MainSceneMapTravelModule.tscn"
 const TRAVEL_BUTTONS_ROOT_SCENE_PATH := "res://Scenes/Main/Modules/MainSceneTravelButtonsRoot.tscn"
+const LOCATION_BACKGROUND_SCRIPT_PATH := "res://Scripts/Maps/Location/LocationBackgroundNode.gd"
+const DEFAULT_LOCATION_BACKGROUND_TEXTURE_PATH := "res://Assets/Maps/Location/Location_001.png"
 
 @onready var debug_label: Label = $CanvasLayer/DebugLabel
 @onready var robin: RobinWanderActor = $Robin
@@ -52,6 +54,8 @@ func _ensure_runtime_children() -> void:
 	if map_runtime_module != null and map_runtime_module.has_method("ensure_runtime_maps"):
 		map_runtime_module.call("ensure_runtime_maps")
 
+	_ensure_location_background()
+
 	var travel_buttons_root := _ensure_travel_buttons_root()
 	_ensure_map_travel_button(travel_buttons_root, "ToInfrastructureRoomButton", "インフラへ", "インフラルームへ移動", true)
 	_ensure_map_travel_button(travel_buttons_root, "ToRobinRoomButton", "部屋へ戻る", "ロビンの部屋へ戻る", false)
@@ -73,6 +77,26 @@ func _ensure_main_child_from_scene(node_name: String, scene_path: String) -> Nod
 	node.name = node_name
 	add_child(node)
 	return node
+
+
+func _ensure_location_background() -> Node2D:
+	var existing_background := get_node_or_null("LocationBackground") as Node2D
+	if existing_background != null:
+		return existing_background
+
+	var location_background_script := load(LOCATION_BACKGROUND_SCRIPT_PATH) as Script
+	if location_background_script == null:
+		return null
+
+	var background := location_background_script.new() as Node2D
+	if background == null:
+		return null
+	background.name = "LocationBackground"
+	background.z_index = -40
+	background.set("room_map_path", NodePath("../RobinRoomMap"))
+	background.set("texture_path", DEFAULT_LOCATION_BACKGROUND_TEXTURE_PATH)
+	add_child(background)
+	return background
 
 
 func _ensure_travel_buttons_root() -> Control:
