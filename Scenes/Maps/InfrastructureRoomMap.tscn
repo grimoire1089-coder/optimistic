@@ -1,0 +1,19 @@
+[gd_scene format=3 uid="uid://infrastructure_room_map"]
+
+[ext_resource type="Script" path="res://Scripts/Maps/RoomMapGridModule.gd" id="1_room_map_grid"]
+
+[node name="InfrastructureRoomMap" type="Node2D"]
+visible = false
+z_index = -30
+script = ExtResource("1_room_map_grid")
+map_id = &"infrastructure_room"
+map_display_name = "インフラルーム"
+buildable = false
+cell_size = Vector2(48, 48)
+fixed_grid_size = Vector2i(15, 15)
+fit_cell_size_to_visual_rect = true
+show_grid = true
+show_neon_frame = false
+
+[node name="FurnitureRoot" type="Node2D" parent="."]
+z_index = 1
