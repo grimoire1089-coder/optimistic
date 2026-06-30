@@ -5,14 +5,14 @@
 [ext_resource type="PackedScene" path="res://Scenes/Maps/Furniture/Kitchen/KitchenModuleFurniture.tscn" id="3_kitchen_module"]
 
 [node name="FurnitureBuildInventory" type="PanelContainer"]
-custom_minimum_size = Vector2(320, 286)
+custom_minimum_size = Vector2(320, 410)
 anchors_preset = 3
 anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = -392.0
-offset_top = -398.0
+offset_top = -522.0
 offset_right = -24.0
 offset_bottom = -112.0
 grow_horizontal = 0
@@ -34,7 +34,7 @@ theme_override_constants/separation = 8
 
 [node name="TitleLabel" type="Label" parent="MarginContainer/Rows"]
 layout_mode = 2
-text = "家具インベントリ"
+text = "ビルドインベントリ"
 theme_override_font_sizes/font_size = 18
 
 [node name="ModeButtons" type="HBoxContainer" parent="MarginContainer/Rows"]
@@ -69,6 +69,16 @@ text = "シンプルマットレス\n2 x 4 / Rで回転"
 custom_minimum_size = Vector2(280, 52)
 layout_mode = 2
 text = "キッチンモジュール\n4 x 2 / Rで回転"
+
+[node name="FloorPlaceButton" type="Button" parent="MarginContainer/Rows/ItemList"]
+custom_minimum_size = Vector2(280, 52)
+layout_mode = 2
+text = "床を敷く\nFloor_001 / 15 x 15"
+
+[node name="FloorStoreButton" type="Button" parent="MarginContainer/Rows/ItemList"]
+custom_minimum_size = Vector2(280, 52)
+layout_mode = 2
+text = "床をしまう\nFloor_001"
 
 [node name="DetailLabel" type="Label" parent="MarginContainer/Rows"]
 layout_mode = 2
