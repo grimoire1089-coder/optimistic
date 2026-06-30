@@ -16,7 +16,7 @@
 [ext_resource type="PackedScene" path="res://Scenes/UI/HUD/BuildModeButton.tscn" id="13_build_mode_button"]
 [ext_resource type="PackedScene" path="res://Scenes/UI/HUD/ShopButton.tscn" id="14_shop_button"]
 [ext_resource type="PackedScene" path="res://Scenes/UI/Shop/ShopMenu.tscn" id="15_shop_menu"]
-[ext_resource type="Script" path="res://Scripts/Scenes/Main/Modules/RobinRoomBgmListModule.gd" id="16_robin_room_bgm"]
+[ext_resource type="Script" uid="uid://bs7g8isgeu778" path="res://Scripts/Scenes/Main/Modules/RobinRoomBgmListModule.gd" id="16_robin_room_bgm"]
 [ext_resource type="PackedScene" path="res://Scenes/UI/HUD/MessageLogPanel.tscn" id="17_message_log"]
 
 [sub_resource type="Environment" id="Environment_ctt6t"]
@@ -31,7 +31,7 @@ script = ExtResource("3_canvas_glow")
 
 [node name="RobinRoomBgmListModule" type="Node" parent="." unique_id=638603961]
 script = ExtResource("16_robin_room_bgm")
-bgm_paths = PackedStringArray("res://Assets/Audio/BGM/Room BGM 001.ogg", "res://Assets/Audio/BGM/Room BGM 002.ogg")
+bgm_paths = PackedStringArray("res://Assets/Audio/BGM/Room BGM 001.ogg", "res://Assets/Audio/BGM/Room BGM 002.ogg", "res://Assets/Audio/BGM/Room BGM 003.ogg")
 
 [node name="RobinRoomMap" type="Node2D" parent="." unique_id=723162854]
 z_index = -30
