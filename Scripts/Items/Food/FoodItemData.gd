@@ -9,12 +9,19 @@ class_name FoodItemData
 @export_range(1, 999, 1) var stack_max: int = 99
 @export_range(0, 999999, 1) var buy_price: int = 0
 @export_range(0, 999999, 1) var sell_price: int = 0
+@export var need_effect: NeedEffectData
 
 
 func get_icon_path() -> String:
 	if icon == null:
 		return ""
 	return icon.resource_path
+
+
+func get_need_effect_path() -> String:
+	if need_effect == null:
+		return ""
+	return need_effect.resource_path
 
 
 func to_inventory_entry(amount: int = 1) -> Dictionary:
@@ -28,4 +35,5 @@ func to_inventory_entry(amount: int = 1) -> Dictionary:
 		"description": description,
 		"buy_price": buy_price,
 		"sell_price": sell_price,
+		"need_effect_path": get_need_effect_path(),
 	}
