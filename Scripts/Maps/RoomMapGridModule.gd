@@ -8,6 +8,7 @@ signal map_rect_changed(visual_rect: Rect2, grid_rect: Rect2, grid_size: Vector2
 @export var buildable: bool = true
 @export var screen_margin: float = 96.0
 @export var bottom_reserved_margin: float = 0.0
+@export var map_visual_offset: Vector2 = Vector2.ZERO
 @export var side_ui_margin: float = 280.0
 @export var cell_size: Vector2 = Vector2(48.0, 48.0)
 @export var fixed_grid_size: Vector2i = Vector2i.ZERO
@@ -45,10 +46,9 @@ func is_buildable() -> bool:
 func get_visual_map_rect() -> Rect2:
 	var rect := get_viewport().get_visible_rect()
 	var horizontal_margin := maxf(side_ui_margin, 0.0)
-	var top_margin := maxf(screen_margin, 0.0)
-	var bottom_margin := maxf(screen_margin + bottom_reserved_margin, 0.0)
-	var min_pos := rect.position + Vector2(horizontal_margin, top_margin)
-	var max_pos := rect.end - Vector2(horizontal_margin, bottom_margin)
+	var vertical_margin := maxf(screen_margin, 0.0)
+	var min_pos := rect.position + Vector2(horizontal_margin, vertical_margin)
+	var max_pos := rect.end - Vector2(horizontal_margin, vertical_margin)
 	var center := rect.position + rect.size * 0.5
 
 	if min_pos.x > max_pos.x:
@@ -65,7 +65,7 @@ func get_visual_map_rect() -> Rect2:
 
 	var square_size := minf(available_size.x, available_size.y)
 	var square_area_size := Vector2(square_size, square_size)
-	var square_area_position := min_pos + (available_size - square_area_size) * 0.5
+	var square_area_position := min_pos + (available_size - square_area_size) * 0.5 + map_visual_offset
 	return Rect2(square_area_position, square_area_size)
 
 
