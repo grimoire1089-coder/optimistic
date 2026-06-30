@@ -52,17 +52,23 @@ horizontal_alignment = 2
 theme_override_colors/font_color = Color(0.58, 0.9, 1, 0.9)
 theme_override_font_sizes/font_size = 13
 
+[node name="LogTabBar" type="TabBar" parent="MarginContainer/Rows"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 30)
+layout_mode = 2
+size_flags_horizontal = 3
+
 [node name="EmptyLabel" type="Label" parent="MarginContainer/Rows"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "まだログはありません"
+text = "通常ログはありません"
 autowrap_mode = 3
 theme_override_colors/font_color = Color(0.62, 0.74, 0.82, 0.82)
 theme_override_font_sizes/font_size = 13
 
 [node name="ScrollContainer" type="ScrollContainer" parent="MarginContainer/Rows"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 440)
+custom_minimum_size = Vector2(0, 402)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -70,7 +76,7 @@ horizontal_scroll_mode = 0
 
 [node name="MessageList" type="VBoxContainer" parent="MarginContainer/Rows/ScrollContainer"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 440)
+custom_minimum_size = Vector2(0, 402)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
