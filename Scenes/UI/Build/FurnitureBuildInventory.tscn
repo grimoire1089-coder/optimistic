@@ -1,23 +1,25 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://Scripts/UI/Build/FurnitureBuildInventory.gd" id="1_furniture_inventory"]
 [ext_resource type="PackedScene" path="res://Scenes/Maps/Furniture/SimpleMattressFurniture.tscn" id="2_simple_mattress"]
+[ext_resource type="PackedScene" path="res://Scenes/Maps/Furniture/Kitchen/KitchenModuleFurniture.tscn" id="3_kitchen_module"]
 
 [node name="FurnitureBuildInventory" type="PanelContainer"]
-custom_minimum_size = Vector2(320, 220)
+custom_minimum_size = Vector2(320, 286)
 anchors_preset = 3
 anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = -392.0
-offset_top = -340.0
+offset_top = -398.0
 offset_right = -24.0
 offset_bottom = -112.0
 grow_horizontal = 0
 grow_vertical = 0
 script = ExtResource("1_furniture_inventory")
 simple_mattress_scene = ExtResource("2_simple_mattress")
+kitchen_module_scene = ExtResource("3_kitchen_module")
 
 [node name="MarginContainer" type="MarginContainer" parent="."]
 layout_mode = 2
@@ -62,6 +64,11 @@ theme_override_constants/separation = 6
 custom_minimum_size = Vector2(280, 52)
 layout_mode = 2
 text = "シンプルマットレス\n2 x 4 / Rで回転"
+
+[node name="KitchenModuleButton" type="Button" parent="MarginContainer/Rows/ItemList"]
+custom_minimum_size = Vector2(280, 52)
+layout_mode = 2
+text = "キッチンモジュール\n4 x 2 / Rで回転"
 
 [node name="DetailLabel" type="Label" parent="MarginContainer/Rows"]
 layout_mode = 2
