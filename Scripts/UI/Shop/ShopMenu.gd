@@ -293,20 +293,13 @@ func _create_item_card(entry: ShopItemData, credits: int) -> Control:
 	icon_rect.texture = _load_entry_icon(entry)
 	card.add_child(icon_rect)
 
-	var name_frame := PanelContainer.new()
-	name_frame.custom_minimum_size = Vector2(0, 34)
-	name_frame.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	name_frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	name_frame.add_theme_stylebox_override("panel", _create_name_frame_style())
-	card.add_child(name_frame)
-
 	var name_marquee := MarqueeLabel.new()
-	name_marquee.custom_minimum_size = Vector2(0, 30)
+	name_marquee.custom_minimum_size = Vector2(0, 34)
 	name_marquee.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	name_marquee.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	name_marquee.font_size = 13
 	name_marquee.set_display_text(entry.get_display_name())
-	name_frame.add_child(name_marquee)
+	card.add_child(name_marquee)
 
 	var price_label := Label.new()
 	price_label.text = "%d C" % entry.get_unit_price()
@@ -321,9 +314,13 @@ func _create_item_card(entry: ShopItemData, credits: int) -> Control:
 	buy_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	buy_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	buy_button.focus_mode = Control.FOCUS_NONE
-	buy_button.text = "x%d" % base_amount
-	buy_button.tooltip_text = "購入数: 通常 x%d / Shift x%d / Ctrl x%d" % [base_amount, base_amount * 10, base_amount * 100]
+	buy_button.text = "%d個購入" % base_amount
+	buy_button.tooltip_text = "購入数: 通常 %d個 / Shift %d個 / Ctrl %d個" % [base_amount, base_amount * 10, base_amount * 100]
 	buy_button.disabled = not entry.is_available or entry.get_unit_price() * base_amount > credits
+	buy_button.add_theme_stylebox_override("normal", _create_purchase_button_style())
+	buy_button.add_theme_stylebox_override("hover", _create_purchase_button_style())
+	buy_button.add_theme_stylebox_override("pressed", _create_purchase_button_style())
+	buy_button.add_theme_stylebox_override("focus", _create_purchase_button_style())
 	buy_button.pressed.connect(Callable(self, "_on_buy_pressed").bind(entry))
 	buy_button.mouse_entered.connect(Callable(self, "_show_item_popup").bind(entry, card_panel))
 	buy_button.mouse_exited.connect(_hide_item_popup)
@@ -347,7 +344,7 @@ func _create_item_card_style() -> StyleBoxFlat:
 	return style
 
 
-func _create_name_frame_style() -> StyleBoxFlat:
+func _create_purchase_button_style() -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color(0.01, 0.012, 0.02, 1.0)
 	style.border_color = Color(0.12, 0.28, 0.34, 1.0)
@@ -407,7 +404,7 @@ func _show_item_popup(entry: ShopItemData, anchor: Control) -> void:
 	var base_amount: int = maxi(entry.amount, 1)
 	_item_popup_name_label.text = entry.get_display_name()
 	_item_popup_description_label.text = entry.get_description()
-	_item_popup_price_label.text = "単価: %d C\n購入: x%d / Shift x%d / Ctrl x%d" % [entry.get_unit_price(), base_amount, base_amount * 10, base_amount * 100]
+	_item_popup_price_label.text = "単価: %d C\n購入: %d個 / Shift %d個 / Ctrl %d個" % [entry.get_unit_price(), base_amount, base_amount * 10, base_amount * 100]
 
 	var global_rect := anchor.get_global_rect()
 	var viewport_size := get_viewport_rect().size
