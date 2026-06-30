@@ -38,13 +38,13 @@ func _on_robin_selected(actor: RobinWanderActor) -> void:
 	var actor_name := "AI Character"
 	if actor != null:
 		actor_name = actor.display_name
-	_push_debug_message("AI:%s" % actor_name, "選択されました。HUD表示を試行します")
+	_push_debug_message("AI:%s" % actor_name, "選択されました。HUD切り替えを試行します")
 
 	if ai_character_hud == null:
-		_push_debug_result("AI HUD", "show_actor", false, "AICharacterHud が見つかりません")
+		_push_debug_result("AI HUD", "toggle_actor", false, "AICharacterHud が見つかりません")
 		return
-	ai_character_hud.show_actor(actor)
-	_push_debug_result("AI HUD", "show_actor", true, "target=%s" % actor_name)
+	ai_character_hud.toggle_actor(actor)
+	_push_debug_result("AI HUD", "toggle_actor", true, "target=%s" % actor_name)
 
 
 func _ensure_runtime_children() -> void:
@@ -131,7 +131,7 @@ func _apply_reserved_bottom_hud_layout() -> void:
 	_place_top_right_control(canvas_layer.get_node_or_null("InventoryButton") as Control, Vector2(-232.0, 176.0), Vector2(64.0, 64.0))
 	_place_top_right_control(canvas_layer.get_node_or_null("BuildModeButton") as Control, Vector2(-160.0, 176.0), Vector2(64.0, 64.0))
 	_place_top_right_control(canvas_layer.get_node_or_null("WorkCreditButton") as Control, Vector2(-88.0, 176.0), Vector2(64.0, 64.0))
-	_place_top_right_control(canvas_layer.get_node_or_null("AICharacterHud") as Control, Vector2(-368.0, 260.0), Vector2(344.0, 220.0))
+	_place_top_right_control(canvas_layer.get_node_or_null("AICharacterHud") as Control, Vector2(-368.0, 260.0), Vector2(344.0, 300.0))
 	_place_top_right_control(canvas_layer.get_node_or_null("WorkMenu") as Control, Vector2(-360.0, 260.0), Vector2(336.0, 158.0))
 
 
