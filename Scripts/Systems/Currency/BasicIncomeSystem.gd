@@ -11,7 +11,7 @@ const DEFAULT_INCOME_AMOUNT := 1000
 
 ## trueにすると、ゲーム開始直後の1年目春1日にも支給する。
 ## falseなら、最初の支給は2つ目の季節の1日目から。
-@export var grant_on_first_period_start: bool = false
+@export var grant_on_first_period_start: bool = true
 
 var _clock: GameClockSystem
 var _wallet: Node
@@ -21,6 +21,16 @@ var _last_paid_period_index: int = 0
 func _ready() -> void:
 	add_to_group("basic_income_system")
 	call_deferred("_connect_systems")
+
+
+func reset_for_new_game() -> void:
+	_last_paid_period_index = 0
+
+	if _clock == null or _wallet == null:
+		_connect_systems()
+
+	if grant_on_first_period_start:
+		_try_grant_income_for_current_day()
 
 
 func _connect_systems() -> void:
@@ -41,9 +51,6 @@ func _connect_systems() -> void:
 
 	if not _clock.day_changed.is_connected(_on_day_changed):
 		_clock.day_changed.connect(_on_day_changed)
-
-	if grant_on_first_period_start and _clock.get_season_period_index() == 1:
-		_try_grant_income_for_current_day()
 
 
 func to_save_data() -> Dictionary:
