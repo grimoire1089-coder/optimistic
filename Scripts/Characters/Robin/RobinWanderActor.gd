@@ -56,7 +56,7 @@ func _physics_process(delta: float) -> void:
 			velocity = sleep_velocity
 			facing_direction = sleep_behavior_module.get_facing_direction()
 			move_and_slide()
-			if wander_module.clamp_body_to_movement_area():
+			if not sleep_behavior_module.is_sleeping() and wander_module.clamp_body_to_movement_area():
 				velocity = Vector2.ZERO
 			walk_animator.update_animation(velocity, facing_direction, delta)
 			return
@@ -92,7 +92,21 @@ func get_inventory_module() -> RobinInventoryModule:
 	return inventory_module
 
 
+func is_sleeping() -> bool:
+	if sleep_behavior_module == null:
+		return false
+	return sleep_behavior_module.is_sleeping()
+
+
+func get_current_action_display_text() -> String:
+	if is_sleeping():
+		return "睡眠中"
+	return String(get_current_need_action_id())
+
+
 func get_current_need_action_id() -> StringName:
+	if is_sleeping():
+		return &"sleeping"
 	if need_planner == null:
 		return CharacterNeedActionIds.IDLE
 	return need_planner.get_next_action_id()
