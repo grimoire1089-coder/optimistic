@@ -8,8 +8,8 @@ const MAP_ID_INFRASTRUCTURE_ROOM: StringName = &"infrastructure_room"
 @export var robin_room_map_path: NodePath = NodePath("../RobinRoomMap")
 @export var infrastructure_room_map_path: NodePath = NodePath("../InfrastructureRoomMap")
 @export var robin_path: NodePath = NodePath("../Robin")
-@export var to_infrastructure_button_path: NodePath = NodePath("../CanvasLayer/ToInfrastructureRoomButton")
-@export var to_robin_room_button_path: NodePath = NodePath("../CanvasLayer/ToRobinRoomButton")
+@export var to_infrastructure_button_path: NodePath = NodePath("../CanvasLayer/MainSceneTravelButtons/ToInfrastructureRoomButton")
+@export var to_robin_room_button_path: NodePath = NodePath("../CanvasLayer/MainSceneTravelButtons/ToRobinRoomButton")
 @export var debug_label_path: NodePath = NodePath("../CanvasLayer/DebugLabel")
 @export var build_mode_controller_path: NodePath = NodePath("../BuildModeController")
 @export var build_grid_overlay_path: NodePath = NodePath("../BuildGridHighlightOverlay")
@@ -33,6 +33,8 @@ func _ready() -> void:
 
 
 func _process(_delta: float) -> void:
+	_resolve_static_refs()
+	_connect_buttons()
 	_sync_runtime_build_nodes()
 
 

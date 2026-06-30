@@ -1,10 +1,10 @@
 extends Node2D
 
-const INFRASTRUCTURE_ROOM_MAP_SCENE_PATH := "res://Scenes/Maps/InfrastructureRoomMap.tscn"
+const MAP_RUNTIME_MODULE_SCENE_PATH := "res://Scenes/Main/Modules/MainSceneMapRuntimeModule.tscn"
+const MAP_TRAVEL_MODULE_SCENE_PATH := "res://Scenes/Main/Modules/MainSceneMapTravelModule.tscn"
+const TRAVEL_BUTTONS_ROOT_SCENE_PATH := "res://Scenes/Main/Modules/MainSceneTravelButtonsRoot.tscn"
 
 @onready var debug_label: Label = $CanvasLayer/DebugLabel
-@onready var robin_room_map: RoomMapGridModule = $RobinRoomMap
-@onready var furniture_placement_module: FurniturePlacementModule = $FurniturePlacementModule
 @onready var robin: RobinWanderActor = $Robin
 @onready var canvas_layer: CanvasLayer = $CanvasLayer
 @onready var ai_character_hud: AICharacterHud = $CanvasLayer/AICharacterHud
@@ -13,7 +13,7 @@ const INFRASTRUCTURE_ROOM_MAP_SCENE_PATH := "res://Scenes/Maps/InfrastructureRoo
 
 func _ready() -> void:
 	_push_debug_message("System", "MainScene _ready 開始")
-	_ensure_infrastructure_room_runtime()
+	_ensure_runtime_children()
 	var startup_debug_text := _get_startup_debug_text()
 	debug_label.text = startup_debug_text
 	_connect_robin_selection()
@@ -46,77 +46,65 @@ func _on_robin_selected(actor: RobinWanderActor) -> void:
 	_push_debug_result("AI HUD", "show_actor", true, "target=%s" % actor_name)
 
 
-func _ensure_infrastructure_room_runtime() -> void:
-	_ensure_infrastructure_room_map()
-	_ensure_map_travel_buttons()
-	_ensure_map_travel_module()
+func _ensure_runtime_children() -> void:
+	var map_runtime_module := _ensure_main_child_from_scene("MainSceneMapRuntimeModule", MAP_RUNTIME_MODULE_SCENE_PATH)
+	if map_runtime_module != null and map_runtime_module.has_method("ensure_runtime_maps"):
+		map_runtime_module.call("ensure_runtime_maps")
+
+	var travel_buttons_root := _ensure_travel_buttons_root()
+	_ensure_map_travel_button(travel_buttons_root, "ToInfrastructureRoomButton", "インフラへ", "インフラルームへ移動", true)
+	_ensure_map_travel_button(travel_buttons_root, "ToRobinRoomButton", "部屋へ戻る", "ロビンの部屋へ戻る", false)
+
+	var map_travel_module := _ensure_main_child_from_scene("MainSceneMapTravelModule", MAP_TRAVEL_MODULE_SCENE_PATH)
+	if map_travel_module != null:
+		map_travel_module.set("to_infrastructure_button_path", NodePath("../CanvasLayer/MainSceneTravelButtons/ToInfrastructureRoomButton"))
+		map_travel_module.set("to_robin_room_button_path", NodePath("../CanvasLayer/MainSceneTravelButtons/ToRobinRoomButton"))
 
 
-func _ensure_infrastructure_room_map() -> void:
-	if get_node_or_null("InfrastructureRoomMap") != null:
-		return
-	if robin_room_map == null:
-		return
+func _ensure_main_child_from_scene(node_name: String, scene_path: String) -> Node:
+	var existing_node := get_node_or_null(node_name)
+	if existing_node != null:
+		return existing_node
 
-	var infrastructure_room_map := _instantiate_infrastructure_room_map_scene()
-	if infrastructure_room_map == null:
-		infrastructure_room_map = _create_infrastructure_room_map_fallback()
-	if infrastructure_room_map == null:
-		return
-
-	add_child(infrastructure_room_map)
-	move_child(infrastructure_room_map, robin_room_map.get_index() + 1)
+	var node := _instantiate_scene(scene_path)
+	if node == null:
+		node = Node.new()
+	node.name = node_name
+	add_child(node)
+	return node
 
 
-func _instantiate_infrastructure_room_map_scene() -> RoomMapGridModule:
-	if not ResourceLoader.exists(INFRASTRUCTURE_ROOM_MAP_SCENE_PATH):
+func _ensure_travel_buttons_root() -> Control:
+	if canvas_layer == null:
 		return null
-	var scene := load(INFRASTRUCTURE_ROOM_MAP_SCENE_PATH) as PackedScene
+
+	var existing_root := canvas_layer.get_node_or_null("MainSceneTravelButtons") as Control
+	if existing_root != null:
+		return existing_root
+
+	var root := _instantiate_scene(TRAVEL_BUTTONS_ROOT_SCENE_PATH) as Control
+	if root == null:
+		root = Control.new()
+	root.name = "MainSceneTravelButtons"
+	canvas_layer.add_child(root)
+	return root
+
+
+func _instantiate_scene(scene_path: String) -> Node:
+	if scene_path.is_empty():
+		return null
+	if not ResourceLoader.exists(scene_path):
+		return null
+	var scene := load(scene_path) as PackedScene
 	if scene == null:
 		return null
-	var instance := scene.instantiate() as RoomMapGridModule
-	return instance
+	return scene.instantiate()
 
 
-func _create_infrastructure_room_map_fallback() -> RoomMapGridModule:
-	var infrastructure_room_map := RoomMapGridModule.new()
-	infrastructure_room_map.name = "InfrastructureRoomMap"
-	infrastructure_room_map.visible = false
-	infrastructure_room_map.z_index = robin_room_map.z_index
-	infrastructure_room_map.map_id = &"infrastructure_room"
-	infrastructure_room_map.map_display_name = "インフラルーム"
-	infrastructure_room_map.buildable = false
-	infrastructure_room_map.screen_margin = robin_room_map.screen_margin
-	infrastructure_room_map.side_ui_margin = robin_room_map.side_ui_margin
-	infrastructure_room_map.cell_size = robin_room_map.cell_size
-	infrastructure_room_map.fixed_grid_size = robin_room_map.fixed_grid_size
-	infrastructure_room_map.fit_cell_size_to_visual_rect = robin_room_map.fit_cell_size_to_visual_rect
-	infrastructure_room_map.show_grid = robin_room_map.show_grid
-	infrastructure_room_map.show_neon_frame = robin_room_map.show_neon_frame
-	infrastructure_room_map.grid_line_width = robin_room_map.grid_line_width
-	infrastructure_room_map.grid_line_color = robin_room_map.grid_line_color
-	infrastructure_room_map.grid_border_width = robin_room_map.grid_border_width
-	infrastructure_room_map.grid_border_color = robin_room_map.grid_border_color
-	infrastructure_room_map.frame_outer_glow_width = robin_room_map.frame_outer_glow_width
-	infrastructure_room_map.frame_middle_glow_width = robin_room_map.frame_middle_glow_width
-	infrastructure_room_map.frame_core_line_width = robin_room_map.frame_core_line_width
-
-	var furniture_root := Node2D.new()
-	furniture_root.name = "FurnitureRoot"
-	furniture_root.z_index = 1
-	infrastructure_room_map.add_child(furniture_root)
-	return infrastructure_room_map
-
-
-func _ensure_map_travel_buttons() -> void:
-	if canvas_layer == null:
-		return
-	_ensure_map_travel_button("ToInfrastructureRoomButton", "インフラへ", "インフラルームへ移動", true)
-	_ensure_map_travel_button("ToRobinRoomButton", "部屋へ戻る", "ロビンの部屋へ戻る", false)
-
-
-func _ensure_map_travel_button(button_name: String, text_value: String, tooltip_value: String, visible_on_start: bool) -> Button:
-	var existing_button := canvas_layer.get_node_or_null(button_name) as Button
+func _ensure_map_travel_button(parent: Control, button_name: String, text_value: String, tooltip_value: String, visible_on_start: bool) -> Button:
+	if parent == null:
+		return null
+	var existing_button := parent.get_node_or_null(button_name) as Button
 	if existing_button != null:
 		return existing_button
 
@@ -130,16 +118,8 @@ func _ensure_map_travel_button(button_name: String, text_value: String, tooltip_
 	button.text = text_value
 	button.tooltip_text = tooltip_value
 	button.visible = visible_on_start
-	canvas_layer.add_child(button)
+	parent.add_child(button)
 	return button
-
-
-func _ensure_map_travel_module() -> void:
-	if get_node_or_null("MainSceneMapTravelModule") != null:
-		return
-	var map_travel_module := MainSceneMapTravelModule.new()
-	map_travel_module.name = "MainSceneMapTravelModule"
-	add_child(map_travel_module)
 
 
 func _push_startup_message(message: String) -> void:
@@ -161,6 +141,7 @@ func _push_debug_result(source: String, action: String, success: bool, detail: S
 
 
 func _get_startup_debug_text() -> String:
+	var robin_room_map := get_node_or_null("RobinRoomMap") as RoomMapGridModule
 	if robin_room_map == null:
 		return "Main Scene 起動完了"
 	var grid_size := robin_room_map.get_grid_size()

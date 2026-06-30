@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://main_scene_map_runtime_module"]
+
+[ext_resource type="Script" path="res://Scripts/Scenes/Main/Modules/MainSceneMapRuntimeModule.gd" id="1_map_runtime"]
+
+[node name="MainSceneMapRuntimeModule" type="Node"]
+script = ExtResource("1_map_runtime")
