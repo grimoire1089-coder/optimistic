@@ -10,7 +10,7 @@ class_name ShopMenu
 @onready var close_button: Button = $MarginContainer/Rows/Header/CloseButton
 @onready var shop_list_view: VBoxContainer = $MarginContainer/Rows/ShopListView
 @onready var guide_label: Label = $MarginContainer/Rows/ShopListView/GuideLabel
-@onready var shop_list: VBoxContainer = $MarginContainer/Rows/ShopListView/ShopListScroll/ShopList
+@onready var shop_list: GridContainer = $MarginContainer/Rows/ShopListView/ShopListScroll/ShopList
 @onready var shop_detail_view: BoxContainer = $MarginContainer/Rows/ShopDetailView
 @onready var portrait_rect: TextureRect = $MarginContainer/Rows/ShopDetailView/OwnerFrame/Portrait
 @onready var shop_name_label: Label = $MarginContainer/Rows/ShopDetailView/ShopContent/ShopInfo/ShopNameLabel
@@ -133,14 +133,80 @@ func _show_shop_list() -> void:
 
 func _create_shop_button(shop: ShopData, index: int) -> Button:
 	var button := Button.new()
-	button.custom_minimum_size = Vector2(0, 72)
+	button.custom_minimum_size = Vector2(164, 220)
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	button.focus_mode = Control.FOCUS_NONE
 	button.clip_text = true
-	button.text = "%s\n%s" % [shop.display_name, shop.description]
+	button.text = ""
+	button.tooltip_text = shop.description
+	button.add_theme_stylebox_override("normal", _create_shop_card_style())
+	button.add_theme_stylebox_override("hover", _create_shop_card_style())
+	button.add_theme_stylebox_override("pressed", _create_shop_card_style())
+	button.add_theme_stylebox_override("focus", _create_shop_card_style())
 	button.pressed.connect(Callable(self, "_on_shop_selected").bind(index))
+
+	var card := VBoxContainer.new()
+	card.set_anchors_preset(Control.PRESET_FULL_RECT)
+	card.offset_left = 10.0
+	card.offset_top = 10.0
+	card.offset_right = -10.0
+	card.offset_bottom = -10.0
+	card.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	card.add_theme_constant_override("separation", 7)
+	button.add_child(card)
+
+	var sticker_rect := TextureRect.new()
+	sticker_rect.custom_minimum_size = Vector2(124, 124)
+	sticker_rect.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	sticker_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	sticker_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	sticker_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	sticker_rect.texture = _get_shop_card_texture(shop)
+	card.add_child(sticker_rect)
+
+	var name_label := Label.new()
+	name_label.text = shop.display_name
+	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	name_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	name_label.clip_text = true
+	name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	name_label.add_theme_font_size_override("font_size", 16)
+	card.add_child(name_label)
+
+	var description_label_card := Label.new()
+	description_label_card.text = shop.description
+	description_label_card.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	description_label_card.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	description_label_card.clip_text = true
+	description_label_card.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	description_label_card.add_theme_font_size_override("font_size", 10)
+	card.add_child(description_label_card)
+
 	return button
+
+
+func _get_shop_card_texture(shop: ShopData) -> Texture2D:
+	if shop == null:
+		return null
+	if shop.sticker != null:
+		return shop.sticker
+	return shop.portrait
+
+
+func _create_shop_card_style() -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.035, 0.04, 0.055, 1.0)
+	style.border_color = Color(0.14, 0.8, 0.95, 1.0)
+	style.border_width_left = 1
+	style.border_width_top = 1
+	style.border_width_right = 1
+	style.border_width_bottom = 1
+	style.corner_radius_top_left = 8
+	style.corner_radius_top_right = 8
+	style.corner_radius_bottom_left = 8
+	style.corner_radius_bottom_right = 8
+	return style
 
 
 func _show_shop_detail(shop_index: int) -> void:
