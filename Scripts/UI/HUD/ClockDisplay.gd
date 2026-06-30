@@ -19,6 +19,7 @@ func _ready() -> void:
 
 	_clock.time_changed.connect(_on_time_changed)
 	_clock.phase_changed.connect(_on_phase_changed)
+	_clock.season_changed.connect(_on_season_changed)
 
 	_refresh()
 
@@ -57,4 +58,8 @@ func _on_time_changed(_day: int, _hour: int, _minute: int) -> void:
 
 
 func _on_phase_changed(_phase_id: String) -> void:
+	_refresh()
+
+
+func _on_season_changed(_season_id: String, _season_day: int, _season_year: int) -> void:
 	_refresh()
