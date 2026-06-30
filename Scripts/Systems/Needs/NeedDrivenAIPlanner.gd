@@ -56,5 +56,5 @@ func get_current_need_id() -> StringName:
 func _get_module() -> CharacterNeedsModule:
 	if _needs_module != null:
 		return _needs_module
-	_needs_module = get_node_or_null(needs_module_path) as NeedDrivenAIPlanner
+	_needs_module = get_node_or_null(needs_module_path) as CharacterNeedsModule
 	return _needs_module
