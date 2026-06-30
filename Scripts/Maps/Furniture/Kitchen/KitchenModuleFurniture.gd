@@ -11,6 +11,7 @@ class_name KitchenModuleFurniture
 @export var sprite_fill_ratio: float = 1.0
 @export var fallback_base_color: Color = Color(0.08, 0.09, 0.10, 1.0)
 @export var fallback_edge_color: Color = Color(0.05, 0.95, 1.0, 0.92)
+@export var provides_water: bool = true
 
 var _sprite: Sprite2D
 
@@ -42,6 +43,10 @@ func get_pixel_size() -> Vector2:
 	var safe_footprint := Vector2i(maxi(grid_footprint.x, 1), maxi(grid_footprint.y, 1))
 	var safe_cell_size := Vector2(maxf(cell_size.x, 1.0), maxf(cell_size.y, 1.0))
 	return Vector2(float(safe_footprint.x), float(safe_footprint.y)) * safe_cell_size
+
+
+func can_provide_water() -> bool:
+	return provides_water
 
 
 func set_grid_cell_size(next_cell_size: Vector2) -> void:
