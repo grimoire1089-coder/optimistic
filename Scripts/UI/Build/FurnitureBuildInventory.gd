@@ -3,11 +3,13 @@ class_name FurnitureBuildInventory
 
 @export var build_mode_controller_path: NodePath = NodePath("../../BuildModeController")
 @export var simple_mattress_scene: PackedScene
+@export var kitchen_module_scene: PackedScene
 
 @onready var place_mode_button: Button = $MarginContainer/Rows/ModeButtons/PlaceModeButton
 @onready var move_mode_button: Button = $MarginContainer/Rows/ModeButtons/MoveModeButton
 @onready var store_mode_button: Button = $MarginContainer/Rows/ModeButtons/StoreModeButton
 @onready var mattress_button: Button = $MarginContainer/Rows/ItemList/SimpleMattressButton
+@onready var kitchen_module_button: Button = $MarginContainer/Rows/ItemList/KitchenModuleButton
 @onready var detail_label: Label = $MarginContainer/Rows/DetailLabel
 
 var _build_mode_controller: BuildModeController
@@ -38,6 +40,8 @@ func _connect_buttons() -> void:
 		store_mode_button.pressed.connect(_on_store_mode_pressed)
 	if mattress_button != null:
 		mattress_button.pressed.connect(_on_simple_mattress_pressed)
+	if kitchen_module_button != null:
+		kitchen_module_button.pressed.connect(_on_kitchen_module_pressed)
 
 
 func _on_place_mode_pressed() -> void:
@@ -70,6 +74,14 @@ func _on_simple_mattress_pressed() -> void:
 		return
 	_build_mode_controller.select_furniture_scene(simple_mattress_scene, &"simple_mattress", Vector2i(2, 4), true, 0)
 	_update_detail_text("選択中: シンプルマットレス / 2 x 4 / Rで回転")
+
+
+func _on_kitchen_module_pressed() -> void:
+	_resolve_controller()
+	if _build_mode_controller == null or kitchen_module_scene == null:
+		return
+	_build_mode_controller.select_furniture_scene(kitchen_module_scene, &"kitchen_module", Vector2i(4, 2), true, 0)
+	_update_detail_text("選択中: キッチンモジュール / 4 x 2 / Rで回転")
 
 
 func _on_build_mode_changed(enabled: bool) -> void:
