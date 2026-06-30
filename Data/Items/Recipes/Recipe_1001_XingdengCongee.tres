@@ -1,12 +1,14 @@
-[gd_resource type="Resource" script_class="FoodItemData" format=3]
+[gd_resource type="Resource" script_class="FoodItemData" format=3 uid="uid://jo6osfb87v1b"]
 
 [ext_resource type="Script" uid="uid://cgyi4b7bbmqn" path="res://Scripts/Items/Food/FoodItemData.gd" id="1_food_data"]
+[ext_resource type="Texture2D" uid="uid://cb8e13m33l7ub" path="res://Assets/UI/Icons/Recipe_Card.png" id="1_t4g28"]
 
 [resource]
 script = ExtResource("1_food_data")
 item_id = &"recipe_1001"
 display_name = "星灯中華粥のレシピ"
 description = "星灯小館の中華粥を調理できるようになるレシピメモ。"
+icon = ExtResource("1_t4g28")
 category_id = &"recipes"
 buy_price = 480
 sell_price = 240

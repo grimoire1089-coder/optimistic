@@ -1,5 +1,6 @@
-[gd_resource type="Resource" script_class="FoodItemData" format=3]
+[gd_resource type="Resource" script_class="FoodItemData" format=3 uid="uid://w6aw40b30brg"]
 
+[ext_resource type="Texture2D" uid="uid://cb8e13m33l7ub" path="res://Assets/UI/Icons/Recipe_Card.png" id="1_3gwl0"]
 [ext_resource type="Script" uid="uid://cgyi4b7bbmqn" path="res://Scripts/Items/Food/FoodItemData.gd" id="1_food_data"]
 
 [resource]
@@ -7,6 +8,7 @@ script = ExtResource("1_food_data")
 item_id = &"recipe_1002"
 display_name = "焼き小籠包のレシピ"
 description = "香ばしい焼き小籠包を調理できるようになるレシピメモ。"
+icon = ExtResource("1_3gwl0")
 category_id = &"recipes"
 buy_price = 650
 sell_price = 325
