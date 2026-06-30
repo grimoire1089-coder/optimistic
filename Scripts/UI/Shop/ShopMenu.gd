@@ -15,12 +15,14 @@ class_name ShopMenu
 @onready var portrait_rect: TextureRect = $MarginContainer/Rows/ShopDetailView/OwnerFrame/Portrait
 @onready var shop_name_label: Label = $MarginContainer/Rows/ShopDetailView/ShopContent/ShopInfo/ShopNameLabel
 @onready var description_label: Label = $MarginContainer/Rows/ShopDetailView/ShopContent/ShopInfo/DescriptionLabel
-@onready var item_list: VBoxContainer = $MarginContainer/Rows/ShopDetailView/ShopContent/ItemScroll/ItemList
+@onready var item_tab_bar: TabBar = $MarginContainer/Rows/ShopDetailView/ShopContent/ItemTabBar
+@onready var item_grid: GridContainer = $MarginContainer/Rows/ShopDetailView/ShopContent/ItemScroll/ItemGrid
 @onready var detail_label: Label = $MarginContainer/Rows/DetailLabel
 
 var _inventory_module: RobinInventoryModule
 var _shops: Array[ShopData] = []
 var _selected_shop_index: int = -1
+var _current_shop_tab_index: int = 0
 var _previous_bgm: AudioStream
 var _previous_bgm_position: float = 0.0
 var _has_previous_bgm: bool = false
@@ -35,6 +37,7 @@ func _ready() -> void:
 	guide_label.text = "行きたいお店を選んでください。"
 	back_button.pressed.connect(_on_back_pressed)
 	close_button.pressed.connect(close_menu)
+	item_tab_bar.tab_changed.connect(_on_item_tab_changed)
 	_connect_wallet_signal()
 	_resolve_inventory_module()
 	_reload_shops()
@@ -98,12 +101,13 @@ func _reload_shops() -> void:
 func _show_shop_list() -> void:
 	_restore_previous_bgm_if_needed()
 	_selected_shop_index = -1
+	_current_shop_tab_index = 0
 	title_label.text = "ショップ一覧"
 	back_button.visible = false
 	shop_list_view.visible = true
 	shop_detail_view.visible = false
 	_clear_shop_list()
-	_clear_item_list()
+	_clear_item_grid()
 
 	if shop_database == null:
 		detail_label.text = "ShopDatabase が未設定です。"
@@ -146,12 +150,37 @@ func _show_shop_detail(shop_index: int) -> void:
 	description_label.text = shop.description
 	_apply_shop_portrait(shop)
 	_play_shop_bgm(shop)
-	_refresh_item_list(shop)
+	_setup_item_tabs(shop)
+	_refresh_item_grid(shop)
 
 
 func _apply_shop_portrait(shop: ShopData) -> void:
 	portrait_rect.texture = shop.portrait
 	portrait_rect.visible = shop.portrait != null
+
+
+func _setup_item_tabs(shop: ShopData) -> void:
+	item_tab_bar.clear_tabs()
+	var tabs := shop.get_tabs()
+	if tabs.is_empty():
+		item_tab_bar.visible = false
+		_current_shop_tab_index = 0
+		return
+
+	item_tab_bar.visible = true
+	for tab in tabs:
+		item_tab_bar.add_tab(tab.display_name)
+
+	_current_shop_tab_index = clampi(_current_shop_tab_index, 0, tabs.size() - 1)
+	item_tab_bar.current_tab = _current_shop_tab_index
+
+
+func _get_current_shop_tab_id(shop: ShopData) -> StringName:
+	var tabs := shop.get_tabs()
+	if tabs.is_empty():
+		return &""
+	_current_shop_tab_index = clampi(_current_shop_tab_index, 0, tabs.size() - 1)
+	return tabs[_current_shop_tab_index].tab_id
 
 
 func _play_shop_bgm(shop: ShopData) -> void:
@@ -198,23 +227,24 @@ func _restore_previous_bgm_if_needed() -> void:
 	_active_shop_bgm = null
 
 
-func _refresh_item_list(shop: ShopData) -> void:
-	_clear_item_list()
-	var entries := shop.get_available_items()
+func _refresh_item_grid(shop: ShopData) -> void:
+	_clear_item_grid()
+	var tab_id := _get_current_shop_tab_id(shop)
+	var entries := shop.get_available_items_for_tab(tab_id)
 	if entries.is_empty():
-		detail_label.text = "このショップの商品はまだありません。"
+		detail_label.text = "このタブの商品はまだありません。"
 		return
 
 	var credits := _get_wallet_credits()
 	for entry in entries:
-		item_list.add_child(_create_item_card(entry, credits))
+		item_grid.add_child(_create_item_card(entry, credits))
 
 	detail_label.text = "所持クレジット: %d" % credits
 
 
 func _create_item_card(entry: ShopItemData, credits: int) -> Button:
 	var button := Button.new()
-	button.custom_minimum_size = Vector2(0, 76)
+	button.custom_minimum_size = Vector2(124, 176)
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	button.focus_mode = Control.FOCUS_NONE
@@ -228,54 +258,40 @@ func _create_item_card(entry: ShopItemData, credits: int) -> Button:
 		button.tooltip_text = "クレジットが足りません。必要: %d / 所持: %d" % [total_price, credits]
 	button.pressed.connect(Callable(self, "_on_buy_pressed").bind(entry))
 
-	var row := HBoxContainer.new()
-	row.set_anchors_preset(Control.PRESET_FULL_RECT)
-	row.offset_left = 10.0
-	row.offset_top = 8.0
-	row.offset_right = -10.0
-	row.offset_bottom = -8.0
-	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	row.add_theme_constant_override("separation", 10)
-	button.add_child(row)
+	var card := VBoxContainer.new()
+	card.set_anchors_preset(Control.PRESET_FULL_RECT)
+	card.offset_left = 8.0
+	card.offset_top = 8.0
+	card.offset_right = -8.0
+	card.offset_bottom = -8.0
+	card.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	card.add_theme_constant_override("separation", 5)
+	button.add_child(card)
 
 	var icon_rect := TextureRect.new()
-	icon_rect.custom_minimum_size = Vector2(56, 56)
+	icon_rect.custom_minimum_size = Vector2(72, 72)
+	icon_rect.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	icon_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	icon_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	icon_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	icon_rect.texture = _load_entry_icon(entry)
-	row.add_child(icon_rect)
-
-	var text_box := VBoxContainer.new()
-	text_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	text_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	text_box.add_theme_constant_override("separation", 2)
-	row.add_child(text_box)
+	card.add_child(icon_rect)
 
 	var name_label := Label.new()
 	name_label.text = "%s x%d" % [entry.get_display_name(), max(entry.amount, 1)]
+	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	name_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	name_label.clip_text = true
 	name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	name_label.add_theme_font_size_override("font_size", 15)
-	text_box.add_child(name_label)
-
-	var description := entry.get_description()
-	if description != "":
-		var description_label_card := Label.new()
-		description_label_card.text = description
-		description_label_card.clip_text = true
-		description_label_card.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		description_label_card.add_theme_font_size_override("font_size", 11)
-		text_box.add_child(description_label_card)
+	name_label.add_theme_font_size_override("font_size", 13)
+	card.add_child(name_label)
 
 	var price_label := Label.new()
-	price_label.custom_minimum_size = Vector2(88, 0)
-	price_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	price_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	price_label.text = "%d C" % total_price
+	price_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	price_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	price_label.add_theme_font_size_override("font_size", 15)
-	row.add_child(price_label)
+	price_label.add_theme_font_size_override("font_size", 14)
+	card.add_child(price_label)
 
 	return button
 
@@ -291,11 +307,17 @@ func _load_entry_icon(entry: ShopItemData) -> Texture2D:
 
 
 func _on_shop_selected(shop_index: int) -> void:
+	_current_shop_tab_index = 0
 	_show_shop_detail(shop_index)
 
 
 func _on_back_pressed() -> void:
 	_show_shop_list()
+
+
+func _on_item_tab_changed(tab_index: int) -> void:
+	_current_shop_tab_index = tab_index
+	_refresh_current_shop_detail()
 
 
 func _on_buy_pressed(entry: ShopItemData) -> void:
@@ -375,8 +397,8 @@ func _clear_shop_list() -> void:
 		child.queue_free()
 
 
-func _clear_item_list() -> void:
-	for child in item_list.get_children():
+func _clear_item_grid() -> void:
+	for child in item_grid.get_children():
 		child.queue_free()
 
 
