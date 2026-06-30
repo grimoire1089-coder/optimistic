@@ -14,6 +14,7 @@ const MAP_ID_INFRASTRUCTURE_ROOM: StringName = &"infrastructure_room"
 @export var build_mode_controller_path: NodePath = NodePath("../BuildModeController")
 @export var build_grid_overlay_path: NodePath = NodePath("../BuildGridHighlightOverlay")
 @export var build_preview_path: NodePath = NodePath("../BuildFurniturePlacementPreview")
+@export var floor_placement_module_path: NodePath = NodePath("../FloorPlacementModule")
 @export var move_robin_to_map_center_on_travel: bool = true
 
 var _robin_room_map: RoomMapGridModule
@@ -81,6 +82,12 @@ func _get_active_runtime_room_map_path() -> NodePath:
 	if _active_map_id == MAP_ID_INFRASTRUCTURE_ROOM:
 		return infrastructure_room_map_path
 	return robin_room_map_path
+
+
+func _get_active_floor_root_path() -> NodePath:
+	if _active_map_id == MAP_ID_INFRASTRUCTURE_ROOM:
+		return NodePath("../InfrastructureRoomMap/FloorRoot")
+	return NodePath("../RobinRoomMap/FloorRoot")
 
 
 func _get_active_wander_provider_path() -> NodePath:
@@ -169,6 +176,20 @@ func _sync_runtime_build_nodes() -> void:
 		else:
 			preview.set("room_map_path", active_map_path)
 			preview.set("_room_map", null)
+
+	var floor_placement := get_node_or_null(floor_placement_module_path)
+	if floor_placement != null:
+		if floor_placement.has_method("set_room_map_path"):
+			floor_placement.call("set_room_map_path", active_map_path)
+		else:
+			floor_placement.set("room_map_path", active_map_path)
+			floor_placement.set("_room_map", null)
+		var active_floor_root_path := _get_active_floor_root_path()
+		if floor_placement.has_method("set_floor_root_path"):
+			floor_placement.call("set_floor_root_path", active_floor_root_path)
+		else:
+			floor_placement.set("floor_root_path", active_floor_root_path)
+			floor_placement.set("_floor_root", null)
 
 
 func _sync_travel_buttons() -> void:
