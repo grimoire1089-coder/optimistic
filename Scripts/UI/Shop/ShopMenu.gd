@@ -28,6 +28,10 @@ var _previous_bgm: AudioStream
 var _previous_bgm_position: float = 0.0
 var _has_previous_bgm: bool = false
 var _active_shop_bgm: AudioStream
+var _item_popup: PopupPanel
+var _item_popup_name_label: Label
+var _item_popup_description_label: Label
+var _item_popup_price_label: Label
 
 
 func _ready() -> void:
@@ -39,6 +43,7 @@ func _ready() -> void:
 	back_button.pressed.connect(_on_back_pressed)
 	close_button.pressed.connect(close_menu)
 	item_tab_bar.tab_changed.connect(_on_item_tab_changed)
+	_setup_item_popup()
 	_connect_wallet_signal()
 	_resolve_inventory_module()
 	_reload_shops()
@@ -53,6 +58,7 @@ func open_menu() -> void:
 
 
 func close_menu() -> void:
+	_hide_item_popup()
 	_restore_previous_bgm_if_needed()
 	visible = false
 
@@ -100,6 +106,7 @@ func _reload_shops() -> void:
 
 
 func _show_shop_list() -> void:
+	_hide_item_popup()
 	_restore_previous_bgm_if_needed()
 	_selected_shop_index = -1
 	_current_shop_tab_index = 0
@@ -209,8 +216,18 @@ func _play_shop_bgm(shop: ShopData) -> void:
 			_previous_bgm_position = 0.0
 		_has_previous_bgm = true
 
+	_ensure_stream_loop(shop.shop_bgm)
 	audio_player.call("play_bgm", shop.shop_bgm, 0.0, false)
 	_active_shop_bgm = shop.shop_bgm
+
+
+func _ensure_stream_loop(stream: AudioStream) -> void:
+	if stream == null:
+		return
+	for property in stream.get_property_list():
+		if String(property.get("name", "")) == "loop":
+			stream.set("loop", true)
+			return
 
 
 func _restore_previous_bgm_if_needed() -> void:
@@ -232,6 +249,7 @@ func _restore_previous_bgm_if_needed() -> void:
 
 
 func _refresh_item_grid(shop: ShopData) -> void:
+	_hide_item_popup()
 	_clear_item_grid()
 	var tab_id := _get_current_shop_tab_id(shop)
 	var entries := shop.get_available_items_for_tab(tab_id)
@@ -261,6 +279,10 @@ func _create_item_card(entry: ShopItemData, credits: int) -> Button:
 	if total_price > credits:
 		button.tooltip_text = "クレジットが足りません。必要: %d / 所持: %d" % [total_price, credits]
 	button.pressed.connect(Callable(self, "_on_buy_pressed").bind(entry))
+	button.mouse_entered.connect(Callable(self, "_show_item_popup").bind(entry, button))
+	button.mouse_exited.connect(_hide_item_popup)
+	button.focus_entered.connect(Callable(self, "_show_item_popup").bind(entry, button))
+	button.focus_exited.connect(_hide_item_popup)
 
 	var card := VBoxContainer.new()
 	card.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -281,14 +303,20 @@ func _create_item_card(entry: ShopItemData, credits: int) -> Button:
 	icon_rect.texture = _load_entry_icon(entry)
 	card.add_child(icon_rect)
 
-	var name_label := Label.new()
-	name_label.text = "%s x%d" % [entry.get_display_name(), max(entry.amount, 1)]
-	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	name_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	name_label.clip_text = true
-	name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	name_label.add_theme_font_size_override("font_size", 13)
-	card.add_child(name_label)
+	var name_frame := PanelContainer.new()
+	name_frame.custom_minimum_size = Vector2(0, 34)
+	name_frame.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	name_frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	name_frame.add_theme_stylebox_override("panel", _create_name_frame_style())
+	card.add_child(name_frame)
+
+	var name_marquee := MarqueeLabel.new()
+	name_marquee.custom_minimum_size = Vector2(0, 30)
+	name_marquee.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	name_marquee.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	name_marquee.font_size = 13
+	name_marquee.set_display_text("%s x%d" % [entry.get_display_name(), max(entry.amount, 1)])
+	name_frame.add_child(name_marquee)
 
 	var price_label := Label.new()
 	price_label.text = "%d C" % total_price
@@ -298,6 +326,90 @@ func _create_item_card(entry: ShopItemData, credits: int) -> Button:
 	card.add_child(price_label)
 
 	return button
+
+
+func _create_name_frame_style() -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.01, 0.012, 0.02, 1.0)
+	style.border_color = Color(0.12, 0.28, 0.34, 1.0)
+	style.border_width_left = 1
+	style.border_width_top = 1
+	style.border_width_right = 1
+	style.border_width_bottom = 1
+	style.corner_radius_top_left = 4
+	style.corner_radius_top_right = 4
+	style.corner_radius_bottom_left = 4
+	style.corner_radius_bottom_right = 4
+	return style
+
+
+func _setup_item_popup() -> void:
+	if _item_popup != null:
+		return
+
+	_item_popup = PopupPanel.new()
+	_item_popup.name = "ItemPopup"
+	_item_popup.hide()
+	add_child(_item_popup)
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 12)
+	margin.add_theme_constant_override("margin_top", 10)
+	margin.add_theme_constant_override("margin_right", 12)
+	margin.add_theme_constant_override("margin_bottom", 10)
+	_item_popup.add_child(margin)
+
+	var rows := VBoxContainer.new()
+	rows.custom_minimum_size = Vector2(280, 124)
+	rows.add_theme_constant_override("separation", 6)
+	margin.add_child(rows)
+
+	_item_popup_name_label = Label.new()
+	_item_popup_name_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_item_popup_name_label.add_theme_font_size_override("font_size", 15)
+	rows.add_child(_item_popup_name_label)
+
+	_item_popup_description_label = Label.new()
+	_item_popup_description_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_item_popup_description_label.add_theme_font_size_override("font_size", 12)
+	rows.add_child(_item_popup_description_label)
+
+	_item_popup_price_label = Label.new()
+	_item_popup_price_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_item_popup_price_label.add_theme_font_size_override("font_size", 14)
+	rows.add_child(_item_popup_price_label)
+
+
+func _show_item_popup(entry: ShopItemData, anchor: Control) -> void:
+	if entry == null or anchor == null:
+		return
+	_setup_item_popup()
+
+	_item_popup_name_label.text = "%s x%d" % [entry.get_display_name(), max(entry.amount, 1)]
+	_item_popup_description_label.text = entry.get_description()
+	_item_popup_price_label.text = "%d C" % entry.get_total_price()
+
+	var global_rect := anchor.get_global_rect()
+	var viewport_size := get_viewport_rect().size
+	var popup_size := Vector2i(304, 150)
+	var popup_pos := Vector2i(
+		int(global_rect.position.x + global_rect.size.x + 12.0),
+		int(global_rect.position.y)
+	)
+
+	if popup_pos.x + popup_size.x > int(viewport_size.x):
+		popup_pos.x = int(global_rect.position.x) - popup_size.x - 12
+	if popup_pos.y + popup_size.y > int(viewport_size.y):
+		popup_pos.y = int(viewport_size.y) - popup_size.y - 8
+
+	popup_pos.x = maxi(popup_pos.x, 8)
+	popup_pos.y = maxi(popup_pos.y, 8)
+	_item_popup.popup(Rect2i(popup_pos, popup_size))
+
+
+func _hide_item_popup() -> void:
+	if _item_popup != null and _item_popup.visible:
+		_item_popup.hide()
 
 
 func _load_entry_icon(entry: ShopItemData) -> Texture2D:
