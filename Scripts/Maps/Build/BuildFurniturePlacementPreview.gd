@@ -108,6 +108,7 @@ func _update_place() -> void:
 		return
 	if scene != _preview_scene:
 		_rebuild_preview(scene)
+	_sync_preview_grid_cell_size()
 	var footprint := _controller.get_selected_footprint()
 	_can_place = _placement.can_place_at(_grid, footprint)
 	if _preview_node != null:
@@ -236,6 +237,14 @@ func _rebuild_preview(scene: PackedScene) -> void:
 		_preview_node.name = "FurniturePreview"
 		_preview_node.z_index = 20
 		add_child(_preview_node)
+		_sync_preview_grid_cell_size()
+
+
+func _sync_preview_grid_cell_size() -> void:
+	if _preview_node == null or _room_map == null:
+		return
+	if _preview_node.has_method("set_grid_cell_size"):
+		_preview_node.call("set_grid_cell_size", _room_map.get_cell_size())
 
 
 func _hide_preview() -> void:
