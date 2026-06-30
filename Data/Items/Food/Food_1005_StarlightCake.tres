@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="FoodItemData" format=3]
+
+[ext_resource type="Script" uid="uid://cgyi4b7bbmqn" path="res://Scripts/Items/Food/FoodItemData.gd" id="1_food_data"]
+
+[resource]
+script = ExtResource("1_food_data")
+item_id = &"food_1005"
+display_name = "星灯焼き菓子"
+description = "星灯小館で出される、丸くて甘い焼き菓子。"
+category_id = &"foods"
+buy_price = 140
+sell_price = 70
