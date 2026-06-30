@@ -1,0 +1,8 @@
+extends Resource
+class_name CharacterMoodEntryData
+
+@export var entry_id: StringName = &""
+@export var display_name: String = ""
+@export var detail_text: String = ""
+@export var point: int = 0
+@export var until_next_season: bool = false
