@@ -16,21 +16,38 @@ const DEFAULT_INCOME_AMOUNT := 1000
 var _clock: GameClockSystem
 var _wallet: Node
 var _last_paid_period_index: int = 0
+var _pending_log_messages: Array[String] = []
 
 
 func _ready() -> void:
 	add_to_group("basic_income_system")
+	_connect_tree_signals()
 	call_deferred("_connect_systems")
+	call_deferred("flush_pending_log_messages")
 
 
 func reset_for_new_game() -> void:
 	_last_paid_period_index = 0
+	_pending_log_messages.clear()
 
 	if _clock == null or _wallet == null:
 		_connect_systems()
 
 	if grant_on_first_period_start:
 		_try_grant_income_for_current_day()
+
+
+func flush_pending_log_messages() -> void:
+	if _pending_log_messages.is_empty():
+		return
+
+	var message_log := _find_message_log()
+	if message_log == null:
+		return
+
+	for message in _pending_log_messages:
+		message_log.call("add_message", message)
+	_pending_log_messages.clear()
 
 
 func _connect_systems() -> void:
@@ -64,6 +81,16 @@ func apply_save_data(data: Dictionary) -> void:
 		_last_paid_period_index = max(0, int(data[SAVE_KEY_LAST_PAID_PERIOD]))
 
 
+func _connect_tree_signals() -> void:
+	var tree := get_tree()
+	if tree == null:
+		return
+
+	var callable := Callable(self, "_on_tree_node_added")
+	if not tree.node_added.is_connected(callable):
+		tree.node_added.connect(callable)
+
+
 func _find_clock() -> GameClockSystem:
 	var autoload_clock := get_node_or_null("/root/GameClock")
 	if autoload_clock is GameClockSystem:
@@ -88,8 +115,22 @@ func _find_wallet() -> Node:
 	return null
 
 
+func _find_message_log() -> Node:
+	var group_nodes := get_tree().get_nodes_in_group("message_log")
+	for node in group_nodes:
+		if node != null and node.has_method("add_message"):
+			return node
+	return null
+
+
 func _on_day_changed(_day: int) -> void:
 	_try_grant_income_for_current_day()
+
+
+func _on_tree_node_added(_node: Node) -> void:
+	if _pending_log_messages.is_empty():
+		return
+	call_deferred("flush_pending_log_messages")
 
 
 func _try_grant_income_for_current_day() -> bool:
@@ -120,5 +161,19 @@ func _try_grant_income_for_current_day() -> bool:
 		_clock.get_season_id(),
 		_clock.get_season_day()
 	)
+	_push_income_message(amount_to_text(income_amount))
 
 	return true
+
+
+func _push_income_message(amount_text: String) -> void:
+	var message := "ベーシックインカムとして %s クレジットを受け取りました。" % amount_text
+	var message_log := _find_message_log()
+	if message_log == null:
+		_pending_log_messages.append(message)
+		return
+	message_log.call("add_message", message)
+
+
+func amount_to_text(amount: int) -> String:
+	return "%d" % amount
