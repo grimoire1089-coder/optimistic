@@ -6,12 +6,17 @@ signal travel_to_robin_room_requested
 
 @export var to_infrastructure_button_path: NodePath = NodePath("ToInfrastructureRoomButton")
 @export var to_robin_room_button_path: NodePath = NodePath("ToRobinRoomButton")
+@export var to_infrastructure_label_text: String = "インフラへ"
+@export var to_robin_room_label_text: String = "部屋へ戻る"
+@export var button_position: Vector2 = Vector2(24.0, 64.0)
+@export var button_size: Vector2 = Vector2(152.0, 40.0)
 
 var _to_infrastructure_button: Button
 var _to_robin_room_button: Button
 
 
 func _ready() -> void:
+	_ensure_buttons()
 	_resolve_buttons()
 	_connect_buttons()
 	_apply_start_state()
@@ -49,6 +54,27 @@ func get_to_robin_room_button() -> Button:
 
 func _apply_start_state() -> void:
 	show_for_robin_room()
+
+
+func _ensure_buttons() -> void:
+	if get_node_or_null(to_infrastructure_button_path) == null:
+		_create_button(String(to_infrastructure_button_path), to_infrastructure_label_text, true)
+	if get_node_or_null(to_robin_room_button_path) == null:
+		_create_button(String(to_robin_room_button_path), to_robin_room_label_text, false)
+
+
+func _create_button(button_name: String, text_value: String, visible_on_start: bool) -> Button:
+	var button := Button.new()
+	button.name = button_name
+	button.offset_left = button_position.x
+	button.offset_top = button_position.y
+	button.offset_right = button_position.x + button_size.x
+	button.offset_bottom = button_position.y + button_size.y
+	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	button.text = text_value
+	button.visible = visible_on_start
+	add_child(button)
+	return button
 
 
 func _connect_buttons() -> void:
