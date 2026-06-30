@@ -7,5 +7,6 @@ script = ExtResource("1_entry")
 entry_id = &"new_life"
 display_name = "新生活"
 detail_text = "新しい暮らしが始まった高揚感。次の季節が来るまで、心が少し前を向いています。"
+body = "新しい暮らしが始まった高揚感。次の季節が来るまで、心が少し前を向いています。"
 point = 20
 until_next_season = true
