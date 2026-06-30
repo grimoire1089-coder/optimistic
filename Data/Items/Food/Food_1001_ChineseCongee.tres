@@ -1,12 +1,13 @@
-[gd_resource type="Resource" script_class="FoodItemData" format=3]
+[gd_resource type="Resource" script_class="FoodItemData" format=3 uid="uid://ctai0e72cbxfw"]
 
 [ext_resource type="Script" uid="uid://cgyi4b7bbmqn" path="res://Scripts/Items/Food/FoodItemData.gd" id="1_food_data"]
+[ext_resource type="Texture2D" uid="uid://b1utsuerbk51d" path="res://Assets/Items/Icons/Food/Food_0003.png" id="1_j2gg1"]
 
 [resource]
 script = ExtResource("1_food_data")
 item_id = &"food_1001"
 display_name = "星灯中華粥"
 description = "香辛料をほんのり効かせた、体を内側から温める星灯小館の中華粥。"
-category_id = &"foods"
+icon = ExtResource("1_j2gg1")
 buy_price = 90
 sell_price = 45

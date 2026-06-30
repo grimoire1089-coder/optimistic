@@ -1,12 +1,14 @@
-[gd_resource type="Resource" script_class="FoodItemData" format=3]
+[gd_resource type="Resource" script_class="FoodItemData" format=3 uid="uid://dm0hqdwdx8tfo"]
 
 [ext_resource type="Script" uid="uid://cgyi4b7bbmqn" path="res://Scripts/Items/Food/FoodItemData.gd" id="1_food_data"]
+[ext_resource type="Texture2D" uid="uid://bfa6qlpctg7fv" path="res://Assets/Items/Icons/Food/Food_0007.png" id="1_rjvsa"]
 
 [resource]
 script = ExtResource("1_food_data")
 item_id = &"drink_1002"
 display_name = "濃いめの烏龍茶"
 description = "油っこい料理の後味をすっきり整える、濃いめに淹れた烏龍茶。"
+icon = ExtResource("1_rjvsa")
 category_id = &"drinks"
 buy_price = 80
 sell_price = 40

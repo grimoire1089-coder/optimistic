@@ -1,20 +1,76 @@
-[gd_resource type="Resource" script_class="ShopData" load_steps=28 format=3]
+[gd_resource type="Resource" script_class="ShopData" format=3 uid="uid://cusgsyuwjisn6"]
 
 [ext_resource type="Script" uid="uid://dik32ehksmive" path="res://Scripts/Shops/ShopData.gd" id="1_shop_data"]
 [ext_resource type="Script" uid="uid://8a0d3nyywiao" path="res://Scripts/Shops/ShopItemData.gd" id="2_shop_item"]
-[ext_resource type="Script" uid="uid://bqp1yuzhou2tabs" path="res://Scripts/Shops/ShopTabData.gd" id="3_shop_tab"]
-[ext_resource type="Texture2D" path="res://Assets/Characters/Yuzhou/Portraits/Yuzhou_Game_0001.png" id="4_yuzhou_portrait"]
-[ext_resource type="Texture2D" path="res://Assets/UI/Icons/Xingdeng_Xiaoguan.png" id="5_shop_sticker"]
+[ext_resource type="Script" path="res://Scripts/Shops/ShopTabData.gd" id="3_shop_tab"]
+[ext_resource type="Texture2D" uid="uid://bfqpiy0ncsl7u" path="res://Assets/Characters/Yuzhou/Portraits/Yuzhou_Game_0001.png" id="4_yuzhou_portrait"]
+[ext_resource type="Texture2D" uid="uid://d2743gtf1d3eg" path="res://Assets/UI/Icons/Xingdeng_Xiaoguan.png" id="5_shop_sticker"]
 [ext_resource type="Resource" uid="uid://khpl6knsr1ao" path="res://Data/Items/Food/Food_0001_Nikuman.tres" id="6_nikuman"]
-[ext_resource type="Resource" path="res://Data/Items/Food/Food_1001_ChineseCongee.tres" id="7_congee"]
+[ext_resource type="Resource" uid="uid://ctai0e72cbxfw" path="res://Data/Items/Food/Food_1001_ChineseCongee.tres" id="7_congee"]
 [ext_resource type="Resource" path="res://Data/Items/Food/Food_1002_ShengjianXiaolongbao.tres" id="8_xiaolongbao"]
-[ext_resource type="Resource" path="res://Data/Items/Food/Food_1003_StarlightSesameDango.tres" id="9_sesame_dango"]
-[ext_resource type="Resource" path="res://Data/Items/Food/Food_1005_StarlightCake.tres" id="10_starlight_cake"]
+[ext_resource type="Resource" uid="uid://c6hv88vjv4jov" path="res://Data/Items/Food/Food_1003_StarlightSesameDango.tres" id="9_sesame_dango"]
+[ext_resource type="Resource" uid="uid://bowgxj0pghxf6" path="res://Data/Items/Food/Food_1005_StarlightCake.tres" id="10_starlight_cake"]
 [ext_resource type="Resource" path="res://Data/Items/Food/Drink_1001_LycheeSoda.tres" id="11_lychee_soda"]
 [ext_resource type="Resource" path="res://Data/Items/Food/Drink_1002_OolongTea.tres" id="12_oolong_tea"]
-[ext_resource type="AudioStream" path="res://Assets/Audio/BGM/Yuzhou.ogg" id="13_yuzhou_bgm"]
+[ext_resource type="AudioStream" uid="uid://cwh5w0hl80ww8" path="res://Assets/Audio/BGM/Yuzhou.ogg" id="13_yuzhou_bgm"]
 [ext_resource type="Resource" path="res://Data/Items/Recipes/Recipe_1001_XingdengCongee.tres" id="14_congee_recipe"]
 [ext_resource type="Resource" path="res://Data/Items/Recipes/Recipe_1002_ShengjianXiaolongbao.tres" id="15_xiaolongbao_recipe"]
+
+[sub_resource type="Resource" id="ShopItemData_nikuman"]
+script = ExtResource("2_shop_item")
+item_data = ExtResource("6_nikuman")
+shop_tab_id = &"foods"
+price_override = 120
+
+[sub_resource type="Resource" id="ShopItemData_congee"]
+script = ExtResource("2_shop_item")
+item_data = ExtResource("7_congee")
+shop_tab_id = &"foods"
+price_override = 90
+
+[sub_resource type="Resource" id="ShopItemData_xiaolongbao"]
+script = ExtResource("2_shop_item")
+item_data = ExtResource("8_xiaolongbao")
+shop_tab_id = &"foods"
+price_override = 150
+
+[sub_resource type="Resource" id="ShopItemData_sesame_dango"]
+script = ExtResource("2_shop_item")
+item_data = ExtResource("9_sesame_dango")
+shop_tab_id = &"foods"
+price_override = 110
+
+[sub_resource type="Resource" id="ShopItemData_starlight_cake"]
+script = ExtResource("2_shop_item")
+item_data = ExtResource("10_starlight_cake")
+shop_tab_id = &"foods"
+price_override = 140
+custom_display_name = "月餅"
+custom_description = "丸い月のような形をした、星灯小館の甘い焼き菓子。"
+
+[sub_resource type="Resource" id="ShopItemData_lychee_soda"]
+script = ExtResource("2_shop_item")
+item_data = ExtResource("11_lychee_soda")
+shop_tab_id = &"drinks"
+price_override = 100
+
+[sub_resource type="Resource" id="ShopItemData_oolong_tea"]
+script = ExtResource("2_shop_item")
+item_data = ExtResource("12_oolong_tea")
+shop_tab_id = &"drinks"
+price_override = 80
+
+[sub_resource type="Resource" id="ShopItemData_congee_recipe"]
+script = ExtResource("2_shop_item")
+item_data = ExtResource("14_congee_recipe")
+shop_tab_id = &"recipes"
+price_override = 480
+
+[sub_resource type="Resource" id="ShopItemData_xiaolongbao_recipe"]
+script = ExtResource("2_shop_item")
+item_data = ExtResource("15_xiaolongbao_recipe")
+shop_tab_id = &"recipes"
+price_override = 650
 
 [sub_resource type="Resource" id="ShopTabData_foods"]
 script = ExtResource("3_shop_tab")
@@ -30,71 +86,6 @@ display_name = "飲料"
 script = ExtResource("3_shop_tab")
 tab_id = &"recipes"
 display_name = "レシピ"
-
-[sub_resource type="Resource" id="ShopItemData_nikuman"]
-script = ExtResource("2_shop_item")
-item_data = ExtResource("6_nikuman")
-shop_tab_id = &"foods"
-amount = 1
-price_override = 120
-
-[sub_resource type="Resource" id="ShopItemData_congee"]
-script = ExtResource("2_shop_item")
-item_data = ExtResource("7_congee")
-shop_tab_id = &"foods"
-amount = 1
-price_override = 90
-
-[sub_resource type="Resource" id="ShopItemData_xiaolongbao"]
-script = ExtResource("2_shop_item")
-item_data = ExtResource("8_xiaolongbao")
-shop_tab_id = &"foods"
-amount = 1
-price_override = 150
-
-[sub_resource type="Resource" id="ShopItemData_sesame_dango"]
-script = ExtResource("2_shop_item")
-item_data = ExtResource("9_sesame_dango")
-shop_tab_id = &"foods"
-amount = 1
-price_override = 110
-
-[sub_resource type="Resource" id="ShopItemData_starlight_cake"]
-script = ExtResource("2_shop_item")
-item_data = ExtResource("10_starlight_cake")
-shop_tab_id = &"foods"
-amount = 1
-price_override = 140
-custom_display_name = "月餅"
-custom_description = "丸い月のような形をした、星灯小館の甘い焼き菓子。"
-
-[sub_resource type="Resource" id="ShopItemData_lychee_soda"]
-script = ExtResource("2_shop_item")
-item_data = ExtResource("11_lychee_soda")
-shop_tab_id = &"drinks"
-amount = 1
-price_override = 100
-
-[sub_resource type="Resource" id="ShopItemData_oolong_tea"]
-script = ExtResource("2_shop_item")
-item_data = ExtResource("12_oolong_tea")
-shop_tab_id = &"drinks"
-amount = 1
-price_override = 80
-
-[sub_resource type="Resource" id="ShopItemData_congee_recipe"]
-script = ExtResource("2_shop_item")
-item_data = ExtResource("14_congee_recipe")
-shop_tab_id = &"recipes"
-amount = 1
-price_override = 480
-
-[sub_resource type="Resource" id="ShopItemData_xiaolongbao_recipe"]
-script = ExtResource("2_shop_item")
-item_data = ExtResource("15_xiaolongbao_recipe")
-shop_tab_id = &"recipes"
-amount = 1
-price_override = 650
 
 [resource]
 script = ExtResource("1_shop_data")

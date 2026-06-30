@@ -1,5 +1,6 @@
-[gd_resource type="Resource" script_class="FoodItemData" format=3]
+[gd_resource type="Resource" script_class="FoodItemData" format=3 uid="uid://dlxgrmaq6ufs8"]
 
+[ext_resource type="Texture2D" uid="uid://day66w0lovuuw" path="res://Assets/Items/Icons/Food/Food_0006.png" id="1_1ybrh"]
 [ext_resource type="Script" uid="uid://cgyi4b7bbmqn" path="res://Scripts/Items/Food/FoodItemData.gd" id="1_food_data"]
 
 [resource]
@@ -7,6 +8,7 @@ script = ExtResource("1_food_data")
 item_id = &"drink_1001"
 display_name = "ライチソーダ"
 description = "ライチの甘い香りと炭酸が弾ける、星灯小館の冷たい飲み物。"
+icon = ExtResource("1_1ybrh")
 category_id = &"drinks"
 buy_price = 100
 sell_price = 50
