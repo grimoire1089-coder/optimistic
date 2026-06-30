@@ -85,10 +85,14 @@ func _add_message_row(text: String) -> void:
 	_rows.add_child(label)
 
 func _add_entry_row(entry: CharacterMoodEntryInstance) -> void:
-	var label := Label.new()
-	label.text = "%s  %s" % [_get_signed_point_text(entry.get_point()), entry.get_display_name()]
-	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_rows.add_child(label)
+	var row := VBoxContainer.new()
+	_rows.add_child(row)
+	var title := Label.new()
+	title.text = "%s  %s" % [_get_signed_point_text(entry.get_point()), entry.get_display_name()]
+	row.add_child(title)
+	var info := Label.new()
+	info.text = "Open this entry later."
+	row.add_child(info)
 
 func _get_signed_point_text(point: int) -> String:
 	if point > 0:
