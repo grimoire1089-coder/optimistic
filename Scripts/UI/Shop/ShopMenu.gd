@@ -21,6 +21,10 @@ class_name ShopMenu
 var _inventory_module: RobinInventoryModule
 var _shops: Array[ShopData] = []
 var _selected_shop_index: int = -1
+var _previous_bgm: AudioStream
+var _previous_bgm_position: float = 0.0
+var _has_previous_bgm: bool = false
+var _active_shop_bgm: AudioStream
 
 
 func _ready() -> void:
@@ -45,6 +49,7 @@ func open_menu() -> void:
 
 
 func close_menu() -> void:
+	_restore_previous_bgm_if_needed()
 	visible = false
 
 
@@ -91,6 +96,7 @@ func _reload_shops() -> void:
 
 
 func _show_shop_list() -> void:
+	_restore_previous_bgm_if_needed()
 	_selected_shop_index = -1
 	title_label.text = "ショップ一覧"
 	back_button.visible = false
@@ -139,12 +145,57 @@ func _show_shop_detail(shop_index: int) -> void:
 	shop_name_label.text = shop.display_name
 	description_label.text = shop.description
 	_apply_shop_portrait(shop)
+	_play_shop_bgm(shop)
 	_refresh_item_list(shop)
 
 
 func _apply_shop_portrait(shop: ShopData) -> void:
 	portrait_rect.texture = shop.portrait
 	portrait_rect.visible = shop.portrait != null
+
+
+func _play_shop_bgm(shop: ShopData) -> void:
+	if shop == null or shop.shop_bgm == null:
+		_restore_previous_bgm_if_needed()
+		return
+	if _active_shop_bgm == shop.shop_bgm:
+		return
+
+	var audio_player := get_node_or_null("/root/AudioPlayer")
+	if audio_player == null or not audio_player.has_method("play_bgm"):
+		return
+
+	if not _has_previous_bgm:
+		if audio_player.has_method("get_current_bgm"):
+			_previous_bgm = audio_player.call("get_current_bgm") as AudioStream
+		else:
+			_previous_bgm = null
+		if audio_player.has_method("get_bgm_playback_position"):
+			_previous_bgm_position = float(audio_player.call("get_bgm_playback_position"))
+		else:
+			_previous_bgm_position = 0.0
+		_has_previous_bgm = true
+
+	audio_player.call("play_bgm", shop.shop_bgm, 0.0, false)
+	_active_shop_bgm = shop.shop_bgm
+
+
+func _restore_previous_bgm_if_needed() -> void:
+	if not _has_previous_bgm:
+		_active_shop_bgm = null
+		return
+
+	var audio_player := get_node_or_null("/root/AudioPlayer")
+	if audio_player != null:
+		if _previous_bgm != null and audio_player.has_method("play_bgm"):
+			audio_player.call("play_bgm", _previous_bgm, _previous_bgm_position, true)
+		elif audio_player.has_method("stop_bgm"):
+			audio_player.call("stop_bgm")
+
+	_previous_bgm = null
+	_previous_bgm_position = 0.0
+	_has_previous_bgm = false
+	_active_shop_bgm = null
 
 
 func _refresh_item_list(shop: ShopData) -> void:
