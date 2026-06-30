@@ -6,13 +6,35 @@ signal minute_changed(day: int, hour: int, minute: int)
 signal hour_changed(day: int, hour: int)
 signal day_changed(day: int)
 signal phase_changed(phase_id: String)
+signal season_changed(season_id: String, season_day: int, season_year: int)
 
 const MINUTES_PER_DAY := 24 * 60
+const DAYS_PER_SEASON := 30
+const SEASONS_PER_YEAR := 4
 
 const PHASE_DAWN := "dawn"
 const PHASE_DAY := "day"
 const PHASE_EVENING := "evening"
 const PHASE_NIGHT := "night"
+
+const SEASON_SPRING := "spring"
+const SEASON_SUMMER := "summer"
+const SEASON_AUTUMN := "autumn"
+const SEASON_WINTER := "winter"
+
+const SEASON_IDS := [
+	SEASON_SPRING,
+	SEASON_SUMMER,
+	SEASON_AUTUMN,
+	SEASON_WINTER,
+]
+
+const SEASON_DISPLAY_NAMES := {
+	SEASON_SPRING: "春",
+	SEASON_SUMMER: "夏",
+	SEASON_AUTUMN: "秋",
+	SEASON_WINTER: "冬",
+}
 
 @export var start_day: int = 1
 @export_range(0, 23, 1) var start_hour: int = 6
@@ -35,6 +57,8 @@ var is_clock_paused: bool = false
 var _accumulator: float = 0.0
 var _last_hour: int = -1
 var _last_phase_id: String = ""
+var _last_season_id: String = ""
+var _last_season_year: int = -1
 
 
 func _ready() -> void:
@@ -68,6 +92,8 @@ func reset_time() -> void:
 	_accumulator = 0.0
 	_last_hour = get_hour()
 	_last_phase_id = get_phase_id()
+	_last_season_id = get_season_id()
+	_last_season_year = get_season_year()
 
 	emit_time_signals(true)
 
@@ -113,7 +139,49 @@ func get_time_text() -> String:
 
 
 func get_day_text() -> String:
+	return get_calendar_text()
+
+
+func get_absolute_day_text() -> String:
 	return "Day %d" % day
+
+
+func get_season_index() -> int:
+	var season_period_index := floori(float(day - 1) / float(DAYS_PER_SEASON))
+	return season_period_index % SEASONS_PER_YEAR
+
+
+func get_season_period_index() -> int:
+	return floori(float(day - 1) / float(DAYS_PER_SEASON)) + 1
+
+
+func get_season_id() -> String:
+	return String(SEASON_IDS[get_season_index()])
+
+
+func get_season_year() -> int:
+	return floori(float(day - 1) / float(DAYS_PER_SEASON * SEASONS_PER_YEAR)) + 1
+
+
+func get_season_day() -> int:
+	return ((day - 1) % DAYS_PER_SEASON) + 1
+
+
+func get_season_display_name(season_id: String = "") -> String:
+	var target_id := season_id if season_id != "" else get_season_id()
+	return str(SEASON_DISPLAY_NAMES.get(target_id, "不明"))
+
+
+func get_calendar_text() -> String:
+	return "%d年目 %s %d日目" % [
+		get_season_year(),
+		get_season_display_name(),
+		get_season_day(),
+	]
+
+
+func is_first_day_of_season() -> bool:
+	return get_season_day() == 1
 
 
 func get_phase_id() -> String:
@@ -171,6 +239,9 @@ func emit_time_signals(force: bool = false) -> void:
 	var hour := get_hour()
 	var minute := get_minute()
 	var phase_id := get_phase_id()
+	var season_id := get_season_id()
+	var season_day := get_season_day()
+	var season_year := get_season_year()
 
 	time_changed.emit(day, hour, minute)
 	minute_changed.emit(day, hour, minute)
@@ -183,10 +254,17 @@ func emit_time_signals(force: bool = false) -> void:
 		_last_phase_id = phase_id
 		phase_changed.emit(phase_id)
 
+	if force or season_id != _last_season_id or season_year != _last_season_year:
+		_last_season_id = season_id
+		_last_season_year = season_year
+		season_changed.emit(season_id, season_day, season_year)
+
 
 func _advance_one_minute() -> void:
 	var old_hour := get_hour()
 	var old_phase_id := get_phase_id()
+	var old_season_id := get_season_id()
+	var old_season_year := get_season_year()
 
 	minute_of_day += 1
 
@@ -198,6 +276,9 @@ func _advance_one_minute() -> void:
 	var new_hour := get_hour()
 	var new_phase_id := get_phase_id()
 	var new_minute := get_minute()
+	var new_season_id := get_season_id()
+	var new_season_day := get_season_day()
+	var new_season_year := get_season_year()
 
 	time_changed.emit(day, new_hour, new_minute)
 	minute_changed.emit(day, new_hour, new_minute)
@@ -208,5 +289,10 @@ func _advance_one_minute() -> void:
 	if new_phase_id != old_phase_id:
 		phase_changed.emit(new_phase_id)
 
+	if new_season_id != old_season_id or new_season_year != old_season_year:
+		season_changed.emit(new_season_id, new_season_day, new_season_year)
+
 	_last_hour = new_hour
 	_last_phase_id = new_phase_id
+	_last_season_id = new_season_id
+	_last_season_year = new_season_year
