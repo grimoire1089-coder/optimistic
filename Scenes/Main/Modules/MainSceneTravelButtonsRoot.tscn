@@ -1,3 +1,6 @@
 [gd_scene format=3 uid="uid://main_scene_travel_buttons_root"]
 
+[ext_resource type="Script" path="res://Scripts/Scenes/Main/Modules/MainSceneTravelButtons.gd" id="1_travel_buttons"]
+
 [node name="MainSceneTravelButtons" type="Control"]
+script = ExtResource("1_travel_buttons")
