@@ -5,11 +5,14 @@ extends Node2D
 @onready var furniture_placement_module: FurniturePlacementModule = $FurniturePlacementModule
 @onready var robin: RobinWanderActor = $Robin
 @onready var ai_character_hud: AICharacterHud = $CanvasLayer/AICharacterHud
+@onready var message_log: MessageLogPanel = $CanvasLayer/MessageLogPanel
 
 
 func _ready() -> void:
-	debug_label.text = _get_startup_debug_text()
+	var startup_debug_text := _get_startup_debug_text()
+	debug_label.text = startup_debug_text
 	_connect_robin_selection()
+	_push_startup_message(startup_debug_text)
 
 
 func _connect_robin_selection() -> void:
@@ -24,6 +27,12 @@ func _on_robin_selected(actor: RobinWanderActor) -> void:
 	if ai_character_hud == null:
 		return
 	ai_character_hud.show_actor(actor)
+
+
+func _push_startup_message(message: String) -> void:
+	if message_log == null:
+		return
+	message_log.add_message(message)
 
 
 func _get_startup_debug_text() -> String:
