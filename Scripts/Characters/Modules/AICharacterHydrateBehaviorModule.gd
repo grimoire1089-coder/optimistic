@@ -65,6 +65,10 @@ func get_velocity(delta: float) -> Vector2:
 		_target_kitchen = null
 		return Vector2.ZERO
 
+	if _use_existing_water_bottle():
+		_finish_hydrate_action()
+		return Vector2.ZERO
+
 	_target_kitchen = _find_nearest_kitchen_module()
 	if _target_kitchen == null:
 		return Vector2.ZERO
@@ -75,20 +79,16 @@ func get_velocity(delta: float) -> Vector2:
 	var target_distance := to_target.length()
 
 	if target_distance <= refill_distance:
-		_refill_water_bottle()
-		_target_kitchen = null
-		_cooldown_timer = maxf(refill_cooldown_seconds, 0.0)
-		_is_active = false
+		_create_and_use_water_bottle()
+		_finish_hydrate_action()
 		return Vector2.ZERO
 
 	if target_distance > arrival_distance:
 		_facing_direction = to_target.normalized()
 		return _facing_direction * walk_speed
 
-	_refill_water_bottle()
-	_target_kitchen = null
-	_cooldown_timer = maxf(refill_cooldown_seconds, 0.0)
-	_is_active = false
+	_create_and_use_water_bottle()
+	_finish_hydrate_action()
 	return Vector2.ZERO
 
 
@@ -103,13 +103,44 @@ func _should_hydrate_now() -> bool:
 	return _need_planner.get_next_action_id() == hydrate_action_id
 
 
-func _refill_water_bottle() -> bool:
+func _create_and_use_water_bottle() -> bool:
 	var food_data := _get_water_bottle_item()
 	if food_data == null:
 		return false
 	if _inventory_module == null:
 		return false
 	if not _inventory_module.add_food_item(food_data, 1):
+		return false
+	return _consume_water_bottle(food_data)
+
+
+func _use_existing_water_bottle() -> bool:
+	var food_data := _get_water_bottle_item()
+	if food_data == null:
+		return false
+	if not _has_water_bottle(food_data):
+		return false
+	return _consume_water_bottle(food_data)
+
+
+func _has_water_bottle(food_data: FoodItemData) -> bool:
+	if _inventory_module == null or food_data == null:
+		return false
+	var items := _inventory_module.get_items(food_data.category_id)
+	for item in items:
+		if not item is Dictionary:
+			continue
+		var item_data := item as Dictionary
+		if item_data.get("id", &"") != food_data.item_id:
+			continue
+		return int(item_data.get("amount", 0)) > 0
+	return false
+
+
+func _consume_water_bottle(food_data: FoodItemData) -> bool:
+	if _inventory_module == null or food_data == null:
+		return false
+	if not _inventory_module.remove_item(food_data.category_id, food_data.item_id, 1):
 		return false
 	_apply_water_bottle_need_effect(food_data)
 	return true
@@ -122,6 +153,12 @@ func _apply_water_bottle_need_effect(food_data: FoodItemData) -> void:
 		return
 	for need_id in food_data.need_effect.values.keys():
 		_needs_module.add_need_value(need_id, float(food_data.need_effect.values[need_id]))
+
+
+func _finish_hydrate_action() -> void:
+	_target_kitchen = null
+	_cooldown_timer = maxf(refill_cooldown_seconds, 0.0)
+	_is_active = false
 
 
 func _get_water_bottle_item() -> FoodItemData:
