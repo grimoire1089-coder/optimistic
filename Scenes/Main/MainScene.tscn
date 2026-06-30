@@ -16,7 +16,7 @@
 [ext_resource type="PackedScene" path="res://Scenes/UI/HUD/BuildModeButton.tscn" id="13_build_mode_button"]
 [ext_resource type="PackedScene" path="res://Scenes/UI/HUD/ShopButton.tscn" id="14_shop_button"]
 [ext_resource type="PackedScene" path="res://Scenes/UI/Shop/ShopMenu.tscn" id="15_shop_menu"]
-[ext_resource type="Script" uid="uid://bs7g8isgeu778" path="res://Scripts/Scenes/Main/Modules/RobinRoomBgmListModule.gd" id="16_robin_room_bgm"]
+[ext_resource type="Script" path="res://Scripts/Scenes/Main/Modules/RobinRoomBgmListModule.gd" id="16_robin_room_bgm"]
 [ext_resource type="PackedScene" path="res://Scenes/UI/HUD/MessageLogPanel.tscn" id="17_message_log"]
 
 [sub_resource type="Environment" id="Environment_ctt6t"]
@@ -78,6 +78,6 @@ anchors_preset = 8
 
 [node name="InventoryButton" parent="CanvasLayer" unique_id=15107441 instance=ExtResource("9_inventory_button")]
 
-[node name="BuildModeButton" parent="CanvasLayer" unique_id=1853070945 instance=ExtResource("13_build_mode_button")]
+[node name="BuildModeButton" parent="CanvasLayer" unique_id=767525503 instance=ExtResource("13_build_mode_button")]
 
-[node name="WorkCreditButton" parent="CanvasLayer" unique_id=44562355 instance=ExtResource("7_work_credit_button")]
+[node name="WorkCreditButton" parent="CanvasLayer" unique_id=917382376 instance=ExtResource("7_work_credit_button")]
