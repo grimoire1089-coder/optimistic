@@ -1,7 +1,7 @@
 extends PanelContainer
 class_name CharacterNeedsPanel
 
-@export var bar_width: float = 180.0
+@export var bar_width: float = 132.0
 @export var high_value_color: Color = Color(0.20, 0.85, 0.28, 1.0)
 @export var middle_value_color: Color = Color(0.95, 0.82, 0.18, 1.0)
 @export var low_value_color: Color = Color(0.95, 0.22, 0.18, 1.0)
@@ -72,7 +72,8 @@ func _create_row(need: NeedInstance) -> void:
 
 	var name_label := Label.new()
 	name_label.text = need.definition.display_name
-	name_label.custom_minimum_size = Vector2(72.0, 0.0)
+	name_label.custom_minimum_size = Vector2(58.0, 0.0)
+	name_label.add_theme_font_size_override("font_size", 13)
 	row.add_child(name_label)
 
 	var bar := ProgressBar.new()
@@ -80,13 +81,14 @@ func _create_row(need: NeedInstance) -> void:
 	bar.min_value = 0.0
 	bar.max_value = need.definition.max_value
 	bar.value = need.value
-	bar.custom_minimum_size = Vector2(bar_width, 18.0)
+	bar.custom_minimum_size = Vector2(bar_width, 16.0)
 	bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(bar)
 
 	var value_label := Label.new()
 	value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	value_label.custom_minimum_size = Vector2(36.0, 0.0)
+	value_label.custom_minimum_size = Vector2(28.0, 0.0)
+	value_label.add_theme_font_size_override("font_size", 13)
 	row.add_child(value_label)
 
 	_row_by_need_id[need.definition.need_id] = {
