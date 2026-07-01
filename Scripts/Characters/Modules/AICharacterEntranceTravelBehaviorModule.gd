@@ -127,6 +127,66 @@ func _perform_map_travel(target_map_id: StringName) -> void:
 		return
 	if _map_travel_module.has_method("travel_to_map"):
 		_map_travel_module.call("travel_to_map", target_map_id)
+		_place_body_near_active_map_entrance()
+
+
+func _place_body_near_active_map_entrance() -> void:
+	if _body == null or _map_travel_module == null:
+		return
+	if not _map_travel_module.has_method("get_active_map"):
+		return
+	var active_map: RoomMapGridModule = _map_travel_module.call("get_active_map") as RoomMapGridModule
+	if active_map == null:
+		return
+	var entrance := _find_entrance_in_map(active_map)
+	if entrance == null:
+		return
+	var use_cell := _get_entrance_spawn_cell(active_map, entrance)
+	if not _is_valid_grid_position(use_cell):
+		return
+	_room_map = active_map
+	_body.global_position = active_map.grid_to_world_area_center(use_cell, _get_actor_grid_footprint())
+	_face_node(entrance)
+
+
+func _find_entrance_in_map(room_map: RoomMapGridModule) -> Node2D:
+	if room_map == null:
+		return null
+	var furniture_root := room_map.get_node_or_null("FurnitureRoot") as Node2D
+	if furniture_root == null:
+		return null
+	for child in furniture_root.get_children():
+		var furniture := child as Node2D
+		if furniture == null:
+			continue
+		if furniture is EntranceFurniture:
+			return furniture
+		if furniture.has_meta("furniture_id") and StringName(furniture.get_meta("furniture_id", &"")) == &"entrance":
+			return furniture
+	return null
+
+
+func _get_entrance_spawn_cell(room_map: RoomMapGridModule, entrance: Node2D) -> Vector2i:
+	if room_map == null or entrance == null or not entrance.has_meta("grid_position"):
+		return INVALID_GRID_POSITION
+	var entrance_cell: Vector2i = entrance.get_meta("grid_position", INVALID_GRID_POSITION)
+	if entrance_cell == INVALID_GRID_POSITION:
+		return INVALID_GRID_POSITION
+	var entrance_footprint := _get_furniture_footprint(entrance)
+	var actor_footprint := _get_actor_grid_footprint()
+	var candidates := _get_side_candidate_cells(entrance_cell, entrance_footprint, actor_footprint)
+	var nearest_cell := INVALID_GRID_POSITION
+	var nearest_score := INF
+
+	for candidate in candidates:
+		if not _is_spawn_cell_free(room_map, candidate, actor_footprint):
+			continue
+		var candidate_position := room_map.grid_to_world_area_center(candidate, actor_footprint)
+		var score := entrance.global_position.distance_squared_to(candidate_position)
+		if nearest_cell == INVALID_GRID_POSITION or score < nearest_score:
+			nearest_cell = candidate
+			nearest_score = score
+	return nearest_cell
 
 
 func _get_entrance_use_cell(entrance: Node2D) -> Vector2i:
@@ -325,6 +385,32 @@ func _is_target_cell_walkable(cell: Vector2i, footprint: Vector2i) -> bool:
 	return true
 
 
+func _is_spawn_cell_free(room_map: RoomMapGridModule, cell: Vector2i, footprint: Vector2i) -> bool:
+	if room_map == null or not room_map.is_grid_area_inside(cell, footprint):
+		return false
+	var furniture_root := room_map.get_node_or_null("FurnitureRoot") as Node2D
+	if furniture_root == null:
+		return true
+	for child in furniture_root.get_children():
+		var furniture := child as Node2D
+		if furniture == null or not furniture.has_meta("grid_position"):
+			continue
+		var furniture_cell: Vector2i = furniture.get_meta("grid_position", Vector2i.ZERO)
+		var furniture_footprint := _get_furniture_footprint(furniture)
+		if _grid_areas_overlap(cell, footprint, furniture_cell, furniture_footprint):
+			return false
+	return true
+
+
+func _grid_areas_overlap(a_cell: Vector2i, a_footprint: Vector2i, b_cell: Vector2i, b_footprint: Vector2i) -> bool:
+	return (
+		a_cell.x < b_cell.x + b_footprint.x
+		and a_cell.x + a_footprint.x > b_cell.x
+		and a_cell.y < b_cell.y + b_footprint.y
+		and a_cell.y + a_footprint.y > b_cell.y
+	)
+
+
 func _get_room_map_for_entrance(entrance: Node2D) -> RoomMapGridModule:
 	var node := entrance.get_parent()
 	while node != null:
@@ -335,11 +421,15 @@ func _get_room_map_for_entrance(entrance: Node2D) -> RoomMapGridModule:
 
 
 func _face_entrance() -> void:
-	if _body == null or _target_entrance == null or not is_instance_valid(_target_entrance):
+	_face_node(_target_entrance)
+
+
+func _face_node(target: Node2D) -> void:
+	if _body == null or target == null or not is_instance_valid(target):
 		return
-	var to_entrance := _target_entrance.global_position - _body.global_position
-	if to_entrance.length_squared() > 0.001:
-		_facing_direction = to_entrance.normalized()
+	var to_target := target.global_position - _body.global_position
+	if to_target.length_squared() > 0.001:
+		_facing_direction = to_target.normalized()
 
 
 func _get_furniture_footprint(furniture: Node2D) -> Vector2i:
