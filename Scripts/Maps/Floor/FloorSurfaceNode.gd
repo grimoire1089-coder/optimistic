@@ -96,8 +96,8 @@ func _draw_texture_floor(rect: Rect2) -> void:
 		var target_size := rect.size * clampf(texture_fill_ratio, 0.1, 1.0)
 		var fit_scale := minf(target_size.x / texture_size.x, target_size.y / texture_size.y)
 		var draw_size := texture_size * fit_scale
-		var draw_rect := Rect2(-draw_size * 0.5, draw_size)
-		draw_texture_rect(_texture, draw_rect, false, Color.WHITE)
+		var texture_rect := Rect2(-draw_size * 0.5, draw_size)
+		draw_texture_rect(_texture, texture_rect, false, Color.WHITE)
 		return
 
 	draw_texture_rect(_texture, rect, false, Color.WHITE)
