@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://main_scene_map_entrance_module"]
+
+[ext_resource type="Script" path="res://Scripts/Scenes/Main/Modules/MainSceneMapEntranceModule.gd" id="1_map_entrance"]
+
+[node name="MainSceneMapEntranceModule" type="Node"]
+script = ExtResource("1_map_entrance")
