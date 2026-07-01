@@ -81,6 +81,46 @@ custom_minimum_size = Vector2(88, 36)
 layout_mode = 2
 text = "しまう"
 
+[node name="CategoryButtons" type="HBoxContainer" parent="MarginContainer/Rows"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="BeddingCategoryButton" type="Button" parent="MarginContainer/Rows/CategoryButtons"]
+custom_minimum_size = Vector2(43, 28)
+layout_mode = 2
+toggle_mode = true
+text = "寝具"
+
+[node name="KitchenCategoryButton" type="Button" parent="MarginContainer/Rows/CategoryButtons"]
+custom_minimum_size = Vector2(47, 28)
+layout_mode = 2
+toggle_mode = true
+text = "キッチン"
+
+[node name="HygieneCategoryButton" type="Button" parent="MarginContainer/Rows/CategoryButtons"]
+custom_minimum_size = Vector2(43, 28)
+layout_mode = 2
+toggle_mode = true
+text = "衛生"
+
+[node name="EntertainmentCategoryButton" type="Button" parent="MarginContainer/Rows/CategoryButtons"]
+custom_minimum_size = Vector2(43, 28)
+layout_mode = 2
+toggle_mode = true
+text = "娯楽"
+
+[node name="DecorCategoryButton" type="Button" parent="MarginContainer/Rows/CategoryButtons"]
+custom_minimum_size = Vector2(43, 28)
+layout_mode = 2
+toggle_mode = true
+text = "装飾"
+
+[node name="FloorCategoryButton" type="Button" parent="MarginContainer/Rows/CategoryButtons"]
+custom_minimum_size = Vector2(43, 28)
+layout_mode = 2
+toggle_mode = true
+text = "床"
+
 [node name="ItemList" type="VBoxContainer" parent="MarginContainer/Rows"]
 layout_mode = 2
 theme_override_constants/separation = 6
