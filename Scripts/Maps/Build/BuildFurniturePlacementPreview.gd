@@ -9,8 +9,10 @@ class_name BuildFurniturePlacementPreview
 @export var valid_border_color: Color = Color(0.1, 2.6, 0.35, 0.95)
 @export var invalid_fill_color: Color = Color(1.0, 0.05, 0.03, 0.26)
 @export var invalid_border_color: Color = Color(2.5, 0.12, 0.08, 0.98)
-@export var store_fill_color: Color = Color(1.0, 0.45, 0.0, 0.28)
-@export var store_border_color: Color = Color(2.8, 0.75, 0.05, 1.0)
+@export var move_hover_fill_color: Color = Color(1.0, 0.78, 0.05, 0.24)
+@export var move_hover_border_color: Color = Color(2.6, 1.85, 0.1, 1.0)
+@export var store_fill_color: Color = Color(1.0, 0.08, 0.06, 0.26)
+@export var store_border_color: Color = Color(2.6, 0.16, 0.12, 1.0)
 @export var locked_furniture_message: String = "使用中の家具は動かせません。"
 @export var area_border_width: float = 3.0
 
@@ -78,8 +80,11 @@ func _draw() -> void:
 	var mode := _controller.get_tool_mode()
 	if mode == BuildModeController.TOOL_MODE_PLACE and _controller.get_selected_furniture_scene() != null:
 		_draw_area(_grid, _controller.get_selected_footprint(), _can_place)
-	elif mode == BuildModeController.TOOL_MODE_MOVE and _moving != null:
-		_draw_area(_grid, _moving_footprint, _can_place)
+	elif mode == BuildModeController.TOOL_MODE_MOVE:
+		if _moving != null:
+			_draw_area(_grid, _moving_footprint, _can_place)
+		else:
+			_draw_move_hover_area()
 	elif mode == BuildModeController.TOOL_MODE_STORE:
 		_draw_store_area()
 
@@ -232,6 +237,18 @@ func _draw_area(grid_position: Vector2i, footprint: Vector2i, ok: bool) -> void:
 	var rect := _room_map.get_grid_area_rect(grid_position, footprint)
 	draw_rect(rect, valid_fill_color if ok else invalid_fill_color, true)
 	draw_rect(rect, valid_border_color if ok else invalid_border_color, false, area_border_width)
+
+
+func _draw_move_hover_area() -> void:
+	var node := _placement.get_furniture_at(_grid)
+	if node == null:
+		return
+	var pos: Vector2i = node.get_meta("grid_position", _grid)
+	var fp: Vector2i = node.get_meta("grid_footprint", Vector2i(1, 1))
+	var rect := _room_map.get_grid_area_rect(pos, fp)
+	var can_move := _can_modify_node(node)
+	draw_rect(rect, move_hover_fill_color if can_move else invalid_fill_color, true)
+	draw_rect(rect, move_hover_border_color if can_move else invalid_border_color, false, area_border_width)
 
 
 func _draw_store_area() -> void:
