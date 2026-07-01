@@ -7,40 +7,56 @@ layout_mode = 3
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
-offset_left = -268.0
+offset_left = -328.0
 offset_top = 16.0
 offset_right = -16.0
 offset_bottom = 92.0
 grow_horizontal = 0
 script = ExtResource("1_clock_display")
 
-[node name="PanelContainer" type="PanelContainer" parent="."]
-unique_name_in_owner = true
+[node name="HBoxContainer" type="HBoxContainer" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+theme_override_constants/separation = 8
 
-[node name="MarginContainer" type="MarginContainer" parent="PanelContainer"]
+[node name="BGMMuteButton" type="Button" parent="HBoxContainer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(52, 76)
+layout_mode = 2
+size_flags_vertical = 3
+tooltip_text = "BGMミュート"
+toggle_mode = true
+text = "BGM"
+
+[node name="PanelContainer" type="PanelContainer" parent="HBoxContainer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(252, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="MarginContainer" type="MarginContainer" parent="HBoxContainer/PanelContainer"]
 layout_mode = 2
 theme_override_constants/margin_left = 16
 theme_override_constants/margin_top = 10
 theme_override_constants/margin_right = 16
 theme_override_constants/margin_bottom = 10
 
-[node name="VBoxContainer" type="VBoxContainer" parent="PanelContainer/MarginContainer"]
+[node name="VBoxContainer" type="VBoxContainer" parent="HBoxContainer/PanelContainer/MarginContainer"]
 layout_mode = 2
 theme_override_constants/separation = 4
 
-[node name="TimeLabel" type="Label" parent="PanelContainer/MarginContainer/VBoxContainer"]
+[node name="TimeLabel" type="Label" parent="HBoxContainer/PanelContainer/MarginContainer/VBoxContainer"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "1年目 春 1日目  06:00"
 horizontal_alignment = 2
 
-[node name="PhaseLabel" type="Label" parent="PanelContainer/MarginContainer/VBoxContainer"]
+[node name="PhaseLabel" type="Label" parent="HBoxContainer/PanelContainer/MarginContainer/VBoxContainer"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "朝"
