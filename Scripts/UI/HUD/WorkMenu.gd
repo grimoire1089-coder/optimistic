@@ -43,6 +43,13 @@ func close_menu() -> void:
 	visible = false
 
 
+func toggle_menu() -> void:
+	if visible:
+		close_menu()
+		return
+	open_menu()
+
+
 func _refresh() -> void:
 	title_label.text = "仕事"
 	job_001_button.text = "%s\n8時間" % first_job_name
