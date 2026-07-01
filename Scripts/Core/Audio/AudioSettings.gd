@@ -4,6 +4,7 @@ signal volume_changed(bus_name: StringName, volume: float)
 
 const CONFIG_PATH := "user://audio_settings.cfg"
 const CONFIG_SECTION := "audio"
+const MIN_RESTORE_VOLUME := 0.01
 
 const BUS_BGM: StringName = &"BGM"
 const BUS_SFX: StringName = &"SFX"
@@ -25,6 +26,7 @@ const DEFAULT_VOLUMES := {
 }
 
 var _volumes: Dictionary = {}
+var _last_non_zero_volumes: Dictionary = {}
 
 
 func _ready() -> void:
@@ -39,7 +41,11 @@ func set_volume(bus_name: StringName, volume: float, save_immediately: bool = tr
 		return
 
 	var clamped_volume := clampf(volume, 0.0, 1.0)
-	_volumes[String(bus_name)] = clamped_volume
+	var key := String(bus_name)
+	_volumes[key] = clamped_volume
+
+	if clamped_volume > 0.0:
+		_last_non_zero_volumes[key] = clamped_volume
 
 	_apply_volume(bus_name, clamped_volume)
 	volume_changed.emit(bus_name, clamped_volume)
@@ -51,6 +57,25 @@ func set_volume(bus_name: StringName, volume: float, save_immediately: bool = tr
 func get_volume(bus_name: StringName) -> float:
 	var key := String(bus_name)
 	return float(_volumes.get(key, DEFAULT_VOLUMES.get(key, 0.8)))
+
+
+func is_muted(bus_name: StringName) -> bool:
+	if not AUDIO_BUSES.has(bus_name):
+		return false
+	return get_volume(bus_name) <= 0.0
+
+
+func toggle_mute(bus_name: StringName, fallback_restore_volume: float = -1.0) -> bool:
+	if not AUDIO_BUSES.has(bus_name):
+		push_warning("未登録のAudio Busです: %s" % String(bus_name))
+		return false
+
+	if is_muted(bus_name):
+		set_volume(bus_name, _get_restore_volume(bus_name, fallback_restore_volume))
+		return false
+
+	set_volume(bus_name, 0.0)
+	return true
 
 
 func reset_to_default() -> void:
@@ -91,6 +116,7 @@ func _ensure_bus_exists(bus_name: StringName) -> void:
 
 func _load_settings() -> void:
 	_volumes.clear()
+	_last_non_zero_volumes.clear()
 
 	var config := ConfigFile.new()
 	var err := config.load(CONFIG_PATH)
@@ -98,11 +124,16 @@ func _load_settings() -> void:
 	for bus_name: StringName in AUDIO_BUSES:
 		var key := String(bus_name)
 		var default_volume := float(DEFAULT_VOLUMES.get(key, 0.8))
+		var loaded_volume := default_volume
 
 		if err == OK:
-			_volumes[key] = float(config.get_value(CONFIG_SECTION, key, default_volume))
-		else:
-			_volumes[key] = default_volume
+			loaded_volume = float(config.get_value(CONFIG_SECTION, key, default_volume))
+
+		loaded_volume = clampf(loaded_volume, 0.0, 1.0)
+		_volumes[key] = loaded_volume
+
+		if loaded_volume > 0.0:
+			_last_non_zero_volumes[key] = loaded_volume
 
 
 func _apply_all_volumes() -> void:
@@ -123,3 +154,15 @@ func _apply_volume(bus_name: StringName, volume: float) -> void:
 
 	AudioServer.set_bus_mute(bus_index, false)
 	AudioServer.set_bus_volume_db(bus_index, linear_to_db(volume))
+
+
+func _get_restore_volume(bus_name: StringName, fallback_restore_volume: float) -> float:
+	if fallback_restore_volume > 0.0:
+		return clampf(fallback_restore_volume, MIN_RESTORE_VOLUME, 1.0)
+
+	var key := String(bus_name)
+	var stored_volume := float(_last_non_zero_volumes.get(key, 0.0))
+	if stored_volume > 0.0:
+		return clampf(stored_volume, MIN_RESTORE_VOLUME, 1.0)
+
+	return clampf(float(DEFAULT_VOLUMES.get(key, 0.8)), MIN_RESTORE_VOLUME, 1.0)
