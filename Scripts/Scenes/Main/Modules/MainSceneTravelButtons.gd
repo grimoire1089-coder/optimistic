@@ -8,8 +8,8 @@ signal travel_to_robin_room_requested
 @export var to_robin_room_button_path: NodePath = NodePath("ToRobinRoomButton")
 @export var to_infrastructure_label_text: String = "インフラへ"
 @export var to_robin_room_label_text: String = "部屋へ戻る"
-@export var button_position: Vector2 = Vector2(24.0, 64.0)
-@export var button_size: Vector2 = Vector2(152.0, 40.0)
+@export var button_position: Vector2 = Vector2(52.0, 72.0)
+@export var button_size: Vector2 = Vector2(180.0, 38.0)
 
 var _to_infrastructure_button: Button
 var _to_robin_room_button: Button
@@ -18,6 +18,7 @@ var _to_robin_room_button: Button
 func _ready() -> void:
 	_ensure_buttons()
 	_resolve_buttons()
+	_apply_button_layouts()
 	_connect_buttons()
 	_apply_start_state()
 
@@ -66,15 +67,42 @@ func _ensure_buttons() -> void:
 func _create_button(button_name: String, text_value: String, visible_on_start: bool) -> Button:
 	var button := Button.new()
 	button.name = button_name
+	button.text = text_value
+	button.visible = visible_on_start
+	add_child(button)
+	_apply_button_layout(button)
+	return button
+
+
+func _apply_button_layouts() -> void:
+	_apply_button_layout(_to_infrastructure_button)
+	_apply_button_layout(_to_robin_room_button)
+
+
+func _apply_button_layout(button: Button) -> void:
+	if button == null:
+		return
+	button.custom_minimum_size = button_size
 	button.offset_left = button_position.x
 	button.offset_top = button_position.y
 	button.offset_right = button_position.x + button_size.x
 	button.offset_bottom = button_position.y + button_size.y
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	button.text = text_value
-	button.visible = visible_on_start
-	add_child(button)
-	return button
+	button.add_theme_font_size_override("font_size", 13)
+	button.add_theme_stylebox_override("normal", _make_button_style(Color(0.08, 0.08, 0.10, 0.95), Color(0.26, 0.28, 0.32, 1.0), 1))
+	button.add_theme_stylebox_override("hover", _make_button_style(Color(0.12, 0.14, 0.17, 0.98), Color(0.00, 1.65, 1.65, 0.95), 2))
+	button.add_theme_stylebox_override("pressed", _make_button_style(Color(0.04, 0.20, 0.22, 1.0), Color(0.25, 2.4, 2.4, 1.0), 2))
+	button.add_theme_stylebox_override("disabled", _make_button_style(Color(0.06, 0.06, 0.07, 0.65), Color(0.18, 0.18, 0.20, 0.8), 1))
+
+
+func _make_button_style(bg_color: Color, border_color: Color, border_width: int) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = bg_color
+	style.border_color = border_color
+	style.set_border_width_all(border_width)
+	style.set_corner_radius_all(8)
+	style.set_content_margin_all(4.0)
+	return style
 
 
 func _connect_buttons() -> void:
