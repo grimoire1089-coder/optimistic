@@ -3,15 +3,15 @@
 [ext_resource type="Script" path="res://Scripts/UI/HUD/BuildModeButton.gd" id="1_build_button"]
 
 [node name="BuildModeButton" type="Button"]
-custom_minimum_size = Vector2(64, 64)
+custom_minimum_size = Vector2(56, 56)
 layout_mode = 3
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
-offset_left = -160.0
+offset_left = -144.0
 offset_top = 176.0
-offset_right = -96.0
-offset_bottom = 240.0
+offset_right = -88.0
+offset_bottom = 232.0
 grow_horizontal = 0
 grow_vertical = 0
 mouse_default_cursor_shape = 2
