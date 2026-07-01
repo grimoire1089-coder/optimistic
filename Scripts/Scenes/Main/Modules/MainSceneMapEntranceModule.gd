@@ -8,9 +8,7 @@ const DEFAULT_ENTRANCE_SCENE_PATH := "res://Scenes/Maps/Furniture/Utility/Entran
 
 @export var robin_room_map_path: NodePath = NodePath("../RobinRoomMap")
 @export var infrastructure_room_map_path: NodePath = NodePath("../InfrastructureRoomMap")
-@export var map_travel_module_path: NodePath = NodePath("../MainSceneMapTravelModule")
 @export var furniture_placement_module_path: NodePath = NodePath("../FurniturePlacementModule")
-@export var build_mode_controller_path: NodePath = NodePath("../BuildModeController")
 @export var entrance_scene_path: String = DEFAULT_ENTRANCE_SCENE_PATH
 @export var entrance_footprint: Vector2i = Vector2i(3, 1)
 @export var robin_room_entrance_grid_position: Vector2i = Vector2i(6, 14)
@@ -18,9 +16,7 @@ const DEFAULT_ENTRANCE_SCENE_PATH := "res://Scenes/Maps/Furniture/Utility/Entran
 
 var _robin_room_map: RoomMapGridModule
 var _infrastructure_room_map: RoomMapGridModule
-var _map_travel_module: MainSceneMapTravelModule
 var _furniture_placement_module: FurniturePlacementModule
-var _build_mode_controller: BuildModeController
 var _entrance_scene: PackedScene
 var _sync_timer := 0.0
 var _runtime_entrances_ready := false
@@ -82,7 +78,6 @@ func _ensure_entrance_for_map(
 		furniture_root.add_child(entrance)
 
 	_configure_entrance(entrance, room_map, target_map_id, grid_position)
-	_connect_entrance_signal(entrance)
 	return entrance
 
 
@@ -119,32 +114,6 @@ func _configure_entrance(
 	else:
 		entrance.set("cell_size", room_map.get_cell_size())
 		entrance.queue_redraw()
-
-
-func _connect_entrance_signal(entrance: EntranceFurniture) -> void:
-	if entrance == null:
-		return
-	var callable := Callable(self, "_on_entrance_travel_requested")
-	if not entrance.travel_requested.is_connected(callable):
-		entrance.travel_requested.connect(callable)
-
-
-func _on_entrance_travel_requested(_entrance: EntranceFurniture, target_map_id: StringName) -> void:
-	if target_map_id == &"":
-		return
-	if _is_build_mode_enabled():
-		return
-	_resolve_refs()
-	if _map_travel_module == null:
-		return
-	if _map_travel_module.has_method("travel_to_map"):
-		_map_travel_module.call("travel_to_map", target_map_id)
-		return
-	match target_map_id:
-		MAP_ID_INFRASTRUCTURE_ROOM:
-			_map_travel_module.travel_to_infrastructure_room()
-		MAP_ID_ROBIN_ROOM:
-			_map_travel_module.travel_to_robin_room()
 
 
 func _sync_entrance_layouts() -> void:
@@ -191,23 +160,10 @@ func _get_entrance_scene() -> PackedScene:
 	return _entrance_scene
 
 
-func _is_build_mode_enabled() -> bool:
-	_resolve_refs()
-	if _build_mode_controller == null:
-		return false
-	return _build_mode_controller.is_build_mode_enabled()
-
-
 func _resolve_refs() -> void:
 	if _robin_room_map == null and not robin_room_map_path.is_empty():
 		_robin_room_map = get_node_or_null(robin_room_map_path) as RoomMapGridModule
 	if _infrastructure_room_map == null and not infrastructure_room_map_path.is_empty():
 		_infrastructure_room_map = get_node_or_null(infrastructure_room_map_path) as RoomMapGridModule
-	if _map_travel_module == null and not map_travel_module_path.is_empty():
-		_map_travel_module = get_node_or_null(map_travel_module_path) as MainSceneMapTravelModule
 	if _furniture_placement_module == null and not furniture_placement_module_path.is_empty():
 		_furniture_placement_module = get_node_or_null(furniture_placement_module_path) as FurniturePlacementModule
-	if _build_mode_controller == null and not build_mode_controller_path.is_empty():
-		_build_mode_controller = get_node_or_null(build_mode_controller_path) as BuildModeController
-	if _build_mode_controller == null:
-		_build_mode_controller = get_tree().get_first_node_in_group(&"build_mode_controller") as BuildModeController
