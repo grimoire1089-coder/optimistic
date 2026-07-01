@@ -68,11 +68,13 @@ expand_mode = 1
 stretch_mode = 0
 
 [node name="DebugLabel" type="Label" parent="CanvasLayer" unique_id=210733485]
-offset_left = 24.0
-offset_top = 24.0
-offset_right = 360.0
-offset_bottom = 55.0
-text = "Main Scene 起動完了"
+offset_left = 52.0
+offset_top = 32.0
+offset_right = 340.0
+offset_bottom = 60.0
+text = "ロビンの部屋 / Grid 15 x 15"
+theme_override_colors/font_color = Color(0.88, 0.98, 1, 1)
+theme_override_font_sizes/font_size = 15
 
 [node name="MessageLogPanel" parent="CanvasLayer" unique_id=2086590989 instance=ExtResource("17_message_log")]
 
