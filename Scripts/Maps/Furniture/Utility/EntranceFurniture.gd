@@ -68,6 +68,10 @@ func _on_click_area_input_event(_viewport: Viewport, event: InputEvent, _shape_i
 	var scene_root := get_tree().current_scene
 	if scene_root == null:
 		return
+	var build_controller := scene_root.get_node_or_null("BuildModeController")
+	if build_controller != null and build_controller.has_method("is_build_mode_enabled"):
+		if bool(build_controller.call("is_build_mode_enabled")):
+			return
 	var robin := scene_root.get_node_or_null("Robin")
 	if robin == null or not robin.has_method("request_entrance_travel"):
 		return
