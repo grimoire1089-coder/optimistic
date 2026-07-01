@@ -12,7 +12,8 @@ enum LogChannel { NORMAL, DEBUG }
 ## 旧設定との互換用。デバッグログはコード側で常に無音にする。
 @export var play_notice_sfx_for_debug: bool = false
 @export_range(0.0, 10.0, 0.1) var queued_message_delay_seconds: float = 2.0
-@export var card_height: float = 58.0
+@export var card_height: float = 64.0
+@export var card_horizontal_inset: float = 4.0
 @export var card_enter_offset_y: float = 18.0
 @export var card_enter_duration: float = 0.22
 @export var card_background_color: Color = Color(0.035, 0.04, 0.06, 0.96)
@@ -256,8 +257,8 @@ func _make_card_node(message: String, channel: int, animate_card: bool) -> Panel
 	card.anchor_top = 1.0
 	card.anchor_right = 1.0
 	card.anchor_bottom = 1.0
-	card.offset_left = 0.0
-	card.offset_right = 0.0
+	card.offset_left = card_horizontal_inset
+	card.offset_right = -card_horizontal_inset
 	if animate_card:
 		card.offset_top = -card_height + card_enter_offset_y
 		card.offset_bottom = card_enter_offset_y
@@ -269,9 +270,9 @@ func _make_card_node(message: String, channel: int, animate_card: bool) -> Panel
 	card.add_theme_stylebox_override("panel", _make_card_style(channel))
 
 	var margin := MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 12)
+	margin.add_theme_constant_override("margin_left", 10)
 	margin.add_theme_constant_override("margin_top", 8)
-	margin.add_theme_constant_override("margin_right", 12)
+	margin.add_theme_constant_override("margin_right", 10)
 	margin.add_theme_constant_override("margin_bottom", 8)
 	card.add_child(margin)
 
@@ -281,7 +282,7 @@ func _make_card_node(message: String, channel: int, animate_card: bool) -> Panel
 	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	label.add_theme_color_override("font_color", _get_card_text_color(channel))
-	label.add_theme_font_size_override("font_size", 14)
+	label.add_theme_font_size_override("font_size", 13)
 	margin.add_child(label)
 
 	return card
