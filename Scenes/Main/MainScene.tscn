@@ -56,13 +56,15 @@ click_sfx = ExtResource("4_ctt6t")
 
 [node name="LeftBackgroundPanel" type="TextureRect" parent="CanvasLayer" unique_id=104457291]
 z_index = -100
-offset_left = 8.0
-offset_top = 8.0
-offset_right = 376.0
-offset_bottom = 704.0
+modulate = Color(1, 1, 1, 0.72)
+offset_left = 32.0
+offset_top = 16.0
+offset_right = 352.0
+offset_bottom = 688.0
 mouse_filter = 2
 texture = ExtResource("18_left_panel_bg")
 expand_mode = 1
+stretch_mode = 0
 
 [node name="DebugLabel" type="Label" parent="CanvasLayer" unique_id=210733485]
 offset_left = 24.0
