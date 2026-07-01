@@ -1,8 +1,6 @@
 extends Node2D
 class_name EntranceFurniture
 
-signal travel_requested(entrance: EntranceFurniture, target_map_id: StringName)
-
 @export var display_name: String = "エントランス"
 @export var furniture_id: StringName = &"entrance"
 @export var target_map_id: StringName = &""
