@@ -5,8 +5,8 @@ const MAP_TRAVEL_MODULE_SCENE_PATH := "res://Scenes/Main/Modules/MainSceneMapTra
 const TRAVEL_BUTTONS_ROOT_SCENE_PATH := "res://Scenes/Main/Modules/MainSceneTravelButtonsRoot.tscn"
 const LOCATION_BACKGROUND_SCRIPT_PATH := "res://Scripts/Maps/Location/LocationBackgroundNode.gd"
 const DEFAULT_LOCATION_BACKGROUND_TEXTURE_PATH := "res://Assets/Maps/Location/Location_001.png"
-const RIGHT_TRAVEL_BUTTON_POSITION := Vector2(-400.0, 176.0)
-const RIGHT_TRAVEL_BUTTON_SIZE := Vector2(56.0, 56.0)
+const RIGHT_TRAVEL_BUTTON_POSITION := Vector2(-332.0, 184.0)
+const RIGHT_TRAVEL_BUTTON_SIZE := Vector2(48.0, 48.0)
 
 @onready var debug_label: Label = $CanvasLayer/DebugLabel
 @onready var robin: RobinWanderActor = $Robin
@@ -141,6 +141,7 @@ func _configure_travel_buttons_root(root: Control) -> void:
 	root.offset_top = 0.0
 	root.offset_right = 0.0
 	root.offset_bottom = 0.0
+	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 
 func _instantiate_scene(scene_path: String) -> Node:
@@ -179,6 +180,7 @@ func _configure_right_travel_button(button: Button, text_value: String, tooltip_
 	button.offset_top = RIGHT_TRAVEL_BUTTON_POSITION.y
 	button.offset_right = RIGHT_TRAVEL_BUTTON_POSITION.x + RIGHT_TRAVEL_BUTTON_SIZE.x
 	button.offset_bottom = RIGHT_TRAVEL_BUTTON_POSITION.y + RIGHT_TRAVEL_BUTTON_SIZE.y
+	button.mouse_filter = Control.MOUSE_FILTER_STOP
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	button.text = text_value
 	button.tooltip_text = tooltip_value
@@ -189,11 +191,11 @@ func _apply_reserved_bottom_hud_layout() -> void:
 	if canvas_layer == null:
 		return
 
-	_place_top_right_control(canvas_layer.get_node_or_null("RobinHudButton") as Control, Vector2(-336.0, 176.0), Vector2(56.0, 56.0))
-	_place_top_right_control(canvas_layer.get_node_or_null("ShopButton") as Control, Vector2(-272.0, 176.0), Vector2(56.0, 56.0))
-	_place_top_right_control(canvas_layer.get_node_or_null("InventoryButton") as Control, Vector2(-208.0, 176.0), Vector2(56.0, 56.0))
-	_place_top_right_control(canvas_layer.get_node_or_null("BuildModeButton") as Control, Vector2(-144.0, 176.0), Vector2(56.0, 56.0))
-	_place_top_right_control(canvas_layer.get_node_or_null("WorkCreditButton") as Control, Vector2(-80.0, 176.0), Vector2(56.0, 56.0))
+	_place_top_right_control(canvas_layer.get_node_or_null("RobinHudButton") as Control, Vector2(-280.0, 184.0), RIGHT_TRAVEL_BUTTON_SIZE)
+	_place_top_right_control(canvas_layer.get_node_or_null("ShopButton") as Control, Vector2(-228.0, 184.0), RIGHT_TRAVEL_BUTTON_SIZE)
+	_place_top_right_control(canvas_layer.get_node_or_null("InventoryButton") as Control, Vector2(-176.0, 184.0), RIGHT_TRAVEL_BUTTON_SIZE)
+	_place_top_right_control(canvas_layer.get_node_or_null("BuildModeButton") as Control, Vector2(-124.0, 184.0), RIGHT_TRAVEL_BUTTON_SIZE)
+	_place_top_right_control(canvas_layer.get_node_or_null("WorkCreditButton") as Control, Vector2(-72.0, 184.0), RIGHT_TRAVEL_BUTTON_SIZE)
 	_place_top_right_control(canvas_layer.get_node_or_null("AICharacterHud") as Control, Vector2(-328.0, 252.0), Vector2(304.0, 274.0))
 	_place_top_right_control(canvas_layer.get_node_or_null("WorkMenu") as Control, Vector2(-328.0, 252.0), Vector2(304.0, 158.0))
 
