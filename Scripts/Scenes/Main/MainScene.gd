@@ -151,12 +151,13 @@ func _apply_reserved_bottom_hud_layout() -> void:
 	if canvas_layer == null:
 		return
 
-	_place_top_right_control(canvas_layer.get_node_or_null("ShopButton") as Control, Vector2(-304.0, 176.0), Vector2(64.0, 64.0))
-	_place_top_right_control(canvas_layer.get_node_or_null("InventoryButton") as Control, Vector2(-232.0, 176.0), Vector2(64.0, 64.0))
-	_place_top_right_control(canvas_layer.get_node_or_null("BuildModeButton") as Control, Vector2(-160.0, 176.0), Vector2(64.0, 64.0))
-	_place_top_right_control(canvas_layer.get_node_or_null("WorkCreditButton") as Control, Vector2(-88.0, 176.0), Vector2(64.0, 64.0))
-	_place_top_right_control(canvas_layer.get_node_or_null("AICharacterHud") as Control, Vector2(-368.0, 260.0), Vector2(344.0, 300.0))
-	_place_top_right_control(canvas_layer.get_node_or_null("WorkMenu") as Control, Vector2(-360.0, 260.0), Vector2(336.0, 158.0))
+	_place_top_right_control(canvas_layer.get_node_or_null("RobinHudButton") as Control, Vector2(-336.0, 176.0), Vector2(56.0, 56.0))
+	_place_top_right_control(canvas_layer.get_node_or_null("ShopButton") as Control, Vector2(-272.0, 176.0), Vector2(56.0, 56.0))
+	_place_top_right_control(canvas_layer.get_node_or_null("InventoryButton") as Control, Vector2(-208.0, 176.0), Vector2(56.0, 56.0))
+	_place_top_right_control(canvas_layer.get_node_or_null("BuildModeButton") as Control, Vector2(-144.0, 176.0), Vector2(56.0, 56.0))
+	_place_top_right_control(canvas_layer.get_node_or_null("WorkCreditButton") as Control, Vector2(-80.0, 176.0), Vector2(56.0, 56.0))
+	_place_top_right_control(canvas_layer.get_node_or_null("AICharacterHud") as Control, Vector2(-328.0, 252.0), Vector2(304.0, 274.0))
+	_place_top_right_control(canvas_layer.get_node_or_null("WorkMenu") as Control, Vector2(-328.0, 252.0), Vector2(304.0, 158.0))
 
 
 func _place_top_right_control(control: Control, top_right_offset: Vector2, control_size: Vector2) -> void:
