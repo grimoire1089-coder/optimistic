@@ -301,7 +301,7 @@ func _get_message_card_height(message: String) -> float:
 		estimated_line_count = 1
 	else:
 		for text_line in text_lines:
-			var line_length := max(text_line.length(), 1)
+			var line_length: int = maxi(text_line.length(), 1)
 			estimated_line_count += maxi(int(ceilf(float(line_length) / float(safe_chars_per_line))), 1)
 
 	var estimated_height := card_estimated_vertical_padding + float(estimated_line_count) * card_estimated_line_height
