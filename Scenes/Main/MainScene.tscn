@@ -19,6 +19,7 @@
 [ext_resource type="Script" uid="uid://bs7g8isgeu778" path="res://Scripts/Scenes/Main/Modules/RobinRoomBgmListModule.gd" id="16_robin_room_bgm"]
 [ext_resource type="PackedScene" path="res://Scenes/UI/HUD/MessageLogPanel.tscn" id="17_message_log"]
 [ext_resource type="Texture2D" uid="uid://c3alnt1qvimm6" path="res://Assets/UI/Parts/Background_panel_001.png" id="18_left_panel_bg"]
+[ext_resource type="PackedScene" path="res://Scenes/UI/HUD/RobinHudButton.tscn" id="19_robin_hud_button"]
 
 [sub_resource type="Environment" id="Environment_ctt6t"]
 glow_enabled = true
@@ -87,6 +88,8 @@ text = "Main Scene 起動完了"
 
 [node name="InventoryUI" parent="CanvasLayer" unique_id=520989565 instance=ExtResource("10_inventory_ui")]
 anchors_preset = 8
+
+[node name="RobinHudButton" parent="CanvasLayer" unique_id=109920417 instance=ExtResource("19_robin_hud_button")]
 
 [node name="ShopButton" parent="CanvasLayer" unique_id=2139128007 instance=ExtResource("14_shop_button")]
 
