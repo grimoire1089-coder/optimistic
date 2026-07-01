@@ -244,10 +244,10 @@ func _sync_item_category_visibility() -> void:
 	_set_button_visible(floor_store_button, _current_category_id == CATEGORY_FLOOR)
 
 
-func _set_button_visible(button: Button, is_visible: bool) -> void:
+func _set_button_visible(button: Button, should_show: bool) -> void:
 	if button == null:
 		return
-	button.visible = is_visible
+	button.visible = should_show
 
 
 func _sync_floor_buttons() -> void:
