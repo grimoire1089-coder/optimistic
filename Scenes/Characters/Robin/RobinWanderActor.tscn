@@ -1,4 +1,4 @@
-[gd_scene load_steps=14 format=3 uid="uid://cb0fyv6e2f40m"]
+[gd_scene load_steps=15 format=3 uid="uid://cb0fyv6e2f40m"]
 
 [ext_resource type="Script" path="res://Scripts/Characters/Robin/RobinWanderActor.gd" id="1_actor"]
 [ext_resource type="Texture2D" path="res://Assets/Characters/Robin/Walk/robin_8dir_standing.png" id="2_standing_texture"]
@@ -11,6 +11,7 @@
 [ext_resource type="Script" path="res://Scripts/Characters/Modules/AICharacterHydrateBehaviorModule.gd" id="9_hydrate_behavior"]
 [ext_resource type="Script" path="res://Scripts/Characters/Modules/AICharacterActionProgressBarModule.gd" id="10_action_progress_bar"]
 [ext_resource type="Script" path="res://Scripts/Characters/Modules/AICharacterActionItemDisplayModule.gd" id="11_action_item_display"]
+[ext_resource type="Script" path="res://Scripts/Characters/Modules/AICharacterEntranceTravelBehaviorModule.gd" id="12_entrance_travel"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_robin"]
 radius = 8.0
@@ -78,6 +79,15 @@ apply_need_effect_after_refill = true
 drink_duration_seconds = 3.0
 drink_sfx_path = "res://Assets/Audio/SFX/Game/drink.ogg"
 drink_sfx_delay_seconds = 0.75
+
+[node name="AICharacterEntranceTravelBehaviorModule" type="Node" parent="."]
+script = ExtResource("12_entrance_travel")
+room_map_path = NodePath("../../RobinRoomMap")
+walk_speed = 80.0
+arrive_distance = 14.0
+use_offset_cells = Vector2i(0, -4)
+actor_grid_footprint = Vector2i(2, 4)
+use_time_seconds = 0.45
 
 [node name="AICharacterActionProgressBarModule" type="Node" parent="."]
 script = ExtResource("10_action_progress_bar")
