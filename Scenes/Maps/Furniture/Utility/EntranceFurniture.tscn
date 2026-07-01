@@ -1,0 +1,30 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Maps/Furniture/Utility/EntranceFurniture.gd" id="1_entrance_script"]
+[ext_resource type="Texture2D" path="res://Assets/Maps/Furniture/Utility/Entrance_001.png" id="2_entrance_texture"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_entrance_click"]
+size = Vector2(144, 48)
+
+[node name="EntranceFurniture" type="Node2D"]
+script = ExtResource("1_entrance_script")
+display_name = "エントランス"
+furniture_id = &"entrance"
+grid_footprint = Vector2i(3, 1)
+cell_size = Vector2(48, 48)
+sprite_path = NodePath("Sprite2D")
+click_shape_path = NodePath("ClickArea2D/CollisionShape2D")
+preserve_sprite_aspect = true
+sprite_fill_ratio = 1.0
+built_in = true
+build_locked = true
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture = ExtResource("2_entrance_texture")
+centered = true
+
+[node name="ClickArea2D" type="Area2D" parent="."]
+input_pickable = true
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="ClickArea2D"]
+shape = SubResource("RectangleShape2D_entrance_click")
