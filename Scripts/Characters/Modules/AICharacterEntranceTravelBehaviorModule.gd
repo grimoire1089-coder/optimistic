@@ -4,6 +4,7 @@ class_name AICharacterEntranceTravelBehaviorModule
 signal travel_completed(target_map_id: StringName)
 
 @export var room_map_path: NodePath = NodePath("../../RobinRoomMap")
+@export var map_travel_module_path: NodePath = NodePath("../../MainSceneMapTravelModule")
 @export var walk_speed: float = 80.0
 @export var arrive_distance: float = 14.0
 @export var use_offset_cells: Vector2i = Vector2i(0, -4)
@@ -12,6 +13,7 @@ signal travel_completed(target_map_id: StringName)
 
 var _body: CharacterBody2D
 var _room_map: RoomMapGridModule
+var _map_travel_module: Node
 var _target_entrance: Node2D
 var _target_map_id: StringName = &""
 var _active := false
@@ -37,7 +39,12 @@ func request_travel_to_entrance(entrance: Node2D, target_map_id: StringName) -> 
 	_resolve_refs()
 	if _active:
 		return false
-	if _body == null or _room_map == null or entrance == null or target_map_id == &"":
+	if _body == null or entrance == null or target_map_id == &"":
+		return false
+	var entrance_map := _get_room_map_for_entrance(entrance)
+	if entrance_map != null:
+		_room_map = entrance_map
+	if _room_map == null:
 		return false
 	_target_entrance = entrance
 	_target_map_id = target_map_id
@@ -85,7 +92,16 @@ func _tick_use(delta: float) -> void:
 		return
 	var completed_target_map_id := _target_map_id
 	_reset()
+	_perform_map_travel(completed_target_map_id)
 	travel_completed.emit(completed_target_map_id)
+
+
+func _perform_map_travel(target_map_id: StringName) -> void:
+	_resolve_refs()
+	if _map_travel_module == null:
+		return
+	if _map_travel_module.has_method("travel_to_map"):
+		_map_travel_module.call("travel_to_map", target_map_id)
 
 
 func _get_entrance_use_position(entrance: Node2D) -> Vector2:
@@ -100,6 +116,15 @@ func _get_entrance_use_position(entrance: Node2D) -> Vector2:
 	use_cell.x = clampi(use_cell.x, 0, maxi(grid_size.x - actor_footprint.x, 0))
 	use_cell.y = clampi(use_cell.y, 0, maxi(grid_size.y - actor_footprint.y, 0))
 	return _room_map.grid_to_world_area_center(use_cell, actor_footprint)
+
+
+func _get_room_map_for_entrance(entrance: Node2D) -> RoomMapGridModule:
+	var node := entrance.get_parent()
+	while node != null:
+		if node is RoomMapGridModule:
+			return node as RoomMapGridModule
+		node = node.get_parent()
+	return null
 
 
 func _face_entrance() -> void:
@@ -125,3 +150,5 @@ func _reset() -> void:
 func _resolve_refs() -> void:
 	if _room_map == null and not room_map_path.is_empty():
 		_room_map = get_node_or_null(room_map_path) as RoomMapGridModule
+	if _map_travel_module == null and not map_travel_module_path.is_empty():
+		_map_travel_module = get_node_or_null(map_travel_module_path)
