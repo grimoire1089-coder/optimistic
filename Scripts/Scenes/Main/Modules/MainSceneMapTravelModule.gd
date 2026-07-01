@@ -223,13 +223,15 @@ func _sync_runtime_build_nodes() -> void:
 	var furniture_placement := get_node_or_null(furniture_placement_module_path)
 	if furniture_placement != null:
 		if furniture_placement.has_method("set_room_map_path"):
-			furniture_placement.call("set_room_map_path", active_map_path)
+			if furniture_placement.get("room_map_path") != active_map_path:
+				furniture_placement.call("set_room_map_path", active_map_path)
 		else:
 			furniture_placement.set("room_map_path", active_map_path)
 			furniture_placement.set("_room_map", null)
 		var active_furniture_root_path := _get_active_furniture_root_path_for_scene_modules()
 		if furniture_placement.has_method("set_furniture_root_path"):
-			furniture_placement.call("set_furniture_root_path", active_furniture_root_path)
+			if furniture_placement.get("furniture_root_path") != active_furniture_root_path:
+				furniture_placement.call("set_furniture_root_path", active_furniture_root_path)
 		else:
 			furniture_placement.set("furniture_root_path", active_furniture_root_path)
 			furniture_placement.set("_furniture_root", null)
