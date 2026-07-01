@@ -40,9 +40,9 @@ func _load_default_click_sfx_if_needed() -> void:
 
 
 func _apply_square_button_layout() -> void:
-	custom_minimum_size = Vector2(64.0, 64.0)
-	offset_left = -88.0
-	offset_top = -88.0
+	custom_minimum_size = Vector2(56.0, 56.0)
+	offset_left = -80.0
+	offset_top = -80.0
 	offset_right = -24.0
 	offset_bottom = -24.0
 	mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
@@ -54,7 +54,7 @@ func _add_rounded_button_styles() -> void:
 	add_theme_stylebox_override("hover", _make_style(Color(0.15, 0.15, 0.18, 0.98), Color(0.00, 1.65, 1.65, 0.95), 2))
 	add_theme_stylebox_override("pressed", _make_style(Color(0.04, 0.20, 0.22, 1.0), Color(0.25, 2.4, 2.4, 1.0), 2))
 	add_theme_stylebox_override("disabled", _make_style(Color(0.08, 0.08, 0.09, 0.62), Color(0.18, 0.18, 0.20, 0.8), 1))
-	add_theme_font_size_override("font_size", 13)
+	add_theme_font_size_override("font_size", 11)
 
 
 func _make_style(bg_color: Color, border_color: Color, border_width: int) -> StyleBoxFlat:
@@ -63,5 +63,5 @@ func _make_style(bg_color: Color, border_color: Color, border_width: int) -> Sty
 	style.border_color = border_color
 	style.set_border_width_all(border_width)
 	style.set_corner_radius_all(8)
-	style.set_content_margin_all(4.0)
+	style.set_content_margin_all(3.0)
 	return style
