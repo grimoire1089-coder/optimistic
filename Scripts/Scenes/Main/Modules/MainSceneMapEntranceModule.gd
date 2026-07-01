@@ -23,6 +23,7 @@ var _furniture_placement_module: FurniturePlacementModule
 var _build_mode_controller: BuildModeController
 var _entrance_scene: PackedScene
 var _sync_timer := 0.0
+var _runtime_entrances_ready := false
 
 
 func _ready() -> void:
@@ -33,7 +34,8 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	_resolve_refs()
-	ensure_runtime_entrances()
+	if not _runtime_entrances_ready:
+		ensure_runtime_entrances()
 	_sync_timer += maxf(delta, 0.0)
 	if _sync_timer >= 0.25:
 		_sync_timer = 0.0
@@ -42,19 +44,21 @@ func _process(delta: float) -> void:
 
 func ensure_runtime_entrances() -> void:
 	_resolve_refs()
-	_ensure_entrance_for_map(
+	var robin_entrance := _ensure_entrance_for_map(
 		_robin_room_map,
 		"RobinRoomEntrance",
 		MAP_ID_INFRASTRUCTURE_ROOM,
 		robin_room_entrance_grid_position
 	)
-	_ensure_entrance_for_map(
+	var infrastructure_entrance := _ensure_entrance_for_map(
 		_infrastructure_room_map,
 		"InfrastructureRoomEntrance",
 		MAP_ID_ROBIN_ROOM,
 		infrastructure_room_entrance_grid_position
 	)
-	_sync_active_placement_occupancy()
+	_runtime_entrances_ready = robin_entrance != null and infrastructure_entrance != null
+	if _runtime_entrances_ready:
+		_sync_active_placement_occupancy()
 
 
 func _ensure_entrance_for_map(
