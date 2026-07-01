@@ -3,6 +3,7 @@ class_name MainSceneMapTravelModule
 
 const MAP_ID_ROBIN_ROOM: StringName = &"robin_room"
 const MAP_ID_INFRASTRUCTURE_ROOM: StringName = &"infrastructure_room"
+const DEFAULT_TRAVEL_SFX_PATH := "res://Assets/Audio/SFX/Game/Sci-fi_door_opening.ogg"
 
 @export var default_map_id: StringName = MAP_ID_ROBIN_ROOM
 @export var robin_room_map_path: NodePath = NodePath("../RobinRoomMap")
@@ -15,8 +16,12 @@ const MAP_ID_INFRASTRUCTURE_ROOM: StringName = &"infrastructure_room"
 @export var build_grid_overlay_path: NodePath = NodePath("../BuildGridHighlightOverlay")
 @export var build_preview_path: NodePath = NodePath("../BuildFurniturePlacementPreview")
 @export var floor_placement_module_path: NodePath = NodePath("../FloorPlacementModule")
+@export var furniture_placement_module_path: NodePath = NodePath("../FurniturePlacementModule")
 @export var location_background_path: NodePath = NodePath("../LocationBackground")
 @export var move_robin_to_map_center_on_travel: bool = true
+@export var use_travel_buttons: bool = false
+@export var travel_sfx_path: String = DEFAULT_TRAVEL_SFX_PATH
+@export var travel_sfx_volume_db: float = 0.0
 
 var _robin_room_map: RoomMapGridModule
 var _infrastructure_room_map: RoomMapGridModule
@@ -25,6 +30,7 @@ var _to_infrastructure_button: Button
 var _to_robin_room_button: Button
 var _debug_label: Label
 var _active_map_id: StringName = &""
+var _travel_sfx: AudioStream
 
 
 func _ready() -> void:
@@ -38,14 +44,28 @@ func _process(_delta: float) -> void:
 	_resolve_static_refs()
 	_connect_buttons()
 	_sync_runtime_build_nodes()
+	_sync_travel_buttons()
 
 
 func travel_to_infrastructure_room() -> void:
-	set_active_map(MAP_ID_INFRASTRUCTURE_ROOM)
+	travel_to_map(MAP_ID_INFRASTRUCTURE_ROOM)
 
 
 func travel_to_robin_room() -> void:
-	set_active_map(MAP_ID_ROBIN_ROOM)
+	travel_to_map(MAP_ID_ROBIN_ROOM)
+
+
+func travel_to_map(map_id: StringName, play_sfx: bool = true) -> void:
+	_resolve_static_refs()
+	var next_map := _get_map_for_id(map_id)
+	if next_map == null:
+		return
+	if _active_map_id == map_id:
+		_sync_runtime_build_nodes()
+		return
+	if play_sfx:
+		_play_travel_sfx()
+	set_active_map(map_id)
 
 
 func get_active_map_id() -> StringName:
@@ -91,6 +111,12 @@ func _get_active_floor_root_path() -> NodePath:
 	return NodePath("../RobinRoomMap/FloorRoot")
 
 
+func _get_active_furniture_root_path_for_scene_modules() -> NodePath:
+	if _active_map_id == MAP_ID_INFRASTRUCTURE_ROOM:
+		return NodePath("../InfrastructureRoomMap/FurnitureRoot")
+	return NodePath("../RobinRoomMap/FurnitureRoot")
+
+
 func _get_active_wander_provider_path() -> NodePath:
 	if _active_map_id == MAP_ID_INFRASTRUCTURE_ROOM:
 		return NodePath("../InfrastructureRoomMap")
@@ -101,6 +127,12 @@ func _get_active_furniture_root_path_for_robin_modules() -> NodePath:
 	if _active_map_id == MAP_ID_INFRASTRUCTURE_ROOM:
 		return NodePath("../../InfrastructureRoomMap/FurnitureRoot")
 	return NodePath("../../RobinRoomMap/FurnitureRoot")
+
+
+func _get_active_room_map_path_for_robin_modules() -> NodePath:
+	if _active_map_id == MAP_ID_INFRASTRUCTURE_ROOM:
+		return NodePath("../../InfrastructureRoomMap")
+	return NodePath("../../RobinRoomMap")
 
 
 func _apply_map_visibility() -> void:
@@ -123,14 +155,24 @@ func _sync_robin_to_active_map() -> void:
 			wander_module.set("movement_area_provider_path", provider_path)
 			wander_module.set("_movement_area_provider", null)
 
+	var active_furniture_root_path := _get_active_furniture_root_path_for_robin_modules()
+	var active_room_map_path := _get_active_room_map_path_for_robin_modules()
+
 	var rest_module := _robin.get_node_or_null("AICharacterSleepBehaviorModule")
 	if rest_module != null:
-		var furniture_root_path := _get_active_furniture_root_path_for_robin_modules()
-		rest_module.set("furniture_root_path", furniture_root_path)
+		rest_module.set("furniture_root_path", active_furniture_root_path)
 		rest_module.set("_furniture_root", null)
 		rest_module.set("_target_bedding", null)
 		if rest_module.has_method("_stop_sleeping"):
 			rest_module.call("_stop_sleeping")
+
+	var hydrate_module := _robin.get_node_or_null("AICharacterHydrateBehaviorModule")
+	if hydrate_module != null:
+		hydrate_module.set("furniture_root_path", active_furniture_root_path)
+		hydrate_module.set("room_map_path", active_room_map_path)
+		hydrate_module.set("_furniture_root", null)
+		hydrate_module.set("_room_map", null)
+		hydrate_module.set("_target_kitchen", null)
 
 	if move_robin_to_map_center_on_travel:
 		_move_robin_to_active_map_center()
@@ -178,6 +220,20 @@ func _sync_runtime_build_nodes() -> void:
 			preview.set("room_map_path", active_map_path)
 			preview.set("_room_map", null)
 
+	var furniture_placement := get_node_or_null(furniture_placement_module_path)
+	if furniture_placement != null:
+		if furniture_placement.has_method("set_room_map_path"):
+			furniture_placement.call("set_room_map_path", active_map_path)
+		else:
+			furniture_placement.set("room_map_path", active_map_path)
+			furniture_placement.set("_room_map", null)
+		var active_furniture_root_path := _get_active_furniture_root_path_for_scene_modules()
+		if furniture_placement.has_method("set_furniture_root_path"):
+			furniture_placement.call("set_furniture_root_path", active_furniture_root_path)
+		else:
+			furniture_placement.set("furniture_root_path", active_furniture_root_path)
+			furniture_placement.set("_furniture_root", null)
+
 	var floor_placement := get_node_or_null(floor_placement_module_path)
 	if floor_placement != null:
 		if floor_placement.has_method("set_room_map_path"):
@@ -202,6 +258,14 @@ func _sync_runtime_build_nodes() -> void:
 
 
 func _sync_travel_buttons() -> void:
+	if not use_travel_buttons:
+		if _to_infrastructure_button != null:
+			_to_infrastructure_button.visible = false
+			_to_infrastructure_button.disabled = true
+		if _to_robin_room_button != null:
+			_to_robin_room_button.visible = false
+			_to_robin_room_button.disabled = true
+		return
 	if _to_infrastructure_button != null:
 		_to_infrastructure_button.visible = _active_map_id == MAP_ID_ROBIN_ROOM
 		_to_infrastructure_button.disabled = _active_map_id != MAP_ID_ROBIN_ROOM
@@ -229,6 +293,26 @@ func _connect_buttons() -> void:
 		var to_robin_room_callable := Callable(self, "travel_to_robin_room")
 		if not _to_robin_room_button.pressed.is_connected(to_robin_room_callable):
 			_to_robin_room_button.pressed.connect(to_robin_room_callable)
+
+
+func _play_travel_sfx() -> void:
+	var stream := _get_travel_sfx()
+	if stream == null:
+		return
+	var audio_player := get_node_or_null("/root/AudioPlayer")
+	if audio_player != null and audio_player.has_method("play_sfx"):
+		audio_player.call("play_sfx", stream, 1.0, travel_sfx_volume_db)
+
+
+func _get_travel_sfx() -> AudioStream:
+	if _travel_sfx != null:
+		return _travel_sfx
+	if travel_sfx_path.is_empty():
+		return null
+	if not ResourceLoader.exists(travel_sfx_path):
+		return null
+	_travel_sfx = load(travel_sfx_path) as AudioStream
+	return _travel_sfx
 
 
 func _resolve_static_refs() -> void:
