@@ -18,6 +18,7 @@
 [ext_resource type="PackedScene" path="res://Scenes/UI/Shop/ShopMenu.tscn" id="15_shop_menu"]
 [ext_resource type="Script" uid="uid://bs7g8isgeu778" path="res://Scripts/Scenes/Main/Modules/RobinRoomBgmListModule.gd" id="16_robin_room_bgm"]
 [ext_resource type="PackedScene" path="res://Scenes/UI/HUD/MessageLogPanel.tscn" id="17_message_log"]
+[ext_resource type="Texture2D" uid="uid://c3alnt1qvimm6" path="res://Assets/UI/Parts/Background_panel_001.png" id="18_left_panel_bg"]
 
 [sub_resource type="Environment" id="Environment_ctt6t"]
 glow_enabled = true
@@ -52,6 +53,18 @@ furniture_root_path = NodePath("../RobinRoomMap/FurnitureRoot")
 click_sfx = ExtResource("4_ctt6t")
 
 [node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=295553793]
+
+[node name="LeftBackgroundPanel" type="TextureRect" parent="CanvasLayer" unique_id=104457291]
+z_index = -100
+anchors_preset = 0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = 388.0
+offset_bottom = 704.0
+mouse_filter = 2
+texture = ExtResource("18_left_panel_bg")
+expand_mode = 1
+stretch_mode = 5
 
 [node name="DebugLabel" type="Label" parent="CanvasLayer" unique_id=210733485]
 offset_left = 24.0
