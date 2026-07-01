@@ -1,32 +1,47 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://Scripts/UI/HUD/AICharacterHud.gd" id="1_hud_script"]
 [ext_resource type="PackedScene" path="res://Scenes/UI/CharacterNeeds/CharacterNeedsPanel.tscn" id="2_needs_panel"]
 [ext_resource type="PackedScene" path="res://Scenes/UI/CharacterNeeds/CharacterMoodPanel.tscn" id="3_mood_panel"]
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ai_hud_panel"]
+bg_color = Color(0.015, 0.025, 0.035, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.12, 0.82, 1, 0.95)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+shadow_color = Color(0.08, 0.62, 0.95, 0.28)
+shadow_size = 10
+
 [node name="AICharacterHud" type="PanelContainer"]
-custom_minimum_size = Vector2(344, 0)
+custom_minimum_size = Vector2(304, 0)
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
-offset_left = -368.0
-offset_top = 260.0
+offset_left = -328.0
+offset_top = 252.0
 offset_right = -24.0
-offset_bottom = 560.0
+offset_bottom = 526.0
 grow_horizontal = 0
 grow_vertical = 0
+theme_override_styles/panel = SubResource("StyleBoxFlat_ai_hud_panel")
 script = ExtResource("1_hud_script")
 
 [node name="MarginContainer" type="MarginContainer" parent="."]
 layout_mode = 2
-theme_override_constants/margin_left = 12
-theme_override_constants/margin_top = 10
-theme_override_constants/margin_right = 12
-theme_override_constants/margin_bottom = 10
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 8
 
 [node name="Rows" type="VBoxContainer" parent="MarginContainer"]
 layout_mode = 2
-theme_override_constants/separation = 8
+theme_override_constants/separation = 6
 
 [node name="Header" type="HBoxContainer" parent="MarginContainer/Rows"]
 layout_mode = 2
@@ -35,19 +50,23 @@ layout_mode = 2
 layout_mode = 2
 size_flags_horizontal = 3
 text = "AI Character"
-theme_override_font_sizes/font_size = 18
+theme_override_colors/font_color = Color(0.88, 0.98, 1, 1)
+theme_override_font_sizes/font_size = 16
 
 [node name="CloseButton" type="Button" parent="MarginContainer/Rows/Header"]
-custom_minimum_size = Vector2(32, 28)
+custom_minimum_size = Vector2(28, 26)
 layout_mode = 2
 text = "×"
 
 [node name="ActionLabel" type="Label" parent="MarginContainer/Rows"]
 layout_mode = 2
 text = "状態行動: -"
+autowrap_mode = 3
+theme_override_colors/font_color = Color(0.82, 0.95, 1, 1)
+theme_override_font_sizes/font_size = 13
 
 [node name="Tabs" type="TabContainer" parent="MarginContainer/Rows"]
-custom_minimum_size = Vector2(0, 206)
+custom_minimum_size = Vector2(0, 188)
 layout_mode = 2
 size_flags_vertical = 3
 current_tab = 0
@@ -57,6 +76,7 @@ layout_mode = 2
 
 [node name="CharacterNeedsPanel" parent="MarginContainer/Rows/Tabs/NeedsTab" instance=ExtResource("2_needs_panel")]
 layout_mode = 2
+bar_width = 132.0
 
 [node name="MoodTab" type="MarginContainer" parent="MarginContainer/Rows/Tabs"]
 visible = false
