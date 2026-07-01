@@ -5,6 +5,8 @@ const MAP_TRAVEL_MODULE_SCENE_PATH := "res://Scenes/Main/Modules/MainSceneMapTra
 const TRAVEL_BUTTONS_ROOT_SCENE_PATH := "res://Scenes/Main/Modules/MainSceneTravelButtonsRoot.tscn"
 const LOCATION_BACKGROUND_SCRIPT_PATH := "res://Scripts/Maps/Location/LocationBackgroundNode.gd"
 const DEFAULT_LOCATION_BACKGROUND_TEXTURE_PATH := "res://Assets/Maps/Location/Location_001.png"
+const LEFT_TRAVEL_BUTTON_POSITION := Vector2(52.0, 72.0)
+const LEFT_TRAVEL_BUTTON_SIZE := Vector2(180.0, 38.0)
 
 @onready var debug_label: Label = $CanvasLayer/DebugLabel
 @onready var robin: RobinWanderActor = $Robin
@@ -142,20 +144,26 @@ func _ensure_map_travel_button(parent: Control, button_name: String, text_value:
 		return null
 	var existing_button := parent.get_node_or_null(button_name) as Button
 	if existing_button != null:
+		_configure_left_travel_button(existing_button, text_value, tooltip_value, visible_on_start)
 		return existing_button
 
 	var button := Button.new()
 	button.name = button_name
-	button.offset_left = 24.0
-	button.offset_top = 64.0
-	button.offset_right = 176.0
-	button.offset_bottom = 104.0
+	_configure_left_travel_button(button, text_value, tooltip_value, visible_on_start)
+	parent.add_child(button)
+	return button
+
+
+func _configure_left_travel_button(button: Button, text_value: String, tooltip_value: String, visible_on_start: bool) -> void:
+	button.custom_minimum_size = LEFT_TRAVEL_BUTTON_SIZE
+	button.offset_left = LEFT_TRAVEL_BUTTON_POSITION.x
+	button.offset_top = LEFT_TRAVEL_BUTTON_POSITION.y
+	button.offset_right = LEFT_TRAVEL_BUTTON_POSITION.x + LEFT_TRAVEL_BUTTON_SIZE.x
+	button.offset_bottom = LEFT_TRAVEL_BUTTON_POSITION.y + LEFT_TRAVEL_BUTTON_SIZE.y
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	button.text = text_value
 	button.tooltip_text = tooltip_value
 	button.visible = visible_on_start
-	parent.add_child(button)
-	return button
 
 
 func _apply_reserved_bottom_hud_layout() -> void:
@@ -259,6 +267,6 @@ func _push_debug_result(source: String, action: String, success: bool, detail: S
 func _get_startup_debug_text() -> String:
 	var robin_room_map := get_node_or_null("RobinRoomMap") as RoomMapGridModule
 	if robin_room_map == null:
-		return "Main Scene 起動完了"
+		return "Main Scene"
 	var grid_size := robin_room_map.get_grid_size()
-	return "%s 起動完了 / Grid %d x %d" % [robin_room_map.map_display_name, grid_size.x, grid_size.y]
+	return "%s / Grid %d x %d" % [robin_room_map.map_display_name, grid_size.x, grid_size.y]
