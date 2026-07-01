@@ -14,6 +14,9 @@ enum LogChannel { NORMAL, DEBUG }
 @export_range(0.0, 10.0, 0.1) var queued_message_delay_seconds: float = 2.0
 @export var card_height: float = 64.0
 @export var card_horizontal_inset: float = 4.0
+@export_range(8, 64, 1) var card_estimated_chars_per_line: int = 18
+@export var card_estimated_line_height: float = 18.0
+@export var card_estimated_vertical_padding: float = 24.0
 @export var card_enter_offset_y: float = 18.0
 @export var card_enter_duration: float = 0.22
 @export var card_background_color: Color = Color(0.035, 0.04, 0.06, 0.96)
@@ -236,22 +239,23 @@ func _rebuild_visible_messages(animate_cards: bool) -> void:
 
 
 func _create_message_card(message: String, channel: int, animate_card: bool) -> void:
+	var target_card_height := _get_message_card_height(message)
 	var holder := Control.new()
 	holder.clip_contents = true
-	holder.custom_minimum_size = Vector2(0.0, 0.0 if animate_card else card_height)
+	holder.custom_minimum_size = Vector2(0.0, 0.0 if animate_card else target_card_height)
 	holder.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 
-	var card := _make_card_node(message, channel, animate_card)
+	var card := _make_card_node(message, channel, animate_card, target_card_height)
 	holder.add_child(card)
 	message_list.add_child(holder)
 
 	if animate_card:
-		call_deferred("_animate_message_card", holder, card)
+		call_deferred("_animate_message_card", holder, card, target_card_height)
 
 
-func _make_card_node(message: String, channel: int, animate_card: bool) -> PanelContainer:
+func _make_card_node(message: String, channel: int, animate_card: bool, target_card_height: float) -> PanelContainer:
 	var card := PanelContainer.new()
-	card.custom_minimum_size = Vector2(0.0, card_height)
+	card.custom_minimum_size = Vector2(0.0, target_card_height)
 	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	card.anchor_left = 0.0
 	card.anchor_top = 1.0
@@ -260,11 +264,11 @@ func _make_card_node(message: String, channel: int, animate_card: bool) -> Panel
 	card.offset_left = card_horizontal_inset
 	card.offset_right = -card_horizontal_inset
 	if animate_card:
-		card.offset_top = -card_height + card_enter_offset_y
+		card.offset_top = -target_card_height + card_enter_offset_y
 		card.offset_bottom = card_enter_offset_y
 		card.modulate.a = 0.0
 	else:
-		card.offset_top = -card_height
+		card.offset_top = -target_card_height
 		card.offset_bottom = 0.0
 		card.modulate.a = 1.0
 	card.add_theme_stylebox_override("panel", _make_card_style(channel))
@@ -288,7 +292,23 @@ func _make_card_node(message: String, channel: int, animate_card: bool) -> Panel
 	return card
 
 
-func _animate_message_card(holder: Control, card: PanelContainer) -> void:
+func _get_message_card_height(message: String) -> float:
+	var estimated_line_count := 0
+	var safe_chars_per_line := maxi(card_estimated_chars_per_line, 1)
+	var text_lines := message.split("\n", false)
+
+	if text_lines.is_empty():
+		estimated_line_count = 1
+	else:
+		for text_line in text_lines:
+			var line_length := max(text_line.length(), 1)
+			estimated_line_count += maxi(int(ceilf(float(line_length) / float(safe_chars_per_line))), 1)
+
+	var estimated_height := card_estimated_vertical_padding + float(estimated_line_count) * card_estimated_line_height
+	return maxf(card_height, estimated_height)
+
+
+func _animate_message_card(holder: Control, card: PanelContainer, target_card_height: float) -> void:
 	if not is_instance_valid(holder) or not is_instance_valid(card):
 		return
 
@@ -296,8 +316,8 @@ func _animate_message_card(holder: Control, card: PanelContainer) -> void:
 	tween.set_parallel(true)
 	tween.set_trans(Tween.TRANS_CUBIC)
 	tween.set_ease(Tween.EASE_OUT)
-	tween.tween_property(holder, "custom_minimum_size:y", card_height, card_enter_duration)
-	tween.tween_property(card, "offset_top", -card_height, card_enter_duration)
+	tween.tween_property(holder, "custom_minimum_size:y", target_card_height, card_enter_duration)
+	tween.tween_property(card, "offset_top", -target_card_height, card_enter_duration)
 	tween.tween_property(card, "offset_bottom", 0.0, card_enter_duration)
 	tween.tween_property(card, "modulate:a", 1.0, card_enter_duration)
 
