@@ -3,7 +3,7 @@ class_name RobinInventoryUI
 
 @export var actor_path: NodePath = NodePath("../../Robin")
 @export var inventory_module_child_name: StringName = &"RobinInventoryModule"
-@export var slot_size: Vector2 = Vector2(72, 72)
+@export var slot_size: Vector2 = Vector2(68, 68)
 @export var grid_columns: int = 5
 
 @onready var title_label: Label = $MarginContainer/Rows/Header/TitleLabel
