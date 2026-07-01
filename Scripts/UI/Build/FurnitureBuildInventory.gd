@@ -6,6 +6,7 @@ class_name FurnitureBuildInventory
 @export var simple_mattress_scene: PackedScene
 @export var kitchen_module_scene: PackedScene
 
+@onready var close_button: Button = $MarginContainer/Rows/Header/CloseButton
 @onready var place_mode_button: Button = $MarginContainer/Rows/ModeButtons/PlaceModeButton
 @onready var move_mode_button: Button = $MarginContainer/Rows/ModeButtons/MoveModeButton
 @onready var store_mode_button: Button = $MarginContainer/Rows/ModeButtons/StoreModeButton
@@ -21,6 +22,7 @@ var _floor_placement: Node
 
 func _ready() -> void:
 	visible = false
+	set_process_unhandled_input(true)
 	_resolve_controller()
 	_resolve_floor_placement()
 	_connect_buttons()
@@ -39,7 +41,27 @@ func _process(_delta: float) -> void:
 	_sync_floor_buttons()
 
 
+func _unhandled_input(event: InputEvent) -> void:
+	if not visible:
+		return
+	if event is InputEventKey:
+		var key_event := event as InputEventKey
+		if key_event.pressed and not key_event.echo and key_event.keycode == KEY_ESCAPE:
+			close_build_mode()
+			get_viewport().set_input_as_handled()
+
+
+func close_build_mode() -> void:
+	_resolve_controller()
+	if _build_mode_controller == null:
+		visible = false
+		return
+	_build_mode_controller.set_build_mode_enabled(false)
+
+
 func _connect_buttons() -> void:
+	if close_button != null:
+		close_button.pressed.connect(close_build_mode)
 	if place_mode_button != null:
 		place_mode_button.pressed.connect(_on_place_mode_pressed)
 	if move_mode_button != null:
