@@ -3,7 +3,7 @@ class_name WorkCreditButton
 
 const DEFAULT_CLICK_SFX_PATH := "res://Assets/Audio/SFX/UI/UI_Click_001.ogg"
 
-@export var label_text: String = "\u4ed5\u4e8b"
+@export var label_text: String = "仕事"
 @export var work_menu_path: NodePath = NodePath("../WorkMenu")
 @export var click_sfx: AudioStream
 @export var click_sfx_volume_db: float = 0.0
@@ -23,7 +23,7 @@ func _on_pressed() -> void:
 		push_warning("Work menu not found: %s" % work_menu_path)
 		return
 
-	work_menu.open_menu()
+	work_menu.toggle_menu()
 
 
 func _play_click_sfx() -> void:
