@@ -83,9 +83,11 @@ drink_sfx_delay_seconds = 0.75
 [node name="AICharacterEntranceTravelBehaviorModule" type="Node" parent="."]
 script = ExtResource("12_entrance_travel")
 room_map_path = NodePath("../../RobinRoomMap")
+map_travel_module_path = NodePath("../../MainSceneMapTravelModule")
+furniture_placement_module_path = NodePath("../../FurniturePlacementModule")
 walk_speed = 80.0
 arrive_distance = 14.0
-use_offset_cells = Vector2i(0, -4)
+grid_arrive_distance = 6.0
 actor_grid_footprint = Vector2i(2, 4)
 use_time_seconds = 0.45
 
