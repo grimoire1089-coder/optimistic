@@ -56,17 +56,17 @@ func _load_default_click_sfx_if_needed() -> void:
 
 
 func _apply_square_button_layout() -> void:
-	custom_minimum_size = Vector2(64.0, 64.0)
+	custom_minimum_size = Vector2(56.0, 56.0)
 	anchor_left = 1.0
 	anchor_top = 0.0
 	anchor_right = 1.0
 	anchor_bottom = 0.0
-	offset_left = -304.0
+	offset_left = -272.0
 	offset_top = 176.0
-	offset_right = -240.0
-	offset_bottom = 240.0
+	offset_right = -216.0
+	offset_bottom = 232.0
 	mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	add_theme_font_size_override("font_size", 12)
+	add_theme_font_size_override("font_size", 11)
 	_add_rounded_button_styles()
 
 
@@ -83,5 +83,5 @@ func _make_style(bg_color: Color, border_color: Color, border_width: int) -> Sty
 	style.border_color = border_color
 	style.set_border_width_all(border_width)
 	style.set_corner_radius_all(8)
-	style.set_content_margin_all(4.0)
+	style.set_content_margin_all(3.0)
 	return style
