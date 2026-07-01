@@ -13,6 +13,48 @@ var _occupied_cells: Dictionary = {}
 
 func _ready() -> void:
 	_resolve_refs()
+	sync_occupied_cells_from_furniture_root()
+
+
+func set_room_map_path(next_room_map_path: NodePath) -> void:
+	if room_map_path == next_room_map_path:
+		_resolve_refs()
+		return
+	room_map_path = next_room_map_path
+	_room_map = null
+	_occupied_cells.clear()
+	_resolve_refs()
+	sync_occupied_cells_from_furniture_root()
+
+
+func set_furniture_root_path(next_furniture_root_path: NodePath) -> void:
+	if furniture_root_path == next_furniture_root_path:
+		_resolve_refs()
+		sync_occupied_cells_from_furniture_root()
+		return
+	furniture_root_path = next_furniture_root_path
+	_furniture_root = null
+	_occupied_cells.clear()
+	_resolve_refs()
+	sync_occupied_cells_from_furniture_root()
+
+
+func sync_occupied_cells_from_furniture_root() -> void:
+	_resolve_refs()
+	_occupied_cells.clear()
+	if _furniture_root == null:
+		return
+	for child in _furniture_root.get_children():
+		var furniture := child as Node2D
+		if furniture == null:
+			continue
+		if not furniture.has_meta("grid_position"):
+			continue
+		var grid_position: Vector2i = furniture.get_meta("grid_position", Vector2i.ZERO)
+		var footprint := get_furniture_footprint(furniture, Vector2i(1, 1))
+		if furniture.has_meta("grid_footprint"):
+			footprint = furniture.get_meta("grid_footprint", footprint)
+		_register_furniture_cells(furniture, grid_position, footprint)
 
 
 func can_place_at(grid_position: Vector2i, footprint: Vector2i = Vector2i(1, 1)) -> bool:
@@ -226,6 +268,14 @@ func _register_furniture(
 	if furniture_id != &"":
 		furniture.set_meta("furniture_id", furniture_id)
 
+	_register_furniture_cells(furniture, grid_position, footprint)
+
+
+func _register_furniture_cells(
+	furniture: Node2D,
+	grid_position: Vector2i,
+	footprint: Vector2i = Vector2i(1, 1)
+) -> void:
 	for cell in _get_cells_in_footprint(grid_position, footprint):
 		_occupied_cells[_grid_key(cell)] = furniture
 
