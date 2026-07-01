@@ -59,12 +59,12 @@ z_index = -100
 anchors_preset = 0
 offset_left = 8.0
 offset_top = 8.0
-offset_right = 388.0
+offset_right = 376.0
 offset_bottom = 704.0
 mouse_filter = 2
 texture = ExtResource("18_left_panel_bg")
 expand_mode = 1
-stretch_mode = 5
+stretch_mode = 0
 
 [node name="DebugLabel" type="Label" parent="CanvasLayer" unique_id=210733485]
 offset_left = 24.0
