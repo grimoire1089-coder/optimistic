@@ -4,6 +4,8 @@
 [ext_resource type="Script" uid="uid://8a0d3nyywiao" path="res://Scripts/Shops/ShopItemData.gd" id="2_shop_item"]
 [ext_resource type="Resource" uid="uid://khpl6knsr1ao" path="res://Data/Items/Food/Food_0001_Nikuman.tres" id="3_nikuman"]
 [ext_resource type="Script" path="res://Scripts/Shops/ShopTabData.gd" id="4_j2ce4"]
+[ext_resource type="AudioStream" uid="uid://b8ss10mmxvr1x" path="res://Assets/Audio/BGM/Supermarket.ogg" id="4_yiukw"]
+[ext_resource type="Texture2D" uid="uid://re6kfopavwo1" path="res://Assets/UI/Icons/Corporation/DBW.png" id="5_3ypht"]
 
 [sub_resource type="Resource" id="ShopItemData_nikuman"]
 script = ExtResource("2_shop_item")
@@ -14,4 +16,6 @@ script = ExtResource("1_shop_data")
 shop_id = &"basic_food"
 display_name = "食品ショップ"
 description = "手軽に食べられる食品を扱う基本ショップ。"
+sticker = ExtResource("5_3ypht")
+shop_bgm = ExtResource("4_yiukw")
 items = Array[ExtResource("2_shop_item")]([SubResource("ShopItemData_nikuman")])

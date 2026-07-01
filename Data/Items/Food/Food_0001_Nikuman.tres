@@ -9,4 +9,4 @@ item_id = &"food_0001"
 display_name = "肉まん"
 description = "ふかふかの生地で肉餡を包んだ、定番の温かい食品。"
 icon = ExtResource("2_food_icon")
-sell_price = 60
+sell_price = 2
