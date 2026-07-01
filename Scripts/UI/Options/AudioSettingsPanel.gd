@@ -25,6 +25,9 @@ func _ready() -> void:
 	voice_slider.value_changed.connect(_on_voice_changed)
 	reset_button.pressed.connect(_on_reset_button_pressed)
 
+	if not AudioSettings.volume_changed.is_connected(_on_audio_settings_volume_changed):
+		AudioSettings.volume_changed.connect(_on_audio_settings_volume_changed)
+
 	_refresh_labels()
 
 
@@ -62,6 +65,21 @@ func _on_reset_button_pressed() -> void:
 	sfx_slider.set_value_no_signal(AudioSettings.get_volume(AudioSettings.BUS_SFX))
 	ambience_slider.set_value_no_signal(AudioSettings.get_volume(AudioSettings.BUS_AMBIENCE))
 	voice_slider.set_value_no_signal(AudioSettings.get_volume(AudioSettings.BUS_VOICE))
+
+	_refresh_labels()
+
+
+func _on_audio_settings_volume_changed(bus_name: StringName, volume: float) -> void:
+	if bus_name == AudioSettings.BUS_BGM:
+		bgm_slider.set_value_no_signal(volume)
+	elif bus_name == AudioSettings.BUS_SFX:
+		sfx_slider.set_value_no_signal(volume)
+	elif bus_name == AudioSettings.BUS_AMBIENCE:
+		ambience_slider.set_value_no_signal(volume)
+	elif bus_name == AudioSettings.BUS_VOICE:
+		voice_slider.set_value_no_signal(volume)
+	else:
+		return
 
 	_refresh_labels()
 
