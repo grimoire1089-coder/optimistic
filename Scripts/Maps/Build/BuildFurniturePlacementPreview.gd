@@ -68,7 +68,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			_left_click()
 			get_viewport().set_input_as_handled()
 		elif mouse_event.button_index == MOUSE_BUTTON_RIGHT and mouse_event.pressed:
-			_cancel_move()
+			_right_click()
 			get_viewport().set_input_as_handled()
 
 
@@ -139,6 +139,14 @@ func _left_click() -> void:
 			_store_click()
 
 
+func _right_click() -> void:
+	match _controller.get_tool_mode():
+		BuildModeController.TOOL_MODE_PLACE:
+			_clear_selected_furniture()
+		BuildModeController.TOOL_MODE_MOVE:
+			_cancel_move()
+
+
 func _place_selected() -> void:
 	if not _can_place:
 		return
@@ -200,6 +208,16 @@ func _cancel_move() -> void:
 	_moving.modulate = _moving_modulate
 	_placement.place_existing_furniture(_moving, _moving_origin, _moving_footprint, _moving_id)
 	_clear_move()
+
+
+func _clear_selected_furniture() -> void:
+	if _controller == null:
+		return
+	if _controller.get_selected_furniture_scene() == null:
+		return
+	_controller.clear_selected_furniture()
+	_hide_preview()
+	queue_redraw()
 
 
 func _rotate_current() -> void:
@@ -289,3 +307,5 @@ func _resolve_refs() -> void:
 		_controller = get_tree().get_first_node_in_group(&"build_mode_controller") as BuildModeController
 	if _placement == null and not furniture_placement_module_path.is_empty():
 		_placement = get_node_or_null(furniture_placement_module_path) as FurniturePlacementModule
+	if _placement == null:
+		_placement = get_tree().get_first_node_in_group(&"furniture_placement_module") as FurniturePlacementModule
