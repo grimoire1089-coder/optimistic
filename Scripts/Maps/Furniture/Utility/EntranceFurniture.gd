@@ -66,7 +66,6 @@ func _on_click_area_input_event(_viewport: Viewport, event: InputEvent, _shape_i
 	if mouse_event.button_index != MOUSE_BUTTON_LEFT or not mouse_event.pressed:
 		return
 	travel_requested.emit(self, target_map_id)
-	get_viewport().set_input_as_handled()
 
 
 func _fit_to_grid_size() -> void:
