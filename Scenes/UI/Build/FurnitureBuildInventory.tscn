@@ -1,8 +1,22 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://Scripts/UI/Build/FurnitureBuildInventory.gd" id="1_furniture_inventory"]
 [ext_resource type="PackedScene" path="res://Scenes/Maps/Furniture/SimpleMattressFurniture.tscn" id="2_simple_mattress"]
 [ext_resource type="PackedScene" path="res://Scenes/Maps/Furniture/Kitchen/KitchenModuleFurniture.tscn" id="3_kitchen_module"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_build_inventory_panel"]
+bg_color = Color(0.015, 0.025, 0.035, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.12, 0.82, 1, 0.95)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+shadow_color = Color(0.08, 0.62, 0.95, 0.24)
+shadow_size = 10
 
 [node name="FurnitureBuildInventory" type="PanelContainer"]
 custom_minimum_size = Vector2(320, 410)
@@ -17,6 +31,7 @@ offset_right = -24.0
 offset_bottom = -112.0
 grow_horizontal = 0
 grow_vertical = 0
+theme_override_styles/panel = SubResource("StyleBoxFlat_build_inventory_panel")
 script = ExtResource("1_furniture_inventory")
 simple_mattress_scene = ExtResource("2_simple_mattress")
 kitchen_module_scene = ExtResource("3_kitchen_module")
@@ -35,6 +50,7 @@ theme_override_constants/separation = 8
 [node name="TitleLabel" type="Label" parent="MarginContainer/Rows"]
 layout_mode = 2
 text = "ビルドインベントリ"
+theme_override_colors/font_color = Color(0.88, 0.98, 1, 1)
 theme_override_font_sizes/font_size = 18
 
 [node name="ModeButtons" type="HBoxContainer" parent="MarginContainer/Rows"]
@@ -83,3 +99,4 @@ text = "床をしまう\nFloor_001"
 [node name="DetailLabel" type="Label" parent="MarginContainer/Rows"]
 layout_mode = 2
 text = "家具を選んでください"
+theme_override_colors/font_color = Color(0.88, 0.98, 1, 1)
