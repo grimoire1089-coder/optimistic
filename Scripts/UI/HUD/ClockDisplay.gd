@@ -9,6 +9,7 @@ extends Control
 @export_range(0, 32, 1) var panel_corner_radius: int = 16
 @export_range(0, 32, 1) var panel_glow_size: int = 14
 
+@onready var bgm_mute_button: Button = %BGMMuteButton
 @onready var panel_container: PanelContainer = %PanelContainer
 @onready var time_label: Label = %TimeLabel
 @onready var phase_label: Label = %PhaseLabel
@@ -18,6 +19,7 @@ var _clock: GameClockSystem
 
 func _ready() -> void:
 	_apply_neon_style()
+	_setup_bgm_mute_button()
 	_clock = _find_clock()
 
 	if _clock == null:
@@ -49,6 +51,9 @@ func _apply_neon_style() -> void:
 	_apply_label_neon_style(time_label, time_text_color, 16, 1)
 	_apply_label_neon_style(phase_label, phase_text_color, 13, 1)
 
+	if bgm_mute_button != null:
+		_apply_bgm_mute_button_style(AudioSettings.is_muted(AudioSettings.BUS_BGM))
+
 
 func _apply_label_neon_style(label: Label, font_color: Color, font_size: int, shadow_outline_size: int) -> void:
 	if label == null:
@@ -59,6 +64,60 @@ func _apply_label_neon_style(label: Label, font_color: Color, font_size: int, sh
 	label.add_theme_constant_override("shadow_offset_x", 0)
 	label.add_theme_constant_override("shadow_offset_y", 0)
 	label.add_theme_constant_override("shadow_outline_size", shadow_outline_size)
+
+
+func _setup_bgm_mute_button() -> void:
+	if bgm_mute_button == null:
+		return
+
+	bgm_mute_button.toggle_mode = true
+	bgm_mute_button.focus_mode = Control.FOCUS_NONE
+
+	if not bgm_mute_button.pressed.is_connected(_on_bgm_mute_button_pressed):
+		bgm_mute_button.pressed.connect(_on_bgm_mute_button_pressed)
+
+	if not AudioSettings.volume_changed.is_connected(_on_audio_volume_changed):
+		AudioSettings.volume_changed.connect(_on_audio_volume_changed)
+
+	_refresh_bgm_mute_button()
+
+
+func _apply_bgm_mute_button_style(is_bgm_muted: bool) -> void:
+	if bgm_mute_button == null:
+		return
+
+	var button_bg_color := Color(0.06, 0.02, 0.03, 0.92) if is_bgm_muted else panel_bg_color
+	var button_border_color := Color(1.0, 0.36, 0.42, 0.95) if is_bgm_muted else panel_border_color
+	var button_font_color := Color(1.0, 0.72, 0.76, 1.0) if is_bgm_muted else phase_text_color
+
+	var normal_style := StyleBoxFlat.new()
+	normal_style.bg_color = button_bg_color
+	normal_style.border_color = button_border_color
+	normal_style.set_border_width_all(1)
+	normal_style.set_corner_radius_all(panel_corner_radius)
+	normal_style.shadow_color = Color(button_border_color.r, button_border_color.g, button_border_color.b, 0.35)
+	normal_style.shadow_size = 10
+	normal_style.shadow_offset = Vector2.ZERO
+	normal_style.set_content_margin_all(0.0)
+
+	var hover_style := normal_style.duplicate() as StyleBoxFlat
+	hover_style.bg_color = Color(
+		min(button_bg_color.r + 0.04, 1.0),
+		min(button_bg_color.g + 0.04, 1.0),
+		min(button_bg_color.b + 0.04, 1.0),
+		button_bg_color.a
+	)
+
+	var pressed_style := normal_style.duplicate() as StyleBoxFlat
+	pressed_style.shadow_size = 14
+
+	bgm_mute_button.add_theme_stylebox_override("normal", normal_style)
+	bgm_mute_button.add_theme_stylebox_override("hover", hover_style)
+	bgm_mute_button.add_theme_stylebox_override("pressed", pressed_style)
+	bgm_mute_button.add_theme_color_override("font_color", button_font_color)
+	bgm_mute_button.add_theme_color_override("font_hover_color", button_font_color)
+	bgm_mute_button.add_theme_color_override("font_pressed_color", button_font_color)
+	bgm_mute_button.add_theme_font_size_override("font_size", 12)
 
 
 func _find_clock() -> GameClockSystem:
@@ -87,6 +146,28 @@ func _refresh() -> void:
 		_clock.get_phase_display_name(),
 		_clock.get_time_text(),
 	]
+
+
+func _refresh_bgm_mute_button() -> void:
+	if bgm_mute_button == null:
+		return
+
+	var is_bgm_muted := AudioSettings.is_muted(AudioSettings.BUS_BGM)
+	bgm_mute_button.set_pressed_no_signal(is_bgm_muted)
+	bgm_mute_button.text = "OFF" if is_bgm_muted else "BGM"
+	bgm_mute_button.tooltip_text = "BGMミュート解除" if is_bgm_muted else "BGMミュート"
+	_apply_bgm_mute_button_style(is_bgm_muted)
+
+
+func _on_bgm_mute_button_pressed() -> void:
+	AudioSettings.toggle_mute(AudioSettings.BUS_BGM)
+	_refresh_bgm_mute_button()
+
+
+func _on_audio_volume_changed(bus_name: StringName, _volume: float) -> void:
+	if bus_name != AudioSettings.BUS_BGM:
+		return
+	_refresh_bgm_mute_button()
 
 
 func _on_time_changed(_day: int, _hour: int, _minute: int) -> void:
