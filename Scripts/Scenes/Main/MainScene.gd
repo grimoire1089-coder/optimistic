@@ -12,6 +12,8 @@ const DEFAULT_LOCATION_BACKGROUND_TEXTURE_PATH := "res://Assets/Maps/Location/Lo
 @onready var ai_character_hud: AICharacterHud = $CanvasLayer/AICharacterHud
 @onready var message_log: MessageLogPanel = $CanvasLayer/MessageLogPanel
 
+var _last_build_mode_enabled: bool = false
+
 
 func _ready() -> void:
 	_push_debug_message("System", "MainScene _ready 開始")
@@ -22,6 +24,11 @@ func _ready() -> void:
 	_connect_robin_selection()
 	_push_startup_message(startup_debug_text)
 	_push_debug_result("System", "MainScene 初期化", true, startup_debug_text)
+	_sync_build_mode_ui_lock()
+
+
+func _process(_delta: float) -> void:
+	_sync_build_mode_ui_lock()
 
 
 func _connect_robin_selection() -> void:
@@ -41,6 +48,10 @@ func _on_robin_selected(actor: RobinWanderActor) -> void:
 	if actor != null:
 		actor_name = actor.display_name
 	_push_debug_message("AI:%s" % actor_name, "選択されました。HUD切り替えを試行します")
+
+	if _is_build_mode_enabled():
+		_push_debug_result("AI HUD", "toggle_actor", false, "ビルドモード中なのでHUDを開きません")
+		return
 
 	if ai_character_hud == null:
 		_push_debug_result("AI HUD", "toggle_actor", false, "AICharacterHud が見つかりません")
@@ -171,6 +182,60 @@ func _place_top_right_control(control: Control, top_right_offset: Vector2, contr
 	control.offset_top = top_right_offset.y
 	control.offset_right = top_right_offset.x + control_size.x
 	control.offset_bottom = top_right_offset.y + control_size.y
+
+
+func _sync_build_mode_ui_lock() -> void:
+	var build_mode_enabled := _is_build_mode_enabled()
+	if build_mode_enabled and not _last_build_mode_enabled:
+		_close_non_build_modal_ui()
+	_set_non_build_buttons_disabled(build_mode_enabled)
+	_last_build_mode_enabled = build_mode_enabled
+
+
+func _is_build_mode_enabled() -> bool:
+	var controller := get_node_or_null("BuildModeController") as BuildModeController
+	if controller == null:
+		controller = get_tree().get_first_node_in_group(&"build_mode_controller") as BuildModeController
+	if controller == null:
+		return false
+	return controller.is_build_mode_enabled()
+
+
+func _close_non_build_modal_ui() -> void:
+	_close_canvas_child("AICharacterHud", &"hide_hud")
+	_close_canvas_child("ShopMenu", &"close_menu")
+	_close_canvas_child("InventoryUI", &"close")
+	_close_canvas_child("WorkMenu", &"close_menu")
+
+
+func _close_canvas_child(node_name: String, close_method: StringName) -> void:
+	if canvas_layer == null:
+		return
+	var node := canvas_layer.get_node_or_null(node_name)
+	if node == null:
+		return
+	if node.has_method(close_method):
+		node.call(close_method)
+		return
+	if node is CanvasItem:
+		var canvas_item := node as CanvasItem
+		canvas_item.visible = false
+
+
+func _set_non_build_buttons_disabled(is_disabled: bool) -> void:
+	if canvas_layer == null:
+		return
+	_set_canvas_button_disabled("RobinHudButton", is_disabled)
+	_set_canvas_button_disabled("ShopButton", is_disabled)
+	_set_canvas_button_disabled("InventoryButton", is_disabled)
+	_set_canvas_button_disabled("WorkCreditButton", is_disabled)
+
+
+func _set_canvas_button_disabled(node_name: String, is_disabled: bool) -> void:
+	var button := canvas_layer.get_node_or_null(node_name) as BaseButton
+	if button == null:
+		return
+	button.disabled = is_disabled
 
 
 func _push_startup_message(message: String) -> void:
