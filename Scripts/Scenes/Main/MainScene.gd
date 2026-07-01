@@ -2,9 +2,11 @@ extends Node2D
 
 const MAP_RUNTIME_MODULE_SCENE_PATH := "res://Scenes/Main/Modules/MainSceneMapRuntimeModule.tscn"
 const MAP_TRAVEL_MODULE_SCENE_PATH := "res://Scenes/Main/Modules/MainSceneMapTravelModule.tscn"
+const MAP_ENTRANCE_MODULE_SCENE_PATH := "res://Scenes/Main/Modules/MainSceneMapEntranceModule.tscn"
 const TRAVEL_BUTTONS_ROOT_SCENE_PATH := "res://Scenes/Main/Modules/MainSceneTravelButtonsRoot.tscn"
 const LOCATION_BACKGROUND_SCRIPT_PATH := "res://Scripts/Maps/Location/LocationBackgroundNode.gd"
 const DEFAULT_LOCATION_BACKGROUND_TEXTURE_PATH := "res://Assets/Maps/Location/Location_001.png"
+const ENTRANCE_TRAVEL_SFX_PATH := "res://Assets/Audio/SFX/Game/Sci-fi_door_opening.ogg"
 const RIGHT_TRAVEL_BUTTON_POSITION := Vector2(-332.0, 184.0)
 const RIGHT_TRAVEL_BUTTON_SIZE := Vector2(48.0, 48.0)
 
@@ -69,14 +71,14 @@ func _ensure_runtime_children() -> void:
 
 	_ensure_location_background()
 
-	var travel_buttons_root := _ensure_travel_buttons_root()
-	_ensure_map_travel_button(travel_buttons_root, "ToInfrastructureRoomButton", "インフラ", "インフラルームへ移動", true)
-	_ensure_map_travel_button(travel_buttons_root, "ToRobinRoomButton", "部屋", "ロビンの部屋へ戻る", false)
-
 	var map_travel_module := _ensure_main_child_from_scene("MainSceneMapTravelModule", MAP_TRAVEL_MODULE_SCENE_PATH)
 	if map_travel_module != null:
-		map_travel_module.set("to_infrastructure_button_path", NodePath("../CanvasLayer/MainSceneTravelButtons/ToInfrastructureRoomButton"))
-		map_travel_module.set("to_robin_room_button_path", NodePath("../CanvasLayer/MainSceneTravelButtons/ToRobinRoomButton"))
+		map_travel_module.set("use_travel_buttons", false)
+		map_travel_module.set("travel_sfx_path", ENTRANCE_TRAVEL_SFX_PATH)
+
+	var map_entrance_module := _ensure_main_child_from_scene("MainSceneMapEntranceModule", MAP_ENTRANCE_MODULE_SCENE_PATH)
+	if map_entrance_module != null and map_entrance_module.has_method("ensure_runtime_entrances"):
+		map_entrance_module.call("ensure_runtime_entrances")
 
 
 func _ensure_main_child_from_scene(node_name: String, scene_path: String) -> Node:
