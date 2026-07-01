@@ -8,14 +8,15 @@ signal travel_to_robin_room_requested
 @export var to_robin_room_button_path: NodePath = NodePath("ToRobinRoomButton")
 @export var to_infrastructure_label_text: String = "インフラ"
 @export var to_robin_room_label_text: String = "部屋"
-@export var button_position: Vector2 = Vector2(-400.0, 176.0)
-@export var button_size: Vector2 = Vector2(56.0, 56.0)
+@export var button_position: Vector2 = Vector2(-332.0, 184.0)
+@export var button_size: Vector2 = Vector2(48.0, 48.0)
 
 var _to_infrastructure_button: Button
 var _to_robin_room_button: Button
 
 
 func _ready() -> void:
+	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_ensure_buttons()
 	_resolve_buttons()
 	_apply_button_layouts()
@@ -91,8 +92,9 @@ func _apply_button_layout(button: Button) -> void:
 	button.offset_top = button_position.y
 	button.offset_right = button_position.x + button_size.x
 	button.offset_bottom = button_position.y + button_size.y
+	button.mouse_filter = Control.MOUSE_FILTER_STOP
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	button.add_theme_font_size_override("font_size", 11)
+	button.add_theme_font_size_override("font_size", 10)
 	button.add_theme_stylebox_override("normal", _make_button_style(Color(0.10, 0.10, 0.12, 0.95), Color(0.26, 0.28, 0.32, 1.0), 1))
 	button.add_theme_stylebox_override("hover", _make_button_style(Color(0.15, 0.15, 0.18, 0.98), Color(0.00, 1.65, 1.65, 0.95), 2))
 	button.add_theme_stylebox_override("pressed", _make_button_style(Color(0.04, 0.20, 0.22, 1.0), Color(0.25, 2.4, 2.4, 1.0), 2))
