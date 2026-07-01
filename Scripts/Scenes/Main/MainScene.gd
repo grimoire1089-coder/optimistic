@@ -5,8 +5,8 @@ const MAP_TRAVEL_MODULE_SCENE_PATH := "res://Scenes/Main/Modules/MainSceneMapTra
 const TRAVEL_BUTTONS_ROOT_SCENE_PATH := "res://Scenes/Main/Modules/MainSceneTravelButtonsRoot.tscn"
 const LOCATION_BACKGROUND_SCRIPT_PATH := "res://Scripts/Maps/Location/LocationBackgroundNode.gd"
 const DEFAULT_LOCATION_BACKGROUND_TEXTURE_PATH := "res://Assets/Maps/Location/Location_001.png"
-const LEFT_TRAVEL_BUTTON_POSITION := Vector2(52.0, 72.0)
-const LEFT_TRAVEL_BUTTON_SIZE := Vector2(180.0, 38.0)
+const RIGHT_TRAVEL_BUTTON_POSITION := Vector2(-400.0, 176.0)
+const RIGHT_TRAVEL_BUTTON_SIZE := Vector2(56.0, 56.0)
 
 @onready var debug_label: Label = $CanvasLayer/DebugLabel
 @onready var robin: RobinWanderActor = $Robin
@@ -70,8 +70,8 @@ func _ensure_runtime_children() -> void:
 	_ensure_location_background()
 
 	var travel_buttons_root := _ensure_travel_buttons_root()
-	_ensure_map_travel_button(travel_buttons_root, "ToInfrastructureRoomButton", "インフラへ", "インフラルームへ移動", true)
-	_ensure_map_travel_button(travel_buttons_root, "ToRobinRoomButton", "部屋へ戻る", "ロビンの部屋へ戻る", false)
+	_ensure_map_travel_button(travel_buttons_root, "ToInfrastructureRoomButton", "インフラ", "インフラルームへ移動", true)
+	_ensure_map_travel_button(travel_buttons_root, "ToRobinRoomButton", "部屋", "ロビンの部屋へ戻る", false)
 
 	var map_travel_module := _ensure_main_child_from_scene("MainSceneMapTravelModule", MAP_TRAVEL_MODULE_SCENE_PATH)
 	if map_travel_module != null:
@@ -118,14 +118,29 @@ func _ensure_travel_buttons_root() -> Control:
 
 	var existing_root := canvas_layer.get_node_or_null("MainSceneTravelButtons") as Control
 	if existing_root != null:
+		_configure_travel_buttons_root(existing_root)
 		return existing_root
 
 	var root := _instantiate_scene(TRAVEL_BUTTONS_ROOT_SCENE_PATH) as Control
 	if root == null:
 		root = Control.new()
 	root.name = "MainSceneTravelButtons"
+	_configure_travel_buttons_root(root)
 	canvas_layer.add_child(root)
 	return root
+
+
+func _configure_travel_buttons_root(root: Control) -> void:
+	if root == null:
+		return
+	root.anchor_left = 0.0
+	root.anchor_top = 0.0
+	root.anchor_right = 1.0
+	root.anchor_bottom = 1.0
+	root.offset_left = 0.0
+	root.offset_top = 0.0
+	root.offset_right = 0.0
+	root.offset_bottom = 0.0
 
 
 func _instantiate_scene(scene_path: String) -> Node:
@@ -144,22 +159,26 @@ func _ensure_map_travel_button(parent: Control, button_name: String, text_value:
 		return null
 	var existing_button := parent.get_node_or_null(button_name) as Button
 	if existing_button != null:
-		_configure_left_travel_button(existing_button, text_value, tooltip_value, visible_on_start)
+		_configure_right_travel_button(existing_button, text_value, tooltip_value, visible_on_start)
 		return existing_button
 
 	var button := Button.new()
 	button.name = button_name
-	_configure_left_travel_button(button, text_value, tooltip_value, visible_on_start)
+	_configure_right_travel_button(button, text_value, tooltip_value, visible_on_start)
 	parent.add_child(button)
 	return button
 
 
-func _configure_left_travel_button(button: Button, text_value: String, tooltip_value: String, visible_on_start: bool) -> void:
-	button.custom_minimum_size = LEFT_TRAVEL_BUTTON_SIZE
-	button.offset_left = LEFT_TRAVEL_BUTTON_POSITION.x
-	button.offset_top = LEFT_TRAVEL_BUTTON_POSITION.y
-	button.offset_right = LEFT_TRAVEL_BUTTON_POSITION.x + LEFT_TRAVEL_BUTTON_SIZE.x
-	button.offset_bottom = LEFT_TRAVEL_BUTTON_POSITION.y + LEFT_TRAVEL_BUTTON_SIZE.y
+func _configure_right_travel_button(button: Button, text_value: String, tooltip_value: String, visible_on_start: bool) -> void:
+	button.custom_minimum_size = RIGHT_TRAVEL_BUTTON_SIZE
+	button.anchor_left = 1.0
+	button.anchor_top = 0.0
+	button.anchor_right = 1.0
+	button.anchor_bottom = 0.0
+	button.offset_left = RIGHT_TRAVEL_BUTTON_POSITION.x
+	button.offset_top = RIGHT_TRAVEL_BUTTON_POSITION.y
+	button.offset_right = RIGHT_TRAVEL_BUTTON_POSITION.x + RIGHT_TRAVEL_BUTTON_SIZE.x
+	button.offset_bottom = RIGHT_TRAVEL_BUTTON_POSITION.y + RIGHT_TRAVEL_BUTTON_SIZE.y
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	button.text = text_value
 	button.tooltip_text = tooltip_value
@@ -237,13 +256,24 @@ func _set_non_build_buttons_disabled(is_disabled: bool) -> void:
 	_set_canvas_button_disabled("ShopButton", is_disabled)
 	_set_canvas_button_disabled("InventoryButton", is_disabled)
 	_set_canvas_button_disabled("WorkCreditButton", is_disabled)
+	_set_canvas_button_disabled("ToInfrastructureRoomButton", is_disabled)
+	_set_canvas_button_disabled("ToRobinRoomButton", is_disabled)
 
 
 func _set_canvas_button_disabled(node_name: String, is_disabled: bool) -> void:
-	var button := canvas_layer.get_node_or_null(node_name) as BaseButton
-	if button == null:
+	if canvas_layer == null:
 		return
-	button.disabled = is_disabled
+	var direct_button := canvas_layer.get_node_or_null(node_name) as BaseButton
+	if direct_button != null:
+		direct_button.disabled = is_disabled
+		return
+	var travel_root := canvas_layer.get_node_or_null("MainSceneTravelButtons")
+	if travel_root == null:
+		return
+	var travel_button := travel_root.get_node_or_null(node_name) as BaseButton
+	if travel_button == null:
+		return
+	travel_button.disabled = is_disabled
 
 
 func _push_startup_message(message: String) -> void:
