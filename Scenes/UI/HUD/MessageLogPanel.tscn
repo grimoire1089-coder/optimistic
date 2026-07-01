@@ -12,10 +12,10 @@ corner_radius_bottom_right = 14
 corner_radius_bottom_left = 14
 
 [node name="MessageLogPanel" type="PanelContainer"]
-custom_minimum_size = Vector2(288, 564)
+custom_minimum_size = Vector2(288, 526)
 anchors_preset = 0
 offset_left = 52.0
-offset_top = 88.0
+offset_top = 126.0
 offset_right = 340.0
 offset_bottom = 652.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_message_log_panel")
@@ -68,7 +68,7 @@ theme_override_font_sizes/font_size = 13
 
 [node name="ScrollContainer" type="ScrollContainer" parent="MarginContainer/Rows"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 442)
+custom_minimum_size = Vector2(0, 404)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -76,7 +76,7 @@ horizontal_scroll_mode = 0
 
 [node name="MessageList" type="VBoxContainer" parent="MarginContainer/Rows/ScrollContainer"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 442)
+custom_minimum_size = Vector2(0, 404)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
