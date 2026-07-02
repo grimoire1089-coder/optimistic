@@ -1,0 +1,255 @@
+# Optimistic 引き継ぎメモ 2026-07-03
+
+目的:
+- Codexで続きの作業をするための引き継ぎ。
+- 直近で行ったデバッグUI、AI移動、ラピス使用時のグリッドズレ対策を整理する。
+
+対象リポジトリ:
+- grimoire1089-coder/optimistic
+- branch: main
+
+前提ルール:
+- Godot 4系想定。
+- UIとスプライトのみの2Dゲーム。
+- 修正は必要な箇所だけ。関係ないコードは消さない。
+- スクリプト本体は本体、機能はできるだけモジュール化。
+- AIキャラクターの設計ルール:
+  - 見た目/行動処理は縦4 x 横2グリッド想定。
+  - 物理的な足元/当たり判定は下半身2 x 2想定。
+
+------------------------------------------------------------
+1. デバッグUI関連
+------------------------------------------------------------
+
+主なファイル:
+- Scripts/UI/Debug/AIDebugPanel.gd
+- Scenes/Main/MainScene.tscn
+
+やったこと:
+- 右下にAIデバッグUI開閉ボタンを追加。
+- デバッグUIで欲求数値を操作できるようにした。
+  - -10
+  - +10
+  - 0
+  - MAX
+- スタック時用に以下のボタンを追加。
+  - 行動リセット + 最寄りグリッドへ救出
+  - 現在位置をグリッドへ整列
+- デバッグUIを開いた状態で、裏側の他UIボタンが押せてしまう問題を修正。
+  - AIDebugModalGuard を追加。
+  - パネル表示中だけ画面全体のクリックをSTOPする。
+- デバッグUIが一度開いたら閉じられない問題を修正。
+  - パネル内に「閉じる」ボタン追加。
+  - 右下のDBGトグルとも状態同期。
+- Godotエラー修正:
+  - _ready() 中に move_to_front() を呼ぶと
+    Parent node is busy setting up children, move_child() failed
+    が出ていた。
+  - _ready() では call_deferred("_bring_debug_ui_to_front") に変更。
+
+確認済み:
+- デバッグUIの裏側のボタンは押せなくなった。
+- move_child() / move_to_front() 系のエラーは消えた。
+
+関連コミット:
+- 7b6909e1ece238b35488344d533034a3d5319ee5
+  - Prevent clicks through AI debug panel
+- 23ac61b8621578a0d08f793c05142d6b97ee1dd8
+  - Defer AI debug UI front ordering during ready
+
+------------------------------------------------------------
+2. ロビン初期位置/救出/グリッド整列
+------------------------------------------------------------
+
+主なファイル:
+- Scripts/Characters/Robin/RobinWanderActor.gd
+
+やったこと:
+- ロビン初期位置をグリッド内に収める処理を追加。
+  - start_at_movement_area_center
+  - snap_start_position_to_grid
+- debug_reset_actions_and_snap_to_grid() を追加。
+  - 行動リセット
+  - velocity = Vector2.ZERO
+  - 最寄りの歩行可能グリッドへ移動
+- snap_to_nearest_walkable_grid() を追加。
+  - 2x4 footprintで置ける最寄りセルへ移動。
+- get_debug_actor_grid_summary() を追加。
+  - デバッグUIやログ向けに現在のgrid/footprint/walkable/posを表示。
+
+注意:
+- 過去に RobinWanderActor.gd を大きく置き換えようとして、_setup_click_area() など既存関数が消えたことがある。
+- その後、元の関数を復元済み。
+- 今後 RobinWanderActor.gd を編集する場合は、既存のクリック処理やSFX処理を絶対に消さないこと。
+
+関連コミット:
+- 4416d1d2418ef9292a85ea05a820944e629ae16f
+  - Restore Robin helpers with debug grid tools
+
+------------------------------------------------------------
+3. 通常散歩のグリッドステップ移動
+------------------------------------------------------------
+
+主なファイル:
+- Scripts/Characters/Robin/Modules/RobinRandomWanderModule.gd
+- Scripts/Characters/Robin/Modules/RobinWalkSpriteAnimator.gd
+
+やったこと:
+- 通常ランダム散歩を、従来の velocity * delta で滑らせる移動から、グリッドステップ移動へ寄せた。
+- 追加export:
+  - use_grid_step_movement: bool = true
+- セル中心から次セル中心へ補間し、到着時は必ず target_position に確定する。
+- 歩行アニメ側も対応。
+  - velocity が0でも、実際の actor の position delta があれば移動中扱いにする。
+  - detect_position_delta_movement: bool = true
+
+確認状況:
+- ユーザー報告では「時々斜め移動してるのが気になるけど動いてるっぽい？」。
+- 原因候補:
+  - 開始位置がセル中心からズレていると、最初の補間だけ斜めっぽく見える。
+  - 行動モジュール側の移動はまだ旧方式が多く、通常散歩だけグリッドステップ化しても完全には揃わない。
+
+関連コミット:
+- c303310f433dd9839390e6513a32b92f9fedf1e2
+  - Use grid step movement for Robin wander
+- 5d3886f1953c3112c51218e3d26d2d7093dd4f97
+  - Detect direct grid-step movement in Robin animator
+
+------------------------------------------------------------
+4. ラピス使用時のグリッドズレ対策
+------------------------------------------------------------
+
+主なファイル:
+- Scripts/Characters/Modules/AICharacterActionItemDisplayModule.gd
+- Scripts/Characters/Modules/AICharacterSitBehaviorModule.gd
+- Scripts/Characters/Modules/AICharacterLapisGridSnapModule.gd
+
+背景:
+- ユーザーのログで、ラピス使用時に pos=(868.8, 332.8) や pos=(826.4, 121.6) のような半端位置が出ていた。
+- 48pxグリッド基準からズレて見える。
+- ラピス終了後にも pos=(827.7, 121.6) のような微妙なズレが残るケースがあった。
+
+やったこと 1:
+- AICharacterLapisGridSnapModule.gd を新規作成。
+- 立ちラピス状態を監視し、開始/終了時に snap_to_nearest_walkable_grid() を呼ぶ設計。
+
+重要な注意:
+- AICharacterLapisGridSnapModule.gd は作成済みだが、RobinWanderActor.tscn への接続更新がツール側で止まったため、現時点ではシーンに接続されていない可能性が高い。
+- Codexで使う場合は、Robinの子ノードとして追加するか、不要なら削除/統合を検討。
+
+やったこと 2:
+- 既にロビンに接続済みの AICharacterActionItemDisplayModule.gd 側で補正。
+- 追加export:
+  - snap_standing_lapis_to_grid: bool = true
+- 立ちラピス中は毎フレーム _body.call("snap_to_nearest_walkable_grid") を呼ぶ。
+- ラピス終了直後も1回スナップする。
+
+やったこと 3:
+- AICharacterSitBehaviorModule.gd に、行動前の静止待機を追加。
+- 追加export:
+  - pre_action_settle_seconds: float = 0.25
+- これまで:
+  - 移動完了 -> 即着席 / 即ラピス
+- 今回から:
+  - 移動完了
+  - グリッド中心へスナップ
+  - 0.25秒静止
+  - 着席 / ラピス開始
+- 座る場合もラピスの場合も _begin_pre_action_settle() を通す。
+- 静止中は _snap_body_to_current_grid_center() を毎フレーム呼ぶ。
+- _start_standing_lapis() と _update_standing_lapis() でもグリッド中心へ寄せる。
+
+関連コミット:
+- 7ac5e8c... 付近
+  - Add lapis grid snap module
+  - 正確なSHAは必要ならGitHubログで確認。
+- 93ea673d84fa418081da57c8ee6db57cbe5fc9a7
+  - Snap standing lapis transitions from action item display
+- 47bf18c5576ecbbda88cb05bc55df348637fe327
+  - Continuously snap standing lapis to grid
+- 4291c2cf66c61a9a7738e099e9bcd3d01e65db10
+  - Add pre-action settle before sitting and lapis
+
+未確認:
+- 最新の AICharacterSitBehaviorModule.gd は大きく置き換えたので、Godot上でパースエラーがないか必ず確認。
+- 特に以下をチェック。
+  - StringName比較: action_id == &"sit" / &"lapis"
+  - _snap_body_to_current_grid_center() の挙動
+  - _is_pre_action_settling() が意図通り終了するか
+  - ラピス中に毎フレームスナップすることで、アイコン表示やHUDがガタつかないか
+
+------------------------------------------------------------
+5. 直近ユーザーの考え/設計方針
+------------------------------------------------------------
+
+ユーザーの指摘:
+- 今の移動方式がグリッドのズレを呼んでいる。
+- 1コマ/1ターン/1グリッド、たぶん48px単位できっちり動かす形にした方がいい。
+- 移動してすぐ行動するからズレるのもあると思う。
+- 移動を終えた後に完全に静止する時間を作って、そのあと行動させた方が良い。
+
+現時点の実装方針:
+- 通常散歩はグリッドステップ移動化済み。
+- 座る/ラピスは行動前静止待機を入れた。
+- ただし、水分補給・シャワー・クラフト・入口移動・睡眠前移動はまだ旧方式が残っている可能性が高い。
+
+次の推奨作業:
+1. Godotで最新mainを開き、まずパースエラー確認。
+2. ロビンを動かしてログ確認。
+   - sitting / lapis_standing の前に settling=true が出るか。
+   - ラピス開始時/終了時にposがグリッド中心へ戻るか。
+3. 通常散歩で斜めっぽく見える原因を確認。
+   - 経路自体は上下左右のみのはず。
+   - 開始時の位置ズレ補正が必要なら、RobinRandomWanderModule._pick_next_grid_path() で start_cell がwalkableでも現在セル中心へスナップ/ステップする処理を入れる。
+4. 行動前移動の共通化。
+   - 水分補給: AICharacterHydrateBehaviorModule.gd
+   - シャワー: AICharacterHygieneBehaviorModule.gd
+   - クラフト: AICharacterCraftBehaviorModule.gd
+   - 入口移動: AICharacterEntranceTravelBehaviorModule.gd
+   - 睡眠前移動: AICharacterSleepBehaviorModule.gd
+   - 座る/ラピス: AICharacterSitBehaviorModule.gd
+5. 最終的には共通モジュール化推奨。
+   - 例: Scripts/Characters/Modules/AICharacterGridStepMovementModule.gd
+   - 各AI行動モジュールが直接 velocity を返すのではなく、target_cell / next_cell を渡して1グリッド単位移動に寄せる。
+
+------------------------------------------------------------
+6. 既知のリスク/注意点
+------------------------------------------------------------
+
+1. AICharacterActionItemDisplayModule.gd にラピス補正が入っている
+- 本来は表示モジュールに移動補正を入れるのは少し設計的に微妙。
+- 急ぎの安全対策として入れたもの。
+- Codexで作業するなら、最終的には SitBehaviorModule か共通グリッド移動モジュール側へ移すのが綺麗。
+
+2. AICharacterLapisGridSnapModule.gd は未接続の可能性あり
+- 使うならシーンへ追加。
+- 使わないなら削除か、後で共通移動モジュールへ統合。
+
+3. RobinWanderActor.gd の大規模更新は注意
+- 一度既存関数を消してしまう事故があった。
+- 必ず差分で編集し、クリック/SFX/選択処理を残す。
+
+4. move_and_slide() と直接position移動の混在
+- 通常散歩は直接position補間。
+- 行動モジュールの多くは velocity + move_and_slide()。
+- 混在がズレ原因になりやすい。
+- 方針としては、AI移動全体をグリッドステップ方式へ寄せた方が良い。
+
+5. グリッドサイズ
+- RoomMapGridModule.gd の cell_size は Vector2(48, 48)。
+- ユーザーも48px想定で話している。
+
+------------------------------------------------------------
+7. 最後に確認してほしいログ例
+------------------------------------------------------------
+
+期待する流れ:
+- action_changed action=sitting ... plan=settling=true action=lapis or sit
+- 0.25秒後
+- action_changed action=sitting ... plan=lapis_standing=true または sitting=true
+
+ラピスで見たいこと:
+- lapis_standing=true の pos が半端値ではなく、グリッド中心由来の安定した値になること。
+- 終了後 idle に戻った時も pos が大きくズレないこと。
+
+以上。
