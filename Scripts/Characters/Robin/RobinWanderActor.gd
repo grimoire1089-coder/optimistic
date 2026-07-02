@@ -13,6 +13,8 @@ const DEFAULT_CLICK_SFX_PATHS := [
 ]
 
 @export var start_at_movement_area_center: bool = true
+@export var snap_start_position_to_grid: bool = true
+@export var debug_actor_grid_footprint: Vector2i = Vector2i(2, 4)
 @export var display_name: String = "ロビン"
 @export var sprite_click_padding: Vector2 = Vector2(24.0, 24.0)
 @export var click_sfx: AudioStream
@@ -54,6 +56,8 @@ func _ready() -> void:
 	action_item_display_module.setup(self)
 	if start_at_movement_area_center:
 		global_position = wander_module.get_movement_center()
+	if snap_start_position_to_grid:
+		call_deferred("_snap_start_position_to_grid_deferred")
 	walk_animator.setup()
 
 
@@ -243,6 +247,70 @@ func get_current_lowest_need_id() -> StringName:
 	return needs_module.get_lowest_need_id()
 
 
+func debug_reset_actions_and_snap_to_grid() -> bool:
+	var reset_any := debug_reset_all_actions()
+	velocity = Vector2.ZERO
+	var snapped := snap_to_nearest_walkable_grid()
+	if wander_module != null:
+		wander_module.clamp_body_to_movement_area()
+	return reset_any or snapped
+
+
+func debug_reset_all_actions() -> bool:
+	var reset_any := false
+	reset_any = _debug_reset_behavior(entrance_travel_behavior_module) or reset_any
+	reset_any = _debug_reset_behavior(craft_behavior_module) or reset_any
+	reset_any = _debug_reset_behavior(sleep_behavior_module) or reset_any
+	reset_any = _debug_reset_behavior(hydrate_behavior_module) or reset_any
+	reset_any = _debug_reset_behavior(hygiene_behavior_module) or reset_any
+	reset_any = _debug_reset_behavior(sit_behavior_module) or reset_any
+	velocity = Vector2.ZERO
+	return reset_any
+
+
+func snap_to_nearest_walkable_grid() -> bool:
+	var room_map := _get_room_map()
+	if room_map == null:
+		if wander_module != null:
+			return wander_module.clamp_body_to_movement_area()
+		return false
+
+	var footprint := _get_debug_actor_grid_footprint()
+	var nearest_cell := _get_nearest_walkable_top_left_cell(global_position, footprint)
+	if not _is_valid_debug_grid_position(nearest_cell):
+		return false
+
+	var snapped_position := room_map.grid_to_world_area_center(nearest_cell, footprint)
+	var changed := global_position.distance_squared_to(snapped_position) > 0.001
+	global_position = snapped_position
+	velocity = Vector2.ZERO
+	if wander_module != null:
+		wander_module.clamp_body_to_movement_area()
+	return changed
+
+
+func get_debug_actor_grid_summary() -> String:
+	var room_map := _get_room_map()
+	if room_map == null:
+		return "grid: no room map"
+	var footprint := _get_debug_actor_grid_footprint()
+	var top_left := _get_actor_top_left_grid_position(footprint)
+	var can_stand := _is_debug_grid_area_walkable(top_left, footprint)
+	return "grid=%s footprint=%s walkable=%s pos=(%.1f, %.1f)" % [
+		str(top_left),
+		str(footprint),
+		str(can_stand),
+		global_position.x,
+		global_position.y,
+	]
+
+
+func _snap_start_position_to_grid_deferred() -> void:
+	if not snap_start_position_to_grid:
+		return
+	snap_to_nearest_walkable_grid()
+
+
 func _should_skip_sleep_move_and_slide() -> bool:
 	if sleep_behavior_module == null:
 		return false
@@ -260,77 +328,128 @@ func _cancel_sit_behavior() -> void:
 	sit_behavior_module.cancel_sitting()
 
 
-func _is_busy_for_entrance_travel() -> bool:
-	if entrance_travel_behavior_module != null and entrance_travel_behavior_module.is_active():
-		return true
-	if craft_behavior_module != null and craft_behavior_module.is_active():
-		return true
-	if sleep_behavior_module != null and sleep_behavior_module.is_active():
-		return true
-	if hydrate_behavior_module != null and hydrate_behavior_module.is_active():
-		return true
-	if hygiene_behavior_module != null and hygiene_behavior_module.is_active():
-		return true
-	return false
-
-
-func _connect_entrance_travel_signal() -> void:
-	if entrance_travel_behavior_module == null:
-		return
-	var callable := Callable(self, "_on_entrance_travel_completed")
-	if not entrance_travel_behavior_module.travel_completed.is_connected(callable):
-		entrance_travel_behavior_module.travel_completed.connect(callable)
-
-
-func _on_entrance_travel_completed(target_map_id: StringName) -> void:
-	entrance_travel_completed.emit(target_map_id)
-
-
-func _setup_click_area() -> void:
-	if click_area == null:
-		return
-	click_area.input_pickable = true
-	var callable := Callable(self, "_on_click_area_input_event")
-	if not click_area.input_event.is_connected(callable):
-		click_area.input_event.connect(callable)
-
-
-func _on_click_area_input_event(_viewport: Viewport, event: InputEvent, _shape_idx: int) -> void:
-	if event is InputEventMouseButton:
-		var mouse_event := event as InputEventMouseButton
-		if mouse_event.button_index == MOUSE_BUTTON_LEFT and mouse_event.pressed:
-			_select_actor()
-
-
-func _is_mouse_inside_sprite_click_rect(global_mouse_position: Vector2) -> bool:
-	if sprite == null:
+func _debug_reset_behavior(behavior: Node) -> bool:
+	if behavior == null:
 		return false
-	var local_position := sprite.to_local(global_mouse_position)
-	var rect := sprite.get_rect().grow_individual(
-		sprite_click_padding.x,
-		sprite_click_padding.y,
-		sprite_click_padding.x,
-		sprite_click_padding.y
-	)
-	return rect.has_point(local_position)
+	var was_active := _is_behavior_active_for_debug(behavior)
+
+	if behavior.has_method("debug_reset_action"):
+		behavior.call("debug_reset_action")
+		return true
+	if behavior.has_method("cancel_travel"):
+		behavior.call("cancel_travel")
+		return true
+	if behavior.has_method("cancel_sitting"):
+		behavior.call("cancel_sitting")
+		return true
+
+	if behavior.has_method("_stop_sleeping"):
+		behavior.call("_stop_sleeping")
+		return true
+	if behavior.has_method("_reset_action"):
+		behavior.call("_reset_action")
+		return true
+	if behavior.has_method("_finish_hydrate_action"):
+		_debug_set_property_if_exists(behavior, &"_is_drinking", false)
+		_debug_set_property_if_exists(behavior, &"_drink_food_data", null)
+		behavior.call("_finish_hydrate_action")
+		return true
+	if behavior.has_method("_finish_hygiene_action"):
+		_debug_set_property_if_exists(behavior, &"_is_showering", false)
+		behavior.call("_finish_hygiene_action")
+		return true
+
+	_debug_set_property_if_exists(behavior, &"_is_active", false)
+	_debug_set_property_if_exists(behavior, &"_path_cells", [])
+	return was_active
 
 
-func _select_actor() -> void:
-	_play_click_sfx()
-	selected.emit(self)
-	get_viewport().set_input_as_handled()
+func _is_behavior_active_for_debug(behavior: Node) -> bool:
+	if behavior == null:
+		return false
+	if not behavior.has_method("is_active"):
+		return false
+	return behavior.call("is_active") == true
 
 
-func _play_click_sfx() -> void:
-	if click_sfx == null:
+func _debug_set_property_if_exists(object: Object, property_name: StringName, value: Variant) -> void:
+	if object == null:
 		return
-	AudioPlayer.play_sfx(click_sfx, 1.0, click_sfx_volume_db)
-
-
-func _load_default_click_sfx_if_needed() -> void:
-	if click_sfx != null:
+	if not _has_property(object, property_name):
 		return
-	for path in DEFAULT_CLICK_SFX_PATHS:
-		if ResourceLoader.exists(path):
-			click_sfx = load(path) as AudioStream
-			return
+	object.set(property_name, value)
+
+
+func _get_nearest_walkable_top_left_cell(world_position: Vector2, footprint: Vector2i) -> Vector2i:
+	var room_map := _get_room_map()
+	if room_map == null:
+		return Vector2i(-999999, -999999)
+	var grid_size := room_map.get_grid_size()
+	var safe_footprint := Vector2i(maxi(footprint.x, 1), maxi(footprint.y, 1))
+	var max_x := grid_size.x - safe_footprint.x
+	var max_y := grid_size.y - safe_footprint.y
+	if max_x < 0 or max_y < 0:
+		return Vector2i(-999999, -999999)
+
+	var nearest_cell := Vector2i(-999999, -999999)
+	var nearest_distance := INF
+	for y in range(max_y + 1):
+		for x in range(max_x + 1):
+			var cell := Vector2i(x, y)
+			if not _is_debug_grid_area_walkable(cell, safe_footprint):
+				continue
+			var center := room_map.grid_to_world_area_center(cell, safe_footprint)
+			var distance := world_position.distance_squared_to(center)
+			if distance < nearest_distance:
+				nearest_distance = distance
+				nearest_cell = cell
+	return nearest_cell
+
+
+func _is_debug_grid_area_walkable(top_left_cell: Vector2i, footprint: Vector2i) -> bool:
+	var room_map := _get_room_map()
+	if room_map == null:
+		return false
+	var safe_footprint := Vector2i(maxi(footprint.x, 1), maxi(footprint.y, 1))
+	if not room_map.is_grid_area_inside(top_left_cell, safe_footprint):
+		return false
+	var furniture_placement := _get_furniture_placement_module()
+	if furniture_placement != null and furniture_placement.has_method("can_place_at"):
+		return furniture_placement.call("can_place_at", top_left_cell, safe_footprint) == true
+	return true
+
+
+func _get_actor_top_left_grid_position(footprint: Vector2i) -> Vector2i:
+	var room_map := _get_room_map()
+	if room_map == null:
+		return Vector2i(-999999, -999999)
+	var safe_footprint := Vector2i(maxi(footprint.x, 1), maxi(footprint.y, 1))
+	var center_cell := room_map.world_to_grid(global_position)
+	return center_cell - Vector2i(floori(float(safe_footprint.x) * 0.5), floori(float(safe_footprint.y) * 0.5))
+
+
+func _get_debug_actor_grid_footprint() -> Vector2i:
+	return Vector2i(maxi(debug_actor_grid_footprint.x, 1), maxi(debug_actor_grid_footprint.y, 1))
+
+
+func _get_room_map() -> RoomMapGridModule:
+	return get_node_or_null("../RobinRoomMap") as RoomMapGridModule
+
+
+func _get_furniture_placement_module() -> Node:
+	return get_node_or_null("../FurniturePlacementModule")
+
+
+func _is_valid_debug_grid_position(grid_position: Vector2i) -> bool:
+	return grid_position != Vector2i(-999999, -999999)
+
+
+func _has_property(object: Object, property_name: StringName) -> bool:
+	if object == null:
+		return false
+	for property_info in object.get_property_list():
+		if not property_info.has("name"):
+			continue
+		if StringName(property_info["name"]) == property_name:
+			return true
+	return false
