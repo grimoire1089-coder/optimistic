@@ -8,6 +8,7 @@ class_name AICharacterHud
 @onready var needs_panel: CharacterNeedsPanel = $MarginContainer/Rows/Tabs/NeedsTab/CharacterNeedsPanel
 @onready var mood_panel: CharacterMoodPanel = $MarginContainer/Rows/Tabs/MoodTab/CharacterMoodPanel
 @onready var action_queue_panel: AICharacterActionQueuePanel = $MarginContainer/Rows/Tabs/ActionQueueTab/ActionQueueScroll/ActionQueueRows
+@onready var skills_panel: CharacterSkillsPanel = $MarginContainer/Rows/Tabs/SkillsTab/CharacterSkillsPanel
 
 var _actor: RobinWanderActor
 var _refresh_timer: float = 0.0
@@ -39,6 +40,8 @@ func show_actor(actor: RobinWanderActor) -> void:
 		needs_panel.set_character_needs(null)
 		mood_panel.set_mood_module(null)
 		action_queue_panel.clear_actor()
+		if skills_panel != null:
+			skills_panel.set_skills_module(null)
 		_update_action_label()
 		_push_debug_result("AI HUD", "show_actor", false, "actor が null です")
 		return
@@ -46,6 +49,8 @@ func show_actor(actor: RobinWanderActor) -> void:
 	needs_panel.set_needs_module(_actor.get_needs_module())
 	mood_panel.set_mood_module(_actor.get_mood_module())
 	action_queue_panel.set_actor(_actor)
+	if skills_panel != null:
+		skills_panel.set_skills_module(_actor.get_skills_module())
 	_update_action_label()
 	_push_debug_result("AI HUD", "show_actor", true, "target=%s" % _actor.display_name)
 
@@ -63,6 +68,8 @@ func clear_actor() -> void:
 	needs_panel.set_character_needs(null)
 	mood_panel.set_mood_module(null)
 	action_queue_panel.clear_actor()
+	if skills_panel != null:
+		skills_panel.set_skills_module(null)
 	_update_action_label()
 	hide_hud()
 	_push_debug_result("AI HUD", "clear_actor", true, "previous=%s" % previous_actor_name)
@@ -85,6 +92,8 @@ func _setup_tabs() -> void:
 		tab_container.set_tab_title(1, "気分")
 	if tab_container.get_tab_count() >= 3:
 		tab_container.set_tab_title(2, "行動")
+	if tab_container.get_tab_count() >= 4:
+		tab_container.set_tab_title(3, "スキル")
 	tab_container.current_tab = 0
 
 func _update_action_label() -> void:
