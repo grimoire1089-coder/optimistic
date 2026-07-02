@@ -3,6 +3,7 @@ class_name AICharacterActionProgressBarModule
 
 @export var hydrate_behavior_path: NodePath = NodePath("../AICharacterHydrateBehaviorModule")
 @export var sleep_behavior_path: NodePath = NodePath("../AICharacterSleepBehaviorModule")
+@export var craft_behavior_path: NodePath = NodePath("../AICharacterCraftBehaviorModule")
 @export var bar_offset: Vector2 = Vector2(-42.0, -88.0)
 @export var bar_size: Vector2 = Vector2(84.0, 10.0)
 @export var background_color: Color = Color(0.02, 0.025, 0.035, 0.82)
@@ -13,6 +14,7 @@ class_name AICharacterActionProgressBarModule
 var _body: Node2D
 var _hydrate_behavior: Node
 var _sleep_behavior: Node
+var _craft_behavior: Node
 var _bar: ProgressBar
 var _bar_add_deferred := false
 
@@ -52,6 +54,8 @@ func _update_bar() -> void:
 
 
 func _get_active_progress_source() -> Node:
+	if _craft_behavior != null and _should_show_source(_craft_behavior):
+		return _craft_behavior
 	if _hydrate_behavior != null and _should_show_source(_hydrate_behavior):
 		return _hydrate_behavior
 	if _sleep_behavior != null and _should_show_source(_sleep_behavior):
@@ -135,3 +139,5 @@ func _resolve_refs() -> void:
 		_hydrate_behavior = get_node_or_null(hydrate_behavior_path)
 	if _sleep_behavior == null and not sleep_behavior_path.is_empty():
 		_sleep_behavior = get_node_or_null(sleep_behavior_path)
+	if _craft_behavior == null and not craft_behavior_path.is_empty():
+		_craft_behavior = get_node_or_null(craft_behavior_path)
