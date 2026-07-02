@@ -1,6 +1,9 @@
 extends PanelContainer
 class_name WorkMenu
 
+const BOTTOM_RIGHT_MARGIN := Vector2(24.0, 24.0)
+const BOTTOM_RIGHT_PANEL_SIZE := Vector2(320.0, 196.0)
+
 @export var first_job_name: String = "仕事001"
 @export var first_job_minutes: int = 8 * 60
 @export var worker_path: NodePath = NodePath("../../Robin")
@@ -17,6 +20,8 @@ var _worker: Node
 
 func _ready() -> void:
 	visible = false
+	_apply_bottom_right_layout()
+	call_deferred("_apply_bottom_right_layout")
 	close_button.pressed.connect(close_menu)
 	job_001_button.pressed.connect(_on_job_001_pressed)
 	_resolve_worker()
@@ -34,6 +39,7 @@ func _process(delta: float) -> void:
 
 
 func open_menu() -> void:
+	_apply_bottom_right_layout()
 	visible = true
 	_refresh_timer = 0.0
 	_refresh()
@@ -91,6 +97,20 @@ func _resolve_worker() -> void:
 	if worker_path.is_empty():
 		return
 	_worker = get_node_or_null(worker_path)
+
+
+func _apply_bottom_right_layout() -> void:
+	custom_minimum_size = BOTTOM_RIGHT_PANEL_SIZE
+	anchor_left = 1.0
+	anchor_top = 1.0
+	anchor_right = 1.0
+	anchor_bottom = 1.0
+	offset_left = -BOTTOM_RIGHT_MARGIN.x - BOTTOM_RIGHT_PANEL_SIZE.x
+	offset_top = -BOTTOM_RIGHT_MARGIN.y - BOTTOM_RIGHT_PANEL_SIZE.y
+	offset_right = -BOTTOM_RIGHT_MARGIN.x
+	offset_bottom = -BOTTOM_RIGHT_MARGIN.y
+	grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	grow_vertical = Control.GROW_DIRECTION_BEGIN
 
 
 func _push_message(message: String) -> void:
