@@ -246,6 +246,10 @@ func _draw_grid_area_highlight(grid_position: Vector2i, footprint: Vector2i, fil
 
 
 func _get_first_active_ai_movement_behavior() -> Node:
+	var group_nodes := get_tree().get_nodes_in_group(&"ai_movement_behavior")
+	for node in group_nodes:
+		if node is Node and _is_active_ai_movement_behavior(node):
+			return node
 	var root := get_tree().current_scene
 	if root == null:
 		return null
