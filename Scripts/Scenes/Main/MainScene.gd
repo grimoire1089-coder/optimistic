@@ -219,8 +219,10 @@ func _configure_map_grid_toggle_button(button: Button) -> void:
 
 
 func _on_map_grid_toggle_button_pressed() -> void:
+	if canvas_layer == null:
+		return
 	var room_map := get_node_or_null("RobinRoomMap") as RoomMapGridModule
-	var button := _ensure_map_grid_toggle_button()
+	var button := canvas_layer.get_node_or_null(MAP_GRID_TOGGLE_BUTTON_NAME) as Button
 	if room_map == null or button == null:
 		return
 	room_map.show_grid = button.button_pressed
