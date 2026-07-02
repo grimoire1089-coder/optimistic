@@ -25,9 +25,9 @@ anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
 offset_left = -328.0
-offset_top = 328.0
+offset_top = 400.0
 offset_right = -24.0
-offset_bottom = 652.0
+offset_bottom = 688.0
 grow_horizontal = 0
 grow_vertical = 0
 theme_override_styles/panel = SubResource("StyleBoxFlat_ai_hud_panel")
@@ -67,7 +67,7 @@ theme_override_colors/font_color = Color(0.82, 0.95, 1, 1)
 theme_override_font_sizes/font_size = 13
 
 [node name="Tabs" type="TabContainer" parent="MarginContainer/Rows"]
-custom_minimum_size = Vector2(0, 188)
+custom_minimum_size = Vector2(0, 168)
 layout_mode = 2
 size_flags_vertical = 3
 current_tab = 0
