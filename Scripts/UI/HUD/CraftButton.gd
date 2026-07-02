@@ -3,10 +3,11 @@ class_name CraftButton
 
 const DEFAULT_CLICK_SFX_PATH := "res://Assets/Audio/SFX/UI/UI_Click_001.ogg"
 const DEFAULT_LABEL_CODES := [0x5236, 0x4f5c]
+const FIRST_ROW_BUTTON_SIZE := Vector2(48.0, 48.0)
 const SECOND_ROW_TOP_RIGHT_OFFSET := Vector2(-280.0, 236.0)
 const SECOND_ROW_BUTTON_SIZE := Vector2(48.0, 48.0)
 const SECOND_ROW_MENU_TOP_RIGHT_OFFSET := Vector2(-328.0, 304.0)
-const SECOND_ROW_MENU_SIZE := Vector2(304.0, 172.0)
+const SECOND_ROW_MENU_SIZE := Vector2(304.0, 260.0)
 
 @export var label_text: String = ""
 @export var craft_menu_path: NodePath = NodePath("../CraftMenu")
@@ -20,7 +21,7 @@ func _ready() -> void:
 	text = _get_label_text()
 	_load_default_click_sfx_if_needed()
 	pressed.connect(_on_pressed)
-	call_deferred("_apply_second_row_layout_after_parent")
+	call_deferred("_apply_hud_button_layout_after_parent")
 
 
 func _on_pressed() -> void:
@@ -89,12 +90,25 @@ func _apply_square_button_layout() -> void:
 	_add_rounded_button_styles()
 
 
-func _apply_second_row_layout_after_parent() -> void:
+func _apply_hud_button_layout_after_parent() -> void:
+	_place_canvas_sibling("RobinHudButton", Vector2(-280.0, 184.0), FIRST_ROW_BUTTON_SIZE)
+	_place_canvas_sibling("ShopButton", Vector2(-228.0, 184.0), FIRST_ROW_BUTTON_SIZE)
+	_place_canvas_sibling("InventoryButton", Vector2(-176.0, 184.0), FIRST_ROW_BUTTON_SIZE)
+	_place_canvas_sibling("BuildModeButton", Vector2(-124.0, 184.0), FIRST_ROW_BUTTON_SIZE)
+	_place_canvas_sibling("WorkCreditButton", Vector2(-72.0, 184.0), FIRST_ROW_BUTTON_SIZE)
 	_place_top_right_control(self, SECOND_ROW_TOP_RIGHT_OFFSET, SECOND_ROW_BUTTON_SIZE)
 	var craft_menu := _find_craft_menu() as Control
 	if craft_menu == null:
 		return
 	_place_top_right_control(craft_menu, SECOND_ROW_MENU_TOP_RIGHT_OFFSET, SECOND_ROW_MENU_SIZE)
+
+
+func _place_canvas_sibling(node_name: String, top_right_offset: Vector2, control_size: Vector2) -> void:
+	var parent_node := get_parent()
+	if parent_node == null:
+		return
+	var control := parent_node.get_node_or_null(node_name) as Control
+	_place_top_right_control(control, top_right_offset, control_size)
 
 
 func _place_top_right_control(control: Control, top_right_offset: Vector2, control_size: Vector2) -> void:
