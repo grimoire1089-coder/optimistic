@@ -1,9 +1,10 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=7 format=3]
 
 [ext_resource type="Script" path="res://Scripts/UI/HUD/AICharacterHud.gd" id="1_hud_script"]
 [ext_resource type="PackedScene" path="res://Scenes/UI/CharacterNeeds/CharacterNeedsPanel.tscn" id="2_needs_panel"]
 [ext_resource type="PackedScene" path="res://Scenes/UI/CharacterNeeds/CharacterMoodPanel.tscn" id="3_mood_panel"]
 [ext_resource type="Script" path="res://Scripts/UI/HUD/AICharacterActionQueuePanel.gd" id="4_action_queue_panel"]
+[ext_resource type="PackedScene" path="res://Scenes/UI/CharacterSkills/CharacterSkillsPanel.tscn" id="5_skills_panel"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ai_hud_panel"]
 bg_color = Color(0.015, 0.025, 0.035, 1)
@@ -103,3 +104,10 @@ layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 5
 script = ExtResource("4_action_queue_panel")
+
+[node name="SkillsTab" type="MarginContainer" parent="MarginContainer/Rows/Tabs"]
+visible = false
+layout_mode = 2
+
+[node name="CharacterSkillsPanel" parent="MarginContainer/Rows/Tabs/SkillsTab" instance=ExtResource("5_skills_panel")]
+layout_mode = 2
