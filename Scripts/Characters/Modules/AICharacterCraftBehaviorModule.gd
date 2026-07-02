@@ -51,6 +51,9 @@ func request_craft(recipe: CraftRecipeData, quantity: int) -> bool:
 	if _is_active:
 		_push_message("制作中です。")
 		return false
+	if _is_body_sleeping():
+		_push_message("睡眠中なので、今は制作できません。")
+		return false
 	if recipe == null or recipe.output_item == null or _inventory_module == null:
 		return false
 	_recipe = recipe
@@ -312,6 +315,14 @@ func _update_stuck(distance: float, delta: float) -> void:
 	else:
 		_stuck_timer += maxf(delta, 0.0)
 	_last_distance = distance
+
+
+func _is_body_sleeping() -> bool:
+	if _body == null:
+		return false
+	if not _body.has_method("is_sleeping"):
+		return false
+	return _body.call("is_sleeping") == true
 
 
 func _add_skill_experience_for_completed_craft() -> void:
