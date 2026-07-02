@@ -1,13 +1,11 @@
 extends Node
 class_name MainSceneSleepFastForwardModule
 
-const DEFAULT_TIME_SCALE_CONTROLLER_PATH := NodePath("/root/TimeScaleController")
-
 @export var actor_paths: Array[NodePath] = [NodePath("../Robin")]
 @export var ai_character_actor_group: StringName = &"ai_character_actor"
 @export var map_travel_module_path: NodePath = NodePath("../MainSceneMapTravelModule")
 @export var build_mode_controller_path: NodePath = NodePath("../BuildModeController")
-@export var time_scale_controller_path: NodePath = DEFAULT_TIME_SCALE_CONTROLLER_PATH
+@export var time_scale_controller_path: NodePath = NodePath("/root/TimeScaleController")
 @export var pause_during_build_mode: bool = true
 
 var _map_travel_module: Node
