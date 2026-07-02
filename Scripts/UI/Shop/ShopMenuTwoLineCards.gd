@@ -16,6 +16,11 @@ func _process(_delta: float) -> void:
 	_refresh_current_shop_detail()
 
 
+func _show_shop_list() -> void:
+	super._show_shop_list()
+	_clear_duplicated_shop_list_detail()
+
+
 func _create_shop_button(shop: ShopData, index: int) -> Button:
 	var button := Button.new()
 	button.custom_minimum_size = Vector2(164, 220)
@@ -152,6 +157,17 @@ func _create_item_card(entry: ShopItemData, credits: int) -> Control:
 	card.add_child(buy_button)
 
 	return card_panel
+
+
+func _clear_duplicated_shop_list_detail() -> void:
+	if detail_label == null:
+		return
+	var guide_text := ""
+	if guide_label != null:
+		guide_text = guide_label.text.strip_edges()
+	var detail_text := detail_label.text.strip_edges()
+	if detail_text == "行きたいお店を選んでください。" or detail_text == guide_text:
+		detail_label.text = ""
 
 
 func _single_line_shop_name(shop: ShopData) -> String:
