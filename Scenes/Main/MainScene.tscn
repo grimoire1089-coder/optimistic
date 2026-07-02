@@ -22,6 +22,7 @@
 [ext_resource type="PackedScene" path="res://Scenes/UI/HUD/RobinHudButton.tscn" id="19_robin_hud_button"]
 [ext_resource type="PackedScene" path="res://Scenes/UI/HUD/CraftButton.tscn" id="20_craft_button"]
 [ext_resource type="PackedScene" path="res://Scenes/UI/HUD/ProductionMenu.tscn" id="21_production_menu"]
+[ext_resource type="PackedScene" path="res://Scenes/Main/Modules/MainSceneSleepFastForwardModule.tscn" id="22_sleep_fast_forward"]
 
 [sub_resource type="Environment" id="Environment_ctt6t"]
 glow_enabled = true
@@ -36,6 +37,8 @@ script = ExtResource("3_canvas_glow")
 [node name="RobinRoomBgmListModule" type="Node" parent="." unique_id=638603961]
 script = ExtResource("16_robin_room_bgm")
 bgm_paths = PackedStringArray("res://Assets/Audio/BGM/Room BGM 001.ogg", "res://Assets/Audio/BGM/Room BGM 002.ogg", "res://Assets/Audio/BGM/Room BGM 003.ogg", "res://Assets/Audio/BGM/Room BGM 004.ogg", "res://Assets/Audio/BGM/Room BGM 005.ogg")
+
+[node name="MainSceneSleepFastForwardModule" parent="." instance=ExtResource("22_sleep_fast_forward")]
 
 [node name="RobinRoomMap" type="Node2D" parent="." unique_id=723162854]
 z_index = -30
