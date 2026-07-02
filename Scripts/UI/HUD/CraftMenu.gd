@@ -7,6 +7,9 @@ const RECIPE_PATHS := [
 	"res://Data/Craft/Recipes/Cooking_0001_WhiteRice.tres",
 ]
 
+const LARGE_MENU_SIZE := Vector2(420.0, 520.0)
+const RECIPE_CARD_SIZE := Vector2(380.0, 170.0)
+
 const TITLE_CRAFT_CODES := [0x5236, 0x4f5c]
 const TITLE_COOKING_CODES := [0x6599, 0x7406]
 const COOKING_BUTTON_TEXT_CODES := [0x6599, 0x7406, 0x0a, 0x5236, 0x4f5c, 0x65b9, 0x5f0f]
@@ -21,6 +24,10 @@ const MISSING_FURNITURE_PREFIX_CODES := [0x5fc5, 0x8981, 0x5bb6, 0x5177, 0x304c,
 const INVENTORY_NOT_FOUND_CODES := [0x30a4, 0x30f3, 0x30d9, 0x30f3, 0x30c8, 0x30ea, 0x304c, 0x898b, 0x3064, 0x304b, 0x308a, 0x307e, 0x305b, 0x3093, 0x3002]
 const OUTPUT_FAILED_CODES := [0x5b8c, 0x6210, 0x54c1, 0x3092, 0x8ffd, 0x52a0, 0x3067, 0x304d, 0x307e, 0x305b, 0x3093, 0x3067, 0x3057, 0x305f, 0x3002]
 const KITCHEN_MODULE_NAME_CODES := [0x30ad, 0x30c3, 0x30c1, 0x30f3, 0x30e2, 0x30b8, 0x30e5, 0x30fc, 0x30eb]
+const WHITE_RICE_NAME_CODES := [0x767d, 0x7c73]
+const REQUIRED_MATERIALS_LABEL_CODES := [0x5fc5, 0x8981, 0x6750, 0x6599, 0x3a, 0x20]
+const REQUIRED_FURNITURE_LABEL_CODES := [0x5fc5, 0x8981, 0x5bb6, 0x5177, 0x3a, 0x20]
+const NONE_CODES := [0x306a, 0x3057]
 
 @export var cooking_method_id: StringName = &"cooking"
 @export var actor_path: NodePath = NodePath("../../Robin")
@@ -34,12 +41,13 @@ const KITCHEN_MODULE_NAME_CODES := [0x30ad, 0x30c3, 0x30c1, 0x30f3, 0x30e2, 0x30
 @onready var detail_label: Label = $MarginContainer/Rows/DetailLabel
 
 var _selected_method_id: StringName = &""
-var _dynamic_buttons: Array[Button] = []
+var _dynamic_nodes: Array[Node] = []
 var _recipes: Array[CraftRecipeData] = []
 
 
 func _ready() -> void:
 	visible = false
+	custom_minimum_size = LARGE_MENU_SIZE
 	if not is_in_group(&"craft_menu"):
 		add_to_group(&"craft_menu")
 	close_button.pressed.connect(close_menu)
@@ -78,15 +86,16 @@ func _on_cooking_pressed() -> void:
 
 
 func _show_category_view() -> void:
-	_clear_dynamic_buttons()
+	_clear_dynamic_nodes()
 	title_label.text = _string_from_codes(TITLE_CRAFT_CODES)
 	cooking_button.visible = true
+	cooking_button.custom_minimum_size = Vector2(380.0, 72.0)
 	cooking_button.text = _string_from_codes(COOKING_BUTTON_TEXT_CODES)
 	detail_label.text = _string_from_codes(GUIDE_TEXT_CODES)
 
 
 func _show_cooking_view() -> void:
-	_clear_dynamic_buttons()
+	_clear_dynamic_nodes()
 	title_label.text = _string_from_codes(TITLE_COOKING_CODES)
 	cooking_button.visible = false
 	_add_back_button()
@@ -94,28 +103,55 @@ func _show_cooking_view() -> void:
 		detail_label.text = _string_from_codes(NO_RECIPE_CODES)
 		return
 	for recipe in _recipes:
-		_add_recipe_button(recipe)
+		_add_recipe_card(recipe)
 	detail_label.text = _string_from_codes(COOKING_GUIDE_CODES)
 
 
 func _add_back_button() -> void:
 	var button := Button.new()
-	button.custom_minimum_size = Vector2(280.0, 32.0)
+	button.custom_minimum_size = Vector2(380.0, 40.0)
 	button.text = _string_from_codes(BACK_BUTTON_CODES)
 	button.pressed.connect(_on_back_pressed)
 	category_list.add_child(button)
-	_dynamic_buttons.append(button)
+	_dynamic_nodes.append(button)
 
 
-func _add_recipe_button(recipe: CraftRecipeData) -> void:
+func _add_recipe_card(recipe: CraftRecipeData) -> void:
 	if recipe == null:
 		return
+	var card := PanelContainer.new()
+	card.custom_minimum_size = RECIPE_CARD_SIZE
+	card.add_theme_stylebox_override("panel", _make_card_style())
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 12)
+	margin.add_theme_constant_override("margin_top", 10)
+	margin.add_theme_constant_override("margin_right", 12)
+	margin.add_theme_constant_override("margin_bottom", 10)
+	card.add_child(margin)
+
+	var rows := VBoxContainer.new()
+	rows.add_theme_constant_override("separation", 8)
+	margin.add_child(rows)
+
+	var name_label := Label.new()
+	name_label.text = _get_recipe_display_name(recipe)
+	name_label.add_theme_font_size_override("font_size", 22)
+	rows.add_child(name_label)
+
+	var requirements_label := Label.new()
+	requirements_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	requirements_label.text = _build_requirement_text(recipe)
+	rows.add_child(requirements_label)
+
 	var button := Button.new()
-	button.custom_minimum_size = Vector2(280.0, 56.0)
-	button.text = "%s\n%s" % [_get_recipe_display_name(recipe), _string_from_codes(MAKE_BUTTON_CODES)]
+	button.custom_minimum_size = Vector2(356.0, 42.0)
+	button.text = _string_from_codes(MAKE_BUTTON_CODES)
 	button.pressed.connect(Callable(self, "_on_recipe_pressed").bind(recipe))
-	category_list.add_child(button)
-	_dynamic_buttons.append(button)
+	rows.add_child(button)
+
+	category_list.add_child(card)
+	_dynamic_nodes.append(card)
 
 
 func _on_back_pressed() -> void:
@@ -167,6 +203,39 @@ func _load_recipes_once() -> void:
 		_recipes.append(recipe)
 
 
+func _build_requirement_text(recipe: CraftRecipeData) -> String:
+	return "%s%s\n%s%s" % [
+		_string_from_codes(REQUIRED_MATERIALS_LABEL_CODES),
+		_build_materials_text(recipe),
+		_string_from_codes(REQUIRED_FURNITURE_LABEL_CODES),
+		_build_furniture_text(recipe),
+	]
+
+
+func _build_materials_text(recipe: CraftRecipeData) -> String:
+	if recipe == null or recipe.ingredients.is_empty():
+		return _string_from_codes(NONE_CODES)
+	var parts: Array[String] = []
+	for ingredient in recipe.ingredients:
+		if ingredient == null or ingredient.item_data == null:
+			continue
+		parts.append("%s x%d" % [_get_item_display_name(ingredient.item_data), ingredient.amount])
+	if parts.is_empty():
+		return _string_from_codes(NONE_CODES)
+	return " / ".join(parts)
+
+
+func _build_furniture_text(recipe: CraftRecipeData) -> String:
+	if recipe == null or recipe.required_furniture_ids.is_empty():
+		return _string_from_codes(NONE_CODES)
+	var parts: Array[String] = []
+	for furniture_id_text in recipe.required_furniture_ids:
+		parts.append(_get_furniture_display_name(StringName(furniture_id_text)))
+	if parts.is_empty():
+		return _string_from_codes(NONE_CODES)
+	return " / ".join(parts)
+
+
 func _get_missing_text(recipe: CraftRecipeData, inventory: Node) -> String:
 	if recipe == null:
 		return _string_from_codes(NO_RECIPE_CODES)
@@ -175,7 +244,7 @@ func _get_missing_text(recipe: CraftRecipeData, inventory: Node) -> String:
 			continue
 		var current_amount := _get_inventory_item_amount(inventory, ingredient.item_data.category_id, ingredient.item_data.item_id)
 		if current_amount < ingredient.amount:
-			return "%s%s %d/%d" % [_string_from_codes(MISSING_MATERIAL_PREFIX_CODES), ingredient.item_data.display_name, current_amount, ingredient.amount]
+			return "%s%s %d/%d" % [_string_from_codes(MISSING_MATERIAL_PREFIX_CODES), _get_item_display_name(ingredient.item_data), current_amount, ingredient.amount]
 	for furniture_id_text in recipe.required_furniture_ids:
 		var furniture_id := StringName(furniture_id_text)
 		if not _has_furniture(furniture_id):
@@ -238,10 +307,22 @@ func _get_furniture_display_name(furniture_id: StringName) -> String:
 	return String(furniture_id)
 
 
-func _get_recipe_display_name(recipe: CraftRecipeData) -> String:
-	if recipe == null or recipe.output_item == null:
+func _get_item_display_name(item_data: FoodItemData) -> String:
+	if item_data == null:
 		return ""
-	return recipe.output_item.display_name
+	if not item_data.display_name.is_empty():
+		return item_data.display_name
+	return String(item_data.item_id)
+
+
+func _get_recipe_display_name(recipe: CraftRecipeData) -> String:
+	if recipe == null:
+		return ""
+	if recipe.recipe_id == &"cooking_0001_white_rice":
+		return _string_from_codes(WHITE_RICE_NAME_CODES)
+	if recipe.output_item != null and not recipe.output_item.display_name.is_empty():
+		return recipe.output_item.display_name
+	return String(recipe.recipe_id)
 
 
 func _get_inventory_module() -> Node:
@@ -269,11 +350,21 @@ func _push_message(message: String) -> void:
 	message_log.call("add_message", message)
 
 
-func _clear_dynamic_buttons() -> void:
-	for button in _dynamic_buttons:
-		if button != null and is_instance_valid(button):
-			button.queue_free()
-	_dynamic_buttons.clear()
+func _clear_dynamic_nodes() -> void:
+	for node in _dynamic_nodes:
+		if node != null and is_instance_valid(node):
+			node.queue_free()
+	_dynamic_nodes.clear()
+
+
+func _make_card_style() -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.08, 0.08, 0.09, 0.92)
+	style.border_color = Color(0.14, 0.8, 0.95, 0.75)
+	style.set_border_width_all(1)
+	style.set_corner_radius_all(8)
+	style.set_content_margin_all(4.0)
+	return style
 
 
 func _string_from_codes(codes: Array) -> String:
