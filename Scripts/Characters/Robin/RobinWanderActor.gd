@@ -24,6 +24,7 @@ const DEFAULT_CLICK_SFX_PATHS := [
 @onready var needs_module: CharacterNeedsModule = $AICharacterNeedsBundle/CharacterNeedsModule
 @onready var mood_module: CharacterMoodModule = $AICharacterNeedsBundle/CharacterMoodModule
 @onready var need_planner: NeedDrivenAIPlanner = $AICharacterNeedsBundle/NeedDrivenAIPlanner
+@onready var skills_module: AICharacterSkillsModule = $AICharacterSkillsModule
 @onready var inventory_module: RobinInventoryModule = $RobinInventoryModule
 @onready var wander_module: RobinRandomWanderModule = $RobinRandomWanderModule
 @onready var sleep_behavior_module: AICharacterSleepBehaviorModule = $AICharacterSleepBehaviorModule
@@ -148,6 +149,10 @@ func get_mood_module() -> CharacterMoodModule:
 
 func get_need_planner() -> NeedDrivenAIPlanner:
 	return need_planner
+
+
+func get_skills_module() -> AICharacterSkillsModule:
+	return skills_module
 
 
 func get_inventory_module() -> RobinInventoryModule:
