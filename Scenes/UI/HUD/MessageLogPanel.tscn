@@ -92,6 +92,14 @@ text = "Message Log"
 theme_override_colors/font_color = Color(0.86, 0.98, 1, 1)
 theme_override_font_sizes/font_size = 16
 
+[node name="ExportDebugLogButton" type="Button" parent="MarginContainer/Rows/Header"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(48, 28)
+layout_mode = 2
+tooltip_text = "デバッグログをTXTとしてuser://debug_logsへ出力"
+text = "TXT"
+
 [node name="CountLabel" type="Label" parent="MarginContainer/Rows/Header"]
 unique_name_in_owner = true
 layout_mode = 2
