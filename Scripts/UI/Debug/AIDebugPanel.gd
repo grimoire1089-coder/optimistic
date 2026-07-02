@@ -42,7 +42,7 @@ func _ready() -> void:
 	_build_modal_guard()
 	_build_toggle_button()
 	_build_panel()
-	_bring_debug_ui_to_front()
+	call_deferred("_bring_debug_ui_to_front")
 	_refresh_panel()
 	set_process(true)
 
