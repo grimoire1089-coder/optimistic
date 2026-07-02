@@ -3,6 +3,11 @@ class_name MessageLogPanel
 
 const DEFAULT_NOTICE_SFX_PATH := "res://Assets/Audio/SFX/UI/UI_Notice_001.ogg"
 
+## TXT出力先。Godotのユーザーデータフォルダ内に保存する。
+## Windowsなら概ね %APPDATA%/Godot/app_userdata/<project>/debug_logs/ に入る。
+const DEBUG_LOG_EXPORT_DIRECTORY := "user://debug_logs"
+const DEBUG_LOG_EXPORT_PREFIX := "debug_log"
+
 enum LogChannel { NORMAL, DEBUG }
 
 @export_range(1, 300, 1) var max_messages: int = 100
@@ -28,6 +33,7 @@ enum LogChannel { NORMAL, DEBUG }
 
 @onready var title_label: Label = %TitleLabel
 @onready var count_label: Label = %CountLabel
+@onready var export_debug_button: Button = %ExportDebugLogButton
 @onready var tab_bar: TabBar = %LogTabBar
 @onready var empty_label: Label = %EmptyLabel
 @onready var scroll_container: ScrollContainer = %ScrollContainer
@@ -40,16 +46,19 @@ var _queued_debug_messages: Array[Dictionary] = []
 var _current_channel: int = LogChannel.NORMAL
 var _is_processing_normal_queue: bool = false
 var _is_processing_debug_queue: bool = false
+var _last_exported_debug_log_path: String = ""
 
 
 func _ready() -> void:
 	add_to_group(&"message_log")
 	_load_default_notice_sfx_if_needed()
 	_setup_tabs()
+	_connect_export_debug_button()
 	_apply_bottom_stack_layout()
 	_rebuild_visible_messages(false)
 	_update_header()
 	_update_empty_state()
+	_update_export_debug_button()
 
 
 func add_message(message: String) -> void:
@@ -85,6 +94,7 @@ func clear_messages() -> void:
 		_rebuild_visible_messages(false)
 	_update_header()
 	_update_empty_state()
+	_update_export_debug_button()
 
 
 func clear_debug_messages() -> void:
@@ -94,6 +104,7 @@ func clear_debug_messages() -> void:
 		_rebuild_visible_messages(false)
 	_update_header()
 	_update_empty_state()
+	_update_export_debug_button()
 
 
 func clear_all_messages() -> void:
@@ -104,6 +115,7 @@ func clear_all_messages() -> void:
 	_rebuild_visible_messages(false)
 	_update_header()
 	_update_empty_state()
+	_update_export_debug_button()
 
 
 func get_messages() -> PackedStringArray:
@@ -120,6 +132,36 @@ func switch_to_normal_log() -> void:
 
 func switch_to_debug_log() -> void:
 	_set_current_channel(LogChannel.DEBUG)
+
+
+func get_last_exported_debug_log_path() -> String:
+	return _last_exported_debug_log_path
+
+
+func export_debug_log_to_txt() -> String:
+	var file_path: String = _make_debug_log_file_path()
+	var make_dir_error: Error = DirAccess.make_dir_recursive_absolute(DEBUG_LOG_EXPORT_DIRECTORY)
+	if make_dir_error != OK:
+		add_debug_message("デバッグログ出力フォルダを作成できませんでした: %s" % error_string(make_dir_error))
+		return ""
+
+	var file: FileAccess = FileAccess.open(file_path, FileAccess.WRITE)
+	if file == null:
+		var open_error: Error = FileAccess.get_open_error()
+		add_debug_message("デバッグログTXTを作成できませんでした: %s" % error_string(open_error))
+		return ""
+
+	file.store_string(_build_debug_log_export_text())
+	file.close()
+
+	_last_exported_debug_log_path = file_path
+	add_debug_message("デバッグログTXTを出力しました: %s" % ProjectSettings.globalize_path(file_path))
+	_update_export_debug_button()
+	return file_path
+
+
+func _on_export_debug_log_button_pressed() -> void:
+	export_debug_log_to_txt()
 
 
 func _queue_message_to_channel(message: String, channel: int, should_play_sfx: bool) -> void:
@@ -183,6 +225,7 @@ func _add_message_to_channel_immediate(message: String, channel: int, should_pla
 	_trim_old_messages(channel)
 	_update_header()
 	_update_empty_state()
+	_update_export_debug_button()
 
 	if should_play_sfx:
 		_play_notice_sfx()
@@ -204,6 +247,13 @@ func _setup_tabs() -> void:
 		tab_bar.tab_changed.connect(callable)
 
 
+func _connect_export_debug_button() -> void:
+	if export_debug_button == null:
+		return
+	if not export_debug_button.pressed.is_connected(_on_export_debug_log_button_pressed):
+		export_debug_button.pressed.connect(_on_export_debug_log_button_pressed)
+
+
 func _on_log_tab_changed(tab: int) -> void:
 	_set_current_channel(tab)
 
@@ -217,6 +267,7 @@ func _set_current_channel(channel: int) -> void:
 	_rebuild_visible_messages(false)
 	_update_header()
 	_update_empty_state()
+	_update_export_debug_button()
 	if auto_scroll_to_latest:
 		call_deferred("_scroll_to_latest")
 
@@ -356,6 +407,14 @@ func _update_empty_state() -> void:
 		scroll_container.visible = not is_empty
 
 
+func _update_export_debug_button() -> void:
+	if export_debug_button == null:
+		return
+	var is_debug_channel: bool = _current_channel == LogChannel.DEBUG
+	export_debug_button.visible = is_debug_channel
+	export_debug_button.disabled = _debug_messages.is_empty() and _queued_debug_messages.is_empty()
+
+
 func _scroll_to_latest() -> void:
 	await get_tree().process_frame
 	if scroll_container == null:
@@ -406,6 +465,47 @@ func _set_processing_queue(channel: int, processing: bool) -> void:
 		_is_processing_debug_queue = processing
 		return
 	_is_processing_normal_queue = processing
+
+
+func _build_debug_log_export_text() -> String:
+	var lines: PackedStringArray = []
+	lines.append("Optimistic Debug Log")
+	lines.append("exported_at=%s" % _make_timestamp_text())
+	lines.append("message_count=%d" % _debug_messages.size())
+	if not _last_exported_debug_log_path.is_empty():
+		lines.append("previous_export=%s" % ProjectSettings.globalize_path(_last_exported_debug_log_path))
+	lines.append("---")
+	for index in range(_debug_messages.size()):
+		lines.append("%03d: %s" % [index + 1, _debug_messages[index]])
+	return "\n".join(lines) + "\n"
+
+
+func _make_debug_log_file_path() -> String:
+	return "%s/%s_%s.txt" % [DEBUG_LOG_EXPORT_DIRECTORY, DEBUG_LOG_EXPORT_PREFIX, _make_file_timestamp_text()]
+
+
+func _make_file_timestamp_text() -> String:
+	var stamp: Dictionary = Time.get_datetime_dict_from_system()
+	return "%04d%02d%02d_%02d%02d%02d" % [
+		int(stamp.get("year", 0)),
+		int(stamp.get("month", 0)),
+		int(stamp.get("day", 0)),
+		int(stamp.get("hour", 0)),
+		int(stamp.get("minute", 0)),
+		int(stamp.get("second", 0)),
+	]
+
+
+func _make_timestamp_text() -> String:
+	var stamp: Dictionary = Time.get_datetime_dict_from_system()
+	return "%04d-%02d-%02d %02d:%02d:%02d" % [
+		int(stamp.get("year", 0)),
+		int(stamp.get("month", 0)),
+		int(stamp.get("day", 0)),
+		int(stamp.get("hour", 0)),
+		int(stamp.get("minute", 0)),
+		int(stamp.get("second", 0)),
+	]
 
 
 func _to_packed_string_array(messages: Array[String]) -> PackedStringArray:
