@@ -20,6 +20,7 @@ amount = 1
 script = ExtResource("1_recipe_script")
 recipe_id = &"cooking_0001_white_rice"
 category_id = &"cooking"
+craft_game_minutes = 10
 output_item = ExtResource("5_white_rice")
 output_amount = 1
 ingredients = Array[ExtResource("2_ingredient_script")]([SubResource("CraftIngredientData_raw_rice"), SubResource("CraftIngredientData_water_bottle")])
