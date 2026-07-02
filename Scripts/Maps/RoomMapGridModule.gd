@@ -202,9 +202,16 @@ func _draw_neon_frame(visual_rect: Rect2) -> void:
 	var outer_color := Color(0.0, 1.4, 1.4, 0.20)
 	var middle_color := Color(0.0, 2.2, 2.2, 0.48)
 	var core_color := Color(0.85, 4.0, 4.0, 1.0)
-	draw_rect(visual_rect, outer_color, false, frame_outer_glow_width)
-	draw_rect(visual_rect, middle_color, false, frame_middle_glow_width)
+	_draw_outside_rect_stroke(visual_rect, outer_color, frame_outer_glow_width)
+	_draw_outside_rect_stroke(visual_rect, middle_color, frame_middle_glow_width)
 	draw_rect(visual_rect, core_color, false, frame_core_line_width)
+
+
+func _draw_outside_rect_stroke(base_rect: Rect2, color: Color, width: float) -> void:
+	var safe_width := maxf(width, 0.0)
+	if safe_width <= 0.0:
+		return
+	draw_rect(base_rect.grow(safe_width * 0.5), color, false, safe_width)
 
 
 func _sync_map_state(force_emit: bool) -> void:
