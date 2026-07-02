@@ -118,6 +118,16 @@ func advance_minutes(minutes: int) -> void:
 		_advance_one_minute()
 
 
+func _advance_one_minute() -> void:
+	minute_of_day += 1
+	if minute_of_day >= MINUTES_PER_DAY:
+		minute_of_day = 0
+		day += 1
+		day_changed.emit(day)
+
+	emit_time_signals(false)
+
+
 func set_time(new_day: int, new_hour: int, new_minute: int) -> void:
 	day = max(1, new_day)
 	minute_of_day = clamp(new_hour, 0, 23) * 60 + clamp(new_minute, 0, 59)
