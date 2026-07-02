@@ -1,0 +1,10 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/UI/CharacterSkills/CharacterSkillsPanel.gd" id="1_skills_panel"]
+
+[node name="CharacterSkillsPanel" type="PanelContainer"]
+script = ExtResource("1_skills_panel")
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+
+[node name="Rows" type="VBoxContainer" parent="MarginContainer"]
