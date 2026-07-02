@@ -29,6 +29,7 @@ const DEFAULT_CLICK_SFX_PATHS := [
 @onready var wander_module: RobinRandomWanderModule = $RobinRandomWanderModule
 @onready var sleep_behavior_module: AICharacterSleepBehaviorModule = $AICharacterSleepBehaviorModule
 @onready var hydrate_behavior_module: AICharacterHydrateBehaviorModule = $AICharacterHydrateBehaviorModule
+@onready var hygiene_behavior_module: AICharacterHygieneBehaviorModule = $AICharacterHygieneBehaviorModule
 @onready var sit_behavior_module: AICharacterSitBehaviorModule = $AICharacterSitBehaviorModule
 @onready var craft_behavior_module: AICharacterCraftBehaviorModule = $AICharacterCraftBehaviorModule
 @onready var entrance_travel_behavior_module: AICharacterEntranceTravelBehaviorModule = $AICharacterEntranceTravelBehaviorModule
@@ -44,6 +45,7 @@ func _ready() -> void:
 	wander_module.setup(self)
 	sleep_behavior_module.setup(self)
 	hydrate_behavior_module.setup(self)
+	hygiene_behavior_module.setup(self)
 	sit_behavior_module.setup(self)
 	craft_behavior_module.setup(self)	
 	entrance_travel_behavior_module.setup(self)
@@ -107,6 +109,17 @@ func _physics_process(delta: float) -> void:
 			_cancel_sit_behavior()
 			velocity = hydrate_velocity
 			facing_direction = hydrate_behavior_module.get_facing_direction()
+			move_and_slide()
+			if wander_module.clamp_body_to_movement_area():
+				velocity = Vector2.ZERO
+			walk_animator.update_animation(velocity, facing_direction, delta)
+			return
+	if hygiene_behavior_module != null:
+		var hygiene_velocity := hygiene_behavior_module.get_velocity(delta)
+		if hygiene_behavior_module.is_active():
+			_cancel_sit_behavior()
+			velocity = hygiene_velocity
+			facing_direction = hygiene_behavior_module.get_facing_direction()
 			move_and_slide()
 			if wander_module.clamp_body_to_movement_area():
 				velocity = Vector2.ZERO
@@ -195,6 +208,8 @@ func get_current_action_display_text() -> String:
 		return "制作中"
 	if hydrate_behavior_module != null and hydrate_behavior_module.is_active():
 		return "水分補給中"
+	if hygiene_behavior_module != null and hygiene_behavior_module.is_active():
+		return "シャワー中"
 	if sit_behavior_module != null and sit_behavior_module.is_active():
 		if sit_behavior_module.is_using_lapis():
 			return "ラピス操作中"
@@ -211,6 +226,8 @@ func get_current_need_action_id() -> StringName:
 		return &"crafting"
 	if hydrate_behavior_module != null and hydrate_behavior_module.is_active():
 		return &"hydrating"
+	if hygiene_behavior_module != null and hygiene_behavior_module.is_active():
+		return &"maintaining"
 	if sit_behavior_module != null and sit_behavior_module.is_active():
 		return &"sitting"
 	if is_sleeping():
@@ -251,6 +268,8 @@ func _is_busy_for_entrance_travel() -> bool:
 	if sleep_behavior_module != null and sleep_behavior_module.is_active():
 		return true
 	if hydrate_behavior_module != null and hydrate_behavior_module.is_active():
+		return true
+	if hygiene_behavior_module != null and hygiene_behavior_module.is_active():
 		return true
 	return false
 
