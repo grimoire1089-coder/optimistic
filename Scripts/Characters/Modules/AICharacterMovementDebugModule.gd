@@ -126,9 +126,11 @@ func _make_state_message(reason: String, action: StringName) -> String:
 	var target_text: String = _get_target_text(action)
 	var path_size: int = _get_path_size(action)
 	var nearest_furniture_text: String = _get_nearest_furniture_text()
-	return "%s action=%s pos=%s grid=%s vel=%s target=%s path=%d near=%s" % [
+	var active_flags: String = _get_active_behavior_flags()
+	return "%s action=%s active=%s pos=%s grid=%s vel=%s target=%s path=%d near=%s" % [
 		reason,
 		String(action),
+		active_flags,
 		_format_vec2(_body.global_position),
 		_format_vec2i(grid_cell),
 		_format_vec2(_body.velocity),
@@ -139,17 +141,34 @@ func _make_state_message(reason: String, action: StringName) -> String:
 
 
 func _get_action_id() -> StringName:
-	if _body != null and _body.has_method("get_current_need_action_id"):
-		return StringName(str(_body.call("get_current_need_action_id")))
-	if _sleep_behavior != null and _sleep_behavior.has_method("is_active") and _sleep_behavior.call("is_active") == true:
-		return &"sleep"
-	if _hydrate_behavior != null and _hydrate_behavior.has_method("is_active") and _hydrate_behavior.call("is_active") == true:
-		return &"hydrate"
-	if _craft_behavior != null and _craft_behavior.has_method("is_active") and _craft_behavior.call("is_active") == true:
-		return &"craft"
+	# NeedPlannerの次行動ではなく、実際に動いている行動モジュールを優先して見る。
+	# HUD上の表示ズレや、複数モジュールが同時にactiveになった時の切り分けに使う。
 	if _entrance_travel_behavior != null and _entrance_travel_behavior.has_method("is_active") and _entrance_travel_behavior.call("is_active") == true:
 		return &"map_travel"
+	if _craft_behavior != null and _craft_behavior.has_method("is_active") and _craft_behavior.call("is_active") == true:
+		return &"crafting"
+	if _hydrate_behavior != null and _hydrate_behavior.has_method("is_active") and _hydrate_behavior.call("is_active") == true:
+		return &"hydrating"
+	if _sleep_behavior != null and _sleep_behavior.has_method("is_active") and _sleep_behavior.call("is_active") == true:
+		return &"sleeping"
 	return &"idle"
+
+
+func _get_active_behavior_flags() -> String:
+	var flags: PackedStringArray = []
+	flags.append("hydrate=%s" % _is_behavior_active(_hydrate_behavior))
+	flags.append("sleep=%s" % _is_behavior_active(_sleep_behavior))
+	flags.append("craft=%s" % _is_behavior_active(_craft_behavior))
+	flags.append("travel=%s" % _is_behavior_active(_entrance_travel_behavior))
+	return ",".join(flags)
+
+
+func _is_behavior_active(behavior: Node) -> bool:
+	if behavior == null:
+		return false
+	if not behavior.has_method("is_active"):
+		return false
+	return behavior.call("is_active") == true
 
 
 func _get_target_text(action: StringName) -> String:
