@@ -19,14 +19,14 @@ shadow_color = Color(0.08, 0.62, 0.95, 0.24)
 shadow_size = 10
 
 [node name="FurnitureBuildInventory" type="PanelContainer"]
-custom_minimum_size = Vector2(320, 410)
+custom_minimum_size = Vector2(320, 468)
 anchors_preset = 3
 anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = -392.0
-offset_top = -522.0
+offset_top = -580.0
 offset_right = -24.0
 offset_bottom = -112.0
 grow_horizontal = 0
@@ -138,12 +138,17 @@ text = "キッチンモジュール\n4 x 2 / Rで回転"
 [node name="FloorPlaceButton" type="Button" parent="MarginContainer/Rows/ItemList"]
 custom_minimum_size = Vector2(280, 52)
 layout_mode = 2
-text = "床を敷く\nFloor_001 / 15 x 15"
+text = "角丸フロアパネル\nFloor_001 / 15 x 15"
+
+[node name="Floor002PlaceButton" type="Button" parent="MarginContainer/Rows/ItemList"]
+custom_minimum_size = Vector2(280, 52)
+layout_mode = 2
+text = "金属フロアパネル\nFloor_002 / 15 x 15"
 
 [node name="FloorStoreButton" type="Button" parent="MarginContainer/Rows/ItemList"]
 custom_minimum_size = Vector2(280, 52)
 layout_mode = 2
-text = "床をしまう\nFloor_001"
+text = "床をしまう"
 
 [node name="DetailLabel" type="Label" parent="MarginContainer/Rows"]
 layout_mode = 2
