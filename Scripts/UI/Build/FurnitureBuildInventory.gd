@@ -106,7 +106,6 @@ func _connect_buttons() -> void:
 	_connect_category_button(decor_category_button, CATEGORY_DECOR)
 	_connect_category_button(floor_category_button, CATEGORY_FLOOR)
 	if mattress_button != null:
-		matress_dummy_do_not_use()
 		mattress_button.pressed.connect(_on_simple_mattress_pressed)
 	if kitchen_module_button != null:
 		kitchen_module_button.pressed.connect(_on_kitchen_module_pressed)
@@ -120,11 +119,6 @@ func _connect_buttons() -> void:
 		floor_002_place_button.pressed.connect(_on_floor_002_place_pressed)
 	if floor_store_button != null:
 		floor_store_button.pressed.connect(_on_floor_store_pressed)
-
-
-func matress_dummy_do_not_use() -> void:
-	# 旧シーンの接続順確認用。処理はしない。
-	return
 
 
 func _connect_category_button(button: Button, category_id: StringName) -> void:
