@@ -46,10 +46,11 @@ func _draw() -> void:
 
 
 func _draw_outside_rect_stroke(base_rect: Rect2, color: Color, width: float) -> void:
-	var safe_width := maxf(width, 0.0)
-	if safe_width <= 0.0:
+	var source_width := maxf(width, 0.0)
+	if source_width <= 0.0:
 		return
-	draw_rect(base_rect.grow(safe_width * 0.5), color, false, safe_width)
+	var stroke_width := source_width * 0.5
+	draw_rect(base_rect.grow(stroke_width * 0.5), color, false, stroke_width)
 
 
 func _sync_to_viewport() -> void:
