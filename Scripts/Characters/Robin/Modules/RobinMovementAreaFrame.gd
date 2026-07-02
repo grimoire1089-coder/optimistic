@@ -40,9 +40,16 @@ func _draw() -> void:
 	var middle_color := Color(0.0, 2.2, 2.2, 0.48)
 	var core_color := Color(0.85, 4.0, 4.0, 1.0)
 
-	draw_rect(local_area, outer_color, false, outer_glow_width)
-	draw_rect(local_area, middle_color, false, middle_glow_width)
+	_draw_outside_rect_stroke(local_area, outer_color, outer_glow_width)
+	_draw_outside_rect_stroke(local_area, middle_color, middle_glow_width)
 	draw_rect(local_area, core_color, false, core_line_width)
+
+
+func _draw_outside_rect_stroke(base_rect: Rect2, color: Color, width: float) -> void:
+	var safe_width := maxf(width, 0.0)
+	if safe_width <= 0.0:
+		return
+	draw_rect(base_rect.grow(safe_width * 0.5), color, false, safe_width)
 
 
 func _sync_to_viewport() -> void:
