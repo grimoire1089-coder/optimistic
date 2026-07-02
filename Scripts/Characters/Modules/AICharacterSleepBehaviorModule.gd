@@ -29,6 +29,7 @@ const BUILD_LOCK_REASON_META := &"build_lock_reason"
 @export var stuck_position_epsilon: float = 1.0
 @export var stuck_sleep_start_distance: float = 24.0
 @export var stuck_floor_sleep_enabled: bool = true
+@export var snap_to_grid_path_on_stuck: bool = true
 @export var actor_grid_footprint: Vector2i = Vector2i(2, 4)
 
 var _body: CharacterBody2D
@@ -64,6 +65,10 @@ func is_sleeping() -> bool:
 	return _is_sleeping
 
 
+func is_floor_sleeping() -> bool:
+	return _is_floor_sleeping
+
+
 func is_action_progress_visible() -> bool:
 	return _is_active
 
@@ -91,6 +96,7 @@ func get_velocity(delta: float) -> Vector2:
 
 	if _is_sleeping:
 		_is_active = true
+		_reset_stuck_watch()
 		_recover_energy(delta)
 		return Vector2.ZERO
 
@@ -116,10 +122,13 @@ func get_velocity(delta: float) -> Vector2:
 		return Vector2.ZERO
 
 	if _is_stuck_trying_to_reach_bedding(delta):
+		if _try_snap_to_sleep_path_cell(target_cell):
+			_reset_stuck_watch()
+			return Vector2.ZERO
 		if target_distance <= stuck_sleep_start_distance:
 			_start_bedding_sleep()
 		else:
-			_handle_stuck_sleep_attempt()
+			_handle_stuck_sleep_attempt(target_cell)
 		_recover_energy(delta)
 		return Vector2.ZERO
 
@@ -211,7 +220,11 @@ func _stop_sleeping() -> void:
 	_reset_stuck_watch()
 
 
-func _handle_stuck_sleep_attempt() -> void:
+func _handle_stuck_sleep_attempt(target_cell: Vector2i = INVALID_GRID_POSITION) -> void:
+	if _is_valid_grid_position(target_cell):
+		_path_cells.clear()
+		_reset_stuck_watch()
+		return
 	if stuck_floor_sleep_enabled:
 		_start_floor_sleep()
 		return
@@ -243,6 +256,31 @@ func _is_stuck_trying_to_reach_bedding(delta: float) -> bool:
 func _reset_stuck_watch() -> void:
 	_last_walk_position = Vector2(INF, INF)
 	_stuck_timer = 0.0
+
+
+func _try_snap_to_sleep_path_cell(target_cell: Vector2i) -> bool:
+	if not snap_to_grid_path_on_stuck:
+		return false
+	if _body == null or _room_map == null:
+		return false
+	if not _is_valid_grid_position(target_cell):
+		return false
+
+	if _path_cells.is_empty() or _path_cells[_path_cells.size() - 1] != target_cell:
+		var start_cell := _get_current_or_nearest_walkable_top_left_cell(false)
+		_path_cells = _find_grid_path(start_cell, target_cell)
+
+	if _path_cells.is_empty():
+		return false
+
+	var next_cell := _path_cells[0]
+	if not _is_sleep_target_cell_walkable(next_cell, _get_actor_grid_footprint()):
+		_path_cells.clear()
+		return false
+
+	_body.global_position = _room_map.grid_to_world_area_center(next_cell, _get_actor_grid_footprint())
+	_path_cells.remove_at(0)
+	return true
 
 
 func _set_sleeping_bedding(bedding: Node2D) -> void:
