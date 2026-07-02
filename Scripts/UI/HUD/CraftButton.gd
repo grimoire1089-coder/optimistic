@@ -3,19 +3,11 @@ class_name CraftButton
 
 const DEFAULT_CLICK_SFX_PATH := "res://Assets/Audio/SFX/UI/UI_Click_001.ogg"
 const DEFAULT_LABEL_CODES := [0x5236, 0x4f5c]
-const HUD_BUTTON_SIZE := Vector2(56.0, 56.0)
-const HUD_BUTTON_GAP := 16.0
-const FIRST_ROW_BUTTON_SIZE := HUD_BUTTON_SIZE
-const FIRST_ROW_TOP := 176.0
-const FIRST_ROW_ROBIN_LEFT := -368.0
-const FIRST_ROW_SHOP_LEFT := -296.0
-const FIRST_ROW_INVENTORY_LEFT := -224.0
-const FIRST_ROW_BUILD_LEFT := -152.0
-const FIRST_ROW_WORK_LEFT := -80.0
-const SECOND_ROW_TOP_RIGHT_OFFSET := Vector2(FIRST_ROW_ROBIN_LEFT, 248.0)
-const SECOND_ROW_BUTTON_SIZE := HUD_BUTTON_SIZE
-const SECOND_ROW_MENU_TOP_RIGHT_OFFSET := Vector2(FIRST_ROW_ROBIN_LEFT, 320.0)
-const SECOND_ROW_MENU_SIZE := Vector2(344.0, 260.0)
+const FIRST_ROW_BUTTON_SIZE := Vector2(48.0, 48.0)
+const SECOND_ROW_TOP_RIGHT_OFFSET := Vector2(-280.0, 236.0)
+const SECOND_ROW_BUTTON_SIZE := Vector2(48.0, 48.0)
+const SECOND_ROW_MENU_TOP_RIGHT_OFFSET := Vector2(-328.0, 304.0)
+const SECOND_ROW_MENU_SIZE := Vector2(304.0, 260.0)
 
 @export var label_text: String = ""
 @export var craft_menu_path: NodePath = NodePath("../CraftMenu")
@@ -84,26 +76,26 @@ func _load_default_click_sfx_if_needed() -> void:
 
 
 func _apply_square_button_layout() -> void:
-	custom_minimum_size = HUD_BUTTON_SIZE
+	custom_minimum_size = Vector2(56.0, 56.0)
 	anchor_left = 1.0
 	anchor_top = 0.0
 	anchor_right = 1.0
 	anchor_bottom = 0.0
-	offset_left = SECOND_ROW_TOP_RIGHT_OFFSET.x
-	offset_top = SECOND_ROW_TOP_RIGHT_OFFSET.y
-	offset_right = SECOND_ROW_TOP_RIGHT_OFFSET.x + SECOND_ROW_BUTTON_SIZE.x
-	offset_bottom = SECOND_ROW_TOP_RIGHT_OFFSET.y + SECOND_ROW_BUTTON_SIZE.y
+	offset_left = -280.0
+	offset_top = 236.0
+	offset_right = -224.0
+	offset_bottom = 292.0
 	mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	add_theme_font_size_override("font_size", 11)
 	_add_rounded_button_styles()
 
 
 func _apply_hud_button_layout_after_parent() -> void:
-	_place_canvas_sibling("RobinHudButton", Vector2(FIRST_ROW_ROBIN_LEFT, FIRST_ROW_TOP), FIRST_ROW_BUTTON_SIZE)
-	_place_canvas_sibling("ShopButton", Vector2(FIRST_ROW_SHOP_LEFT, FIRST_ROW_TOP), FIRST_ROW_BUTTON_SIZE)
-	_place_canvas_sibling("InventoryButton", Vector2(FIRST_ROW_INVENTORY_LEFT, FIRST_ROW_TOP), FIRST_ROW_BUTTON_SIZE)
-	_place_canvas_sibling("BuildModeButton", Vector2(FIRST_ROW_BUILD_LEFT, FIRST_ROW_TOP), FIRST_ROW_BUTTON_SIZE)
-	_place_canvas_sibling("WorkCreditButton", Vector2(FIRST_ROW_WORK_LEFT, FIRST_ROW_TOP), FIRST_ROW_BUTTON_SIZE)
+	_place_canvas_sibling("RobinHudButton", Vector2(-280.0, 184.0), FIRST_ROW_BUTTON_SIZE)
+	_place_canvas_sibling("ShopButton", Vector2(-228.0, 184.0), FIRST_ROW_BUTTON_SIZE)
+	_place_canvas_sibling("InventoryButton", Vector2(-176.0, 184.0), FIRST_ROW_BUTTON_SIZE)
+	_place_canvas_sibling("BuildModeButton", Vector2(-124.0, 184.0), FIRST_ROW_BUTTON_SIZE)
+	_place_canvas_sibling("WorkCreditButton", Vector2(-72.0, 184.0), FIRST_ROW_BUTTON_SIZE)
 	_place_top_right_control(self, SECOND_ROW_TOP_RIGHT_OFFSET, SECOND_ROW_BUTTON_SIZE)
 	var craft_menu := _find_craft_menu() as Control
 	if craft_menu == null:
