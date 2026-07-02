@@ -26,8 +26,8 @@ func _ready() -> void:
 		set_process(false)
 		return
 
+	z_index = 900
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	anchors_preset = Control.PRESET_FULL_RECT
 	anchor_left = 0.0
 	anchor_top = 0.0
 	anchor_right = 1.0
