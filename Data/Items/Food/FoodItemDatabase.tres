@@ -1,10 +1,15 @@
-[gd_resource type="Resource" script_class="FoodItemDatabase" load_steps=5 format=3]
+[gd_resource type="Resource" script_class="FoodItemDatabase" load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://Scripts/Items/Food/FoodItemDatabase.gd" id="1_food_database"]
 [ext_resource type="Script" path="res://Scripts/Items/Food/FoodItemData.gd" id="2_food_data_script"]
 [ext_resource type="Resource" path="res://Data/Items/Food/Food_0001_Nikuman.tres" id="3_food_0001"]
 [ext_resource type="Resource" path="res://Data/Items/Food/Food_0008_WaterBottle.tres" id="4_food_0008"]
+[ext_resource type="Resource" path="res://Data/Items/Ingredients/Ingredients_0001_RawRice.tres" id="5_ingredient_0001"]
+[ext_resource type="Resource" path="res://Data/Items/Ingredients/Ingredients_0002_WheatFlour.tres" id="6_ingredient_0002"]
+[ext_resource type="Resource" path="res://Data/Items/Ingredients/Ingredients_0003_WhiteSugar.tres" id="7_ingredient_0003"]
+[ext_resource type="Resource" path="res://Data/Items/Ingredients/Ingredients_0004_Salt.tres" id="8_ingredient_0004"]
+[ext_resource type="Resource" path="res://Data/Items/Ingredients/Ingredients_0005_PinkRockSalt.tres" id="9_ingredient_0005"]
 
 [resource]
 script = ExtResource("1_food_database")
-foods = Array[ExtResource("2_food_data_script")]([ExtResource("3_food_0001"), ExtResource("4_food_0008")])
+foods = Array[ExtResource("2_food_data_script")]([ExtResource("3_food_0001"), ExtResource("4_food_0008"), ExtResource("5_ingredient_0001"), ExtResource("6_ingredient_0002"), ExtResource("7_ingredient_0003"), ExtResource("8_ingredient_0004"), ExtResource("9_ingredient_0005")])
