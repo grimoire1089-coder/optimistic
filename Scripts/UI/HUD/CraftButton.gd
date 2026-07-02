@@ -11,8 +11,10 @@ const FIRST_ROW_SHOP_LEFT := -224.0
 const FIRST_ROW_INVENTORY_LEFT := -152.0
 const FIRST_ROW_BUILD_LEFT := -80.0
 const SECOND_ROW_WORK_LEFT := -296.0
+const SECOND_ROW_CRAFT_LEFT := -224.0
+const SECOND_ROW_SETTINGS_LEFT := -152.0
 const SECOND_ROW_TOP := 256.0
-const SECOND_ROW_TOP_RIGHT_OFFSET := Vector2(-224.0, SECOND_ROW_TOP)
+const SECOND_ROW_TOP_RIGHT_OFFSET := Vector2(SECOND_ROW_CRAFT_LEFT, SECOND_ROW_TOP)
 const SECOND_ROW_BUTTON_SIZE := HUD_BUTTON_SIZE
 const SECOND_ROW_MENU_TOP_RIGHT_OFFSET := Vector2(-344.0, 328.0)
 const SECOND_ROW_MENU_SIZE := Vector2(320.0, 260.0)
@@ -103,7 +105,8 @@ func _apply_hud_button_layout_after_parent() -> void:
 	_place_canvas_sibling("ShopButton", Vector2(FIRST_ROW_SHOP_LEFT, FIRST_ROW_TOP), FIRST_ROW_BUTTON_SIZE)
 	_place_canvas_sibling("InventoryButton", Vector2(FIRST_ROW_INVENTORY_LEFT, FIRST_ROW_TOP), FIRST_ROW_BUTTON_SIZE)
 	_place_canvas_sibling("BuildModeButton", Vector2(FIRST_ROW_BUILD_LEFT, FIRST_ROW_TOP), FIRST_ROW_BUTTON_SIZE)
-	_place_canvas_sibling("WorkCreditButton", Vector2(SECOND_ROW_WORK_LEFT, SECOND_ROW_TOP), FIRST_ROW_BUTTON_SIZE)
+	_place_canvas_sibling("WorkCreditButton", Vector2(SECOND_ROW_WORK_LEFT, SECOND_ROW_TOP), SECOND_ROW_BUTTON_SIZE)
+	_place_canvas_sibling("SettingsButton", Vector2(SECOND_ROW_SETTINGS_LEFT, SECOND_ROW_TOP), SECOND_ROW_BUTTON_SIZE)
 	_place_top_right_control(self, SECOND_ROW_TOP_RIGHT_OFFSET, SECOND_ROW_BUTTON_SIZE)
 	var craft_menu := _find_craft_menu() as Control
 	if craft_menu == null:
