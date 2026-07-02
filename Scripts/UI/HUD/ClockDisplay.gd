@@ -1,6 +1,7 @@
 extends Control
 
 @export var clock_path: NodePath
+@export var weather_path: NodePath
 @export var panel_bg_color: Color = Color(0.01, 0.025, 0.04, 0.88)
 @export var panel_border_color: Color = Color(0.33, 0.85, 1.0, 0.95)
 @export var panel_glow_color: Color = Color(0.12, 0.65, 1.0, 0.38)
@@ -15,16 +16,21 @@ extends Control
 @onready var phase_label: Label = %PhaseLabel
 
 var _clock: GameClockSystem
+var _weather: GameWeatherSystem
 
 
 func _ready() -> void:
 	_apply_neon_style()
 	_setup_bgm_mute_button()
 	_clock = _find_clock()
+	_weather = _find_weather()
+
+	if _weather != null:
+		_connect_weather_signals()
 
 	if _clock == null:
 		time_label.text = "--:--"
-		phase_label.text = "時刻なし"
+		phase_label.text = "%s / 時刻なし" % _get_weather_display_text()
 		push_warning("ClockDisplay: GameClockSystem が見つかりません。")
 		return
 
@@ -137,15 +143,52 @@ func _find_clock() -> GameClockSystem:
 	return null
 
 
+func _find_weather() -> GameWeatherSystem:
+	if weather_path != NodePath():
+		var node := get_node_or_null(weather_path)
+		if node is GameWeatherSystem:
+			return node
+
+	var autoload_weather := get_node_or_null("/root/WeatherSystem")
+	if autoload_weather is GameWeatherSystem:
+		return autoload_weather
+
+	var group_nodes := get_tree().get_nodes_in_group("weather_system")
+	if group_nodes.size() > 0 and group_nodes[0] is GameWeatherSystem:
+		return group_nodes[0]
+
+	return null
+
+
+func _connect_weather_signals() -> void:
+	if _weather == null:
+		return
+	if not _weather.weather_changed.is_connected(_on_weather_changed):
+		_weather.weather_changed.connect(_on_weather_changed)
+	if not _weather.daily_weather_updated.is_connected(_on_daily_weather_updated):
+		_weather.daily_weather_updated.connect(_on_daily_weather_updated)
+
+
 func _refresh() -> void:
 	if _clock == null:
 		return
 
 	time_label.text = _clock.get_day_text()
-	phase_label.text = "%s  %s" % [
+	phase_label.text = "%s / %s  %s" % [
+		_get_weather_display_text(),
 		_clock.get_phase_display_name(),
 		_clock.get_time_text(),
 	]
+
+
+func _get_weather_display_text() -> String:
+	if _weather == null:
+		_weather = _find_weather()
+		if _weather != null:
+			_connect_weather_signals()
+	if _weather == null:
+		return "天候なし"
+	return _weather.get_weather_display_name()
 
 
 func _refresh_bgm_mute_button() -> void:
@@ -179,4 +222,12 @@ func _on_phase_changed(_phase_id: String) -> void:
 
 
 func _on_season_changed(_season_id: String, _season_day: int, _season_year: int) -> void:
+	_refresh()
+
+
+func _on_weather_changed(_weather_id: StringName, _display_name: String) -> void:
+	_refresh()
+
+
+func _on_daily_weather_updated(_day: int, _weather_id: StringName, _display_name: String) -> void:
 	_refresh()
