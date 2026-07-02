@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="CraftRecipeData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Craft/CraftRecipeData.gd" id="1_recipe_script"]
+[ext_resource type="Resource" path="res://Data/Items/Food/Food_0008_WaterBottle.tres" id="2_water_bottle"]
+
+[resource]
+script = ExtResource("1_recipe_script")
+recipe_id = &"drink_0001_water_bottle"
+category_id = &"drinks"
+output_item = ExtResource("2_water_bottle")
+output_amount = 1
+ingredients = Array[CraftIngredientData]([])
+required_furniture_ids = PackedStringArray("kitchen_module")
