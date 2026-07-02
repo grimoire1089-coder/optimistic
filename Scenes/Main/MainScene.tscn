@@ -33,7 +33,7 @@ script = ExtResource("3_canvas_glow")
 
 [node name="RobinRoomBgmListModule" type="Node" parent="." unique_id=638603961]
 script = ExtResource("16_robin_room_bgm")
-bgm_paths = PackedStringArray("res://Assets/Audio/BGM/Room BGM 001.ogg", "res://Assets/Audio/BGM/Room BGM 002.ogg", "res://Assets/Audio/BGM/Room BGM 003.ogg", "res://Assets/Audio/BGM/Room BGM 004.ogg")
+bgm_paths = PackedStringArray("res://Assets/Audio/BGM/Room BGM 001.ogg", "res://Assets/Audio/BGM/Room BGM 002.ogg", "res://Assets/Audio/BGM/Room BGM 003.ogg", "res://Assets/Audio/BGM/Room BGM 004.ogg", "res://Assets/Audio/BGM/Room BGM 005.ogg")
 
 [node name="RobinRoomMap" type="Node2D" parent="." unique_id=723162854]
 z_index = -30
@@ -56,8 +56,8 @@ click_sfx = ExtResource("4_ctt6t")
 [node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=295553793]
 
 [node name="LeftBackgroundPanel" type="TextureRect" parent="CanvasLayer" unique_id=104457291]
-z_index = -100
 modulate = Color(1, 1, 1, 0.72)
+z_index = -100
 offset_left = 32.0
 offset_top = 16.0
 offset_right = 352.0
@@ -65,16 +65,15 @@ offset_bottom = 688.0
 mouse_filter = 2
 texture = ExtResource("18_left_panel_bg")
 expand_mode = 1
-stretch_mode = 0
 
 [node name="DebugLabel" type="Label" parent="CanvasLayer" unique_id=210733485]
 offset_left = 52.0
 offset_top = 32.0
 offset_right = 340.0
 offset_bottom = 60.0
-text = "ロビンの部屋 / Grid 15 x 15"
 theme_override_colors/font_color = Color(0.88, 0.98, 1, 1)
 theme_override_font_sizes/font_size = 15
+text = "ロビンの部屋 / Grid 15 x 15"
 
 [node name="MessageLogPanel" parent="CanvasLayer" unique_id=2086590989 instance=ExtResource("17_message_log")]
 
