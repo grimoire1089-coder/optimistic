@@ -7,6 +7,7 @@
 script = ExtResource("1_recipe_script")
 recipe_id = &"drink_0001_water_bottle"
 category_id = &"drinks"
+craft_game_minutes = 1
 output_item = ExtResource("2_water_bottle")
 output_amount = 1
 ingredients = Array[CraftIngredientData]([])
