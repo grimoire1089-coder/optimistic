@@ -301,7 +301,7 @@ func _format_vec2(value: Vector2) -> String:
 
 
 func _format_vec2i(value: Vector2i) -> String:
-	return "(%d, %d" % [value.x, value.y]
+	return "(%d, %d)" % [value.x, value.y]
 
 
 func _resolve_refs() -> void:
