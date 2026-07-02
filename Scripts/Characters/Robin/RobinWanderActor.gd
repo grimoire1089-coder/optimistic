@@ -29,6 +29,7 @@ const DEFAULT_CLICK_SFX_PATHS := [
 @onready var wander_module: RobinRandomWanderModule = $RobinRandomWanderModule
 @onready var sleep_behavior_module: AICharacterSleepBehaviorModule = $AICharacterSleepBehaviorModule
 @onready var hydrate_behavior_module: AICharacterHydrateBehaviorModule = $AICharacterHydrateBehaviorModule
+@onready var sit_behavior_module: AICharacterSitBehaviorModule = $AICharacterSitBehaviorModule
 @onready var craft_behavior_module: AICharacterCraftBehaviorModule = $AICharacterCraftBehaviorModule
 @onready var entrance_travel_behavior_module: AICharacterEntranceTravelBehaviorModule = $AICharacterEntranceTravelBehaviorModule
 @onready var action_progress_bar_module: AICharacterActionProgressBarModule = $AICharacterActionProgressBarModule
@@ -43,6 +44,7 @@ func _ready() -> void:
 	wander_module.setup(self)
 	sleep_behavior_module.setup(self)
 	hydrate_behavior_module.setup(self)
+	sit_behavior_module.setup(self)
 	craft_behavior_module.setup(self)	
 	entrance_travel_behavior_module.setup(self)
 	_connect_entrance_travel_signal()
@@ -66,6 +68,7 @@ func _physics_process(delta: float) -> void:
 	if entrance_travel_behavior_module != null:
 		var entrance_travel_velocity := entrance_travel_behavior_module.get_velocity(delta)
 		if entrance_travel_behavior_module.is_active():
+			_cancel_sit_behavior()
 			velocity = entrance_travel_velocity
 			facing_direction = entrance_travel_behavior_module.get_facing_direction()
 			move_and_slide()
@@ -76,6 +79,7 @@ func _physics_process(delta: float) -> void:
 	if craft_behavior_module != null:
 		var craft_velocity := craft_behavior_module.get_velocity(delta)
 		if craft_behavior_module.is_active():
+			_cancel_sit_behavior()
 			velocity = craft_velocity
 			facing_direction = craft_behavior_module.get_facing_direction()
 			move_and_slide()
@@ -86,6 +90,7 @@ func _physics_process(delta: float) -> void:
 	if sleep_behavior_module != null:
 		var sleep_velocity := sleep_behavior_module.get_velocity(delta)
 		if sleep_behavior_module.is_active():
+			_cancel_sit_behavior()
 			velocity = sleep_velocity
 			facing_direction = sleep_behavior_module.get_facing_direction()
 			if _should_skip_sleep_move_and_slide():
@@ -99,10 +104,21 @@ func _physics_process(delta: float) -> void:
 	if hydrate_behavior_module != null:
 		var hydrate_velocity := hydrate_behavior_module.get_velocity(delta)
 		if hydrate_behavior_module.is_active():
+			_cancel_sit_behavior()
 			velocity = hydrate_velocity
 			facing_direction = hydrate_behavior_module.get_facing_direction()
 			move_and_slide()
 			if wander_module.clamp_body_to_movement_area():
+				velocity = Vector2.ZERO
+			walk_animator.update_animation(velocity, facing_direction, delta)
+			return
+	if sit_behavior_module != null:
+		var sit_velocity := sit_behavior_module.get_velocity(delta)
+		if sit_behavior_module.is_active():
+			velocity = sit_velocity
+			facing_direction = sit_behavior_module.get_facing_direction()
+			move_and_slide()
+			if not sit_behavior_module.is_sitting() and wander_module.clamp_body_to_movement_area():
 				velocity = Vector2.ZERO
 			walk_animator.update_animation(velocity, facing_direction, delta)
 			return
@@ -179,6 +195,8 @@ func get_current_action_display_text() -> String:
 		return "制作中"
 	if hydrate_behavior_module != null and hydrate_behavior_module.is_active():
 		return "水分補給中"
+	if sit_behavior_module != null and sit_behavior_module.is_active():
+		return "着席中"
 	if is_sleeping():
 		return "睡眠中"
 	return String(get_current_need_action_id())
@@ -191,6 +209,8 @@ func get_current_need_action_id() -> StringName:
 		return &"crafting"
 	if hydrate_behavior_module != null and hydrate_behavior_module.is_active():
 		return &"hydrating"
+	if sit_behavior_module != null and sit_behavior_module.is_active():
+		return &"sitting"
 	if is_sleeping():
 		return &"sleeping"
 	if need_planner == null:
@@ -211,6 +231,14 @@ func _should_skip_sleep_move_and_slide() -> bool:
 		return false
 	var direct_movement_value: Variant = sleep_behavior_module.get("use_direct_grid_path_movement")
 	return bool(direct_movement_value)
+
+
+func _cancel_sit_behavior() -> void:
+	if sit_behavior_module == null:
+		return
+	if not sit_behavior_module.is_active():
+		return
+	sit_behavior_module.cancel_sitting()
 
 
 func _is_busy_for_entrance_travel() -> bool:

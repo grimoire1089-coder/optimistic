@@ -49,6 +49,9 @@ var _drink_food_data: FoodItemData
 var _action_progress_ratio := 0.0
 var _move_start_distance := 0.0
 var _last_target_kitchen: Node2D
+var _target_cell: Vector2i = INVALID_GRID_POSITION
+var _target_kitchen_grid_position: Vector2i = INVALID_GRID_POSITION
+var _target_kitchen_grid_footprint: Vector2i = Vector2i.ZERO
 var _path_cells: Array[Vector2i] = []
 
 
@@ -83,6 +86,36 @@ func get_facing_direction() -> Vector2:
 	return _facing_direction
 
 
+func get_debug_path_cells() -> Array[Vector2i]:
+	var result: Array[Vector2i] = []
+	for cell in _path_cells:
+		result.append(cell)
+	return result
+
+
+func get_debug_target_cell() -> Vector2i:
+	return _target_cell
+
+
+func get_debug_next_cell() -> Vector2i:
+	if _path_cells.is_empty():
+		return INVALID_GRID_POSITION
+	return _path_cells[0]
+
+
+func get_debug_actor_footprint() -> Vector2i:
+	return _get_actor_grid_footprint()
+
+
+func get_debug_movement_summary() -> String:
+	return "target_cell=%s next_cell=%s path=%d footprint=%s" % [
+		str(get_debug_target_cell()),
+		str(get_debug_next_cell()),
+		_path_cells.size(),
+		str(get_debug_actor_footprint()),
+	]
+
+
 func get_velocity(delta: float) -> Vector2:
 	_resolve_refs()
 	_tick_cooldown(delta)
@@ -110,12 +143,11 @@ func get_velocity(delta: float) -> Vector2:
 		_is_active = true
 		return Vector2.ZERO
 
-	_target_kitchen = _find_nearest_kitchen_module()
-	if _target_kitchen == null:
+	if not _ensure_hydrate_target():
 		_reset_hydrate_action()
 		return Vector2.ZERO
 
-	var target_cell := _get_kitchen_use_cell(_target_kitchen)
+	var target_cell: Vector2i = _target_cell
 	if not _is_valid_grid_position(target_cell):
 		if _is_close_enough_to_refill(_target_kitchen):
 			_begin_created_water_bottle_drink()
@@ -124,7 +156,7 @@ func get_velocity(delta: float) -> Vector2:
 		return Vector2.ZERO
 
 	_is_active = true
-	var target_position := _get_kitchen_use_position(_target_kitchen)
+	var target_position := _get_kitchen_use_position_from_cell(_target_kitchen, target_cell)
 	var to_target := target_position - _body.global_position
 	var target_distance := to_target.length()
 	_sync_movement_progress_target(target_distance)
@@ -164,6 +196,7 @@ func _begin_existing_water_bottle_drink() -> bool:
 		return false
 	if not _has_water_bottle(food_data):
 		return false
+	_clear_hydrate_target()
 	_begin_drinking(food_data, 0.0)
 	return true
 
@@ -276,21 +309,17 @@ func _apply_water_bottle_need_effect(food_data: FoodItemData) -> void:
 
 
 func _finish_hydrate_action() -> void:
-	_target_kitchen = null
-	_last_target_kitchen = null
+	_clear_hydrate_target()
 	_move_start_distance = 0.0
 	_cooldown_timer = maxf(refill_cooldown_seconds, 0.0)
 	_action_progress_ratio = 0.0
 	_is_active = false
-	_path_cells.clear()
 
 
 func _reset_hydrate_action() -> void:
-	_target_kitchen = null
-	_last_target_kitchen = null
+	_clear_hydrate_target()
 	_move_start_distance = 0.0
 	_action_progress_ratio = 0.0
-	_path_cells.clear()
 
 
 func _sync_movement_progress_target(target_distance: float) -> void:
@@ -318,6 +347,66 @@ func _get_water_bottle_item() -> FoodItemData:
 	if resource != null and resource is FoodItemData:
 		_water_bottle_item = resource as FoodItemData
 	return _water_bottle_item
+
+
+func _ensure_hydrate_target() -> bool:
+	if _has_valid_hydrate_target():
+		return true
+
+	_set_hydrate_target(_find_nearest_kitchen_module())
+	return _target_kitchen != null
+
+
+func _has_valid_hydrate_target() -> bool:
+	if _target_kitchen == null:
+		return false
+	if not is_instance_valid(_target_kitchen):
+		return false
+	if _furniture_root != null and _target_kitchen.get_parent() != _furniture_root:
+		return false
+	if not _is_kitchen_module(_target_kitchen):
+		return false
+	if _has_target_kitchen_layout_changed(_target_kitchen):
+		return false
+	if _is_valid_grid_position(_target_cell):
+		return _is_target_cell_walkable(_target_cell, _get_actor_grid_footprint())
+	return _is_close_enough_to_refill(_target_kitchen)
+
+
+func _set_hydrate_target(kitchen: Node2D) -> void:
+	var previous_kitchen: Node2D = null
+	if _target_kitchen != null and is_instance_valid(_target_kitchen):
+		previous_kitchen = _target_kitchen
+	var previous_cell := _target_cell
+	if kitchen == null:
+		_clear_hydrate_target()
+		return
+
+	_target_kitchen = kitchen
+	_target_kitchen_grid_position = _get_furniture_grid_position(_target_kitchen)
+	_target_kitchen_grid_footprint = _get_furniture_footprint(_target_kitchen)
+	_target_cell = _get_kitchen_use_cell(_target_kitchen)
+
+	if previous_kitchen != _target_kitchen or previous_cell != _target_cell:
+		_last_target_kitchen = null
+		_move_start_distance = 0.0
+		_path_cells.clear()
+
+
+func _clear_hydrate_target() -> void:
+	_target_kitchen = null
+	_last_target_kitchen = null
+	_target_cell = INVALID_GRID_POSITION
+	_target_kitchen_grid_position = INVALID_GRID_POSITION
+	_target_kitchen_grid_footprint = Vector2i.ZERO
+	_path_cells.clear()
+
+
+func _has_target_kitchen_layout_changed(kitchen: Node2D) -> bool:
+	return (
+		_get_furniture_grid_position(kitchen) != _target_kitchen_grid_position
+		or _get_furniture_footprint(kitchen) != _target_kitchen_grid_footprint
+	)
 
 
 func _find_nearest_kitchen_module() -> Node2D:
@@ -366,7 +455,11 @@ func _is_kitchen_module(furniture: Node2D) -> bool:
 
 
 func _get_kitchen_use_position(kitchen: Node2D) -> Vector2:
-	var use_cell := _get_kitchen_use_cell(kitchen)
+	var use_cell := _target_cell if kitchen == _target_kitchen else _get_kitchen_use_cell(kitchen)
+	return _get_kitchen_use_position_from_cell(kitchen, use_cell)
+
+
+func _get_kitchen_use_position_from_cell(kitchen: Node2D, use_cell: Vector2i) -> Vector2:
 	if _is_valid_grid_position(use_cell) and _room_map != null:
 		return _room_map.grid_to_world_area_center(use_cell, _get_actor_grid_footprint())
 	if kitchen != null:
@@ -393,6 +486,18 @@ func _get_nearest_point_on_furniture_area(furniture: Node2D, world_position: Vec
 				clampf(world_position.y, furniture_rect.position.y, furniture_rect.end.y)
 			)
 	return furniture.global_position
+
+
+func _get_furniture_grid_position(furniture: Node2D) -> Vector2i:
+	if furniture == null:
+		return INVALID_GRID_POSITION
+	if not furniture.has_meta("grid_position"):
+		return INVALID_GRID_POSITION
+	var grid_position: Variant = furniture.get_meta("grid_position", INVALID_GRID_POSITION)
+	if grid_position is Vector2i:
+		var typed_grid_position: Vector2i = grid_position
+		return typed_grid_position
+	return INVALID_GRID_POSITION
 
 
 func _get_kitchen_use_cell(kitchen: Node2D) -> Vector2i:

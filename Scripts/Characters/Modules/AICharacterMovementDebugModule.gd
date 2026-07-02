@@ -9,6 +9,7 @@ const INVALID_DEBUG_GRID_POSITION := Vector2i(-999999, -999999)
 @export var furniture_root_path: NodePath = NodePath("../../RobinRoomMap/FurnitureRoot")
 @export var hydrate_behavior_path: NodePath = NodePath("../AICharacterHydrateBehaviorModule")
 @export var sleep_behavior_path: NodePath = NodePath("../AICharacterSleepBehaviorModule")
+@export var sit_behavior_path: NodePath = NodePath("../AICharacterSitBehaviorModule")
 @export var craft_behavior_path: NodePath = NodePath("../AICharacterCraftBehaviorModule")
 @export var entrance_travel_behavior_path: NodePath = NodePath("../AICharacterEntranceTravelBehaviorModule")
 @export var normal_log_interval_seconds: float = 3.0
@@ -26,6 +27,7 @@ var _room_map: RoomMapGridModule
 var _furniture_root: Node
 var _hydrate_behavior: Node
 var _sleep_behavior: Node
+var _sit_behavior: Node
 var _craft_behavior: Node
 var _entrance_travel_behavior: Node
 
@@ -72,10 +74,11 @@ func _physics_process(delta: float) -> void:
 
 func _should_watch_movement_for_action(action: StringName) -> bool:
 	if action != &"sleeping":
+		if action == &"sitting" and _sit_behavior != null:
+			if _sit_behavior.has_method("is_sitting") and _sit_behavior.call("is_sitting") == true:
+				return false
 		return true
-	if _sleep_behavior == null:
-		return true
-	if _sleep_behavior.has_method("is_sleeping") and _sleep_behavior.call("is_sleeping") == true:
+	if _sleep_behavior != null and _sleep_behavior.has_method("is_sleeping") and _sleep_behavior.call("is_sleeping") == true:
 		return false
 	return true
 
@@ -246,6 +249,8 @@ func _get_action_id() -> StringName:
 		return &"crafting"
 	if _hydrate_behavior != null and _hydrate_behavior.has_method("is_active") and _hydrate_behavior.call("is_active") == true:
 		return &"hydrating"
+	if _sit_behavior != null and _sit_behavior.has_method("is_active") and _sit_behavior.call("is_active") == true:
+		return &"sitting"
 	if _sleep_behavior != null and _sleep_behavior.has_method("is_active") and _sleep_behavior.call("is_active") == true:
 		return &"sleeping"
 	return &"idle"
@@ -254,6 +259,7 @@ func _get_action_id() -> StringName:
 func _get_active_behavior_flags() -> String:
 	var flags: PackedStringArray = []
 	flags.append("hydrate=%s" % _is_behavior_active(_hydrate_behavior))
+	flags.append("sit=%s" % _is_behavior_active(_sit_behavior))
 	flags.append("sleep=%s" % _is_behavior_active(_sleep_behavior))
 	flags.append("craft=%s" % _is_behavior_active(_craft_behavior))
 	flags.append("travel=%s" % _is_behavior_active(_entrance_travel_behavior))
@@ -276,6 +282,8 @@ func _get_target_text(action: StringName) -> String:
 	var target: Object = null
 	if String(action) == "hydrating" or String(action) == "hydrate":
 		target = behavior.get("_target_kitchen")
+	elif String(action) == "sitting" or String(action) == "sit":
+		target = behavior.get("_target_stool")
 	elif String(action) == "sleeping" or String(action) == "sleep":
 		target = behavior.get("_target_bedding")
 	elif String(action) == "crafting" or String(action) == "craft":
@@ -302,6 +310,8 @@ func _get_behavior_for_action(action: StringName) -> Node:
 	var action_text: String = String(action)
 	if action_text == "hydrating" or action_text == "hydrate":
 		return _hydrate_behavior
+	if action_text == "sitting" or action_text == "sit":
+		return _sit_behavior
 	if action_text == "sleeping" or action_text == "sleep":
 		return _sleep_behavior
 	if action_text == "crafting" or action_text == "craft":
@@ -397,6 +407,8 @@ func _resolve_refs() -> void:
 		_hydrate_behavior = get_node_or_null(hydrate_behavior_path)
 	if _sleep_behavior == null and not sleep_behavior_path.is_empty():
 		_sleep_behavior = get_node_or_null(sleep_behavior_path)
+	if _sit_behavior == null and not sit_behavior_path.is_empty():
+		_sit_behavior = get_node_or_null(sit_behavior_path)
 	if _craft_behavior == null and not craft_behavior_path.is_empty():
 		_craft_behavior = get_node_or_null(craft_behavior_path)
 	if _entrance_travel_behavior == null and not entrance_travel_behavior_path.is_empty():

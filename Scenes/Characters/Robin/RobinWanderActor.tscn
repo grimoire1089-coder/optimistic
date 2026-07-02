@@ -1,4 +1,4 @@
-[gd_scene load_steps=19 format=3 uid="uid://cb0fyv6e2f40m"]
+[gd_scene load_steps=20 format=3 uid="uid://cb0fyv6e2f40m"]
 
 [ext_resource type="Script" path="res://Scripts/Characters/Robin/RobinWanderActor.gd" id="1_actor"]
 [ext_resource type="Texture2D" path="res://Assets/Characters/Robin/Walk/robin_8dir_standing.png" id="2_standing_texture"]
@@ -9,6 +9,7 @@
 [ext_resource type="Script" path="res://Scripts/Characters/Robin/Modules/RobinInventoryModule.gd" id="7_inventory_module"]
 [ext_resource type="Script" path="res://Scripts/Characters/Modules/AICharacterSleepBehaviorModule.gd" id="8_sleep_behavior"]
 [ext_resource type="Script" path="res://Scripts/Characters/Modules/AICharacterHydrateBehaviorModule.gd" id="9_hydrate_behavior"]
+[ext_resource type="Script" path="res://Scripts/Characters/Modules/AICharacterSitBehaviorModule.gd" id="10_sit_behavior"]
 [ext_resource type="Script" path="res://Scripts/Characters/Modules/AICharacterActionProgressBarModule.gd" id="10_action_progress_bar"]
 [ext_resource type="Script" path="res://Scripts/Characters/Modules/AICharacterActionItemDisplayModule.gd" id="11_action_item_display"]
 [ext_resource type="Script" path="res://Scripts/Characters/Modules/AICharacterEntranceTravelBehaviorModule.gd" id="12_entrance_travel"]
@@ -92,6 +93,17 @@ drink_duration_seconds = 3.0
 drink_sfx_path = "res://Assets/Audio/SFX/Game/drink.ogg"
 drink_sfx_delay_seconds = 0.75
 
+[node name="AICharacterSitBehaviorModule" type="Node" parent="." groups=["ai_movement_behavior"]]
+script = ExtResource("10_sit_behavior")
+need_planner_path = NodePath("../AICharacterNeedsBundle/NeedDrivenAIPlanner")
+furniture_root_path = NodePath("../../RobinRoomMap/FurnitureRoot")
+furniture_placement_module_path = NodePath("../../FurniturePlacementModule")
+room_map_path = NodePath("../../RobinRoomMap")
+walk_speed = 80.0
+sit_duration_range = Vector2(45, 120)
+retry_cooldown_range = Vector2(20, 45)
+actor_grid_footprint = Vector2i(2, 4)
+
 [node name="AICharacterCraftBehaviorModule" type="Node" parent="." groups=["ai_movement_behavior"]]
 script = ExtResource("13_craft_behavior")
 inventory_module_path = NodePath("../RobinInventoryModule")
@@ -124,6 +136,7 @@ script = ExtResource("16_movement_debug")
 normal_log_interval_seconds = 4.0
 stuck_log_seconds = 1.0
 nearby_furniture_radius = 120.0
+sit_behavior_path = NodePath("../AICharacterSitBehaviorModule")
 
 [node name="AICharacterActionProgressBarModule" type="Node" parent="."]
 script = ExtResource("10_action_progress_bar")
