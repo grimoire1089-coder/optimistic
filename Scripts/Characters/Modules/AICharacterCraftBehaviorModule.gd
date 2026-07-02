@@ -39,6 +39,7 @@ var _craft_duration_seconds := 1.0
 var _last_distance := INF
 var _stuck_timer := 0.0
 var _facing_direction := Vector2.DOWN
+var _path_cells: Array[Vector2i] = []
 
 
 func setup(body: CharacterBody2D) -> void:
@@ -62,6 +63,7 @@ func request_craft(recipe: CraftRecipeData, quantity: int) -> bool:
 	_craft_timer = 0.0
 	_stuck_timer = 0.0
 	_last_distance = INF
+	_path_cells.clear()
 	if not _consume_ingredients():
 		_reset_action()
 		return false
@@ -139,7 +141,10 @@ func _update_moving(delta: float) -> Vector2:
 		_body.global_position = target_position
 		_begin_crafting()
 		return Vector2.ZERO
-	_facing_direction = to_target.normalized()
+	var path_velocity := _get_grid_path_velocity_to_target(_target_cell)
+	if path_velocity != Vector2.ZERO:
+		return path_velocity
+	_facing_direction = AICharacterGridMovementHelper.get_axis_aligned_direction(to_target)
 	return _facing_direction * walk_speed
 
 
@@ -147,13 +152,14 @@ func _begin_crafting() -> void:
 	_is_active = true
 	_is_moving = false
 	_is_crafting = true
+	_path_cells.clear()
 	_craft_timer = 0.0
 	_action_progress_ratio = MOVE_PROGRESS_PORTION
 	_craft_duration_seconds = _get_craft_duration_seconds()
 	if _target_furniture != null:
 		var to_furniture := _target_furniture.global_position - _body.global_position
 		if to_furniture.length() > 0.1:
-			_facing_direction = to_furniture.normalized()
+			_facing_direction = AICharacterGridMovementHelper.get_axis_aligned_direction(to_furniture)
 
 
 func _update_crafting(delta: float) -> void:
@@ -259,10 +265,17 @@ func _get_furniture_use_cell(furniture: Node2D) -> Vector2i:
 	var furniture_footprint := _get_furniture_footprint(furniture)
 	var actor_footprint := _get_actor_grid_footprint()
 	var candidates := _get_side_candidate_cells(furniture_cell, furniture_footprint, actor_footprint)
+	var nearest := _get_nearest_furniture_use_candidate(candidates, actor_footprint, false)
+	if nearest != INVALID_GRID_POSITION:
+		return nearest
+	return _get_nearest_furniture_use_candidate(candidates, actor_footprint, true)
+
+
+func _get_nearest_furniture_use_candidate(candidates: Array[Vector2i], actor_footprint: Vector2i, allow_occupied: bool) -> Vector2i:
 	var nearest := INVALID_GRID_POSITION
 	var nearest_distance := INF
 	for candidate in candidates:
-		if not _is_target_cell_walkable(candidate, actor_footprint):
+		if not _is_target_cell_walkable(candidate, actor_footprint, allow_occupied):
 			continue
 		var position := _room_map.grid_to_world_area_center(candidate, actor_footprint)
 		var distance := _body.global_position.distance_squared_to(position)
@@ -273,14 +286,104 @@ func _get_furniture_use_cell(furniture: Node2D) -> Vector2i:
 
 
 func _get_side_candidate_cells(furniture_cell: Vector2i, furniture_footprint: Vector2i, actor_footprint: Vector2i) -> Array[Vector2i]:
-	var candidates: Array[Vector2i] = []
-	for y in range(furniture_cell.y - actor_footprint.y + 1, furniture_cell.y + furniture_footprint.y):
-		candidates.append(Vector2i(furniture_cell.x - actor_footprint.x, y))
-		candidates.append(Vector2i(furniture_cell.x + furniture_footprint.x, y))
-	for x in range(furniture_cell.x - actor_footprint.x + 1, furniture_cell.x + furniture_footprint.x):
-		candidates.append(Vector2i(x, furniture_cell.y - actor_footprint.y))
-		candidates.append(Vector2i(x, furniture_cell.y + furniture_footprint.y))
-	return candidates
+	return AICharacterGridMovementHelper.get_side_candidate_cells(furniture_cell, furniture_footprint, actor_footprint)
+
+
+func _get_grid_path_velocity_to_target(target_cell: Vector2i) -> Vector2:
+	if _body == null or _room_map == null:
+		return Vector2.ZERO
+	if not _is_valid_grid_position(target_cell):
+		return Vector2.ZERO
+
+	var start_cell := _get_current_or_nearest_walkable_top_left_cell(true)
+	if not _is_valid_grid_position(start_cell):
+		return Vector2.ZERO
+
+	if start_cell == target_cell:
+		_path_cells.clear()
+		var target_position := _room_map.grid_to_world_area_center(target_cell, _get_actor_grid_footprint())
+		var to_target := target_position - _body.global_position
+		if to_target.length() > use_distance:
+			_facing_direction = AICharacterGridMovementHelper.get_axis_aligned_direction(to_target)
+			return _facing_direction * walk_speed
+		return Vector2.ZERO
+
+	if _path_cells.is_empty() or _path_cells[_path_cells.size() - 1] != target_cell:
+		_path_cells = _find_grid_path(start_cell, target_cell)
+		if _path_cells.is_empty():
+			return Vector2.ZERO
+
+	while not _path_cells.is_empty():
+		var waypoint_cell := _path_cells[0]
+		if not _is_target_cell_inside(waypoint_cell, _get_actor_grid_footprint()):
+			_path_cells.clear()
+			return Vector2.ZERO
+
+		var waypoint_position := _room_map.grid_to_world_area_center(waypoint_cell, _get_actor_grid_footprint())
+		var to_waypoint := waypoint_position - _body.global_position
+		if to_waypoint.length() > use_distance:
+			_facing_direction = AICharacterGridMovementHelper.get_axis_aligned_direction(to_waypoint)
+			return _facing_direction * walk_speed
+
+		_body.global_position = waypoint_position
+		_path_cells.remove_at(0)
+
+	return Vector2.ZERO
+
+
+func _find_grid_path(start_cell: Vector2i, target_cell: Vector2i) -> Array[Vector2i]:
+	return AICharacterGridMovementHelper.find_grid_path_with_fallback(
+		start_cell,
+		target_cell,
+		_get_actor_grid_footprint(),
+		Callable(self, "_is_target_cell_walkable"),
+		Callable(self, "_is_target_cell_inside"),
+		INVALID_GRID_POSITION
+	)
+
+
+func _get_current_or_nearest_walkable_top_left_cell(allow_snap: bool) -> Vector2i:
+	var current_cell := _get_current_actor_top_left_grid_position()
+	if _is_target_cell_walkable(current_cell, _get_actor_grid_footprint()):
+		return current_cell
+
+	var nearest_cell := _get_nearest_walkable_top_left_to_world_position(_body.global_position)
+	if allow_snap and _is_valid_grid_position(nearest_cell):
+		_body.global_position = _room_map.grid_to_world_area_center(nearest_cell, _get_actor_grid_footprint())
+		_path_cells.clear()
+	return nearest_cell
+
+
+func _get_current_actor_top_left_grid_position() -> Vector2i:
+	if _room_map == null or _body == null:
+		return INVALID_GRID_POSITION
+	return AICharacterGridMovementHelper.get_current_actor_top_left_grid_position(
+		_room_map,
+		_body.global_position,
+		_get_actor_grid_footprint(),
+		INVALID_GRID_POSITION
+	)
+
+
+func _get_nearest_walkable_top_left_to_world_position(world_position: Vector2) -> Vector2i:
+	if _room_map == null:
+		return INVALID_GRID_POSITION
+	var nearest_cell := AICharacterGridMovementHelper.get_nearest_walkable_top_left_to_world_position(
+		_room_map,
+		world_position,
+		_get_actor_grid_footprint(),
+		Callable(self, "_is_target_cell_walkable"),
+		INVALID_GRID_POSITION
+	)
+	if _is_valid_grid_position(nearest_cell):
+		return nearest_cell
+	return AICharacterGridMovementHelper.get_nearest_walkable_top_left_to_world_position(
+		_room_map,
+		world_position,
+		_get_actor_grid_footprint(),
+		Callable(self, "_is_target_cell_inside"),
+		INVALID_GRID_POSITION
+	)
 
 
 func _get_target_position() -> Vector2:
@@ -291,12 +394,20 @@ func _get_target_position() -> Vector2:
 	return _body.global_position
 
 
-func _is_target_cell_walkable(cell: Vector2i, footprint: Vector2i) -> bool:
-	if _room_map == null or not _room_map.is_grid_area_inside(cell, footprint):
+func _is_target_cell_walkable(cell: Vector2i, footprint: Vector2i, allow_occupied: bool = false) -> bool:
+	if not _is_target_cell_inside(cell, footprint):
 		return false
+	if allow_occupied:
+		return true
 	if _furniture_placement != null and _furniture_placement.has_method("can_place_at"):
 		return _furniture_placement.call("can_place_at", cell, footprint) == true
 	return true
+
+
+func _is_target_cell_inside(cell: Vector2i, footprint: Vector2i) -> bool:
+	if _room_map == null:
+		return false
+	return _room_map.is_grid_area_inside(cell, footprint)
 
 
 func _get_furniture_footprint(furniture: Node2D) -> Vector2i:
@@ -306,7 +417,11 @@ func _get_furniture_footprint(furniture: Node2D) -> Vector2i:
 
 
 func _get_actor_grid_footprint() -> Vector2i:
-	return Vector2i(maxi(actor_grid_footprint.x, 1), maxi(actor_grid_footprint.y, 1))
+	return AICharacterGridMovementHelper.get_safe_footprint(actor_grid_footprint)
+
+
+func _is_valid_grid_position(grid_position: Vector2i) -> bool:
+	return AICharacterGridMovementHelper.is_valid_grid_position(grid_position, INVALID_GRID_POSITION)
 
 
 func _update_stuck(distance: float, delta: float) -> void:
@@ -346,6 +461,7 @@ func _reset_action() -> void:
 	_craft_timer = 0.0
 	_stuck_timer = 0.0
 	_last_distance = INF
+	_path_cells.clear()
 
 
 func _get_furniture_id(node: Node) -> StringName:

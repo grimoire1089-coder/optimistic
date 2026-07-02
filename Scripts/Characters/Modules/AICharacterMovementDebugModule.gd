@@ -75,6 +75,15 @@ func _physics_process(delta: float) -> void:
 
 
 func _should_watch_movement_for_action(action: StringName) -> bool:
+	if action == &"hydrating" and _hydrate_behavior != null:
+		if _hydrate_behavior.has_method("is_drinking") and _hydrate_behavior.call("is_drinking") == true:
+			return false
+	if action == &"maintaining" and _hygiene_behavior != null:
+		if _hygiene_behavior.has_method("is_showering") and _hygiene_behavior.call("is_showering") == true:
+			return false
+	if action == &"crafting" and _craft_behavior != null:
+		if _has_property(_craft_behavior, &"_is_crafting") and _craft_behavior.get("_is_crafting") == true:
+			return false
 	if action != &"sleeping":
 		if action == &"sitting" and _sit_behavior != null:
 			if _sit_behavior.has_method("is_using_lapis") and _sit_behavior.call("is_using_lapis") == true:

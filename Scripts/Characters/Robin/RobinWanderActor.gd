@@ -220,7 +220,12 @@ func get_current_action_display_text() -> String:
 		return "着席中"
 	if is_sleeping():
 		return "睡眠中"
-	return String(get_current_need_action_id())
+	if wander_module != null and wander_module.is_moving():
+		return "移動中"
+	var action_id := get_current_need_action_id()
+	if action_id == CharacterNeedActionIds.IDLE:
+		return "暇を持て余している"
+	return String(action_id)
 
 
 func get_current_need_action_id() -> StringName:
@@ -250,10 +255,10 @@ func get_current_lowest_need_id() -> StringName:
 func debug_reset_actions_and_snap_to_grid() -> bool:
 	var reset_any := debug_reset_all_actions()
 	velocity = Vector2.ZERO
-	var snapped := snap_to_nearest_walkable_grid()
+	var did_snap := snap_to_nearest_walkable_grid()
 	if wander_module != null:
 		wander_module.clamp_body_to_movement_area()
-	return reset_any or snapped
+	return reset_any or did_snap
 
 
 func debug_reset_all_actions() -> bool:
@@ -458,34 +463,21 @@ func _debug_set_property_if_exists(object: Object, property_name: StringName, va
 func _get_nearest_walkable_top_left_cell(world_position: Vector2, footprint: Vector2i) -> Vector2i:
 	var room_map := _get_room_map()
 	if room_map == null:
-		return Vector2i(-999999, -999999)
-	var grid_size := room_map.get_grid_size()
-	var safe_footprint := Vector2i(maxi(footprint.x, 1), maxi(footprint.y, 1))
-	var max_x := grid_size.x - safe_footprint.x
-	var max_y := grid_size.y - safe_footprint.y
-	if max_x < 0 or max_y < 0:
-		return Vector2i(-999999, -999999)
-
-	var nearest_cell := Vector2i(-999999, -999999)
-	var nearest_distance := INF
-	for y in range(max_y + 1):
-		for x in range(max_x + 1):
-			var cell := Vector2i(x, y)
-			if not _is_debug_grid_area_walkable(cell, safe_footprint):
-				continue
-			var center := room_map.grid_to_world_area_center(cell, safe_footprint)
-			var distance := world_position.distance_squared_to(center)
-			if distance < nearest_distance:
-				nearest_distance = distance
-				nearest_cell = cell
-	return nearest_cell
+		return AICharacterGridMovementHelper.INVALID_GRID_POSITION
+	return AICharacterGridMovementHelper.get_nearest_walkable_top_left_to_world_position(
+		room_map,
+		world_position,
+		footprint,
+		Callable(self, "_is_debug_grid_area_walkable"),
+		AICharacterGridMovementHelper.INVALID_GRID_POSITION
+	)
 
 
 func _is_debug_grid_area_walkable(top_left_cell: Vector2i, footprint: Vector2i) -> bool:
 	var room_map := _get_room_map()
 	if room_map == null:
 		return false
-	var safe_footprint := Vector2i(maxi(footprint.x, 1), maxi(footprint.y, 1))
+	var safe_footprint := AICharacterGridMovementHelper.get_safe_footprint(footprint)
 	if not room_map.is_grid_area_inside(top_left_cell, safe_footprint):
 		return false
 	var furniture_placement := _get_furniture_placement_module()
@@ -497,14 +489,17 @@ func _is_debug_grid_area_walkable(top_left_cell: Vector2i, footprint: Vector2i) 
 func _get_actor_top_left_grid_position(footprint: Vector2i) -> Vector2i:
 	var room_map := _get_room_map()
 	if room_map == null:
-		return Vector2i(-999999, -999999)
-	var safe_footprint := Vector2i(maxi(footprint.x, 1), maxi(footprint.y, 1))
-	var center_cell := room_map.world_to_grid(global_position)
-	return center_cell - Vector2i(floori(float(safe_footprint.x) * 0.5), floori(float(safe_footprint.y) * 0.5))
+		return AICharacterGridMovementHelper.INVALID_GRID_POSITION
+	return AICharacterGridMovementHelper.get_current_actor_top_left_grid_position(
+		room_map,
+		global_position,
+		footprint,
+		AICharacterGridMovementHelper.INVALID_GRID_POSITION
+	)
 
 
 func _get_debug_actor_grid_footprint() -> Vector2i:
-	return Vector2i(maxi(debug_actor_grid_footprint.x, 1), maxi(debug_actor_grid_footprint.y, 1))
+	return AICharacterGridMovementHelper.get_safe_footprint(debug_actor_grid_footprint)
 
 
 func _get_room_map() -> RoomMapGridModule:
@@ -516,7 +511,10 @@ func _get_furniture_placement_module() -> Node:
 
 
 func _is_valid_debug_grid_position(grid_position: Vector2i) -> bool:
-	return grid_position != Vector2i(-999999, -999999)
+	return AICharacterGridMovementHelper.is_valid_grid_position(
+		grid_position,
+		AICharacterGridMovementHelper.INVALID_GRID_POSITION
+	)
 
 
 func _has_property(object: Object, property_name: StringName) -> bool:

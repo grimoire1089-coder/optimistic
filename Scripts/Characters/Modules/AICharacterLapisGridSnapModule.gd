@@ -50,8 +50,8 @@ func _snap_actor_to_grid(reason: String) -> void:
 		return
 	if not _actor.has_method("snap_to_nearest_walkable_grid"):
 		return
-	var snapped := bool(_actor.call("snap_to_nearest_walkable_grid"))
-	if debug_log_enabled and snapped:
+	var did_snap := bool(_actor.call("snap_to_nearest_walkable_grid"))
+	if debug_log_enabled and did_snap:
 		_push_debug("[AI Lapis] grid snap %s" % reason)
 
 

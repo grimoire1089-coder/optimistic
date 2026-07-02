@@ -43,8 +43,8 @@
   - 右下のDBGトグルとも状態同期。
 - Godotエラー修正:
   - _ready() 中に move_to_front() を呼ぶと
-    Parent node is busy setting up children, move_child() failed
-    が出ていた。
+	Parent node is busy setting up children, move_child() failed
+	が出ていた。
   - _ready() では call_deferred("_bring_debug_ui_to_front") に変更。
 
 確認済み:

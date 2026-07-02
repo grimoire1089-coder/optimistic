@@ -94,6 +94,18 @@ func get_facing_direction() -> Vector2:
 	return _direction
 
 
+func is_idle() -> bool:
+	return _is_idle
+
+
+func is_moving() -> bool:
+	if _is_idle:
+		return false
+	if _uses_grid_path_movement():
+		return _grid_step_active or not _path_cells.is_empty()
+	return _timer > 0.0
+
+
 func get_movement_center() -> Vector2:
 	if _body == null:
 		return Vector2.ZERO
@@ -186,13 +198,9 @@ func _setup_walk_directions() -> void:
 
 	_walk_directions = [
 		Vector2.DOWN,
-		Vector2(1.0, 1.0).normalized(),
 		Vector2.RIGHT,
-		Vector2(1.0, -1.0).normalized(),
 		Vector2.UP,
-		Vector2(-1.0, -1.0).normalized(),
 		Vector2.LEFT,
-		Vector2(-1.0, 1.0).normalized(),
 	]
 
 
@@ -235,7 +243,9 @@ func _update_grid_step_movement(delta: float) -> void:
 			_body.global_position = _grid_step_target_position
 			_grid_step_active = false
 			if not _path_cells.is_empty():
-				_path_cells.remove_at(0)
+				var waypoint_position := _get_actor_grid_area_center(_path_cells[0])
+				if _body.global_position.distance_squared_to(waypoint_position) <= 0.001:
+					_path_cells.remove_at(0)
 			if _path_cells.is_empty():
 				_start_idle()
 			return
@@ -245,7 +255,7 @@ func _update_grid_step_movement(delta: float) -> void:
 			return
 
 		var waypoint_cell := _path_cells[0]
-		if not _is_actor_grid_area_walkable(waypoint_cell):
+		if not _is_actor_grid_area_inside(waypoint_cell):
 			_pick_next_action()
 			return
 
@@ -256,11 +266,13 @@ func _update_grid_step_movement(delta: float) -> void:
 			_path_cells.remove_at(0)
 			continue
 
-		_direction = to_waypoint.normalized()
+		var step_target := AICharacterGridMovementHelper.get_axis_aligned_step_target(_body.global_position, waypoint_position)
+		var to_step_target := step_target - _body.global_position
+		_direction = AICharacterGridMovementHelper.get_axis_aligned_direction(to_step_target)
 		_grid_step_start_position = _body.global_position
-		_grid_step_target_position = waypoint_position
+		_grid_step_target_position = step_target
 		_grid_step_elapsed = 0.0
-		_grid_step_duration = maxf(to_waypoint.length() / maxf(walk_speed, 1.0), 0.01)
+		_grid_step_duration = maxf(to_step_target.length() / maxf(walk_speed, 1.0), 0.01)
 		_grid_step_active = true
 		continue
 
@@ -268,14 +280,14 @@ func _update_grid_step_movement(delta: float) -> void:
 func _get_grid_path_velocity() -> Vector2:
 	while not _path_cells.is_empty():
 		var waypoint_cell := _path_cells[0]
-		if not _is_actor_grid_area_walkable(waypoint_cell):
+		if not _is_actor_grid_area_inside(waypoint_cell):
 			_pick_next_action()
 			return Vector2.ZERO
 
 		var waypoint_position := _get_actor_grid_area_center(waypoint_cell)
 		var to_waypoint := waypoint_position - _body.global_position
 		if to_waypoint.length() > grid_arrival_distance:
-			_direction = to_waypoint.normalized()
+			_direction = AICharacterGridMovementHelper.get_axis_aligned_direction(to_waypoint)
 			return _direction * walk_speed
 
 		_body.global_position = waypoint_position
@@ -302,49 +314,20 @@ func _pick_next_grid_path() -> bool:
 
 
 func _find_grid_path(start_cell: Vector2i, target_cell: Vector2i) -> Array[Vector2i]:
-	var path: Array[Vector2i] = []
-	if start_cell == target_cell:
-		return path
-	if not _is_actor_grid_area_walkable(start_cell) or not _is_actor_grid_area_walkable(target_cell):
-		return path
-
-	var frontier: Array[Vector2i] = [start_cell]
-	var came_from: Dictionary = {}
-	came_from[_grid_key(start_cell)] = INVALID_GRID_POSITION
-	var read_index := 0
-	var steps: Array[Vector2i] = [Vector2i.RIGHT, Vector2i.DOWN, Vector2i.LEFT, Vector2i.UP]
-
-	while read_index < frontier.size():
-		var current := frontier[read_index]
-		read_index += 1
-
-		if current == target_cell:
-			break
-
-		for step in steps:
-			var next_cell := current + step
-			var next_key := _grid_key(next_cell)
-			if came_from.has(next_key):
-				continue
-			if not _is_actor_grid_area_walkable(next_cell):
-				continue
-			came_from[next_key] = current
-			frontier.append(next_cell)
-
-	var target_key := _grid_key(target_cell)
-	if not came_from.has(target_key):
-		return path
-
-	var trace_cell := target_cell
-	while trace_cell != start_cell:
-		path.insert(0, trace_cell)
-		trace_cell = came_from[_grid_key(trace_cell)] as Vector2i
-
-	return path
+	return AICharacterGridMovementHelper.find_grid_path_with_fallback(
+		start_cell,
+		target_cell,
+		_get_safe_actor_grid_footprint(),
+		Callable(self, "_is_actor_grid_area_walkable"),
+		Callable(self, "_is_actor_grid_area_inside"),
+		INVALID_GRID_POSITION
+	)
 
 
 func _pick_random_walkable_top_left_excluding(excluded_cell: Vector2i) -> Vector2i:
 	var candidates := _get_all_walkable_top_left_cells()
+	if candidates.is_empty():
+		candidates = _get_all_fallback_top_left_cells()
 	if candidates.is_empty():
 		return INVALID_GRID_POSITION
 	if candidates.size() == 1:
@@ -368,7 +351,6 @@ func _get_all_walkable_top_left_cells() -> Array[Vector2i]:
 	if room_map == null:
 		return cells
 
-	var grid_size := room_map.get_grid_size()
 	var footprint := _get_safe_actor_grid_footprint()
 	var furniture_placement := _get_furniture_placement_module()
 	var layout_version := _get_walkable_layout_version(furniture_placement)
@@ -377,16 +359,11 @@ func _get_all_walkable_top_left_cells() -> Array[Vector2i]:
 			if _walkable_cells_cache_footprint == footprint and _walkable_cells_cache_version == layout_version:
 				return _walkable_cells_cache
 
-	var max_x := grid_size.x - footprint.x
-	var max_y := grid_size.y - footprint.y
-	if max_x < 0 or max_y < 0:
-		return cells
-
-	for y in range(max_y + 1):
-		for x in range(max_x + 1):
-			var cell := Vector2i(x, y)
-			if _is_actor_grid_area_walkable(cell):
-				cells.append(cell)
+	cells = AICharacterGridMovementHelper.get_all_walkable_top_left_cells(
+		room_map,
+		footprint,
+		Callable(self, "_is_actor_grid_area_walkable")
+	)
 	_walkable_cells_cache = cells
 	_walkable_cells_cache_room_map = room_map
 	_walkable_cells_cache_placement = furniture_placement
@@ -395,25 +372,44 @@ func _get_all_walkable_top_left_cells() -> Array[Vector2i]:
 	return cells
 
 
+func _get_all_fallback_top_left_cells() -> Array[Vector2i]:
+	var room_map := _get_room_map()
+	if room_map == null:
+		var empty: Array[Vector2i] = []
+		return empty
+	return AICharacterGridMovementHelper.get_all_walkable_top_left_cells(
+		room_map,
+		_get_safe_actor_grid_footprint(),
+		Callable(self, "_is_actor_grid_area_inside")
+	)
+
+
 func _get_nearest_walkable_top_left_to_world_position(world_position: Vector2) -> Vector2i:
-	var nearest_cell := INVALID_GRID_POSITION
-	var nearest_distance := INF
-	for cell in _get_all_walkable_top_left_cells():
-		var center := _get_actor_grid_area_center(cell)
-		var distance := world_position.distance_squared_to(center)
-		if distance < nearest_distance:
-			nearest_distance = distance
-			nearest_cell = cell
-	return nearest_cell
+	var room_map := _get_room_map()
+	if room_map == null:
+		return INVALID_GRID_POSITION
+	var cells := _get_all_walkable_top_left_cells()
+	if cells.is_empty():
+		cells = _get_all_fallback_top_left_cells()
+	return AICharacterGridMovementHelper.get_nearest_top_left_cell_from_cells(
+		room_map,
+		world_position,
+		_get_safe_actor_grid_footprint(),
+		cells,
+		INVALID_GRID_POSITION
+	)
 
 
 func _get_current_actor_top_left_grid_position() -> Vector2i:
 	var room_map := _get_room_map()
 	if room_map == null or _body == null:
 		return INVALID_GRID_POSITION
-	var footprint := _get_safe_actor_grid_footprint()
-	var center_cell := room_map.world_to_grid(_body.global_position)
-	return center_cell - Vector2i(floori(float(footprint.x) * 0.5), floori(float(footprint.y) * 0.5))
+	return AICharacterGridMovementHelper.get_current_actor_top_left_grid_position(
+		room_map,
+		_body.global_position,
+		_get_safe_actor_grid_footprint(),
+		INVALID_GRID_POSITION
+	)
 
 
 func _get_actor_grid_area_center(top_left_cell: Vector2i) -> Vector2:
@@ -423,14 +419,11 @@ func _get_actor_grid_area_center(top_left_cell: Vector2i) -> Vector2:
 	return room_map.grid_to_world_area_center(top_left_cell, _get_safe_actor_grid_footprint())
 
 
-func _is_actor_grid_area_walkable(top_left_cell: Vector2i) -> bool:
-	if not _is_valid_grid_position(top_left_cell):
-		return false
-	var room_map := _get_room_map()
-	if room_map == null:
-		return false
+func _is_actor_grid_area_walkable(top_left_cell: Vector2i, footprint_override: Vector2i = Vector2i.ZERO) -> bool:
 	var footprint := _get_safe_actor_grid_footprint()
-	if not room_map.is_grid_area_inside(top_left_cell, footprint):
+	if footprint_override.x > 0 and footprint_override.y > 0:
+		footprint = AICharacterGridMovementHelper.get_safe_footprint(footprint_override)
+	if not _is_actor_grid_area_inside(top_left_cell, footprint):
 		return false
 
 	var furniture_placement := _get_furniture_placement_module()
@@ -438,6 +431,18 @@ func _is_actor_grid_area_walkable(top_left_cell: Vector2i) -> bool:
 		return furniture_placement.call("can_place_at", top_left_cell, footprint) == true
 
 	return true
+
+
+func _is_actor_grid_area_inside(top_left_cell: Vector2i, footprint_override: Vector2i = Vector2i.ZERO) -> bool:
+	if not _is_valid_grid_position(top_left_cell):
+		return false
+	var room_map := _get_room_map()
+	if room_map == null:
+		return false
+	var footprint := _get_safe_actor_grid_footprint()
+	if footprint_override.x > 0 and footprint_override.y > 0:
+		footprint = AICharacterGridMovementHelper.get_safe_footprint(footprint_override)
+	return room_map.is_grid_area_inside(top_left_cell, footprint)
 
 
 func _clamp_body_to_grid_footprint_area() -> bool:
@@ -480,7 +485,7 @@ func _keep_inside_movement_area() -> void:
 		target_direction.y = -1.0
 
 	if target_direction != Vector2.ZERO:
-		_direction = target_direction.normalized()
+		_direction = AICharacterGridMovementHelper.get_axis_aligned_direction(target_direction)
 		_is_idle = false
 		_timer = max(_timer, 0.35)
 
@@ -498,7 +503,7 @@ func _uses_grid_path_movement() -> bool:
 
 
 func _get_safe_actor_grid_footprint() -> Vector2i:
-	return Vector2i(maxi(actor_grid_footprint.x, 1), maxi(actor_grid_footprint.y, 1))
+	return AICharacterGridMovementHelper.get_safe_footprint(actor_grid_footprint)
 
 
 func _get_room_map() -> RoomMapGridModule:
@@ -526,11 +531,11 @@ func _invalidate_walkable_cells_cache() -> void:
 
 
 func _grid_key(grid_position: Vector2i) -> String:
-	return "%d,%d" % [grid_position.x, grid_position.y]
+	return AICharacterGridMovementHelper.grid_key(grid_position)
 
 
 func _is_valid_grid_position(grid_position: Vector2i) -> bool:
-	return grid_position != INVALID_GRID_POSITION
+	return AICharacterGridMovementHelper.is_valid_grid_position(grid_position, INVALID_GRID_POSITION)
 
 
 func _get_provider_visual_map_rect() -> Rect2:

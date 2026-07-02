@@ -195,7 +195,7 @@ func get_velocity(delta: float) -> Vector2:
 		return path_velocity
 
 	if target_distance > arrival_distance:
-		_facing_direction = to_target.normalized()
+		_facing_direction = AICharacterGridMovementHelper.get_axis_aligned_direction(to_target)
 		return _facing_direction * walk_speed
 
 	_start_bedding_sleep()
@@ -297,7 +297,11 @@ func _has_valid_bedding_target() -> bool:
 	if _get_bedding_footprint(_target_bedding) != _target_bedding_grid_footprint:
 		return false
 	if _is_valid_grid_position(_path_target_cell):
-		return _is_sleep_target_cell_walkable(_path_target_cell, _get_actor_grid_footprint())
+		if _is_sleep_target_cell_walkable(_path_target_cell, _get_actor_grid_footprint()):
+			return true
+		if not _is_sleep_target_cell_inside(_path_target_cell, _get_actor_grid_footprint()):
+			return false
+		return _get_bedding_side_sleep_cell(_target_bedding) == _path_target_cell
 	return true
 
 
@@ -409,7 +413,7 @@ func _move_along_grid_path_to_target(target_cell: Vector2i, delta: float) -> boo
 			return false
 
 	var waypoint_cell: Vector2i = _path_cells[0]
-	if not _is_sleep_target_cell_walkable(waypoint_cell, _get_actor_grid_footprint()):
+	if not _is_sleep_target_cell_inside(waypoint_cell, _get_actor_grid_footprint()):
 		_path_cells.clear()
 		return false
 
@@ -427,13 +431,14 @@ func _move_body_towards_position(target_position: Vector2, delta: float) -> bool
 	var distance: float = to_target.length()
 	if distance <= grid_arrival_distance:
 		_body.global_position = target_position
-		_facing_direction = Vector2.DOWN if distance <= 0.001 else to_target.normalized()
+		_facing_direction = Vector2.DOWN if distance <= 0.001 else AICharacterGridMovementHelper.get_axis_aligned_direction(to_target)
 		return true
 
-	_facing_direction = to_target.normalized()
-	var move_distance: float = minf(walk_speed * maxf(delta, 0.0), distance)
+	_facing_direction = AICharacterGridMovementHelper.get_axis_aligned_direction(to_target)
+	var axis_distance: float = absf(to_target.x) if not is_zero_approx(_facing_direction.x) else absf(to_target.y)
+	var move_distance: float = minf(walk_speed * maxf(delta, 0.0), axis_distance)
 	_body.global_position += _facing_direction * move_distance
-	return move_distance >= distance
+	return _body.global_position.distance_to(target_position) <= grid_arrival_distance
 
 
 func _try_snap_to_sleep_path_cell(target_cell: Vector2i) -> bool:
@@ -533,6 +538,7 @@ func _find_nearest_bedding() -> Node2D:
 	var nearest_score := INF
 	var start_cell := _get_current_or_nearest_walkable_top_left_cell(false)
 	var distance_map := _get_grid_distance_map(start_cell)
+	var fallback_distance_map: Dictionary = {}
 	for child in _furniture_root.get_children():
 		var furniture := child as Node2D
 		if furniture == null:
@@ -540,10 +546,16 @@ func _find_nearest_bedding() -> Node2D:
 		if not _is_bedding(furniture):
 			continue
 		var sleep_cell: Vector2i = _get_bedding_side_sleep_cell_with_distance_map(furniture, distance_map)
+		var score_distance_map := distance_map
+		if not _is_valid_grid_position(sleep_cell):
+			if fallback_distance_map.is_empty():
+				fallback_distance_map = _get_grid_distance_map(start_cell, true)
+			sleep_cell = _get_bedding_side_sleep_cell_with_distance_map(furniture, fallback_distance_map, true)
+			score_distance_map = fallback_distance_map
 		if not _is_valid_grid_position(sleep_cell):
 			continue
 		var sleep_position := _room_map.grid_to_world_area_center(sleep_cell, _get_actor_grid_footprint())
-		var path_score := _get_grid_distance_score(distance_map, sleep_cell)
+		var path_score := _get_grid_distance_score(score_distance_map, sleep_cell)
 		if path_score < 0.0:
 			continue
 		var distance_score := _body.global_position.distance_squared_to(sleep_position) / 1000000.0
@@ -601,10 +613,13 @@ func _get_bedding_side_sleep_position(bedding: Node2D) -> Vector2:
 
 func _get_bedding_side_sleep_cell(bedding: Node2D) -> Vector2i:
 	var start_cell := _get_current_or_nearest_walkable_top_left_cell(false)
-	return _get_bedding_side_sleep_cell_with_distance_map(bedding, _get_grid_distance_map(start_cell))
+	var sleep_cell := _get_bedding_side_sleep_cell_with_distance_map(bedding, _get_grid_distance_map(start_cell))
+	if _is_valid_grid_position(sleep_cell):
+		return sleep_cell
+	return _get_bedding_side_sleep_cell_with_distance_map(bedding, _get_grid_distance_map(start_cell, true), true)
 
 
-func _get_bedding_side_sleep_cell_with_distance_map(bedding: Node2D, distance_map: Dictionary) -> Vector2i:
+func _get_bedding_side_sleep_cell_with_distance_map(bedding: Node2D, distance_map: Dictionary, allow_occupied: bool = false) -> Vector2i:
 	if bedding == null or _room_map == null:
 		return INVALID_GRID_POSITION
 	if not bedding.has_meta("grid_position"):
@@ -618,7 +633,7 @@ func _get_bedding_side_sleep_cell_with_distance_map(bedding: Node2D, distance_ma
 	var nearest_cell := INVALID_GRID_POSITION
 	var nearest_score := INF
 	for candidate in candidates:
-		if not _is_sleep_target_cell_walkable(candidate, actor_footprint):
+		if not _is_sleep_target_cell_walkable(candidate, actor_footprint, allow_occupied):
 			continue
 		var path_score := _get_grid_distance_score(distance_map, candidate)
 		if path_score < 0.0:
@@ -633,19 +648,7 @@ func _get_bedding_side_sleep_cell_with_distance_map(bedding: Node2D, distance_ma
 
 
 func _get_bedding_side_candidate_cells(bedding_cell: Vector2i, bedding_footprint: Vector2i, actor_footprint: Vector2i) -> Array[Vector2i]:
-	var candidates: Array[Vector2i] = []
-	var min_y := bedding_cell.y - actor_footprint.y + 1
-	var max_y := bedding_cell.y + bedding_footprint.y - 1
-	for y in range(min_y, max_y + 1):
-		candidates.append(Vector2i(bedding_cell.x - actor_footprint.x, y))
-		candidates.append(Vector2i(bedding_cell.x + bedding_footprint.x, y))
-
-	var min_x := bedding_cell.x - actor_footprint.x + 1
-	var max_x := bedding_cell.x + bedding_footprint.x - 1
-	for x in range(min_x, max_x + 1):
-		candidates.append(Vector2i(x, bedding_cell.y - actor_footprint.y))
-		candidates.append(Vector2i(x, bedding_cell.y + bedding_footprint.y))
-	return candidates
+	return AICharacterGridMovementHelper.get_side_candidate_cells(bedding_cell, bedding_footprint, actor_footprint)
 
 
 func _is_close_enough_to_bedding(bedding: Node2D) -> bool:
@@ -700,7 +703,7 @@ func _get_grid_path_velocity_to_target(target_cell: Vector2i) -> Vector2:
 		var target_position := _room_map.grid_to_world_area_center(target_cell, _get_actor_grid_footprint())
 		var to_target := target_position - _body.global_position
 		if to_target.length() > grid_arrival_distance:
-			_facing_direction = to_target.normalized()
+			_facing_direction = AICharacterGridMovementHelper.get_axis_aligned_direction(to_target)
 			return _facing_direction * walk_speed
 		return Vector2.ZERO
 
@@ -711,14 +714,14 @@ func _get_grid_path_velocity_to_target(target_cell: Vector2i) -> Vector2:
 
 	while not _path_cells.is_empty():
 		var waypoint_cell := _path_cells[0]
-		if not _is_sleep_target_cell_walkable(waypoint_cell, _get_actor_grid_footprint()):
+		if not _is_sleep_target_cell_inside(waypoint_cell, _get_actor_grid_footprint()):
 			_path_cells.clear()
 			return Vector2.ZERO
 
 		var waypoint_position := _room_map.grid_to_world_area_center(waypoint_cell, _get_actor_grid_footprint())
 		var to_waypoint := waypoint_position - _body.global_position
 		if to_waypoint.length() > grid_arrival_distance:
-			_facing_direction = to_waypoint.normalized()
+			_facing_direction = AICharacterGridMovementHelper.get_axis_aligned_direction(to_waypoint)
 			return _facing_direction * walk_speed
 
 		_body.global_position = waypoint_position
@@ -735,87 +738,31 @@ func _get_grid_path_score(start_cell: Vector2i, target_cell: Vector2i) -> float:
 	return _get_grid_distance_score(_get_grid_distance_map(start_cell), target_cell)
 
 
-func _get_grid_distance_map(start_cell: Vector2i) -> Dictionary:
-	var distances: Dictionary = {}
-	var footprint := _get_actor_grid_footprint()
-	if not _is_valid_grid_position(start_cell):
-		return distances
-	if not _is_sleep_target_cell_walkable(start_cell, footprint):
-		return distances
-
-	var frontier: Array[Vector2i] = [start_cell]
-	distances[_grid_key(start_cell)] = 0
-	var read_index := 0
-	var steps: Array[Vector2i] = [Vector2i.RIGHT, Vector2i.DOWN, Vector2i.LEFT, Vector2i.UP]
-
-	while read_index < frontier.size():
-		var current := frontier[read_index]
-		read_index += 1
-		var current_distance := int(distances[_grid_key(current)])
-
-		for step in steps:
-			var next_cell := current + step
-			var next_key := _grid_key(next_cell)
-			if distances.has(next_key):
-				continue
-			if not _is_sleep_target_cell_walkable(next_cell, footprint):
-				continue
-			distances[next_key] = current_distance + 1
-			frontier.append(next_cell)
-
-	return distances
+func _get_grid_distance_map(start_cell: Vector2i, allow_occupied: bool = false) -> Dictionary:
+	var walkable_callable := Callable(self, "_is_sleep_target_cell_walkable")
+	if allow_occupied:
+		walkable_callable = Callable(self, "_is_sleep_target_cell_inside")
+	return AICharacterGridMovementHelper.get_grid_distance_map(
+		start_cell,
+		_get_actor_grid_footprint(),
+		walkable_callable,
+		INVALID_GRID_POSITION
+	)
 
 
 func _get_grid_distance_score(distance_map: Dictionary, target_cell: Vector2i) -> float:
-	if not _is_valid_grid_position(target_cell):
-		return -1.0
-	var target_key := _grid_key(target_cell)
-	if not distance_map.has(target_key):
-		return -1.0
-	return float(int(distance_map[target_key]))
+	return AICharacterGridMovementHelper.get_grid_distance_score(distance_map, target_cell, INVALID_GRID_POSITION)
 
 
 func _find_grid_path(start_cell: Vector2i, target_cell: Vector2i) -> Array[Vector2i]:
-	var path: Array[Vector2i] = []
-	var footprint := _get_actor_grid_footprint()
-	if start_cell == target_cell:
-		return path
-	if not _is_sleep_target_cell_walkable(start_cell, footprint) or not _is_sleep_target_cell_walkable(target_cell, footprint):
-		return path
-
-	var frontier: Array[Vector2i] = [start_cell]
-	var came_from: Dictionary = {}
-	came_from[_grid_key(start_cell)] = INVALID_GRID_POSITION
-	var read_index := 0
-	var steps: Array[Vector2i] = [Vector2i.RIGHT, Vector2i.DOWN, Vector2i.LEFT, Vector2i.UP]
-
-	while read_index < frontier.size():
-		var current := frontier[read_index]
-		read_index += 1
-
-		if current == target_cell:
-			break
-
-		for step in steps:
-			var next_cell := current + step
-			var next_key := _grid_key(next_cell)
-			if came_from.has(next_key):
-				continue
-			if not _is_sleep_target_cell_walkable(next_cell, footprint):
-				continue
-			came_from[next_key] = current
-			frontier.append(next_cell)
-
-	var target_key := _grid_key(target_cell)
-	if not came_from.has(target_key):
-		return path
-
-	var trace_cell := target_cell
-	while trace_cell != start_cell:
-		path.insert(0, trace_cell)
-		trace_cell = came_from[_grid_key(trace_cell)] as Vector2i
-
-	return path
+	return AICharacterGridMovementHelper.find_grid_path_with_fallback(
+		start_cell,
+		target_cell,
+		_get_actor_grid_footprint(),
+		Callable(self, "_is_sleep_target_cell_walkable"),
+		Callable(self, "_is_sleep_target_cell_inside"),
+		INVALID_GRID_POSITION
+	)
 
 
 func _get_current_or_nearest_walkable_top_left_cell(allow_snap: bool) -> Vector2i:
@@ -833,45 +780,49 @@ func _get_current_or_nearest_walkable_top_left_cell(allow_snap: bool) -> Vector2
 func _get_current_actor_top_left_grid_position() -> Vector2i:
 	if _room_map == null or _body == null:
 		return INVALID_GRID_POSITION
-	var footprint := _get_actor_grid_footprint()
-	var center_cell := _room_map.world_to_grid(_body.global_position)
-	return center_cell - Vector2i(floori(float(footprint.x) * 0.5), floori(float(footprint.y) * 0.5))
+	return AICharacterGridMovementHelper.get_current_actor_top_left_grid_position(
+		_room_map,
+		_body.global_position,
+		_get_actor_grid_footprint(),
+		INVALID_GRID_POSITION
+	)
 
 
 func _get_nearest_walkable_top_left_to_world_position(world_position: Vector2) -> Vector2i:
-	var nearest_cell := INVALID_GRID_POSITION
-	var nearest_distance := INF
 	if _room_map == null:
+		return INVALID_GRID_POSITION
+	var nearest_cell := AICharacterGridMovementHelper.get_nearest_walkable_top_left_to_world_position(
+		_room_map,
+		world_position,
+		_get_actor_grid_footprint(),
+		Callable(self, "_is_sleep_target_cell_walkable"),
+		INVALID_GRID_POSITION
+	)
+	if _is_valid_grid_position(nearest_cell):
 		return nearest_cell
-
-	var grid_size := _room_map.get_grid_size()
-	var footprint := _get_actor_grid_footprint()
-	var max_x := grid_size.x - footprint.x
-	var max_y := grid_size.y - footprint.y
-	if max_x < 0 or max_y < 0:
-		return nearest_cell
-
-	for y in range(max_y + 1):
-		for x in range(max_x + 1):
-			var cell := Vector2i(x, y)
-			if not _is_sleep_target_cell_walkable(cell, footprint):
-				continue
-			var center := _room_map.grid_to_world_area_center(cell, footprint)
-			var distance := world_position.distance_squared_to(center)
-			if distance < nearest_distance:
-				nearest_distance = distance
-				nearest_cell = cell
-	return nearest_cell
+	return AICharacterGridMovementHelper.get_nearest_walkable_top_left_to_world_position(
+		_room_map,
+		world_position,
+		_get_actor_grid_footprint(),
+		Callable(self, "_is_sleep_target_cell_inside"),
+		INVALID_GRID_POSITION
+	)
 
 
-func _is_sleep_target_cell_walkable(cell: Vector2i, footprint: Vector2i) -> bool:
-	if _room_map == null:
+func _is_sleep_target_cell_walkable(cell: Vector2i, footprint: Vector2i, allow_occupied: bool = false) -> bool:
+	if not _is_sleep_target_cell_inside(cell, footprint):
 		return false
-	if not _room_map.is_grid_area_inside(cell, footprint):
-		return false
+	if allow_occupied:
+		return true
 	if _furniture_placement_module != null and _furniture_placement_module.has_method("can_place_at"):
 		return _furniture_placement_module.call("can_place_at", cell, footprint) == true
 	return true
+
+
+func _is_sleep_target_cell_inside(cell: Vector2i, footprint: Vector2i) -> bool:
+	if _room_map == null:
+		return false
+	return _room_map.is_grid_area_inside(cell, footprint)
 
 
 func _get_furniture_grid_position(furniture: Node2D) -> Vector2i:
@@ -897,15 +848,15 @@ func _get_bedding_footprint(bedding: Node2D) -> Vector2i:
 
 
 func _get_actor_grid_footprint() -> Vector2i:
-	return Vector2i(maxi(actor_grid_footprint.x, 1), maxi(actor_grid_footprint.y, 1))
+	return AICharacterGridMovementHelper.get_safe_footprint(actor_grid_footprint)
 
 
 func _grid_key(grid_position: Vector2i) -> String:
-	return "%d,%d" % [grid_position.x, grid_position.y]
+	return AICharacterGridMovementHelper.grid_key(grid_position)
 
 
 func _is_valid_grid_position(grid_position: Vector2i) -> bool:
-	return grid_position != INVALID_GRID_POSITION
+	return AICharacterGridMovementHelper.is_valid_grid_position(grid_position, INVALID_GRID_POSITION)
 
 
 func _has_property(object: Object, property_name: StringName) -> bool:
