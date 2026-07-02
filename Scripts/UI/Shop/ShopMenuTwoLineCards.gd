@@ -50,3 +50,29 @@ func _create_shop_button(shop: ShopData, index: int) -> Button:
 	card.add_child(name_label)
 
 	return button
+
+
+func _show_shop_detail(shop_index: int) -> void:
+	if shop_index < 0 or shop_index >= _shops.size():
+		_show_shop_list()
+		return
+
+	_selected_shop_index = shop_index
+	var shop := _shops[_selected_shop_index]
+	title_label.text = _single_line_shop_name(shop)
+	back_button.visible = true
+	shop_list_view.visible = false
+	shop_detail_view.visible = true
+	shop_name_label.text = ""
+	shop_name_label.visible = false
+	description_label.text = shop.description
+	_apply_shop_portrait(shop)
+	_play_shop_bgm(shop)
+	_setup_item_tabs(shop)
+	_refresh_item_grid(shop)
+
+
+func _single_line_shop_name(shop: ShopData) -> String:
+	if shop == null:
+		return ""
+	return shop.display_name.replace("\n", " ").strip_edges()
