@@ -1,6 +1,6 @@
 [gd_scene load_steps=5 format=3]
 
-[ext_resource type="Script" path="res://Scripts/UI/Shop/ShopMenu.gd" id="1_shop_menu"]
+[ext_resource type="Script" path="res://Scripts/UI/Shop/ShopMenuTwoLineCards.gd" id="1_shop_menu"]
 [ext_resource type="Resource" path="res://Data/Shops/ShopDatabase.tres" id="2_shop_database"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_shop_panel"]
