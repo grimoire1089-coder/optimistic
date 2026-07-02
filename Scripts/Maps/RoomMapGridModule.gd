@@ -3,6 +3,8 @@ class_name RoomMapGridModule
 
 signal map_rect_changed(visual_rect: Rect2, grid_rect: Rect2, grid_size: Vector2i)
 
+const INVALID_DEBUG_GRID_POSITION := Vector2i(-999999, -999999)
+
 @export var map_id: StringName = &"robin_room"
 @export var map_display_name: String = "ロビンの部屋"
 @export var buildable: bool = true
@@ -211,47 +213,24 @@ func _draw_grid() -> void:
 
 
 func _draw_ai_movement_debug_highlight() -> void:
-	var sleep_behavior := _get_first_sleep_behavior_with_path_debug()
-	if sleep_behavior == null:
-		return
-	if sleep_behavior.has_method("is_active") and sleep_behavior.call("is_active") != true:
-		return
-	if sleep_behavior.has_method("is_sleeping") and sleep_behavior.call("is_sleeping") == true:
+	var behavior := _get_first_active_ai_movement_behavior()
+	if behavior == null:
 		return
 
-	var footprint := Vector2i(1, 1)
-	if sleep_behavior.has_method("get_debug_actor_footprint"):
-		var footprint_value: Variant = sleep_behavior.call("get_debug_actor_footprint")
-		if footprint_value is Vector2i:
-			footprint = footprint_value
-
-	var path_cells: Array = []
-	if sleep_behavior.has_method("get_debug_path_cells"):
-		var path_value: Variant = sleep_behavior.call("get_debug_path_cells")
-		if path_value is Array:
-			path_cells = path_value
-
-	for cell_value in path_cells:
-		if not (cell_value is Vector2i):
-			continue
-		var path_cell: Vector2i = cell_value
+	var footprint := _get_behavior_footprint(behavior)
+	var path_cells := _get_behavior_path_cells(behavior)
+	for path_cell in path_cells:
 		_draw_grid_area_highlight(path_cell, footprint, ai_movement_path_fill_color, ai_movement_path_border_color, 1.0)
 
-	if sleep_behavior.has_method("get_debug_next_cell"):
-		var next_value: Variant = sleep_behavior.call("get_debug_next_cell")
-		if next_value is Vector2i:
-			var next_cell: Vector2i = next_value
-			if is_grid_area_inside(next_cell, footprint):
-				_draw_grid_area_highlight(next_cell, footprint, ai_movement_next_fill_color, ai_movement_next_border_color, 3.0)
+	var next_cell := _get_behavior_next_cell(behavior, path_cells)
+	if _is_valid_debug_cell(next_cell) and is_grid_area_inside(next_cell, footprint):
+		_draw_grid_area_highlight(next_cell, footprint, ai_movement_next_fill_color, ai_movement_next_border_color, 3.0)
 
-	if sleep_behavior.has_method("get_debug_target_cell"):
-		var target_value: Variant = sleep_behavior.call("get_debug_target_cell")
-		if target_value is Vector2i:
-			var target_cell: Vector2i = target_value
-			if is_grid_area_inside(target_cell, footprint):
-				_draw_grid_area_highlight(target_cell, footprint, ai_movement_target_fill_color, ai_movement_target_border_color, 3.0)
+	var target_cell := _get_behavior_target_cell(behavior, path_cells)
+	if _is_valid_debug_cell(target_cell) and is_grid_area_inside(target_cell, footprint):
+		_draw_grid_area_highlight(target_cell, footprint, ai_movement_target_fill_color, ai_movement_target_border_color, 3.0)
 
-	var actor := sleep_behavior.get_parent() as Node2D
+	var actor := behavior.get_parent() as Node2D
 	if actor != null:
 		var actor_top_left := world_to_grid(actor.global_position) - Vector2i(floori(float(footprint.x) * 0.5), floori(float(footprint.y) * 0.5))
 		if is_grid_area_inside(actor_top_left, footprint):
@@ -266,25 +245,131 @@ func _draw_grid_area_highlight(grid_position: Vector2i, footprint: Vector2i, fil
 	draw_rect(rect, border_color, false, border_width)
 
 
-func _get_first_sleep_behavior_with_path_debug() -> Node:
-	var nodes := get_tree().get_nodes_in_group(&"ai_sleep_behavior")
-	for node in nodes:
-		if node is Node and node.has_method("get_debug_path_cells"):
-			return node
+func _get_first_active_ai_movement_behavior() -> Node:
 	var root := get_tree().current_scene
 	if root == null:
 		return null
-	return _find_first_sleep_behavior_recursive(root)
+	return _find_first_active_ai_movement_behavior_recursive(root)
 
 
-func _find_first_sleep_behavior_recursive(node: Node) -> Node:
-	if node.has_method("get_debug_path_cells") and node.has_method("get_debug_target_cell"):
+func _find_first_active_ai_movement_behavior_recursive(node: Node) -> Node:
+	if _is_active_ai_movement_behavior(node):
 		return node
 	for child in node.get_children():
-		var found := _find_first_sleep_behavior_recursive(child)
+		var found := _find_first_active_ai_movement_behavior_recursive(child)
 		if found != null:
 			return found
 	return null
+
+
+func _is_active_ai_movement_behavior(node: Node) -> bool:
+	if node == null:
+		return false
+	if not node.has_method("is_active"):
+		return false
+	if node.call("is_active") != true:
+		return false
+	if node.has_method("is_sleeping") and node.call("is_sleeping") == true:
+		return false
+	return _has_movement_debug_data(node)
+
+
+func _has_movement_debug_data(behavior: Node) -> bool:
+	if behavior.has_method("get_debug_path_cells"):
+		return true
+	if _has_property(behavior, &"_path_cells"):
+		return true
+	if behavior.has_method("get_debug_target_cell"):
+		return true
+	if _has_property(behavior, &"_path_target_cell") or _has_property(behavior, &"_target_cell"):
+		return true
+	return false
+
+
+func _get_behavior_footprint(behavior: Node) -> Vector2i:
+	if behavior.has_method("get_debug_actor_footprint"):
+		var method_value: Variant = behavior.call("get_debug_actor_footprint")
+		if method_value is Vector2i:
+			return Vector2i(maxi(method_value.x, 1), maxi(method_value.y, 1))
+	if _has_property(behavior, &"actor_grid_footprint"):
+		var property_value: Variant = behavior.get("actor_grid_footprint")
+		if property_value is Vector2i:
+			return Vector2i(maxi(property_value.x, 1), maxi(property_value.y, 1))
+	return Vector2i(1, 1)
+
+
+func _get_behavior_path_cells(behavior: Node) -> Array[Vector2i]:
+	var result: Array[Vector2i] = []
+	var source_value: Variant = null
+	if behavior.has_method("get_debug_path_cells"):
+		source_value = behavior.call("get_debug_path_cells")
+	elif _has_property(behavior, &"_path_cells"):
+		source_value = behavior.get("_path_cells")
+	if not (source_value is Array):
+		return result
+	for cell_value in source_value:
+		if cell_value is Vector2i:
+			result.append(cell_value)
+	return result
+
+
+func _get_behavior_next_cell(behavior: Node, path_cells: Array[Vector2i]) -> Vector2i:
+	if behavior.has_method("get_debug_next_cell"):
+		var method_value: Variant = behavior.call("get_debug_next_cell")
+		if method_value is Vector2i:
+			return method_value
+	if not path_cells.is_empty():
+		return path_cells[0]
+	return INVALID_DEBUG_GRID_POSITION
+
+
+func _get_behavior_target_cell(behavior: Node, path_cells: Array[Vector2i]) -> Vector2i:
+	if behavior.has_method("get_debug_target_cell"):
+		var method_value: Variant = behavior.call("get_debug_target_cell")
+		if method_value is Vector2i:
+			return method_value
+	for property_name in [&"_path_target_cell", &"_target_cell"]:
+		if _has_property(behavior, property_name):
+			var property_value: Variant = behavior.get(property_name)
+			if property_value is Vector2i:
+				return property_value
+	var target_from_object := _get_behavior_target_cell_from_target_object(behavior)
+	if _is_valid_debug_cell(target_from_object):
+		return target_from_object
+	if not path_cells.is_empty():
+		return path_cells[path_cells.size() - 1]
+	return INVALID_DEBUG_GRID_POSITION
+
+
+func _get_behavior_target_cell_from_target_object(behavior: Node) -> Vector2i:
+	for property_name in [&"_target_bedding", &"_target_kitchen", &"_target_furniture", &"_target_entrance"]:
+		if not _has_property(behavior, property_name):
+			continue
+		var target_value: Variant = behavior.get(property_name)
+		if not (target_value is Node2D):
+			continue
+		for method_name in [&"_get_bedding_side_sleep_cell", &"_get_kitchen_use_cell", &"_get_furniture_use_cell", &"_get_entrance_use_cell"]:
+			if not behavior.has_method(method_name):
+				continue
+			var cell_value: Variant = behavior.call(method_name, target_value)
+			if cell_value is Vector2i:
+				return cell_value
+	return INVALID_DEBUG_GRID_POSITION
+
+
+func _is_valid_debug_cell(grid_position: Vector2i) -> bool:
+	return grid_position != INVALID_DEBUG_GRID_POSITION
+
+
+func _has_property(object: Object, property_name: StringName) -> bool:
+	if object == null:
+		return false
+	for property_info in object.get_property_list():
+		if not property_info.has("name"):
+			continue
+		if StringName(property_info["name"]) == property_name:
+			return true
+	return false
 
 
 func _draw_neon_frame(visual_rect: Rect2) -> void:
