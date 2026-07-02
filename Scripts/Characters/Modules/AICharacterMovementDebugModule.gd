@@ -1,6 +1,8 @@
 extends Node
 class_name AICharacterMovementDebugModule
 
+const INVALID_DEBUG_GRID_POSITION := Vector2i(-999999, -999999)
+
 @export var enabled: bool = true
 @export var body_path: NodePath = NodePath("..")
 @export var room_map_path: NodePath = NodePath("../../RobinRoomMap")
@@ -163,7 +165,76 @@ func _get_movement_plan_text(action: StringName) -> String:
 		return "none"
 	if behavior.has_method("get_debug_movement_summary"):
 		return str(behavior.call("get_debug_movement_summary"))
-	return "none"
+
+	var path_cells := _get_behavior_path_cells(behavior)
+	var target_cell := _get_behavior_target_cell(behavior, path_cells)
+	var next_cell := INVALID_DEBUG_GRID_POSITION
+	if not path_cells.is_empty():
+		next_cell = path_cells[0]
+	var footprint := _get_behavior_footprint(behavior)
+	if path_cells.is_empty() and not _is_valid_debug_cell(target_cell):
+		return "none"
+	return "target_cell=%s next_cell=%s path=%d footprint=%s" % [
+		str(target_cell),
+		str(next_cell),
+		path_cells.size(),
+		str(footprint),
+	]
+
+
+func _get_behavior_path_cells(behavior: Node) -> Array[Vector2i]:
+	var result: Array[Vector2i] = []
+	if behavior == null or not _has_property(behavior, &"_path_cells"):
+		return result
+	var path_value: Variant = behavior.get("_path_cells")
+	if not (path_value is Array):
+		return result
+	for cell_value in path_value:
+		if cell_value is Vector2i:
+			result.append(cell_value)
+	return result
+
+
+func _get_behavior_target_cell(behavior: Node, path_cells: Array[Vector2i]) -> Vector2i:
+	for property_name in [&"_path_target_cell", &"_target_cell"]:
+		if _has_property(behavior, property_name):
+			var property_value: Variant = behavior.get(property_name)
+			if property_value is Vector2i:
+				return property_value
+	var target_from_object := _get_behavior_target_cell_from_target_object(behavior)
+	if _is_valid_debug_cell(target_from_object):
+		return target_from_object
+	if not path_cells.is_empty():
+		return path_cells[path_cells.size() - 1]
+	return INVALID_DEBUG_GRID_POSITION
+
+
+func _get_behavior_target_cell_from_target_object(behavior: Node) -> Vector2i:
+	for property_name in [&"_target_bedding", &"_target_kitchen", &"_target_furniture", &"_target_entrance"]:
+		if not _has_property(behavior, property_name):
+			continue
+		var target_value: Variant = behavior.get(property_name)
+		if not (target_value is Node2D):
+			continue
+		for method_name in [&"_get_bedding_side_sleep_cell", &"_get_kitchen_use_cell", &"_get_furniture_use_cell", &"_get_entrance_use_cell"]:
+			if not behavior.has_method(method_name):
+				continue
+			var cell_value: Variant = behavior.call(method_name, target_value)
+			if cell_value is Vector2i:
+				return cell_value
+	return INVALID_DEBUG_GRID_POSITION
+
+
+func _get_behavior_footprint(behavior: Node) -> Vector2i:
+	if behavior != null and _has_property(behavior, &"actor_grid_footprint"):
+		var footprint_value: Variant = behavior.get("actor_grid_footprint")
+		if footprint_value is Vector2i:
+			return Vector2i(maxi(footprint_value.x, 1), maxi(footprint_value.y, 1))
+	return Vector2i(1, 1)
+
+
+func _is_valid_debug_cell(grid_position: Vector2i) -> bool:
+	return grid_position != INVALID_DEBUG_GRID_POSITION
 
 
 func _get_action_id() -> StringName:
@@ -302,6 +373,17 @@ func _format_vec2(value: Vector2) -> String:
 
 func _format_vec2i(value: Vector2i) -> String:
 	return "(%d, %d)" % [value.x, value.y]
+
+
+func _has_property(object: Object, property_name: StringName) -> bool:
+	if object == null:
+		return false
+	for property_info in object.get_property_list():
+		if not property_info.has("name"):
+			continue
+		if StringName(property_info["name"]) == property_name:
+			return true
+	return false
 
 
 func _resolve_refs() -> void:
