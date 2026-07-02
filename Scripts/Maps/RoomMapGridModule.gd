@@ -22,6 +22,15 @@ signal map_rect_changed(visual_rect: Rect2, grid_rect: Rect2, grid_size: Vector2
 @export var frame_outer_glow_width: float = 24.0
 @export var frame_middle_glow_width: float = 12.0
 @export var frame_core_line_width: float = 4.0
+@export var show_ai_movement_debug_highlight: bool = true
+@export var ai_movement_path_fill_color: Color = Color(0.0, 1.0, 1.0, 0.18)
+@export var ai_movement_path_border_color: Color = Color(0.0, 2.0, 2.0, 0.55)
+@export var ai_movement_next_fill_color: Color = Color(1.0, 0.95, 0.1, 0.25)
+@export var ai_movement_next_border_color: Color = Color(1.0, 1.8, 0.2, 0.85)
+@export var ai_movement_target_fill_color: Color = Color(1.0, 0.15, 0.95, 0.20)
+@export var ai_movement_target_border_color: Color = Color(1.0, 0.3, 1.6, 0.85)
+@export var ai_movement_footprint_fill_color: Color = Color(0.2, 1.0, 0.35, 0.12)
+@export var ai_movement_footprint_border_color: Color = Color(0.4, 1.8, 0.6, 0.62)
 
 var _last_visual_rect := Rect2()
 var _last_grid_rect := Rect2()
@@ -168,6 +177,9 @@ func _draw() -> void:
 	if show_grid:
 		_draw_grid()
 
+	if show_ai_movement_debug_highlight:
+		_draw_ai_movement_debug_highlight()
+
 
 func _draw_grid() -> void:
 	var grid_rect := get_grid_rect()
@@ -196,6 +208,74 @@ func _draw_grid() -> void:
 		)
 
 	draw_rect(grid_rect, grid_border_color, false, grid_border_width)
+
+
+func _draw_ai_movement_debug_highlight() -> void:
+	var sleep_behavior := _get_first_sleep_behavior_with_path_debug()
+	if sleep_behavior == null:
+		return
+	if sleep_behavior.has_method("is_active") and sleep_behavior.call("is_active") != true:
+		return
+	if sleep_behavior.has_method("is_sleeping") and sleep_behavior.call("is_sleeping") == true:
+		return
+
+	var footprint := Vector2i(1, 1)
+	if sleep_behavior.has_method("get_debug_actor_footprint"):
+		footprint = sleep_behavior.call("get_debug_actor_footprint") as Vector2i
+
+	var path_cells: Array = []
+	if sleep_behavior.has_method("get_debug_path_cells"):
+		path_cells = sleep_behavior.call("get_debug_path_cells") as Array
+
+	for cell_value in path_cells:
+		if not (cell_value is Vector2i):
+			continue
+		_draw_grid_area_highlight(cell_value as Vector2i, footprint, ai_movement_path_fill_color, ai_movement_path_border_color, 1.0)
+
+	if sleep_behavior.has_method("get_debug_next_cell"):
+		var next_cell: Vector2i = sleep_behavior.call("get_debug_next_cell")
+		if is_grid_area_inside(next_cell, footprint):
+			_draw_grid_area_highlight(next_cell, footprint, ai_movement_next_fill_color, ai_movement_next_border_color, 3.0)
+
+	if sleep_behavior.has_method("get_debug_target_cell"):
+		var target_cell: Vector2i = sleep_behavior.call("get_debug_target_cell")
+		if is_grid_area_inside(target_cell, footprint):
+			_draw_grid_area_highlight(target_cell, footprint, ai_movement_target_fill_color, ai_movement_target_border_color, 3.0)
+
+	var actor := sleep_behavior.get_parent() as Node2D
+	if actor != null:
+		var actor_top_left := world_to_grid(actor.global_position) - Vector2i(floori(float(footprint.x) * 0.5), floori(float(footprint.y) * 0.5))
+		if is_grid_area_inside(actor_top_left, footprint):
+			_draw_grid_area_highlight(actor_top_left, footprint, ai_movement_footprint_fill_color, ai_movement_footprint_border_color, 2.0)
+
+
+func _draw_grid_area_highlight(grid_position: Vector2i, footprint: Vector2i, fill_color: Color, border_color: Color, border_width: float) -> void:
+	if not is_grid_area_inside(grid_position, footprint):
+		return
+	var rect := get_grid_area_rect(grid_position, footprint).grow(-2.0)
+	draw_rect(rect, fill_color, true)
+	draw_rect(rect, border_color, false, border_width)
+
+
+func _get_first_sleep_behavior_with_path_debug() -> Node:
+	var nodes := get_tree().get_nodes_in_group(&"ai_sleep_behavior")
+	for node in nodes:
+		if node is Node and node.has_method("get_debug_path_cells"):
+			return node
+	var root := get_tree().current_scene
+	if root == null:
+		return null
+	return _find_first_sleep_behavior_recursive(root)
+
+
+func _find_first_sleep_behavior_recursive(node: Node) -> Node:
+	if node.has_method("get_debug_path_cells") and node.has_method("get_debug_target_cell"):
+		return node
+	for child in node.get_children():
+		var found := _find_first_sleep_behavior_recursive(child)
+		if found != null:
+			return found
+	return null
 
 
 func _draw_neon_frame(visual_rect: Rect2) -> void:
