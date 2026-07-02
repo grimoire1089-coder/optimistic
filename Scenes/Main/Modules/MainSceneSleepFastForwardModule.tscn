@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://main_scene_sleep_fast_forward_module"]
+
+[ext_resource type="Script" path="res://Scripts/Scenes/Main/Modules/MainSceneSleepFastForwardModule.gd" id="1_sleep_fast_forward"]
+
+[node name="MainSceneSleepFastForwardModule" type="Node"]
+script = ExtResource("1_sleep_fast_forward")
