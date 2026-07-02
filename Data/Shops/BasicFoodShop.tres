@@ -49,7 +49,8 @@ display_name = "食材"
 [resource]
 script = ExtResource("1_shop_data")
 shop_id = &"basic_food"
-display_name = "デカダンス\nバイトワークス"
+display_name = "デカダンス
+バイトワークス"
 description = "手軽に使える食材を扱う基本ショップ。"
 sticker = ExtResource("5_sticker")
 shop_bgm = ExtResource("4_bgm")
