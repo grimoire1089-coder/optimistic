@@ -54,6 +54,19 @@ func set_floor_root_path(next_floor_root_path: NodePath) -> void:
 	_resolve_refs()
 
 
+func configure_floor(next_floor_id: StringName, next_display_name: String, next_texture_path: String, next_floor_node_name: StringName = &"", next_floor_footprint: Vector2i = Vector2i.ZERO) -> void:
+	floor_id = next_floor_id
+	floor_display_name = next_display_name
+	floor_texture_path = next_texture_path
+	if next_floor_node_name != &"":
+		floor_node_name = next_floor_node_name
+	if next_floor_footprint.x > 0 and next_floor_footprint.y > 0:
+		floor_footprint = next_floor_footprint
+	_floor_node = null
+	_resolve_refs()
+	_sync_floor_node()
+
+
 func place_floor() -> Node2D:
 	_resolve_refs()
 	if _room_map == null:
@@ -64,10 +77,14 @@ func place_floor() -> Node2D:
 
 	_resolve_existing_floor_node()
 	if _floor_node == null:
-		_floor_node = _create_floor_node()
-		if _floor_node == null:
-			return null
-		_floor_root.add_child(_floor_node)
+		var existing_floor := _get_first_floor_node()
+		if existing_floor != null:
+			_floor_node = existing_floor
+		else:
+			_floor_node = _create_floor_node()
+			if _floor_node == null:
+				return null
+			_floor_root.add_child(_floor_node)
 
 	_sync_floor_node()
 	return _floor_node
@@ -83,6 +100,16 @@ func remove_floor() -> bool:
 	return true
 
 
+func remove_any_floor() -> bool:
+	_resolve_refs()
+	var floor_node := _get_first_floor_node()
+	if floor_node == null:
+		return false
+	floor_node.queue_free()
+	_floor_node = null
+	return true
+
+
 func toggle_floor() -> bool:
 	if has_floor():
 		remove_floor()
@@ -94,6 +121,11 @@ func has_floor() -> bool:
 	_resolve_refs()
 	_resolve_existing_floor_node()
 	return _floor_node != null
+
+
+func has_any_floor() -> bool:
+	_resolve_refs()
+	return _get_first_floor_node() != null
 
 
 func get_floor_footprint() -> Vector2i:
@@ -130,6 +162,7 @@ func _sync_floor_node() -> void:
 		return
 
 	var footprint := _get_active_floor_footprint()
+	_floor_node.name = String(floor_node_name)
 	_floor_node.z_index = floor_z_index
 	_floor_node.set_meta("floor_id", floor_id)
 	_set_property_if_exists(_floor_node, &"display_name", floor_display_name)
@@ -190,6 +223,20 @@ func _resolve_existing_floor_node() -> void:
 	if _floor_root == null:
 		return
 	_floor_node = _floor_root.get_node_or_null(String(floor_node_name)) as Node2D
+
+
+func _get_first_floor_node() -> Node2D:
+	if _floor_root == null:
+		return null
+	for child in _floor_root.get_children():
+		var floor_candidate: Node2D = child as Node2D
+		if floor_candidate == null:
+			continue
+		if floor_candidate.has_meta("floor_id"):
+			return floor_candidate
+		if String(floor_candidate.name).begins_with("Floor_"):
+			return floor_candidate
+	return null
 
 
 func _set_property_if_exists(object: Object, property_name: StringName, value: Variant) -> void:
