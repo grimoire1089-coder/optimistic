@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="FoodItemData" format=3]
+
+[ext_resource type="Script" uid="uid://cgyi4b7bbmqn" path="res://Scripts/Items/Food/FoodItemData.gd" id="1_food_data"]
+[ext_resource type="Texture2D" path="res://Assets/Items/Icons/Ingredients/Ingredients_0005.png" id="2_ingredient_icon"]
+
+[resource]
+script = ExtResource("1_food_data")
+item_id = &"ingredient_0005_pink_rock_salt"
+display_name = "ピンク岩塩"
+description = "淡いピンク色の岩塩。料理にまろやかな塩味を足す食材。"
+icon = ExtResource("2_ingredient_icon")
+category_id = &"ingredients"
+sell_price = 2
