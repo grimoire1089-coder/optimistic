@@ -21,6 +21,7 @@ SceneRouter="*uid://d3dum2wt1mbeq"
 AudioSettings="*uid://bde05i1gmmns0"
 AudioPlayer="*uid://dtm1jv0vp0lus"
 GameClock="*res://Scripts/Systems/Time/GameClock.gd"
+WeatherSystem="*res://Scripts/Systems/Weather/WeatherSystem.gd"
 CreditWallet="*res://Scripts/Systems/Currency/CreditWallet.gd"
 BasicIncome="*res://Scripts/Systems/Currency/BasicIncomeSystem.gd"
 
