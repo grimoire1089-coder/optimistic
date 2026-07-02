@@ -8,6 +8,16 @@ const CATEGORY_ENTERTAINMENT: StringName = &"entertainment"
 const CATEGORY_DECOR: StringName = &"decor"
 const CATEGORY_FLOOR: StringName = &"floor"
 
+const FLOOR_001_ID: StringName = &"floor_001"
+const FLOOR_001_DISPLAY_NAME := "角丸フロアパネル"
+const FLOOR_001_TEXTURE_PATH := "res://Assets/Maps/Furniture/Floor/Floor_001.png"
+const FLOOR_001_NODE_NAME: StringName = &"Floor_001"
+const FLOOR_002_ID: StringName = &"floor_002"
+const FLOOR_002_DISPLAY_NAME := "金属フロアパネル"
+const FLOOR_002_TEXTURE_PATH := "res://Assets/Maps/Furniture/Floor/Floor_002.png"
+const FLOOR_002_NODE_NAME: StringName = &"Floor_002"
+const FLOOR_FOOTPRINT := Vector2i(15, 15)
+
 @export var build_mode_controller_path: NodePath = NodePath("../../BuildModeController")
 @export var floor_placement_module_path: NodePath = NodePath("../../FloorPlacementModule")
 @export var simple_mattress_scene: PackedScene
@@ -26,6 +36,7 @@ const CATEGORY_FLOOR: StringName = &"floor"
 @onready var mattress_button: Button = $MarginContainer/Rows/ItemList/SimpleMattressButton
 @onready var kitchen_module_button: Button = $MarginContainer/Rows/ItemList/KitchenModuleButton
 @onready var floor_place_button: Button = $MarginContainer/Rows/ItemList/FloorPlaceButton
+@onready var floor_002_place_button: Button = $MarginContainer/Rows/ItemList/Floor002PlaceButton
 @onready var floor_store_button: Button = $MarginContainer/Rows/ItemList/FloorStoreButton
 @onready var detail_label: Label = $MarginContainer/Rows/DetailLabel
 
@@ -96,6 +107,8 @@ func _connect_buttons() -> void:
 		kitchen_module_button.pressed.connect(_on_kitchen_module_pressed)
 	if floor_place_button != null:
 		floor_place_button.pressed.connect(_on_floor_place_pressed)
+	if floor_002_place_button != null:
+		floor_002_place_button.pressed.connect(_on_floor_002_place_pressed)
 	if floor_store_button != null:
 		floor_store_button.pressed.connect(_on_floor_store_pressed)
 
@@ -161,26 +174,49 @@ func _on_kitchen_module_pressed() -> void:
 
 
 func _on_floor_place_pressed() -> void:
+	_place_floor(FLOOR_001_ID, FLOOR_001_DISPLAY_NAME, FLOOR_001_TEXTURE_PATH, FLOOR_001_NODE_NAME, "Floor_001")
+
+
+func _on_floor_002_place_pressed() -> void:
+	_place_floor(FLOOR_002_ID, FLOOR_002_DISPLAY_NAME, FLOOR_002_TEXTURE_PATH, FLOOR_002_NODE_NAME, "Floor_002")
+
+
+func _place_floor(floor_id: StringName, floor_display_name: String, floor_texture_path: String, floor_node_name: StringName, floor_label: String) -> void:
 	_resolve_floor_placement()
 	if _floor_placement == null or not _floor_placement.has_method("place_floor"):
 		_update_detail_text("床モジュールが見つかりません")
 		return
+	if _floor_placement.has_method("configure_floor"):
+		_floor_placement.call("configure_floor", floor_id, floor_display_name, floor_texture_path, floor_node_name, FLOOR_FOOTPRINT)
+	else:
+		_floor_placement.set("floor_id", floor_id)
+		_floor_placement.set("floor_display_name", floor_display_name)
+		_floor_placement.set("floor_texture_path", floor_texture_path)
+		_floor_placement.set("floor_node_name", floor_node_name)
+		_floor_placement.set("floor_footprint", FLOOR_FOOTPRINT)
 	var floor_node := _floor_placement.call("place_floor") as Node2D
 	if floor_node == null:
-		_update_detail_text("床を敷けませんでした: Floor_001.png を確認")
+		_update_detail_text("床を敷けませんでした: %s.png を確認" % floor_label)
 		return
-	_update_detail_text("床を敷きました: Floor_001 / 15 x 15")
+	_update_detail_text("床を敷きました: %s / 15 x 15" % floor_label)
 	_sync_floor_buttons()
 
 
 func _on_floor_store_pressed() -> void:
 	_resolve_floor_placement()
-	if _floor_placement == null or not _floor_placement.has_method("remove_floor"):
+	if _floor_placement == null:
 		_update_detail_text("床モジュールが見つかりません")
 		return
-	var removed := bool(_floor_placement.call("remove_floor"))
+	var removed := false
+	if _floor_placement.has_method("remove_any_floor"):
+		removed = bool(_floor_placement.call("remove_any_floor"))
+	elif _floor_placement.has_method("remove_floor"):
+		removed = bool(_floor_placement.call("remove_floor"))
+	else:
+		_update_detail_text("床モジュールが見つかりません")
+		return
 	if removed:
-		_update_detail_text("床をしまいました: Floor_001")
+		_update_detail_text("床をしまいました")
 	else:
 		_update_detail_text("しまう床がありません")
 	_sync_floor_buttons()
@@ -241,6 +277,7 @@ func _sync_item_category_visibility() -> void:
 	_set_button_visible(mattress_button, _current_category_id == CATEGORY_BEDDING)
 	_set_button_visible(kitchen_module_button, _current_category_id == CATEGORY_KITCHEN)
 	_set_button_visible(floor_place_button, _current_category_id == CATEGORY_FLOOR)
+	_set_button_visible(floor_002_place_button, _current_category_id == CATEGORY_FLOOR)
 	_set_button_visible(floor_store_button, _current_category_id == CATEGORY_FLOOR)
 
 
@@ -253,10 +290,14 @@ func _set_button_visible(button: Button, should_show: bool) -> void:
 func _sync_floor_buttons() -> void:
 	var has_floor_module := _floor_placement != null
 	var has_floor := false
-	if has_floor_module and _floor_placement.has_method("has_floor"):
+	if has_floor_module and _floor_placement.has_method("has_any_floor"):
+		has_floor = bool(_floor_placement.call("has_any_floor"))
+	elif has_floor_module and _floor_placement.has_method("has_floor"):
 		has_floor = bool(_floor_placement.call("has_floor"))
 	if floor_place_button != null:
 		floor_place_button.disabled = not has_floor_module or has_floor
+	if floor_002_place_button != null:
+		floor_002_place_button.disabled = not has_floor_module or has_floor
 	if floor_store_button != null:
 		floor_store_button.disabled = not has_floor_module or not has_floor
 
