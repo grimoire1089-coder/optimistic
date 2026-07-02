@@ -7,6 +7,7 @@ const RECIPE_PATHS := [
 	"res://Data/Craft/Recipes/Cooking_0001_WhiteRice.tres",
 ]
 
+const LARGE_MENU_TOP_RIGHT_OFFSET := Vector2(-444.0, 304.0)
 const LARGE_MENU_SIZE := Vector2(420.0, 520.0)
 const RECIPE_CARD_SIZE := Vector2(380.0, 170.0)
 
@@ -48,6 +49,7 @@ var _recipes: Array[CraftRecipeData] = []
 func _ready() -> void:
 	visible = false
 	custom_minimum_size = LARGE_MENU_SIZE
+	call_deferred("_apply_large_layout_after_parent")
 	if not is_in_group(&"craft_menu"):
 		add_to_group(&"craft_menu")
 	close_button.pressed.connect(close_menu)
@@ -56,8 +58,20 @@ func _ready() -> void:
 	_show_category_view()
 
 
+func _apply_large_layout_after_parent() -> void:
+	anchor_left = 1.0
+	anchor_top = 0.0
+	anchor_right = 1.0
+	anchor_bottom = 0.0
+	offset_left = LARGE_MENU_TOP_RIGHT_OFFSET.x
+	offset_top = LARGE_MENU_TOP_RIGHT_OFFSET.y
+	offset_right = LARGE_MENU_TOP_RIGHT_OFFSET.x + LARGE_MENU_SIZE.x
+	offset_bottom = LARGE_MENU_TOP_RIGHT_OFFSET.y + LARGE_MENU_SIZE.y
+
+
 func open_menu() -> void:
 	visible = true
+	_apply_large_layout_after_parent()
 	if _selected_method_id == cooking_method_id:
 		_show_cooking_view()
 		return
