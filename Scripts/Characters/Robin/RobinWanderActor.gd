@@ -196,6 +196,8 @@ func get_current_action_display_text() -> String:
 	if hydrate_behavior_module != null and hydrate_behavior_module.is_active():
 		return "水分補給中"
 	if sit_behavior_module != null and sit_behavior_module.is_active():
+		if sit_behavior_module.is_using_lapis():
+			return "ラピス操作中"
 		return "着席中"
 	if is_sleeping():
 		return "睡眠中"

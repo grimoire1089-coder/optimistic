@@ -6,20 +6,28 @@ const BUILD_LOCK_META := &"build_locked_by_sleep"
 const BUILD_LOCK_REASON_META := &"build_lock_reason"
 
 @export var need_planner_path: NodePath = NodePath("../AICharacterNeedsBundle/NeedDrivenAIPlanner")
+@export var needs_module_path: NodePath = NodePath("../AICharacterNeedsBundle/CharacterNeedsModule")
 @export var furniture_root_path: NodePath = NodePath("../../RobinRoomMap/FurnitureRoot")
 @export var furniture_placement_module_path: NodePath = NodePath("../../FurniturePlacementModule")
 @export var room_map_path: NodePath = NodePath("../../RobinRoomMap")
+@export var fun_need_id: StringName = CharacterNeedIds.FUN
+@export var idle_action_id: StringName = CharacterNeedActionIds.IDLE
+@export var play_action_id: StringName = CharacterNeedActionIds.PLAY
 @export var stool_ids: Array[StringName] = [&"stool"]
+@export var lapis_icon_path: String = "res://Assets/Items/Icons/Tool/Lapis_001.png"
+@export var fun_recovery_per_game_minute: float = 0.2
 @export var walk_speed: float = 80.0
 @export var arrive_distance: float = 12.0
 @export var grid_arrival_distance: float = 6.0
 @export var sit_chance: float = 1.0
 @export var sit_duration_range: Vector2 = Vector2(45.0, 120.0)
+@export var standing_lapis_duration_range: Vector2 = Vector2(20.0, 50.0)
 @export var retry_cooldown_range: Vector2 = Vector2(20.0, 45.0)
 @export var actor_grid_footprint: Vector2i = Vector2i(2, 4)
 @export var snap_to_stool_when_sitting: bool = true
 
 var _body: CharacterBody2D
+var _needs_module: CharacterNeedsModule
 var _need_planner: NeedDrivenAIPlanner
 var _furniture_root: Node
 var _furniture_placement_module: Node
@@ -30,7 +38,9 @@ var _target_cell: Vector2i = INVALID_GRID_POSITION
 var _path_cells: Array[Vector2i] = []
 var _active := false
 var _sitting := false
+var _using_lapis_standing := false
 var _sit_timer := 0.0
+var _standing_lapis_timer := 0.0
 var _retry_cooldown := 0.0
 var _facing_direction := Vector2.DOWN
 var _rng := RandomNumberGenerator.new()
@@ -54,6 +64,20 @@ func is_sitting() -> bool:
 	return _sitting
 
 
+func is_using_lapis() -> bool:
+	return _sitting or _using_lapis_standing
+
+
+func is_action_item_display_visible() -> bool:
+	return is_using_lapis()
+
+
+func get_action_item_icon_path() -> String:
+	if not is_action_item_display_visible():
+		return ""
+	return lapis_icon_path
+
+
 func cancel_sitting() -> void:
 	_reset()
 
@@ -64,7 +88,7 @@ func get_facing_direction() -> Vector2:
 
 func get_debug_path_cells() -> Array[Vector2i]:
 	var result: Array[Vector2i] = []
-	if _sitting:
+	if _sitting or _using_lapis_standing:
 		return result
 	for cell in _path_cells:
 		result.append(cell)
@@ -72,13 +96,13 @@ func get_debug_path_cells() -> Array[Vector2i]:
 
 
 func get_debug_target_cell() -> Vector2i:
-	if _sitting:
+	if _sitting or _using_lapis_standing:
 		return INVALID_GRID_POSITION
 	return _target_cell
 
 
 func get_debug_next_cell() -> Vector2i:
-	if _sitting:
+	if _sitting or _using_lapis_standing:
 		return INVALID_GRID_POSITION
 	if _path_cells.is_empty():
 		return INVALID_GRID_POSITION
@@ -91,10 +115,12 @@ func get_debug_actor_footprint() -> Vector2i:
 
 func get_debug_movement_summary() -> String:
 	if _sitting:
-		return "sitting=true stool_cell=%s lower_body_footprint=%s" % [
+		return "sitting=true lapis=true stool_cell=%s lower_body_footprint=%s" % [
 			str(_get_furniture_grid_position(_sitting_stool)),
 			str(Vector2i(2, 2)),
 		]
+	if _using_lapis_standing:
+		return "lapis_standing=true path=0 footprint=%s" % [str(get_debug_actor_footprint())]
 	return "target_cell=%s next_cell=%s path=%d footprint=%s sitting=%s" % [
 		str(get_debug_target_cell()),
 		str(get_debug_next_cell()),
@@ -120,13 +146,17 @@ func get_velocity(delta: float) -> Vector2:
 		_update_sitting(delta)
 		return Vector2.ZERO
 
+	if _using_lapis_standing:
+		_active = true
+		_update_standing_lapis(delta)
+		return Vector2.ZERO
+
 	if _retry_cooldown > 0.0:
 		_active = false
 		return Vector2.ZERO
 
 	if not _ensure_target_stool():
-		_active = false
-		_start_retry_cooldown()
+		_start_standing_lapis()
 		return Vector2.ZERO
 
 	_active = true
@@ -154,7 +184,8 @@ func get_velocity(delta: float) -> Vector2:
 func _should_sit_now() -> bool:
 	if _need_planner == null:
 		return true
-	return _need_planner.get_next_action_id() == CharacterNeedActionIds.IDLE
+	var next_action: StringName = _need_planner.get_next_action_id()
+	return next_action == idle_action_id or next_action == play_action_id
 
 
 func _ensure_target_stool() -> bool:
@@ -205,6 +236,8 @@ func _clear_target() -> void:
 func _start_sitting() -> void:
 	_active = true
 	_sitting = true
+	_using_lapis_standing = false
+	_standing_lapis_timer = 0.0
 	_sit_timer = _rng.randf_range(maxf(sit_duration_range.x, 0.1), maxf(sit_duration_range.y, sit_duration_range.x + 0.1))
 	_path_cells.clear()
 	_face_stool()
@@ -215,17 +248,61 @@ func _start_sitting() -> void:
 
 func _update_sitting(delta: float) -> void:
 	_face_stool()
+	_recover_fun(delta)
 	_sit_timer -= maxf(delta, 0.0)
 	if _sit_timer <= 0.0:
 		_reset()
 		_start_retry_cooldown()
 
 
+func _start_standing_lapis() -> void:
+	_clear_sitting_stool_lock()
+	_clear_target()
+	_active = true
+	_sitting = false
+	_using_lapis_standing = true
+	_sit_timer = 0.0
+	_standing_lapis_timer = _rng.randf_range(
+		maxf(standing_lapis_duration_range.x, 0.1),
+		maxf(standing_lapis_duration_range.y, standing_lapis_duration_range.x + 0.1)
+	)
+	_facing_direction = Vector2.DOWN
+
+
+func _update_standing_lapis(delta: float) -> void:
+	_facing_direction = Vector2.DOWN
+	_recover_fun(delta)
+	_standing_lapis_timer -= maxf(delta, 0.0)
+	if _standing_lapis_timer <= 0.0:
+		_reset()
+		_start_retry_cooldown()
+
+
+func _recover_fun(delta: float) -> void:
+	if _needs_module == null:
+		return
+	var game_minutes := _get_game_minutes_from_delta(delta)
+	if game_minutes <= 0.0:
+		return
+	_needs_module.add_need_value(fun_need_id, fun_recovery_per_game_minute * game_minutes)
+
+
+func _get_game_minutes_from_delta(delta: float) -> float:
+	var game_clock := get_node_or_null("/root/GameClock")
+	if game_clock != null and game_clock.has_method("get"):
+		var seconds_per_minute := float(game_clock.get("real_seconds_per_game_minute"))
+		if seconds_per_minute > 0.0:
+			return delta / seconds_per_minute
+	return delta
+
+
 func _reset() -> void:
 	_clear_sitting_stool_lock()
 	_active = false
 	_sitting = false
+	_using_lapis_standing = false
 	_sit_timer = 0.0
+	_standing_lapis_timer = 0.0
 	_clear_target()
 
 
@@ -269,17 +346,19 @@ func _find_nearest_stool() -> Node2D:
 
 	var nearest: Node2D = null
 	var nearest_score := INF
+	var start_cell := _get_current_or_nearest_walkable_top_left_cell(false)
+	var distance_map := _get_grid_distance_map(start_cell)
 	for child in _furniture_root.get_children():
 		var furniture := child as Node2D
 		if furniture == null:
 			continue
 		if not _is_stool(furniture):
 			continue
-		var use_cell := _get_stool_use_cell(furniture)
+		var use_cell := _get_stool_use_cell_with_distance_map(furniture, distance_map)
 		if not _is_valid_grid_position(use_cell):
 			continue
 		var use_position := _get_stool_use_position(use_cell)
-		var path_score := _get_grid_path_score_to_target(use_cell)
+		var path_score := _get_grid_distance_score(distance_map, use_cell)
 		if path_score < 0.0:
 			continue
 		var distance_score := _body.global_position.distance_squared_to(use_position) / 1000000.0
@@ -309,6 +388,11 @@ func _is_stool(furniture: Node2D) -> bool:
 
 
 func _get_stool_use_cell(stool: Node2D) -> Vector2i:
+	var start_cell := _get_current_or_nearest_walkable_top_left_cell(false)
+	return _get_stool_use_cell_with_distance_map(stool, _get_grid_distance_map(start_cell))
+
+
+func _get_stool_use_cell_with_distance_map(stool: Node2D, distance_map: Dictionary) -> Vector2i:
 	if stool == null or _room_map == null:
 		return INVALID_GRID_POSITION
 	var stool_cell := _get_furniture_grid_position(stool)
@@ -318,14 +402,13 @@ func _get_stool_use_cell(stool: Node2D) -> Vector2i:
 	var stool_footprint := _get_furniture_footprint(stool)
 	var actor_footprint := _get_actor_grid_footprint()
 	var candidates := _get_side_candidate_cells(stool_cell, stool_footprint, actor_footprint)
-	var start_cell := _get_current_or_nearest_walkable_top_left_cell(false)
 	var nearest_cell := INVALID_GRID_POSITION
 	var nearest_score := INF
 
 	for candidate in candidates:
 		if not _is_target_cell_walkable(candidate, actor_footprint):
 			continue
-		var path_score := _get_grid_path_score(start_cell, candidate)
+		var path_score := _get_grid_distance_score(distance_map, candidate)
 		if path_score < 0.0:
 			continue
 		var candidate_position := _room_map.grid_to_world_area_center(candidate, actor_footprint)
@@ -397,7 +480,7 @@ func _get_grid_path_velocity_to_target(target_cell: Vector2i) -> Vector2:
 
 func _get_grid_path_score_to_target(target_cell: Vector2i) -> float:
 	var start_cell := _get_current_or_nearest_walkable_top_left_cell(false)
-	return _get_grid_path_score(start_cell, target_cell)
+	return _get_grid_distance_score(_get_grid_distance_map(start_cell), target_cell)
 
 
 func _get_grid_path_score(start_cell: Vector2i, target_cell: Vector2i) -> float:
@@ -405,10 +488,47 @@ func _get_grid_path_score(start_cell: Vector2i, target_cell: Vector2i) -> float:
 		return -1.0
 	if start_cell == target_cell:
 		return 0.0
-	var path := _find_grid_path(start_cell, target_cell)
-	if path.is_empty():
+	return _get_grid_distance_score(_get_grid_distance_map(start_cell), target_cell)
+
+
+func _get_grid_distance_map(start_cell: Vector2i) -> Dictionary:
+	var distances: Dictionary = {}
+	var footprint := _get_actor_grid_footprint()
+	if not _is_valid_grid_position(start_cell):
+		return distances
+	if not _is_target_cell_walkable(start_cell, footprint):
+		return distances
+
+	var frontier: Array[Vector2i] = [start_cell]
+	distances[_grid_key(start_cell)] = 0
+	var read_index := 0
+	var steps: Array[Vector2i] = [Vector2i.RIGHT, Vector2i.DOWN, Vector2i.LEFT, Vector2i.UP]
+
+	while read_index < frontier.size():
+		var current := frontier[read_index]
+		read_index += 1
+		var current_distance := int(distances[_grid_key(current)])
+
+		for step in steps:
+			var next_cell := current + step
+			var next_key := _grid_key(next_cell)
+			if distances.has(next_key):
+				continue
+			if not _is_target_cell_walkable(next_cell, footprint):
+				continue
+			distances[next_key] = current_distance + 1
+			frontier.append(next_cell)
+
+	return distances
+
+
+func _get_grid_distance_score(distance_map: Dictionary, target_cell: Vector2i) -> float:
+	if not _is_valid_grid_position(target_cell):
 		return -1.0
-	return float(path.size())
+	var target_key := _grid_key(target_cell)
+	if not distance_map.has(target_key):
+		return -1.0
+	return float(int(distance_map[target_key]))
 
 
 func _find_grid_path(start_cell: Vector2i, target_cell: Vector2i) -> Array[Vector2i]:
@@ -591,6 +711,8 @@ func _has_property(object: Object, property_name: StringName) -> bool:
 func _resolve_refs() -> void:
 	if _body == null:
 		_body = get_parent() as CharacterBody2D
+	if _needs_module == null and not needs_module_path.is_empty():
+		_needs_module = get_node_or_null(needs_module_path) as CharacterNeedsModule
 	if _need_planner == null and not need_planner_path.is_empty():
 		_need_planner = get_node_or_null(need_planner_path) as NeedDrivenAIPlanner
 	if _furniture_root == null and not furniture_root_path.is_empty():

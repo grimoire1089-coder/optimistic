@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="FoodItemData" format=3]
+
+[ext_resource type="Script" uid="uid://cgyi4b7bbmqn" path="res://Scripts/Items/Food/FoodItemData.gd" id="1_item_data"]
+[ext_resource type="Texture2D" uid="uid://dsnumiauoviid" path="res://Assets/Items/Icons/Tool/Lapis_001.png" id="2_lapis_icon"]
+
+[resource]
+script = ExtResource("1_item_data")
+item_id = &"tool_0001_lapis"
+display_name = "ラピス"
+description = "通信・決済・魔導操作を一体化した、デカダンス住民に不可欠なスマート端末。"
+icon = ExtResource("2_lapis_icon")
+category_id = &"tools"
+stack_max = 1
+can_discard = false
+can_transfer = false

@@ -219,16 +219,23 @@ func _draw_ai_movement_debug_highlight() -> void:
 
 	var footprint := _get_behavior_footprint(behavior)
 	var path_cells := _get_behavior_path_cells(behavior)
+	var has_movement_highlight := false
 	for path_cell in path_cells:
 		_draw_grid_area_highlight(path_cell, footprint, ai_movement_path_fill_color, ai_movement_path_border_color, 1.0)
+		has_movement_highlight = true
 
 	var next_cell := _get_behavior_next_cell(behavior, path_cells)
 	if _is_valid_debug_cell(next_cell) and is_grid_area_inside(next_cell, footprint):
 		_draw_grid_area_highlight(next_cell, footprint, ai_movement_next_fill_color, ai_movement_next_border_color, 3.0)
+		has_movement_highlight = true
 
 	var target_cell := _get_behavior_target_cell(behavior, path_cells)
 	if _is_valid_debug_cell(target_cell) and is_grid_area_inside(target_cell, footprint):
 		_draw_grid_area_highlight(target_cell, footprint, ai_movement_target_fill_color, ai_movement_target_border_color, 3.0)
+		has_movement_highlight = true
+
+	if not has_movement_highlight:
+		return
 
 	var actor := behavior.get_parent() as Node2D
 	if actor != null:
@@ -274,6 +281,10 @@ func _is_active_ai_movement_behavior(node: Node) -> bool:
 	if node.call("is_active") != true:
 		return false
 	if node.has_method("is_sleeping") and node.call("is_sleeping") == true:
+		return false
+	if node.has_method("is_sitting") and node.call("is_sitting") == true:
+		return false
+	if node.has_method("is_using_lapis") and node.call("is_using_lapis") == true:
 		return false
 	return _has_movement_debug_data(node)
 

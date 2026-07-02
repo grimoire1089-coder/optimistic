@@ -9,6 +9,7 @@ const BUILD_LOCK_META := &"build_locked_by_sleep"
 var _room_map: RoomMapGridModule
 var _furniture_root: Node2D
 var _occupied_cells: Dictionary = {}
+var _layout_version := 0
 
 
 func _ready() -> void:
@@ -43,6 +44,7 @@ func sync_occupied_cells_from_furniture_root() -> void:
 	_resolve_refs()
 	_occupied_cells.clear()
 	if _furniture_root == null:
+		_mark_layout_changed()
 		return
 	for child in _furniture_root.get_children():
 		var furniture := child as Node2D
@@ -55,6 +57,7 @@ func sync_occupied_cells_from_furniture_root() -> void:
 		if furniture.has_meta("grid_footprint"):
 			footprint = furniture.get_meta("grid_footprint", footprint)
 		_register_furniture_cells(furniture, grid_position, footprint)
+	_mark_layout_changed()
 
 
 func can_place_at(grid_position: Vector2i, footprint: Vector2i = Vector2i(1, 1)) -> bool:
@@ -229,6 +232,10 @@ func get_furniture_root() -> Node2D:
 	return _furniture_root
 
 
+func get_layout_version() -> int:
+	return _layout_version
+
+
 func sync_furniture_to_room_grid(furniture: Node2D) -> void:
 	_resolve_refs()
 	if furniture == null or _room_map == null:
@@ -249,6 +256,7 @@ func clear_furniture() -> void:
 		if furniture != null:
 			furniture.queue_free()
 	_occupied_cells.clear()
+	_mark_layout_changed()
 
 
 func _register_furniture(
@@ -269,6 +277,7 @@ func _register_furniture(
 		furniture.set_meta("furniture_id", furniture_id)
 
 	_register_furniture_cells(furniture, grid_position, footprint)
+	_mark_layout_changed()
 
 
 func _register_furniture_cells(
@@ -281,9 +290,17 @@ func _register_furniture_cells(
 
 
 func _unregister_furniture(furniture: Node2D) -> void:
+	var removed := false
 	for key in _occupied_cells.keys():
 		if _occupied_cells[key] == furniture:
 			_occupied_cells.erase(key)
+			removed = true
+	if removed:
+		_mark_layout_changed()
+
+
+func _mark_layout_changed() -> void:
+	_layout_version += 1
 
 
 func _get_unique_furniture_nodes() -> Array[Node2D]:

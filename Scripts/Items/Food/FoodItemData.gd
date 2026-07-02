@@ -9,6 +9,8 @@ class_name FoodItemData
 @export_range(1, 999, 1) var stack_max: int = 99
 @export_range(0, 999999, 1) var buy_price: int = 0
 @export_range(0, 999999, 1) var sell_price: int = 0
+@export var can_discard: bool = true
+@export var can_transfer: bool = true
 @export var need_effect: NeedEffectData
 
 
@@ -35,5 +37,7 @@ func to_inventory_entry(amount: int = 1) -> Dictionary:
 		"description": description,
 		"buy_price": buy_price,
 		"sell_price": sell_price,
+		"can_discard": can_discard,
+		"can_transfer": can_transfer,
 		"need_effect_path": get_need_effect_path(),
 	}

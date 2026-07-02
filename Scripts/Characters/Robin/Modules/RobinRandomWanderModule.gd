@@ -29,6 +29,11 @@ var _is_idle: bool = false
 var _direction: Vector2 = Vector2.DOWN
 var _walk_directions: Array[Vector2] = []
 var _path_cells: Array[Vector2i] = []
+var _walkable_cells_cache: Array[Vector2i] = []
+var _walkable_cells_cache_version := -1
+var _walkable_cells_cache_room_map: RoomMapGridModule
+var _walkable_cells_cache_placement: Node
+var _walkable_cells_cache_footprint := Vector2i.ZERO
 
 
 func setup(body: Node2D) -> void:
@@ -46,6 +51,7 @@ func set_movement_area_provider_path(next_provider_path: NodePath) -> void:
 		return
 	movement_area_provider_path = next_provider_path
 	_movement_area_provider = null
+	_invalidate_walkable_cells_cache()
 	_resolve_movement_area_provider()
 	_path_cells.clear()
 	_pick_next_action()
@@ -309,6 +315,13 @@ func _get_all_walkable_top_left_cells() -> Array[Vector2i]:
 
 	var grid_size := room_map.get_grid_size()
 	var footprint := _get_safe_actor_grid_footprint()
+	var furniture_placement := _get_furniture_placement_module()
+	var layout_version := _get_walkable_layout_version(furniture_placement)
+	if _walkable_cells_cache_room_map == room_map:
+		if _walkable_cells_cache_placement == furniture_placement:
+			if _walkable_cells_cache_footprint == footprint and _walkable_cells_cache_version == layout_version:
+				return _walkable_cells_cache
+
 	var max_x := grid_size.x - footprint.x
 	var max_y := grid_size.y - footprint.y
 	if max_x < 0 or max_y < 0:
@@ -319,6 +332,11 @@ func _get_all_walkable_top_left_cells() -> Array[Vector2i]:
 			var cell := Vector2i(x, y)
 			if _is_actor_grid_area_walkable(cell):
 				cells.append(cell)
+	_walkable_cells_cache = cells
+	_walkable_cells_cache_room_map = room_map
+	_walkable_cells_cache_placement = furniture_placement
+	_walkable_cells_cache_footprint = footprint
+	_walkable_cells_cache_version = layout_version
 	return cells
 
 
@@ -427,6 +445,20 @@ func _get_room_map() -> RoomMapGridModule:
 func _get_furniture_placement_module() -> Node:
 	_resolve_furniture_placement_module()
 	return _furniture_placement_module
+
+
+func _get_walkable_layout_version(furniture_placement: Node) -> int:
+	if furniture_placement != null and furniture_placement.has_method("get_layout_version"):
+		return int(furniture_placement.call("get_layout_version"))
+	return 0
+
+
+func _invalidate_walkable_cells_cache() -> void:
+	_walkable_cells_cache.clear()
+	_walkable_cells_cache_version = -1
+	_walkable_cells_cache_room_map = null
+	_walkable_cells_cache_placement = null
+	_walkable_cells_cache_footprint = Vector2i.ZERO
 
 
 func _grid_key(grid_position: Vector2i) -> String:

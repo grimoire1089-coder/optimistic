@@ -171,7 +171,10 @@ func get_velocity(delta: float) -> Vector2:
 
 	to_target = target_position - _body.global_position
 	target_distance = to_target.length()
-	if target_distance <= maxf(arrival_distance, refill_distance) or _is_close_enough_to_refill(_target_kitchen):
+	var can_refill_after_path_failure := target_distance <= maxf(arrival_distance, refill_distance)
+	can_refill_after_path_failure = can_refill_after_path_failure or _is_close_enough_to_refill(_target_kitchen)
+	can_refill_after_path_failure = can_refill_after_path_failure or _is_near_refill_target_cell(target_cell)
+	if can_refill_after_path_failure:
 		_begin_created_water_bottle_drink()
 		return Vector2.ZERO
 
@@ -415,19 +418,21 @@ func _find_nearest_kitchen_module() -> Node2D:
 
 	var nearest: Node2D = null
 	var nearest_score := INF
+	var start_cell := _get_current_or_nearest_walkable_top_left_cell(false)
+	var distance_map := _get_grid_distance_map(start_cell)
 	for child in _furniture_root.get_children():
 		var furniture := child as Node2D
 		if furniture == null:
 			continue
 		if not _is_kitchen_module(furniture):
 			continue
-		var target_cell := _get_kitchen_use_cell(furniture)
+		var target_cell := _get_kitchen_use_cell_with_distance_map(furniture, distance_map)
 		if not _is_valid_grid_position(target_cell):
 			if _is_close_enough_to_refill(furniture):
 				return furniture
 			continue
 		var target_position := _room_map.grid_to_world_area_center(target_cell, _get_actor_grid_footprint())
-		var path_score := _get_grid_path_score_to_target(target_cell)
+		var path_score := _get_grid_distance_score(distance_map, target_cell)
 		if path_score < 0.0 and not _is_close_enough_to_refill(furniture):
 			continue
 		var distance_score := _body.global_position.distance_squared_to(target_position) / 1000000.0
@@ -474,6 +479,16 @@ func _is_close_enough_to_refill(kitchen: Node2D) -> bool:
 	return _body.global_position.distance_to(nearest_position) <= nearby_refill_distance
 
 
+func _is_near_refill_target_cell(target_cell: Vector2i) -> bool:
+	if _body == null or _room_map == null or not _is_valid_grid_position(target_cell):
+		return false
+	var current_cell := _get_current_actor_top_left_grid_position()
+	if not _is_valid_grid_position(current_cell):
+		return false
+	var grid_delta := current_cell - target_cell
+	return abs(grid_delta.x) <= 1 and abs(grid_delta.y) <= 1
+
+
 func _get_nearest_point_on_furniture_area(furniture: Node2D, world_position: Vector2) -> Vector2:
 	if furniture == null:
 		return world_position
@@ -501,6 +516,11 @@ func _get_furniture_grid_position(furniture: Node2D) -> Vector2i:
 
 
 func _get_kitchen_use_cell(kitchen: Node2D) -> Vector2i:
+	var start_cell := _get_current_or_nearest_walkable_top_left_cell(false)
+	return _get_kitchen_use_cell_with_distance_map(kitchen, _get_grid_distance_map(start_cell))
+
+
+func _get_kitchen_use_cell_with_distance_map(kitchen: Node2D, distance_map: Dictionary) -> Vector2i:
 	if kitchen == null or _room_map == null:
 		return INVALID_GRID_POSITION
 	if not kitchen.has_meta("grid_position"):
@@ -512,14 +532,13 @@ func _get_kitchen_use_cell(kitchen: Node2D) -> Vector2i:
 	var kitchen_footprint := _get_furniture_footprint(kitchen)
 	var actor_footprint := _get_actor_grid_footprint()
 	var candidates := _get_side_candidate_cells(kitchen_cell, kitchen_footprint, actor_footprint)
-	var start_cell := _get_current_or_nearest_walkable_top_left_cell(false)
 	var nearest_cell := INVALID_GRID_POSITION
 	var nearest_score := INF
 
 	for candidate in candidates:
 		if not _is_target_cell_walkable(candidate, actor_footprint):
 			continue
-		var path_score := _get_grid_path_score(start_cell, candidate)
+		var path_score := _get_grid_distance_score(distance_map, candidate)
 		if path_score < 0.0:
 			continue
 		var candidate_position := _room_map.grid_to_world_area_center(candidate, actor_footprint)
@@ -594,7 +613,7 @@ func _get_grid_path_velocity_to_target(target_cell: Vector2i, target_distance: f
 
 func _get_grid_path_score_to_target(target_cell: Vector2i) -> float:
 	var start_cell := _get_current_or_nearest_walkable_top_left_cell(false)
-	return _get_grid_path_score(start_cell, target_cell)
+	return _get_grid_distance_score(_get_grid_distance_map(start_cell), target_cell)
 
 
 func _get_grid_path_score(start_cell: Vector2i, target_cell: Vector2i) -> float:
@@ -602,10 +621,47 @@ func _get_grid_path_score(start_cell: Vector2i, target_cell: Vector2i) -> float:
 		return -1.0
 	if start_cell == target_cell:
 		return 0.0
-	var path := _find_grid_path(start_cell, target_cell)
-	if path.is_empty():
+	return _get_grid_distance_score(_get_grid_distance_map(start_cell), target_cell)
+
+
+func _get_grid_distance_map(start_cell: Vector2i) -> Dictionary:
+	var distances: Dictionary = {}
+	var footprint := _get_actor_grid_footprint()
+	if not _is_valid_grid_position(start_cell):
+		return distances
+	if not _is_target_cell_walkable(start_cell, footprint):
+		return distances
+
+	var frontier: Array[Vector2i] = [start_cell]
+	distances[_grid_key(start_cell)] = 0
+	var read_index := 0
+	var steps: Array[Vector2i] = [Vector2i.RIGHT, Vector2i.DOWN, Vector2i.LEFT, Vector2i.UP]
+
+	while read_index < frontier.size():
+		var current := frontier[read_index]
+		read_index += 1
+		var current_distance := int(distances[_grid_key(current)])
+
+		for step in steps:
+			var next_cell := current + step
+			var next_key := _grid_key(next_cell)
+			if distances.has(next_key):
+				continue
+			if not _is_target_cell_walkable(next_cell, footprint):
+				continue
+			distances[next_key] = current_distance + 1
+			frontier.append(next_cell)
+
+	return distances
+
+
+func _get_grid_distance_score(distance_map: Dictionary, target_cell: Vector2i) -> float:
+	if not _is_valid_grid_position(target_cell):
 		return -1.0
-	return float(path.size())
+	var target_key := _grid_key(target_cell)
+	if not distance_map.has(target_key):
+		return -1.0
+	return float(int(distance_map[target_key]))
 
 
 func _find_grid_path(start_cell: Vector2i, target_cell: Vector2i) -> Array[Vector2i]:

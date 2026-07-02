@@ -19,6 +19,9 @@ var _room_map: RoomMapGridModule
 var _map_travel_module: Node
 var _furniture_placement_module: Node
 var _target_entrance: Node2D
+var _target_cell: Vector2i = INVALID_GRID_POSITION
+var _target_entrance_grid_position: Vector2i = INVALID_GRID_POSITION
+var _target_entrance_grid_footprint: Vector2i = Vector2i.ZERO
 var _target_map_id: StringName = &""
 var _active := false
 var _using := false
@@ -55,12 +58,39 @@ func request_travel_to_entrance(entrance: Node2D, target_map_id: StringName) -> 
 	if not _is_valid_grid_position(use_cell):
 		return false
 	_target_entrance = entrance
+	_target_cell = use_cell
+	_target_entrance_grid_position = _get_furniture_grid_position(entrance)
+	_target_entrance_grid_footprint = _get_furniture_footprint(entrance)
 	_target_map_id = target_map_id
 	_active = true
 	_using = false
 	_use_timer = 0.0
 	_path_cells.clear()
 	return true
+
+
+func _has_valid_target_entrance() -> bool:
+	if _target_entrance == null:
+		return false
+	if not is_instance_valid(_target_entrance):
+		return false
+	if _get_furniture_grid_position(_target_entrance) != _target_entrance_grid_position:
+		return false
+	if _get_furniture_footprint(_target_entrance) != _target_entrance_grid_footprint:
+		return false
+	if not _is_valid_grid_position(_target_cell):
+		return false
+	return _is_target_cell_walkable(_target_cell, _get_actor_grid_footprint())
+
+
+func _refresh_target_entrance_cell() -> bool:
+	if _target_entrance == null or not is_instance_valid(_target_entrance):
+		return false
+	_target_entrance_grid_position = _get_furniture_grid_position(_target_entrance)
+	_target_entrance_grid_footprint = _get_furniture_footprint(_target_entrance)
+	_target_cell = _get_entrance_use_cell(_target_entrance)
+	_path_cells.clear()
+	return _is_valid_grid_position(_target_cell)
 
 
 func cancel_travel() -> void:
@@ -79,11 +109,11 @@ func get_velocity(delta: float) -> Vector2:
 		_tick_use(delta)
 		return Vector2.ZERO
 
-	var target_cell := _get_entrance_use_cell(_target_entrance)
-	if not _is_valid_grid_position(target_cell):
+	if not _has_valid_target_entrance() and not _refresh_target_entrance_cell():
 		_reset()
 		return Vector2.ZERO
 
+	var target_cell := _target_cell
 	var use_position := _room_map.grid_to_world_area_center(target_cell, _get_actor_grid_footprint())
 	var to_target := use_position - _body.global_position
 	if to_target.length() <= arrive_distance:
@@ -190,6 +220,11 @@ func _get_entrance_spawn_cell(room_map: RoomMapGridModule, entrance: Node2D) -> 
 
 
 func _get_entrance_use_cell(entrance: Node2D) -> Vector2i:
+	var start_cell := _get_current_or_nearest_walkable_top_left_cell(false)
+	return _get_entrance_use_cell_with_distance_map(entrance, _get_grid_distance_map(start_cell))
+
+
+func _get_entrance_use_cell_with_distance_map(entrance: Node2D, distance_map: Dictionary) -> Vector2i:
 	if entrance == null or _room_map == null:
 		return INVALID_GRID_POSITION
 	if not entrance.has_meta("grid_position"):
@@ -200,14 +235,13 @@ func _get_entrance_use_cell(entrance: Node2D) -> Vector2i:
 	var entrance_footprint := _get_furniture_footprint(entrance)
 	var actor_footprint := _get_actor_grid_footprint()
 	var candidates := _get_side_candidate_cells(entrance_cell, entrance_footprint, actor_footprint)
-	var start_cell := _get_current_or_nearest_walkable_top_left_cell(false)
 	var nearest_cell := INVALID_GRID_POSITION
 	var nearest_score := INF
 
 	for candidate in candidates:
 		if not _is_target_cell_walkable(candidate, actor_footprint):
 			continue
-		var path_score := _get_grid_path_score(start_cell, candidate)
+		var path_score := _get_grid_distance_score(distance_map, candidate)
 		if path_score < 0.0:
 			continue
 		var candidate_position := _room_map.grid_to_world_area_center(candidate, actor_footprint)
@@ -283,10 +317,47 @@ func _get_grid_path_score(start_cell: Vector2i, target_cell: Vector2i) -> float:
 		return -1.0
 	if start_cell == target_cell:
 		return 0.0
-	var path := _find_grid_path(start_cell, target_cell)
-	if path.is_empty():
+	return _get_grid_distance_score(_get_grid_distance_map(start_cell), target_cell)
+
+
+func _get_grid_distance_map(start_cell: Vector2i) -> Dictionary:
+	var distances: Dictionary = {}
+	var footprint := _get_actor_grid_footprint()
+	if not _is_valid_grid_position(start_cell):
+		return distances
+	if not _is_target_cell_walkable(start_cell, footprint):
+		return distances
+
+	var frontier: Array[Vector2i] = [start_cell]
+	distances[_grid_key(start_cell)] = 0
+	var read_index := 0
+	var steps: Array[Vector2i] = [Vector2i.RIGHT, Vector2i.DOWN, Vector2i.LEFT, Vector2i.UP]
+
+	while read_index < frontier.size():
+		var current := frontier[read_index]
+		read_index += 1
+		var current_distance := int(distances[_grid_key(current)])
+
+		for step in steps:
+			var next_cell := current + step
+			var next_key := _grid_key(next_cell)
+			if distances.has(next_key):
+				continue
+			if not _is_target_cell_walkable(next_cell, footprint):
+				continue
+			distances[next_key] = current_distance + 1
+			frontier.append(next_cell)
+
+	return distances
+
+
+func _get_grid_distance_score(distance_map: Dictionary, target_cell: Vector2i) -> float:
+	if not _is_valid_grid_position(target_cell):
 		return -1.0
-	return float(path.size())
+	var target_key := _grid_key(target_cell)
+	if not distance_map.has(target_key):
+		return -1.0
+	return float(int(distance_map[target_key]))
 
 
 func _find_grid_path(start_cell: Vector2i, target_cell: Vector2i) -> Array[Vector2i]:
@@ -444,12 +515,25 @@ func _get_furniture_footprint(furniture: Node2D) -> Vector2i:
 	return Vector2i(1, 1)
 
 
+func _get_furniture_grid_position(furniture: Node2D) -> Vector2i:
+	if furniture == null or not furniture.has_meta("grid_position"):
+		return INVALID_GRID_POSITION
+	var grid_position: Variant = furniture.get_meta("grid_position", INVALID_GRID_POSITION)
+	if grid_position is Vector2i:
+		var typed_grid_position: Vector2i = grid_position
+		return typed_grid_position
+	return INVALID_GRID_POSITION
+
+
 func _get_actor_grid_footprint() -> Vector2i:
 	return Vector2i(maxi(actor_grid_footprint.x, 1), maxi(actor_grid_footprint.y, 1))
 
 
 func _reset() -> void:
 	_target_entrance = null
+	_target_cell = INVALID_GRID_POSITION
+	_target_entrance_grid_position = INVALID_GRID_POSITION
+	_target_entrance_grid_footprint = Vector2i.ZERO
 	_target_map_id = &""
 	_active = false
 	_using = false

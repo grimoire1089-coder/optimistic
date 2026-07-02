@@ -75,6 +75,8 @@ func _physics_process(delta: float) -> void:
 func _should_watch_movement_for_action(action: StringName) -> bool:
 	if action != &"sleeping":
 		if action == &"sitting" and _sit_behavior != null:
+			if _sit_behavior.has_method("is_using_lapis") and _sit_behavior.call("is_using_lapis") == true:
+				return false
 			if _sit_behavior.has_method("is_sitting") and _sit_behavior.call("is_sitting") == true:
 				return false
 		return true

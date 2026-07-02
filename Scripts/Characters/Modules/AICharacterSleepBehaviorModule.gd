@@ -34,7 +34,7 @@ const BUILD_LOCK_REASON_META := &"build_lock_reason"
 @export var stuck_sleep_start_distance: float = 24.0
 @export var stuck_floor_sleep_enabled: bool = true
 @export var snap_to_grid_path_on_stuck: bool = true
-@export var use_direct_grid_path_movement: bool = true
+@export var use_direct_grid_path_movement: bool = false
 @export var actor_grid_footprint: Vector2i = Vector2i(2, 4)
 
 var _body: CharacterBody2D
@@ -45,6 +45,8 @@ var _furniture_root: Node
 var _furniture_placement_module: Node
 var _room_map: RoomMapGridModule
 var _target_bedding: Node2D
+var _target_bedding_grid_position: Vector2i = INVALID_GRID_POSITION
+var _target_bedding_grid_footprint: Vector2i = Vector2i.ZERO
 var _sleeping_bedding: Node2D
 var _floor_sleep_mood_entry: CharacterMoodEntryData
 var _is_active := false
@@ -153,8 +155,7 @@ func get_velocity(delta: float) -> Vector2:
 		_recover_energy(delta)
 		return Vector2.ZERO
 
-	_target_bedding = _find_nearest_bedding()
-	if _target_bedding == null:
+	if not _ensure_bedding_target():
 		_stop_sleeping()
 		return Vector2.ZERO
 
@@ -245,10 +246,8 @@ func _start_sleeping(floor_sleeping: bool) -> void:
 	_is_active = true
 	_is_sleeping = true
 	_is_floor_sleeping = floor_sleeping
-	_target_bedding = null
-	_clear_path_target()
+	_clear_bedding_target()
 	_facing_direction = Vector2.DOWN
-	_path_cells.clear()
 	_reset_stuck_watch()
 	_set_sleep_need_decay_enabled(false)
 
@@ -277,15 +276,59 @@ func _get_energy_ratio() -> float:
 	return _needs_module.get_need_ratio(sleep_need_id, 0.0)
 
 
+func _ensure_bedding_target() -> bool:
+	if _has_valid_bedding_target():
+		return true
+	_set_bedding_target(_find_nearest_bedding())
+	return _target_bedding != null and _is_valid_grid_position(_path_target_cell)
+
+
+func _has_valid_bedding_target() -> bool:
+	if _target_bedding == null:
+		return false
+	if not is_instance_valid(_target_bedding):
+		return false
+	if _furniture_root != null and _target_bedding.get_parent() != _furniture_root:
+		return false
+	if not _is_bedding(_target_bedding):
+		return false
+	if _get_furniture_grid_position(_target_bedding) != _target_bedding_grid_position:
+		return false
+	if _get_bedding_footprint(_target_bedding) != _target_bedding_grid_footprint:
+		return false
+	if _is_valid_grid_position(_path_target_cell):
+		return _is_sleep_target_cell_walkable(_path_target_cell, _get_actor_grid_footprint())
+	return true
+
+
+func _set_bedding_target(bedding: Node2D) -> void:
+	if bedding == null:
+		_clear_bedding_target()
+		return
+	_target_bedding = bedding
+	_target_bedding_grid_position = _get_furniture_grid_position(bedding)
+	_target_bedding_grid_footprint = _get_bedding_footprint(bedding)
+	_clear_path_target()
+	_path_target_bedding = _target_bedding
+	_path_target_cell = _get_bedding_side_sleep_cell(_target_bedding)
+	_path_cells.clear()
+
+
+func _clear_bedding_target() -> void:
+	_target_bedding = null
+	_target_bedding_grid_position = INVALID_GRID_POSITION
+	_target_bedding_grid_footprint = Vector2i.ZERO
+	_clear_path_target()
+	_path_cells.clear()
+
+
 func _stop_sleeping() -> void:
 	_clear_sleeping_bedding_lock()
 	_set_sleep_need_decay_enabled(true)
 	_is_active = false
 	_is_sleeping = false
 	_is_floor_sleeping = false
-	_target_bedding = null
-	_clear_path_target()
-	_path_cells.clear()
+	_clear_bedding_target()
 	_reset_stuck_watch()
 
 
@@ -297,9 +340,7 @@ func _handle_stuck_sleep_attempt(target_cell: Vector2i = INVALID_GRID_POSITION) 
 	if stuck_floor_sleep_enabled:
 		_start_floor_sleep()
 		return
-	_target_bedding = null
-	_clear_path_target()
-	_path_cells.clear()
+	_clear_bedding_target()
 	_reset_stuck_watch()
 
 
@@ -485,25 +526,31 @@ func _set_sleep_need_decay_enabled(enabled: bool) -> void:
 
 
 func _find_nearest_bedding() -> Node2D:
-	if _furniture_root == null:
+	if _furniture_root == null or _body == null or _room_map == null:
 		return null
 
 	var nearest: Node2D = null
-	var nearest_distance := INF
+	var nearest_score := INF
+	var start_cell := _get_current_or_nearest_walkable_top_left_cell(false)
+	var distance_map := _get_grid_distance_map(start_cell)
 	for child in _furniture_root.get_children():
 		var furniture := child as Node2D
 		if furniture == null:
 			continue
 		if not _is_bedding(furniture):
 			continue
-		var sleep_cell: Vector2i = _get_bedding_side_sleep_cell(furniture)
+		var sleep_cell: Vector2i = _get_bedding_side_sleep_cell_with_distance_map(furniture, distance_map)
 		if not _is_valid_grid_position(sleep_cell):
 			continue
 		var sleep_position := _room_map.grid_to_world_area_center(sleep_cell, _get_actor_grid_footprint())
-		var distance := _body.global_position.distance_squared_to(sleep_position)
-		if nearest == null or distance < nearest_distance:
+		var path_score := _get_grid_distance_score(distance_map, sleep_cell)
+		if path_score < 0.0:
+			continue
+		var distance_score := _body.global_position.distance_squared_to(sleep_position) / 1000000.0
+		var score := path_score + distance_score
+		if nearest == null or score < nearest_score:
 			nearest = furniture
-			nearest_distance = distance
+			nearest_score = score
 	return nearest
 
 
@@ -553,6 +600,11 @@ func _get_bedding_side_sleep_position(bedding: Node2D) -> Vector2:
 
 
 func _get_bedding_side_sleep_cell(bedding: Node2D) -> Vector2i:
+	var start_cell := _get_current_or_nearest_walkable_top_left_cell(false)
+	return _get_bedding_side_sleep_cell_with_distance_map(bedding, _get_grid_distance_map(start_cell))
+
+
+func _get_bedding_side_sleep_cell_with_distance_map(bedding: Node2D, distance_map: Dictionary) -> Vector2i:
 	if bedding == null or _room_map == null:
 		return INVALID_GRID_POSITION
 	if not bedding.has_meta("grid_position"):
@@ -563,13 +615,12 @@ func _get_bedding_side_sleep_cell(bedding: Node2D) -> Vector2i:
 	var bedding_footprint := _get_bedding_footprint(bedding)
 	var actor_footprint := _get_actor_grid_footprint()
 	var candidates := _get_bedding_side_candidate_cells(bedding_cell, bedding_footprint, actor_footprint)
-	var start_cell := _get_current_or_nearest_walkable_top_left_cell(false)
 	var nearest_cell := INVALID_GRID_POSITION
 	var nearest_score := INF
 	for candidate in candidates:
 		if not _is_sleep_target_cell_walkable(candidate, actor_footprint):
 			continue
-		var path_score := _get_grid_path_score(start_cell, candidate)
+		var path_score := _get_grid_distance_score(distance_map, candidate)
 		if path_score < 0.0:
 			continue
 		var candidate_position := _room_map.grid_to_world_area_center(candidate, actor_footprint)
@@ -681,10 +732,47 @@ func _get_grid_path_score(start_cell: Vector2i, target_cell: Vector2i) -> float:
 		return -1.0
 	if start_cell == target_cell:
 		return 0.0
-	var path := _find_grid_path(start_cell, target_cell)
-	if path.is_empty():
+	return _get_grid_distance_score(_get_grid_distance_map(start_cell), target_cell)
+
+
+func _get_grid_distance_map(start_cell: Vector2i) -> Dictionary:
+	var distances: Dictionary = {}
+	var footprint := _get_actor_grid_footprint()
+	if not _is_valid_grid_position(start_cell):
+		return distances
+	if not _is_sleep_target_cell_walkable(start_cell, footprint):
+		return distances
+
+	var frontier: Array[Vector2i] = [start_cell]
+	distances[_grid_key(start_cell)] = 0
+	var read_index := 0
+	var steps: Array[Vector2i] = [Vector2i.RIGHT, Vector2i.DOWN, Vector2i.LEFT, Vector2i.UP]
+
+	while read_index < frontier.size():
+		var current := frontier[read_index]
+		read_index += 1
+		var current_distance := int(distances[_grid_key(current)])
+
+		for step in steps:
+			var next_cell := current + step
+			var next_key := _grid_key(next_cell)
+			if distances.has(next_key):
+				continue
+			if not _is_sleep_target_cell_walkable(next_cell, footprint):
+				continue
+			distances[next_key] = current_distance + 1
+			frontier.append(next_cell)
+
+	return distances
+
+
+func _get_grid_distance_score(distance_map: Dictionary, target_cell: Vector2i) -> float:
+	if not _is_valid_grid_position(target_cell):
 		return -1.0
-	return float(path.size())
+	var target_key := _grid_key(target_cell)
+	if not distance_map.has(target_key):
+		return -1.0
+	return float(int(distance_map[target_key]))
 
 
 func _find_grid_path(start_cell: Vector2i, target_cell: Vector2i) -> Array[Vector2i]:
@@ -784,6 +872,16 @@ func _is_sleep_target_cell_walkable(cell: Vector2i, footprint: Vector2i) -> bool
 	if _furniture_placement_module != null and _furniture_placement_module.has_method("can_place_at"):
 		return _furniture_placement_module.call("can_place_at", cell, footprint) == true
 	return true
+
+
+func _get_furniture_grid_position(furniture: Node2D) -> Vector2i:
+	if furniture == null or not furniture.has_meta("grid_position"):
+		return INVALID_GRID_POSITION
+	var grid_position: Variant = furniture.get_meta("grid_position", INVALID_GRID_POSITION)
+	if grid_position is Vector2i:
+		var typed_grid_position: Vector2i = grid_position
+		return typed_grid_position
+	return INVALID_GRID_POSITION
 
 
 func _get_bedding_footprint(bedding: Node2D) -> Vector2i:
