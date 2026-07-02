@@ -13,6 +13,7 @@ const TOGGLE_MARGIN := Vector2(24.0, 24.0)
 
 var _actor: RobinWanderActor
 var _needs_module: CharacterNeedsModule
+var _modal_guard: Control
 var _toggle_button: Button
 var _panel: PanelContainer
 var _status_label: Label
@@ -38,9 +39,10 @@ func _ready() -> void:
 	offset_bottom = 0.0
 
 	_resolve_refs()
+	_build_modal_guard()
 	_build_toggle_button()
 	_build_panel()
-	_bring_toggle_to_front()
+	_bring_debug_ui_to_front()
 	_refresh_panel()
 	set_process(true)
 
@@ -52,6 +54,24 @@ func _process(delta: float) -> void:
 		return
 	_refresh_timer = maxf(refresh_interval_seconds, 0.05)
 	_refresh_panel()
+
+
+func _build_modal_guard() -> void:
+	_modal_guard = Control.new()
+	_modal_guard.name = "AIDebugModalGuard"
+	_modal_guard.z_index = 1
+	_modal_guard.visible = false
+	_modal_guard.mouse_filter = Control.MOUSE_FILTER_STOP
+	_modal_guard.focus_mode = Control.FOCUS_NONE
+	_modal_guard.anchor_left = 0.0
+	_modal_guard.anchor_top = 0.0
+	_modal_guard.anchor_right = 1.0
+	_modal_guard.anchor_bottom = 1.0
+	_modal_guard.offset_left = 0.0
+	_modal_guard.offset_top = 0.0
+	_modal_guard.offset_right = 0.0
+	_modal_guard.offset_bottom = 0.0
+	add_child(_modal_guard)
 
 
 func _build_toggle_button() -> void:
@@ -231,19 +251,25 @@ func _on_close_pressed() -> void:
 
 
 func _set_panel_open(is_open: bool) -> void:
+	if _modal_guard != null:
+		_modal_guard.visible = is_open
 	if _panel != null:
 		_panel.visible = is_open
 	if _toggle_button != null:
 		_toggle_button.set_pressed_no_signal(is_open)
 		_toggle_button.text = "DBG-" if is_open else "DBG"
-		_bring_toggle_to_front()
+	_bring_debug_ui_to_front()
 	_refresh_panel()
 
 
-func _bring_toggle_to_front() -> void:
-	if _toggle_button == null:
-		return
-	_toggle_button.move_to_front()
+func _bring_debug_ui_to_front() -> void:
+	move_to_front()
+	if _modal_guard != null:
+		_modal_guard.move_to_front()
+	if _panel != null:
+		_panel.move_to_front()
+	if _toggle_button != null:
+		_toggle_button.move_to_front()
 
 
 func _on_need_delta_pressed(need_id: StringName, delta: float) -> void:
