@@ -2,12 +2,14 @@ extends Node
 class_name AICharacterActionItemDisplayModule
 
 @export var hydrate_behavior_path: NodePath = NodePath("../AICharacterHydrateBehaviorModule")
+@export var craft_behavior_path: NodePath = NodePath("../AICharacterCraftBehaviorModule")
 @export var item_center_offset: Vector2 = Vector2(0.0, -18.0)
 @export var item_display_size: Vector2 = Vector2(70.0, 70.0)
 @export var item_z_index: int = 190
 
 var _body: Node2D
 var _hydrate_behavior: Node
+var _craft_behavior: Node
 var _item_rect: TextureRect
 var _display_add_deferred := false
 var _current_icon_path := ""
@@ -59,6 +61,8 @@ func _update_display() -> void:
 
 
 func _get_active_item_source() -> Node:
+	if _craft_behavior != null and _should_show_source(_craft_behavior):
+		return _craft_behavior
 	if _hydrate_behavior != null and _should_show_source(_hydrate_behavior):
 		return _hydrate_behavior
 	return null
@@ -117,3 +121,5 @@ func _resolve_refs() -> void:
 		_body = get_parent() as Node2D
 	if _hydrate_behavior == null and not hydrate_behavior_path.is_empty():
 		_hydrate_behavior = get_node_or_null(hydrate_behavior_path)
+	if _craft_behavior == null and not craft_behavior_path.is_empty():
+		_craft_behavior = get_node_or_null(craft_behavior_path)
