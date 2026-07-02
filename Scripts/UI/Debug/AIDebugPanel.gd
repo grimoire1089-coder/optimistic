@@ -40,6 +40,7 @@ func _ready() -> void:
 	_resolve_refs()
 	_build_toggle_button()
 	_build_panel()
+	_bring_toggle_to_front()
 	_refresh_panel()
 	set_process(true)
 
@@ -56,6 +57,7 @@ func _process(delta: float) -> void:
 func _build_toggle_button() -> void:
 	_toggle_button = Button.new()
 	_toggle_button.name = "AIDebugToggleButton"
+	_toggle_button.z_index = 3
 	_toggle_button.custom_minimum_size = TOGGLE_SIZE
 	_toggle_button.size = TOGGLE_SIZE
 	_toggle_button.toggle_mode = true
@@ -73,6 +75,7 @@ func _build_toggle_button() -> void:
 func _build_panel() -> void:
 	_panel = PanelContainer.new()
 	_panel.name = "AIDebugPanelBody"
+	_panel.z_index = 2
 	_panel.custom_minimum_size = PANEL_SIZE
 	_panel.size = PANEL_SIZE
 	_panel.visible = false
@@ -94,11 +97,27 @@ func _build_panel() -> void:
 	rows.add_theme_constant_override("separation", 7)
 	margin.add_child(rows)
 
+	var title_row := HBoxContainer.new()
+	title_row.name = "TitleRow"
+	title_row.add_theme_constant_override("separation", 8)
+	rows.add_child(title_row)
+
 	var title := Label.new()
 	title.text = "AI DEBUG"
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	title.add_theme_color_override("font_color", Color(1.0, 0.82, 1.0, 1.0))
 	title.add_theme_font_size_override("font_size", 17)
-	rows.add_child(title)
+	title_row.add_child(title)
+
+	var close_button := Button.new()
+	close_button.name = "CloseButton"
+	close_button.custom_minimum_size = Vector2(52.0, 28.0)
+	close_button.text = "閉じる"
+	close_button.focus_mode = Control.FOCUS_NONE
+	close_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	close_button.pressed.connect(_on_close_pressed)
+	_apply_button_style(close_button, Color(0.055, 0.025, 0.045, 0.96), Color(1.0, 0.32, 0.72, 0.95), Color(1.0, 0.82, 0.92, 1.0))
+	title_row.add_child(close_button)
 
 	_status_label = Label.new()
 	_status_label.text = "対象: 未接続"
@@ -202,10 +221,29 @@ func _add_need_set_button(row: HBoxContainer, label_text: String, need_id: Strin
 
 
 func _on_toggle_pressed() -> void:
-	if _panel == null:
+	if _toggle_button == null:
 		return
-	_panel.visible = _toggle_button.button_pressed
+	_set_panel_open(_toggle_button.button_pressed)
+
+
+func _on_close_pressed() -> void:
+	_set_panel_open(false)
+
+
+func _set_panel_open(is_open: bool) -> void:
+	if _panel != null:
+		_panel.visible = is_open
+	if _toggle_button != null:
+		_toggle_button.set_pressed_no_signal(is_open)
+		_toggle_button.text = "DBG-" if is_open else "DBG"
+		_bring_toggle_to_front()
 	_refresh_panel()
+
+
+func _bring_toggle_to_front() -> void:
+	if _toggle_button == null:
+		return
+	_toggle_button.move_to_front()
 
 
 func _on_need_delta_pressed(need_id: StringName, delta: float) -> void:
