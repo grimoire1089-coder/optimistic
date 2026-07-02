@@ -57,6 +57,7 @@ var _stuck_timer := 0.0
 var _path_cells: Array[Vector2i] = []
 var _path_target_bedding: Node2D
 var _path_target_cell: Vector2i = INVALID_GRID_POSITION
+var _last_direct_move_target_position: Vector2 = Vector2(INF, INF)
 
 
 func setup(body: CharacterBody2D) -> void:
@@ -87,6 +88,41 @@ func get_action_progress_ratio() -> float:
 
 func get_facing_direction() -> Vector2:
 	return _facing_direction
+
+
+func get_debug_path_cells() -> Array[Vector2i]:
+	var result: Array[Vector2i] = []
+	for cell in _path_cells:
+		result.append(cell)
+	return result
+
+
+func get_debug_target_cell() -> Vector2i:
+	return _path_target_cell
+
+
+func get_debug_next_cell() -> Vector2i:
+	if _path_cells.is_empty():
+		return INVALID_GRID_POSITION
+	return _path_cells[0]
+
+
+func get_debug_actor_footprint() -> Vector2i:
+	return _get_actor_grid_footprint()
+
+
+func get_debug_last_direct_move_target_position() -> Vector2:
+	return _last_direct_move_target_position
+
+
+func get_debug_movement_summary() -> String:
+	return "target_cell=%s next_cell=%s path=%d footprint=%s direct_target=%s" % [
+		str(get_debug_target_cell()),
+		str(get_debug_next_cell()),
+		_path_cells.size(),
+		str(get_debug_actor_footprint()),
+		str(_last_direct_move_target_position),
+	]
 
 
 func get_velocity(delta: float) -> Vector2:
@@ -304,6 +340,7 @@ func _sync_bedding_path_target_cell() -> void:
 func _clear_path_target() -> void:
 	_path_target_bedding = null
 	_path_target_cell = INVALID_GRID_POSITION
+	_last_direct_move_target_position = Vector2(INF, INF)
 
 
 func _move_along_grid_path_to_target(target_cell: Vector2i, delta: float) -> bool:
@@ -318,6 +355,7 @@ func _move_along_grid_path_to_target(target_cell: Vector2i, delta: float) -> boo
 			return false
 		if start_cell == target_cell:
 			var target_position: Vector2 = _room_map.grid_to_world_area_center(target_cell, _get_actor_grid_footprint())
+			_last_direct_move_target_position = target_position
 			_move_body_towards_position(target_position, delta)
 			return true
 		_path_cells = _find_grid_path(start_cell, target_cell)
@@ -330,6 +368,7 @@ func _move_along_grid_path_to_target(target_cell: Vector2i, delta: float) -> boo
 		return false
 
 	var waypoint_position: Vector2 = _room_map.grid_to_world_area_center(waypoint_cell, _get_actor_grid_footprint())
+	_last_direct_move_target_position = waypoint_position
 	if _move_body_towards_position(waypoint_position, delta):
 		_path_cells.remove_at(0)
 	return true
