@@ -1,4 +1,4 @@
-[gd_scene load_steps=16 format=3 uid="uid://cb0fyv6e2f40m"]
+[gd_scene load_steps=17 format=3 uid="uid://cb0fyv6e2f40m"]
 
 [ext_resource type="Script" path="res://Scripts/Characters/Robin/RobinWanderActor.gd" id="1_actor"]
 [ext_resource type="Texture2D" path="res://Assets/Characters/Robin/Walk/robin_8dir_standing.png" id="2_standing_texture"]
@@ -13,6 +13,7 @@
 [ext_resource type="Script" path="res://Scripts/Characters/Modules/AICharacterActionItemDisplayModule.gd" id="11_action_item_display"]
 [ext_resource type="Script" path="res://Scripts/Characters/Modules/AICharacterEntranceTravelBehaviorModule.gd" id="12_entrance_travel"]
 [ext_resource type="Script" path="res://Scripts/Characters/Modules/AICharacterCraftBehaviorModule.gd" id="13_craft_behavior"]
+[ext_resource type="Script" path="res://Scripts/Characters/Modules/AICharacterSkillsModule.gd" id="14_skills_module"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_robin"]
 radius = 8.0
@@ -47,6 +48,9 @@ position = Vector2(0, 0)
 shape = SubResource("RectangleShape2D_click_area")
 
 [node name="AICharacterNeedsBundle" parent="." instance=ExtResource("6_needs_bundle")]
+
+[node name="AICharacterSkillsModule" type="Node" parent="."]
+script = ExtResource("14_skills_module")
 
 [node name="RobinInventoryModule" type="Node" parent="."]
 script = ExtResource("7_inventory_module")
