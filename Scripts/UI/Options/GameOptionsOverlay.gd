@@ -107,7 +107,7 @@ func _connect_close_button() -> void:
 		_close_button.pressed.connect(close_options)
 
 
-func _set_process_mode_recursive(node: Node, mode: int) -> void:
+func _set_process_mode_recursive(node: Node, mode: Node.ProcessMode) -> void:
 	if node == null:
 		return
 	node.process_mode = mode
