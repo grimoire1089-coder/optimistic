@@ -131,14 +131,50 @@ func _create_slot_button() -> Button:
 func _apply_item_to_slot(slot_button: Button, item: Dictionary) -> void:
 	var display_name := String(item.get("display_name", ""))
 	var amount := int(item.get("amount", 1))
-	if amount > 1:
-		slot_button.text = "%s\nx%d" % [display_name, amount]
-	else:
-		slot_button.text = display_name
+	slot_button.text = ""
+	slot_button.tooltip_text = _build_item_tooltip(display_name, amount)
 
 	var icon_path := String(item.get("icon_path", ""))
 	if icon_path != "" and ResourceLoader.exists(icon_path):
 		slot_button.icon = load(icon_path) as Texture2D
+
+	_add_amount_badge(slot_button, amount)
+
+
+func _build_item_tooltip(display_name: String, amount: int) -> String:
+	if display_name.is_empty():
+		return "x%d" % max(amount, 1)
+	return "%s x%d" % [display_name, max(amount, 1)]
+
+
+func _add_amount_badge(slot_button: Button, amount: int) -> void:
+	var badge := Label.new()
+	badge.name = "AmountBadge"
+	badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	badge.text = str(max(amount, 1))
+	badge.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	badge.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	badge.anchor_left = 1.0
+	badge.anchor_top = 1.0
+	badge.anchor_right = 1.0
+	badge.anchor_bottom = 1.0
+	badge.offset_left = -28.0
+	badge.offset_top = -22.0
+	badge.offset_right = -3.0
+	badge.offset_bottom = -3.0
+	badge.add_theme_font_size_override("font_size", 13)
+	badge.add_theme_stylebox_override("normal", _make_amount_badge_style())
+	slot_button.add_child(badge)
+
+
+func _make_amount_badge_style() -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.0, 0.0, 0.0, 0.82)
+	style.border_color = Color(0.14, 0.8, 0.95, 0.95)
+	style.set_border_width_all(1)
+	style.set_corner_radius_all(6)
+	style.set_content_margin_all(1.0)
+	return style
 
 
 func _clear_grid() -> void:
