@@ -5,6 +5,8 @@ const PANEL_PATH := "res://Scenes/UI/Build/FurnitureBuildInventory.tscn"
 const PLACEMENT_PREVIEW_SCRIPT_PATH := "res://Scripts/Maps/Build/BuildFurniturePlacementPreview.gd"
 const FLOOR_PLACEMENT_MODULE_SCRIPT_PATH := "res://Scripts/Maps/Floor/FloorPlacementModule.gd"
 const DEFAULT_FLOOR_TEXTURE_PATH := "res://Assets/Maps/Furniture/Floor/Floor_001.png"
+const PANEL_TOP_RIGHT_OFFSET := Vector2(-344.0, -492.0)
+const PANEL_SIZE := Vector2(320.0, 468.0)
 
 
 static func setup(button: Button, room_ok: bool) -> BuildModeController:
@@ -96,11 +98,31 @@ static func _ensure_furniture_inventory(button: Button) -> void:
 	var canvas := button.get_parent()
 	if canvas == null:
 		return
-	if canvas.get_node_or_null("FurnitureBuildInventory") != null:
+	var existing_panel := canvas.get_node_or_null("FurnitureBuildInventory") as Control
+	if existing_panel != null:
+		_place_panel_bottom_right(existing_panel)
 		return
 
 	var panel_scene := load(PANEL_PATH) as PackedScene
 	if panel_scene == null:
 		return
-	var panel := panel_scene.instantiate()
+	var panel := panel_scene.instantiate() as Control
+	if panel == null:
+		return
+	_place_panel_bottom_right(panel)
 	canvas.add_child.call_deferred(panel)
+
+
+static func _place_panel_bottom_right(panel: Control) -> void:
+	if panel == null:
+		return
+	panel.anchor_left = 1.0
+	panel.anchor_top = 1.0
+	panel.anchor_right = 1.0
+	panel.anchor_bottom = 1.0
+	panel.offset_left = PANEL_TOP_RIGHT_OFFSET.x
+	panel.offset_top = PANEL_TOP_RIGHT_OFFSET.y
+	panel.offset_right = PANEL_TOP_RIGHT_OFFSET.x + PANEL_SIZE.x
+	panel.offset_bottom = PANEL_TOP_RIGHT_OFFSET.y + PANEL_SIZE.y
+	panel.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	panel.grow_vertical = Control.GROW_DIRECTION_BEGIN
