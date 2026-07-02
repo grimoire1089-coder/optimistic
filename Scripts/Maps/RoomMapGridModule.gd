@@ -221,26 +221,35 @@ func _draw_ai_movement_debug_highlight() -> void:
 
 	var footprint := Vector2i(1, 1)
 	if sleep_behavior.has_method("get_debug_actor_footprint"):
-		footprint = sleep_behavior.call("get_debug_actor_footprint") as Vector2i
+		var footprint_value: Variant = sleep_behavior.call("get_debug_actor_footprint")
+		if footprint_value is Vector2i:
+			footprint = footprint_value
 
 	var path_cells: Array = []
 	if sleep_behavior.has_method("get_debug_path_cells"):
-		path_cells = sleep_behavior.call("get_debug_path_cells") as Array
+		var path_value: Variant = sleep_behavior.call("get_debug_path_cells")
+		if path_value is Array:
+			path_cells = path_value
 
 	for cell_value in path_cells:
 		if not (cell_value is Vector2i):
 			continue
-		_draw_grid_area_highlight(cell_value as Vector2i, footprint, ai_movement_path_fill_color, ai_movement_path_border_color, 1.0)
+		var path_cell: Vector2i = cell_value
+		_draw_grid_area_highlight(path_cell, footprint, ai_movement_path_fill_color, ai_movement_path_border_color, 1.0)
 
 	if sleep_behavior.has_method("get_debug_next_cell"):
-		var next_cell: Vector2i = sleep_behavior.call("get_debug_next_cell")
-		if is_grid_area_inside(next_cell, footprint):
-			_draw_grid_area_highlight(next_cell, footprint, ai_movement_next_fill_color, ai_movement_next_border_color, 3.0)
+		var next_value: Variant = sleep_behavior.call("get_debug_next_cell")
+		if next_value is Vector2i:
+			var next_cell: Vector2i = next_value
+			if is_grid_area_inside(next_cell, footprint):
+				_draw_grid_area_highlight(next_cell, footprint, ai_movement_next_fill_color, ai_movement_next_border_color, 3.0)
 
 	if sleep_behavior.has_method("get_debug_target_cell"):
-		var target_cell: Vector2i = sleep_behavior.call("get_debug_target_cell")
-		if is_grid_area_inside(target_cell, footprint):
-			_draw_grid_area_highlight(target_cell, footprint, ai_movement_target_fill_color, ai_movement_target_border_color, 3.0)
+		var target_value: Variant = sleep_behavior.call("get_debug_target_cell")
+		if target_value is Vector2i:
+			var target_cell: Vector2i = target_value
+			if is_grid_area_inside(target_cell, footprint):
+				_draw_grid_area_highlight(target_cell, footprint, ai_movement_target_fill_color, ai_movement_target_border_color, 3.0)
 
 	var actor := sleep_behavior.get_parent() as Node2D
 	if actor != null:
