@@ -18,6 +18,7 @@ const MOVEMENT_PROGRESS_PORTION := 0.35
 @export var walk_speed: float = 80.0
 @export var arrival_distance: float = 8.0
 @export var refill_distance: float = 14.0
+@export var nearby_refill_distance: float = 52.0
 @export var grid_arrival_distance: float = 6.0
 @export var refill_cooldown_seconds: float = 1.5
 @export var actor_grid_footprint: Vector2i = Vector2i(2, 4)
@@ -116,6 +117,9 @@ func get_velocity(delta: float) -> Vector2:
 
 	var target_cell := _get_kitchen_use_cell(_target_kitchen)
 	if not _is_valid_grid_position(target_cell):
+		if _is_close_enough_to_refill(_target_kitchen):
+			_begin_created_water_bottle_drink()
+			return Vector2.ZERO
 		_finish_hydrate_action()
 		return Vector2.ZERO
 
@@ -125,7 +129,7 @@ func get_velocity(delta: float) -> Vector2:
 	var target_distance := to_target.length()
 	_sync_movement_progress_target(target_distance)
 
-	if target_distance <= refill_distance:
+	if target_distance <= refill_distance or _is_close_enough_to_refill(_target_kitchen):
 		_begin_created_water_bottle_drink()
 		return Vector2.ZERO
 
@@ -135,7 +139,7 @@ func get_velocity(delta: float) -> Vector2:
 
 	to_target = target_position - _body.global_position
 	target_distance = to_target.length()
-	if target_distance <= maxf(arrival_distance, refill_distance):
+	if target_distance <= maxf(arrival_distance, refill_distance) or _is_close_enough_to_refill(_target_kitchen):
 		_begin_created_water_bottle_drink()
 		return Vector2.ZERO
 
@@ -330,13 +334,15 @@ func _find_nearest_kitchen_module() -> Node2D:
 			continue
 		var target_cell := _get_kitchen_use_cell(furniture)
 		if not _is_valid_grid_position(target_cell):
+			if _is_close_enough_to_refill(furniture):
+				return furniture
 			continue
 		var target_position := _room_map.grid_to_world_area_center(target_cell, _get_actor_grid_footprint())
 		var path_score := _get_grid_path_score_to_target(target_cell)
-		if path_score < 0.0:
+		if path_score < 0.0 and not _is_close_enough_to_refill(furniture):
 			continue
 		var distance_score := _body.global_position.distance_squared_to(target_position) / 1000000.0
-		var score := path_score + distance_score
+		var score := maxf(path_score, 0.0) + distance_score
 		if nearest == null or score < nearest_score:
 			nearest = furniture
 			nearest_score = score
@@ -366,6 +372,27 @@ func _get_kitchen_use_position(kitchen: Node2D) -> Vector2:
 	if kitchen != null:
 		return kitchen.global_position
 	return Vector2.ZERO
+
+
+func _is_close_enough_to_refill(kitchen: Node2D) -> bool:
+	if _body == null or kitchen == null:
+		return false
+	var nearest_position: Vector2 = _get_nearest_point_on_furniture_area(kitchen, _body.global_position)
+	return _body.global_position.distance_to(nearest_position) <= nearby_refill_distance
+
+
+func _get_nearest_point_on_furniture_area(furniture: Node2D, world_position: Vector2) -> Vector2:
+	if furniture == null:
+		return world_position
+	if _room_map != null and furniture.has_meta("grid_position"):
+		var furniture_cell: Vector2i = furniture.get_meta("grid_position", INVALID_GRID_POSITION)
+		if _is_valid_grid_position(furniture_cell):
+			var furniture_rect: Rect2 = _room_map.get_grid_area_rect(furniture_cell, _get_furniture_footprint(furniture))
+			return Vector2(
+				clampf(world_position.x, furniture_rect.position.x, furniture_rect.end.x),
+				clampf(world_position.y, furniture_rect.position.y, furniture_rect.end.y)
+			)
+	return furniture.global_position
 
 
 func _get_kitchen_use_cell(kitchen: Node2D) -> Vector2i:
