@@ -18,6 +18,9 @@ const BUILD_LOCK_REASON_META := &"build_lock_reason"
 @export var arrival_distance: float = 8.0
 @export var bedding_sleep_start_distance: float = 14.0
 @export var nearby_bedding_sleep_distance: float = 48.0
+@export var visual_bedding_overlap_sleep_enabled: bool = true
+@export var actor_visual_half_extents: Vector2 = Vector2(35.0, 70.0)
+@export var bedding_overlap_margin: float = 4.0
 @export var grid_arrival_distance: float = 6.0
 @export var wake_ratio: float = 0.98
 @export var energy_recovery_per_game_minute: float = 0.31
@@ -125,7 +128,7 @@ func get_velocity(delta: float) -> Vector2:
 	var to_target: Vector2 = target_position - _body.global_position
 	var target_distance: float = to_target.length()
 
-	if target_distance <= bedding_sleep_start_distance or _is_close_enough_to_bedding(_target_bedding):
+	if _can_start_bedding_sleep(target_distance):
 		_start_bedding_sleep()
 		_recover_energy(delta)
 		return Vector2.ZERO
@@ -138,7 +141,7 @@ func get_velocity(delta: float) -> Vector2:
 		if _try_snap_to_sleep_path_cell(target_cell):
 			_reset_stuck_watch()
 			return Vector2.ZERO
-		if target_distance <= stuck_sleep_start_distance or _is_close_enough_to_bedding(_target_bedding):
+		if target_distance <= stuck_sleep_start_distance or _can_start_bedding_sleep(target_distance):
 			_start_bedding_sleep()
 		else:
 			_handle_stuck_sleep_attempt(target_cell)
@@ -156,6 +159,16 @@ func get_velocity(delta: float) -> Vector2:
 	_start_bedding_sleep()
 	_recover_energy(delta)
 	return Vector2.ZERO
+
+
+func _can_start_bedding_sleep(target_distance: float) -> bool:
+	if target_distance <= bedding_sleep_start_distance:
+		return true
+	if _is_close_enough_to_bedding(_target_bedding):
+		return true
+	if _is_visual_overlapping_bedding(_target_bedding):
+		return true
+	return false
 
 
 func _should_sleep_now() -> bool:
@@ -545,6 +558,22 @@ func _is_close_enough_to_bedding(bedding: Node2D) -> bool:
 		return false
 	var nearest_position: Vector2 = _get_nearest_point_on_bedding_area(bedding, _body.global_position)
 	return _body.global_position.distance_to(nearest_position) <= nearby_bedding_sleep_distance
+
+
+func _is_visual_overlapping_bedding(bedding: Node2D) -> bool:
+	if not visual_bedding_overlap_sleep_enabled:
+		return false
+	if _body == null or bedding == null or _room_map == null:
+		return false
+	if not bedding.has_meta("grid_position"):
+		return false
+	var bedding_cell: Vector2i = bedding.get_meta("grid_position", INVALID_GRID_POSITION)
+	if not _is_valid_grid_position(bedding_cell):
+		return false
+	var bedding_rect: Rect2 = _room_map.get_grid_area_rect(bedding_cell, _get_bedding_footprint(bedding)).grow(bedding_overlap_margin)
+	var visual_half_extents := Vector2(maxf(actor_visual_half_extents.x, 1.0), maxf(actor_visual_half_extents.y, 1.0))
+	var actor_rect := Rect2(_body.global_position - visual_half_extents, visual_half_extents * 2.0)
+	return actor_rect.intersects(bedding_rect)
 
 
 func _get_nearest_point_on_bedding_area(bedding: Node2D, world_position: Vector2) -> Vector2:
