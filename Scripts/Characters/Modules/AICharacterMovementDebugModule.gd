@@ -16,6 +16,8 @@ class_name AICharacterMovementDebugModule
 @export var log_slide_collisions: bool = true
 @export var log_action_changes: bool = true
 @export var log_active_heartbeat: bool = true
+@export var collapse_repeated_messages: bool = true
+@export_range(2, 100, 1) var repeated_message_report_interval: int = 10
 
 var _body: CharacterBody2D
 var _room_map: RoomMapGridModule
@@ -30,6 +32,8 @@ var _last_position: Vector2 = Vector2(INF, INF)
 var _stuck_timer: float = 0.0
 var _normal_log_timer: float = 0.0
 var _last_collision_text: String = ""
+var _last_emitted_debug_message: String = ""
+var _last_emitted_repeat_count: int = 0
 
 
 func _ready() -> void:
@@ -247,6 +251,21 @@ func _get_furniture_grid_text(furniture: Node) -> String:
 
 
 func _emit_debug(message: String) -> void:
+	if collapse_repeated_messages and message == _last_emitted_debug_message:
+		_last_emitted_repeat_count += 1
+		if _last_emitted_repeat_count % maxi(repeated_message_report_interval, 2) == 0:
+			_emit_debug_raw("%s repeated=%d" % [message, _last_emitted_repeat_count + 1])
+		return
+
+	if collapse_repeated_messages and _last_emitted_repeat_count > 0:
+		_emit_debug_raw("previous repeated=%d %s" % [_last_emitted_repeat_count + 1, _last_emitted_debug_message])
+
+	_last_emitted_debug_message = message
+	_last_emitted_repeat_count = 0
+	_emit_debug_raw(message)
+
+
+func _emit_debug_raw(message: String) -> void:
 	var text: String = "[AI Move] %s" % message
 	var log_node: Node = get_tree().get_first_node_in_group(&"message_log")
 	if log_node != null and log_node.has_method("add_debug_message"):
