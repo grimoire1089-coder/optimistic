@@ -142,7 +142,8 @@ func _make_state_message(reason: String, action: StringName) -> String:
 	var path_size: int = _get_path_size(action)
 	var nearest_furniture_text: String = _get_nearest_furniture_text()
 	var active_flags: String = _get_active_behavior_flags()
-	return "%s action=%s active=%s pos=%s grid=%s vel=%s target=%s path=%d near=%s" % [
+	var movement_plan_text: String = _get_movement_plan_text(action)
+	return "%s action=%s active=%s pos=%s grid=%s vel=%s target=%s path=%d plan=%s near=%s" % [
 		reason,
 		String(action),
 		active_flags,
@@ -151,8 +152,18 @@ func _make_state_message(reason: String, action: StringName) -> String:
 		_format_vec2(_body.velocity),
 		target_text,
 		path_size,
+		movement_plan_text,
 		nearest_furniture_text,
 	]
+
+
+func _get_movement_plan_text(action: StringName) -> String:
+	var behavior: Node = _get_behavior_for_action(action)
+	if behavior == null:
+		return "none"
+	if behavior.has_method("get_debug_movement_summary"):
+		return str(behavior.call("get_debug_movement_summary"))
+	return "none"
 
 
 func _get_action_id() -> StringName:
@@ -290,7 +301,7 @@ func _format_vec2(value: Vector2) -> String:
 
 
 func _format_vec2i(value: Vector2i) -> String:
-	return "(%d, %d)" % [value.x, value.y]
+	return "(%d, %d" % [value.x, value.y]
 
 
 func _resolve_refs() -> void:
