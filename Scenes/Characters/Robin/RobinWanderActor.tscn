@@ -18,7 +18,7 @@
 [ext_resource type="Script" path="res://Scripts/Characters/Modules/AICharacterMovementDebugModule.gd" id="16_movement_debug"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_robin_collision"]
-size = Vector2(70.4, 35.2)
+size = Vector2(70.4, 70.4)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_click_area"]
 size = Vector2(70, 140)
@@ -39,7 +39,7 @@ centered = true
 scale = Vector2(0.32, 0.32)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
-position = Vector2(0, 52.8)
+position = Vector2(0, 35.2)
 shape = SubResource("RectangleShape2D_robin_collision")
 
 [node name="ClickArea2D" type="Area2D" parent="."]
@@ -69,7 +69,8 @@ script = ExtResource("8_sleep_behavior")
 needs_module_path = NodePath("../AICharacterNeedsBundle/CharacterNeedsModule")
 need_planner_path = NodePath("../AICharacterNeedsBundle/NeedDrivenAIPlanner")
 furniture_root_path = NodePath("../../RobinRoomMap/FurnitureRoot")
-actor_grid_footprint = Vector2i(2, 1)
+actor_grid_footprint = Vector2i(2, 4)
+actor_visual_half_extents = Vector2(35, 70)
 energy_recovery_per_game_minute = 0.31
 floor_sleep_energy_ratio = 0.01
 
@@ -81,7 +82,7 @@ inventory_module_path = NodePath("../RobinInventoryModule")
 furniture_root_path = NodePath("../../RobinRoomMap/FurnitureRoot")
 furniture_placement_module_path = NodePath("../../FurniturePlacementModule")
 room_map_path = NodePath("../../RobinRoomMap")
-actor_grid_footprint = Vector2i(2, 1)
+actor_grid_footprint = Vector2i(2, 4)
 water_bottle_item_path = "res://Data/Items/Food/Food_0008_WaterBottle.tres"
 hydrate_request_ratio = 0.35
 nearby_refill_distance = 48.0
@@ -98,7 +99,7 @@ furniture_root_path = NodePath("../../RobinRoomMap/FurnitureRoot")
 furniture_placement_module_path = NodePath("../../FurniturePlacementModule")
 room_map_path = NodePath("../../RobinRoomMap")
 walk_speed = 80.0
-actor_grid_footprint = Vector2i(2, 1)
+actor_grid_footprint = Vector2i(2, 4)
 
 [node name="AICharacterEntranceTravelBehaviorModule" type="Node" parent="."]
 script = ExtResource("12_entrance_travel")
@@ -108,15 +109,15 @@ furniture_placement_module_path = NodePath("../../FurniturePlacementModule")
 walk_speed = 80.0
 arrive_distance = 14.0
 grid_arrive_distance = 6.0
-actor_grid_footprint = Vector2i(2, 1)
+actor_grid_footprint = Vector2i(2, 4)
 use_time_seconds = 0.45
 
 [node name="AICharacterFootprintShapeModule" type="Node" parent="."]
 script = ExtResource("15_footprint_shape")
 shape_path = NodePath("../CollisionShape2D")
 room_map_path = NodePath("../../RobinRoomMap")
-footprint_cells = Vector2i(2, 1)
-center_cell_offset = Vector2(0, 1.5)
+footprint_cells = Vector2i(2, 2)
+center_cell_offset = Vector2(0, 1)
 
 [node name="AICharacterMovementDebugModule" type="Node" parent="."]
 script = ExtResource("16_movement_debug")
