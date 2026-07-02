@@ -7,9 +7,9 @@ const RECIPE_PATHS := [
 	"res://Data/Craft/Recipes/Cooking_0001_WhiteRice.tres",
 ]
 
-const LARGE_MENU_TOP_RIGHT_OFFSET := Vector2(-444.0, 304.0)
-const LARGE_MENU_SIZE := Vector2(420.0, 520.0)
-const RECIPE_CARD_SIZE := Vector2(380.0, 170.0)
+const LARGE_MENU_SIZE := Vector2(560.0, 560.0)
+const RECIPE_CARD_SIZE := Vector2(520.0, 190.0)
+const RECIPE_ICON_SIZE := Vector2(72.0, 72.0)
 
 const TITLE_CRAFT_CODES := [0x5236, 0x4f5c]
 const TITLE_COOKING_CODES := [0x6599, 0x7406]
@@ -44,34 +44,59 @@ const NONE_CODES := [0x306a, 0x3057]
 var _selected_method_id: StringName = &""
 var _dynamic_nodes: Array[Node] = []
 var _recipes: Array[CraftRecipeData] = []
+var _back_button: Button
 
 
 func _ready() -> void:
 	visible = false
 	custom_minimum_size = LARGE_MENU_SIZE
-	call_deferred("_apply_large_layout_after_parent")
+	call_deferred("_apply_center_layout_after_parent")
 	if not is_in_group(&"craft_menu"):
 		add_to_group(&"craft_menu")
+	_ensure_header_back_button()
+	_move_detail_label_above_cards()
 	close_button.pressed.connect(close_menu)
 	cooking_button.pressed.connect(_on_cooking_pressed)
 	_load_recipes_once()
 	_show_category_view()
 
 
-func _apply_large_layout_after_parent() -> void:
-	anchor_left = 1.0
-	anchor_top = 0.0
-	anchor_right = 1.0
-	anchor_bottom = 0.0
-	offset_left = LARGE_MENU_TOP_RIGHT_OFFSET.x
-	offset_top = LARGE_MENU_TOP_RIGHT_OFFSET.y
-	offset_right = LARGE_MENU_TOP_RIGHT_OFFSET.x + LARGE_MENU_SIZE.x
-	offset_bottom = LARGE_MENU_TOP_RIGHT_OFFSET.y + LARGE_MENU_SIZE.y
+func _apply_center_layout_after_parent() -> void:
+	anchor_left = 0.5
+	anchor_top = 0.5
+	anchor_right = 0.5
+	anchor_bottom = 0.5
+	offset_left = -LARGE_MENU_SIZE.x * 0.5
+	offset_top = -LARGE_MENU_SIZE.y * 0.5
+	offset_right = LARGE_MENU_SIZE.x * 0.5
+	offset_bottom = LARGE_MENU_SIZE.y * 0.5
+
+
+func _ensure_header_back_button() -> void:
+	if _back_button != null and is_instance_valid(_back_button):
+		return
+	var header := close_button.get_parent() as HBoxContainer
+	if header == null:
+		return
+	_back_button = Button.new()
+	_back_button.custom_minimum_size = Vector2(72.0, 28.0)
+	_back_button.text = _string_from_codes(BACK_BUTTON_CODES)
+	_back_button.visible = false
+	_back_button.pressed.connect(_on_back_pressed)
+	header.add_child(_back_button)
+	header.move_child(_back_button, close_button.get_index())
+
+
+func _move_detail_label_above_cards() -> void:
+	var rows := category_list.get_parent() as VBoxContainer
+	if rows == null:
+		return
+	rows.move_child(detail_label, category_list.get_index())
 
 
 func open_menu() -> void:
 	visible = true
-	_apply_large_layout_after_parent()
+	_apply_center_layout_after_parent()
 	if _selected_method_id == cooking_method_id:
 		_show_cooking_view()
 		return
@@ -102,8 +127,9 @@ func _on_cooking_pressed() -> void:
 func _show_category_view() -> void:
 	_clear_dynamic_nodes()
 	title_label.text = _string_from_codes(TITLE_CRAFT_CODES)
+	_set_header_back_visible(false)
 	cooking_button.visible = true
-	cooking_button.custom_minimum_size = Vector2(380.0, 72.0)
+	cooking_button.custom_minimum_size = Vector2(520.0, 72.0)
 	cooking_button.text = _string_from_codes(COOKING_BUTTON_TEXT_CODES)
 	detail_label.text = _string_from_codes(GUIDE_TEXT_CODES)
 
@@ -111,23 +137,21 @@ func _show_category_view() -> void:
 func _show_cooking_view() -> void:
 	_clear_dynamic_nodes()
 	title_label.text = _string_from_codes(TITLE_COOKING_CODES)
+	_set_header_back_visible(true)
 	cooking_button.visible = false
-	_add_back_button()
 	if _recipes.is_empty():
 		detail_label.text = _string_from_codes(NO_RECIPE_CODES)
 		return
+	detail_label.text = _string_from_codes(COOKING_GUIDE_CODES)
 	for recipe in _recipes:
 		_add_recipe_card(recipe)
-	detail_label.text = _string_from_codes(COOKING_GUIDE_CODES)
 
 
-func _add_back_button() -> void:
-	var button := Button.new()
-	button.custom_minimum_size = Vector2(380.0, 40.0)
-	button.text = _string_from_codes(BACK_BUTTON_CODES)
-	button.pressed.connect(_on_back_pressed)
-	category_list.add_child(button)
-	_dynamic_nodes.append(button)
+func _set_header_back_visible(should_show: bool) -> void:
+	_ensure_header_back_button()
+	if _back_button == null:
+		return
+	_back_button.visible = should_show
 
 
 func _add_recipe_card(recipe: CraftRecipeData) -> void:
@@ -144,9 +168,21 @@ func _add_recipe_card(recipe: CraftRecipeData) -> void:
 	margin.add_theme_constant_override("margin_bottom", 10)
 	card.add_child(margin)
 
+	var card_row := HBoxContainer.new()
+	card_row.add_theme_constant_override("separation", 12)
+	margin.add_child(card_row)
+
+	var icon_rect := TextureRect.new()
+	icon_rect.custom_minimum_size = RECIPE_ICON_SIZE
+	icon_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon_rect.texture = _load_recipe_icon(recipe)
+	card_row.add_child(icon_rect)
+
 	var rows := VBoxContainer.new()
+	rows.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	rows.add_theme_constant_override("separation", 8)
-	margin.add_child(rows)
+	card_row.add_child(rows)
 
 	var name_label := Label.new()
 	name_label.text = _get_recipe_display_name(recipe)
@@ -159,7 +195,7 @@ func _add_recipe_card(recipe: CraftRecipeData) -> void:
 	rows.add_child(requirements_label)
 
 	var button := Button.new()
-	button.custom_minimum_size = Vector2(356.0, 42.0)
+	button.custom_minimum_size = Vector2(420.0, 42.0)
 	button.text = _string_from_codes(MAKE_BUTTON_CODES)
 	button.pressed.connect(Callable(self, "_on_recipe_pressed").bind(recipe))
 	rows.add_child(button)
@@ -337,6 +373,15 @@ func _get_recipe_display_name(recipe: CraftRecipeData) -> String:
 	if recipe.output_item != null and not recipe.output_item.display_name.is_empty():
 		return recipe.output_item.display_name
 	return String(recipe.recipe_id)
+
+
+func _load_recipe_icon(recipe: CraftRecipeData) -> Texture2D:
+	if recipe == null or recipe.output_item == null:
+		return null
+	var icon_path := recipe.output_item.get_icon_path()
+	if icon_path.is_empty() or not ResourceLoader.exists(icon_path):
+		return null
+	return load(icon_path) as Texture2D
 
 
 func _get_inventory_module() -> Node:
