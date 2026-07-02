@@ -9,6 +9,9 @@ const DEFAULT_LOCATION_BACKGROUND_TEXTURE_PATH := "res://Assets/Maps/Location/Lo
 const ENTRANCE_TRAVEL_SFX_PATH := "res://Assets/Audio/SFX/Game/Sci-fi_door_opening.ogg"
 const RIGHT_TRAVEL_BUTTON_POSITION := Vector2(-332.0, 184.0)
 const RIGHT_TRAVEL_BUTTON_SIZE := Vector2(48.0, 48.0)
+const MAP_GRID_TOGGLE_BUTTON_NAME := "MapGridToggleButton"
+const MAP_GRID_TOGGLE_BUTTON_POSITION := Vector2(-328.0, 108.0)
+const MAP_GRID_TOGGLE_BUTTON_SIZE := Vector2(48.0, 48.0)
 
 @onready var debug_label: Label = $CanvasLayer/DebugLabel
 @onready var robin: RobinWanderActor = $Robin
@@ -22,6 +25,7 @@ var _last_build_mode_enabled: bool = false
 func _ready() -> void:
 	_push_debug_message("System", "MainScene _ready start")
 	_ensure_runtime_children()
+	_ensure_map_grid_toggle_button()
 	_apply_reserved_bottom_hud_layout()
 	var startup_debug_text := _get_startup_debug_text()
 	debug_label.text = startup_debug_text
@@ -189,6 +193,77 @@ func _configure_right_travel_button(button: Button, text_value: String, tooltip_
 	button.visible = visible_on_start
 
 
+func _ensure_map_grid_toggle_button() -> Button:
+	if canvas_layer == null:
+		return null
+	var button := canvas_layer.get_node_or_null(MAP_GRID_TOGGLE_BUTTON_NAME) as Button
+	if button == null:
+		button = Button.new()
+		button.name = MAP_GRID_TOGGLE_BUTTON_NAME
+		canvas_layer.add_child(button)
+	_configure_map_grid_toggle_button(button)
+	return button
+
+
+func _configure_map_grid_toggle_button(button: Button) -> void:
+	if button == null:
+		return
+	button.custom_minimum_size = MAP_GRID_TOGGLE_BUTTON_SIZE
+	button.toggle_mode = true
+	button.focus_mode = Control.FOCUS_NONE
+	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	_place_top_right_control(button, MAP_GRID_TOGGLE_BUTTON_POSITION, MAP_GRID_TOGGLE_BUTTON_SIZE)
+	if not button.pressed.is_connected(_on_map_grid_toggle_button_pressed):
+		button.pressed.connect(_on_map_grid_toggle_button_pressed)
+	_refresh_map_grid_toggle_button()
+
+
+func _on_map_grid_toggle_button_pressed() -> void:
+	var room_map := get_node_or_null("RobinRoomMap") as RoomMapGridModule
+	var button := _ensure_map_grid_toggle_button()
+	if room_map == null or button == null:
+		return
+	room_map.show_grid = button.button_pressed
+	room_map.queue_redraw()
+	_refresh_map_grid_toggle_button()
+
+
+func _refresh_map_grid_toggle_button() -> void:
+	if canvas_layer == null:
+		return
+	var button := canvas_layer.get_node_or_null(MAP_GRID_TOGGLE_BUTTON_NAME) as Button
+	if button == null:
+		return
+	var room_map := get_node_or_null("RobinRoomMap") as RoomMapGridModule
+	var is_grid_visible := room_map == null or room_map.show_grid
+	button.set_pressed_no_signal(is_grid_visible)
+	button.text = "GRID" if is_grid_visible else "OFF"
+	button.tooltip_text = "薄いグリッドを非表示" if is_grid_visible else "薄いグリッドを表示"
+	_apply_map_grid_toggle_button_style(button, is_grid_visible)
+
+
+func _apply_map_grid_toggle_button_style(button: Button, is_grid_visible: bool) -> void:
+	var bg_color := Color(0.01, 0.025, 0.04, 0.88) if is_grid_visible else Color(0.035, 0.035, 0.045, 0.92)
+	var border_color := Color(0.33, 0.85, 1.0, 0.95) if is_grid_visible else Color(0.25, 0.32, 0.38, 0.95)
+	var font_color := Color(0.33, 0.85, 1.0, 1.0) if is_grid_visible else Color(0.62, 0.70, 0.76, 1.0)
+	var style := StyleBoxFlat.new()
+	style.bg_color = bg_color
+	style.border_color = border_color
+	style.set_border_width_all(1)
+	style.set_corner_radius_all(14)
+	style.shadow_color = Color(border_color.r, border_color.g, border_color.b, 0.35)
+	style.shadow_size = 10
+	style.shadow_offset = Vector2.ZERO
+	style.set_content_margin_all(0.0)
+	button.add_theme_stylebox_override("normal", style)
+	button.add_theme_stylebox_override("hover", style)
+	button.add_theme_stylebox_override("pressed", style)
+	button.add_theme_color_override("font_color", font_color)
+	button.add_theme_color_override("font_hover_color", font_color)
+	button.add_theme_color_override("font_pressed_color", font_color)
+	button.add_theme_font_size_override("font_size", 10)
+
+
 func _apply_reserved_bottom_hud_layout() -> void:
 	if canvas_layer == null:
 		return
@@ -202,6 +277,7 @@ func _apply_reserved_bottom_hud_layout() -> void:
 	_place_top_right_control(canvas_layer.get_node_or_null("AICharacterHud") as Control, Vector2(-328.0, 400.0), Vector2(304.0, 288.0))
 	_place_top_right_control(canvas_layer.get_node_or_null("WorkMenu") as Control, Vector2(-328.0, 252.0), Vector2(304.0, 158.0))
 	_place_top_right_control(canvas_layer.get_node_or_null("CraftMenu") as Control, Vector2(-328.0, 252.0), Vector2(304.0, 172.0))
+	_configure_map_grid_toggle_button(canvas_layer.get_node_or_null(MAP_GRID_TOGGLE_BUTTON_NAME) as Button)
 
 
 func _place_top_right_control(control: Control, top_right_offset: Vector2, control_size: Vector2) -> void:
