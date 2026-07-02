@@ -37,7 +37,7 @@ const SEASON_DISPLAY_NAMES := {
 }
 
 @export var start_day: int = 1
-@export_range(0, 23, 1) var start_hour: int = 6
+@export_range(0, 23, 1) var start_hour: int = 9
 @export_range(0, 59, 1) var start_minute: int = 0
 
 ## 現実何秒でゲーム内1分進むか。
@@ -224,7 +224,7 @@ func get_save_data() -> Dictionary:
 
 func apply_save_data(data: Dictionary) -> void:
 	day = int(data.get("day", 1))
-	minute_of_day = int(data.get("minute_of_day", 6 * 60))
+	minute_of_day = int(data.get("minute_of_day", 9 * 60))
 	is_running = bool(data.get("is_running", true))
 	is_clock_paused = bool(data.get("is_clock_paused", false))
 
@@ -258,41 +258,3 @@ func emit_time_signals(force: bool = false) -> void:
 		_last_season_id = season_id
 		_last_season_year = season_year
 		season_changed.emit(season_id, season_day, season_year)
-
-
-func _advance_one_minute() -> void:
-	var old_hour := get_hour()
-	var old_phase_id := get_phase_id()
-	var old_season_id := get_season_id()
-	var old_season_year := get_season_year()
-
-	minute_of_day += 1
-
-	if minute_of_day >= MINUTES_PER_DAY:
-		minute_of_day = 0
-		day += 1
-		day_changed.emit(day)
-
-	var new_hour := get_hour()
-	var new_phase_id := get_phase_id()
-	var new_minute := get_minute()
-	var new_season_id := get_season_id()
-	var new_season_day := get_season_day()
-	var new_season_year := get_season_year()
-
-	time_changed.emit(day, new_hour, new_minute)
-	minute_changed.emit(day, new_hour, new_minute)
-
-	if new_hour != old_hour:
-		hour_changed.emit(day, new_hour)
-
-	if new_phase_id != old_phase_id:
-		phase_changed.emit(new_phase_id)
-
-	if new_season_id != old_season_id or new_season_year != old_season_year:
-		season_changed.emit(new_season_id, new_season_day, new_season_year)
-
-	_last_hour = new_hour
-	_last_phase_id = new_phase_id
-	_last_season_id = new_season_id
-	_last_season_year = new_season_year
