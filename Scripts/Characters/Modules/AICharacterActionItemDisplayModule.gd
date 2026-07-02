@@ -36,7 +36,7 @@ func setup(body: Node2D) -> void:
 
 func _process(_delta: float) -> void:
 	_resolve_refs()
-	_snap_lapis_transition_if_needed()
+	_snap_lapis_position_if_needed()
 	_request_display()
 	_update_display()
 
@@ -67,12 +67,14 @@ func _update_display() -> void:
 	_item_rect.position = item_center_offset - item_display_size * 0.5
 
 
-func _snap_lapis_transition_if_needed() -> void:
+func _snap_lapis_position_if_needed() -> void:
 	if not snap_standing_lapis_to_grid:
 		_was_standing_lapis = false
 		return
 	var is_standing_lapis := _is_standing_lapis_active()
-	if is_standing_lapis != _was_standing_lapis:
+	if is_standing_lapis:
+		_snap_body_to_grid()
+	elif _was_standing_lapis:
 		_snap_body_to_grid()
 	_was_standing_lapis = is_standing_lapis
 
