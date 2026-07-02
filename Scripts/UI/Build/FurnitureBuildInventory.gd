@@ -22,6 +22,7 @@ const FLOOR_FOOTPRINT := Vector2i(15, 15)
 @export var floor_placement_module_path: NodePath = NodePath("../../FloorPlacementModule")
 @export var simple_mattress_scene: PackedScene
 @export var kitchen_module_scene: PackedScene
+@export var shower_scene: PackedScene
 @export var stool_scene: PackedScene
 
 @onready var close_button: Button = $MarginContainer/Rows/Header/CloseButton
@@ -36,6 +37,7 @@ const FLOOR_FOOTPRINT := Vector2i(15, 15)
 @onready var floor_category_button: Button = $MarginContainer/Rows/CategoryButtons/FloorCategoryButton
 @onready var mattress_button: Button = $MarginContainer/Rows/ItemList/SimpleMattressButton
 @onready var kitchen_module_button: Button = $MarginContainer/Rows/ItemList/KitchenModuleButton
+@onready var shower_button: Button = $MarginContainer/Rows/ItemList/ShowerButton
 @onready var stool_button: Button = $MarginContainer/Rows/ItemList/StoolButton
 @onready var floor_place_button: Button = $MarginContainer/Rows/ItemList/FloorPlaceButton
 @onready var floor_002_place_button: Button = $MarginContainer/Rows/ItemList/Floor002PlaceButton
@@ -104,9 +106,12 @@ func _connect_buttons() -> void:
 	_connect_category_button(decor_category_button, CATEGORY_DECOR)
 	_connect_category_button(floor_category_button, CATEGORY_FLOOR)
 	if mattress_button != null:
+		matress_dummy_do_not_use()
 		mattress_button.pressed.connect(_on_simple_mattress_pressed)
 	if kitchen_module_button != null:
 		kitchen_module_button.pressed.connect(_on_kitchen_module_pressed)
+	if shower_button != null:
+		shower_button.pressed.connect(_on_shower_pressed)
 	if stool_button != null:
 		stool_button.pressed.connect(_on_stool_pressed)
 	if floor_place_button != null:
@@ -115,6 +120,11 @@ func _connect_buttons() -> void:
 		floor_002_place_button.pressed.connect(_on_floor_002_place_pressed)
 	if floor_store_button != null:
 		floor_store_button.pressed.connect(_on_floor_store_pressed)
+
+
+func matress_dummy_do_not_use() -> void:
+	# 旧シーンの接続順確認用。処理はしない。
+	return
 
 
 func _connect_category_button(button: Button, category_id: StringName) -> void:
@@ -175,6 +185,15 @@ func _on_kitchen_module_pressed() -> void:
 	_build_mode_controller.set_tool_mode(BuildModeController.TOOL_MODE_PLACE)
 	_build_mode_controller.select_furniture_scene(kitchen_module_scene, &"kitchen_module", Vector2i(4, 2), true, 0)
 	_update_detail_text("選択中: キッチンモジュール / 4 x 2 / Rで回転")
+
+
+func _on_shower_pressed() -> void:
+	_resolve_controller()
+	if _build_mode_controller == null or shower_scene == null:
+		return
+	_build_mode_controller.set_tool_mode(BuildModeController.TOOL_MODE_PLACE)
+	_build_mode_controller.select_furniture_scene(shower_scene, &"shower", Vector2i(2, 4), true, 0)
+	_update_detail_text("選択中: シャワー / 2 x 4 / Rで回転")
 
 
 func _on_stool_pressed() -> void:
@@ -289,6 +308,7 @@ func _set_category_button_pressed(button: Button, category_id: StringName) -> vo
 func _sync_item_category_visibility() -> void:
 	_set_button_visible(mattress_button, _current_category_id == CATEGORY_BEDDING)
 	_set_button_visible(kitchen_module_button, _current_category_id == CATEGORY_KITCHEN)
+	_set_button_visible(shower_button, _current_category_id == CATEGORY_HYGIENE)
 	_set_button_visible(stool_button, _current_category_id == CATEGORY_DECOR)
 	_set_button_visible(floor_place_button, _current_category_id == CATEGORY_FLOOR)
 	_set_button_visible(floor_002_place_button, _current_category_id == CATEGORY_FLOOR)
@@ -356,7 +376,7 @@ func _normalize_category_id(category_id: StringName) -> StringName:
 
 func _category_has_visible_items(category_id: StringName) -> bool:
 	match category_id:
-		CATEGORY_BEDDING, CATEGORY_KITCHEN, CATEGORY_DECOR, CATEGORY_FLOOR:
+		CATEGORY_BEDDING, CATEGORY_KITCHEN, CATEGORY_HYGIENE, CATEGORY_DECOR, CATEGORY_FLOOR:
 			return true
 		_:
 			return false
