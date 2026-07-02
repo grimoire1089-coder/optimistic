@@ -1,0 +1,119 @@
+# 次チャット引継ぎ: シャワー家具・衛生AI行動 実装後
+
+## 対象リポジトリ
+
+grimoire1089-coder/optimistic
+branch: main
+
+## このチャットで完了したこと
+
+ロビン達AIキャラクター用に、衛生を回復するシャワー家具とAI行動を追加した。
+ユーザー確認済み: ロビンがシャワーを浴びることを確認済み。
+
+## 追加・更新された主なファイル
+
+### 家具本体
+
+- `Scripts/Maps/Furniture/Utility/ShowerFurniture.gd`
+- `Scenes/Maps/Furniture/Utility/ShowerFurniture.tscn`
+
+仕様:
+
+- 表示名: `シャワー`
+- furniture_id: `&"shower"`
+- グリッドサイズ: `Vector2i(2, 4)`
+- 画像: `res://Assets/Maps/Furniture/Utility/Shower_001.png`
+- `can_restore_hygiene() -> bool` を持つ
+- `get_grid_footprint()` / `get_pixel_size()` / `set_grid_cell_size()` は既存の家具に合わせた構成
+
+### ビルドインベントリ
+
+- `Scripts/UI/Build/FurnitureBuildInventory.gd`
+- `Scenes/UI/Build/FurnitureBuildInventory.tscn`
+
+仕様:
+
+- 衛生カテゴリに `ShowerButton` を追加
+- `@export var shower_scene: PackedScene` を追加
+- `shower_scene = ExtResource("5_shower")`
+- ボタン文言: `シャワー\n2 x 4 / Rで回転`
+- 押下時は `select_furniture_scene(shower_scene, &"shower", Vector2i(2, 4), true, 0)`
+
+### AI衛生行動
+
+- `Scripts/Characters/Modules/AICharacterHygieneBehaviorModule.gd`
+
+仕様:
+
+- `CharacterNeedIds.HYGIENE` と `CharacterNeedActionIds.MAINTAIN` に反応
+- `hygiene_request_ratio = 0.45`
+- `shower_duration_seconds = 5.0`
+- `hygiene_recovery_value = 100.0`
+- `shower_ids = [&"shower"]`
+- シャワー家具の `can_restore_hygiene()` または `furniture_id == &"shower"` を対象にする
+- 水分補給行動の経路処理を参考に、グリッド経路・目標セル・次セル・足跡サイズのデバッグ情報を出せる
+- `get_debug_path_cells()` / `get_debug_target_cell()` / `get_debug_next_cell()` / `get_debug_actor_footprint()` / `get_debug_movement_summary()` 実装済み
+
+### ロビン本体への接続
+
+- `Scripts/Characters/Robin/RobinWanderActor.gd`
+- `Scenes/Characters/Robin/RobinWanderActor.tscn`
+
+仕様:
+
+- `@onready var hygiene_behavior_module: AICharacterHygieneBehaviorModule = $AICharacterHygieneBehaviorModule`
+- `_ready()` で `hygiene_behavior_module.setup(self)`
+- `_physics_process()` に衛生行動を追加
+- 表示テキストは衛生行動中 `シャワー中`
+- 行動IDは衛生行動中 `&"maintaining"`
+- 入口移動の busy 判定にも衛生行動を追加
+- TSCN側で `AICharacterHygieneBehaviorModule` ノードを追加し、`groups=["ai_movement_behavior"]`
+- 進行バーと移動デバッグに `hygiene_behavior_path` を接続
+
+### 進行バー
+
+- `Scripts/Characters/Modules/AICharacterActionProgressBarModule.gd`
+
+仕様:
+
+- `@export var hygiene_behavior_path` を追加
+- アクティブな進行ソースに hygiene を追加
+- 優先順は craft -> hygiene -> hydrate -> sleep
+
+### 移動デバッグログ
+
+- `Scripts/Characters/Modules/AICharacterMovementDebugModule.gd`
+
+仕様:
+
+- `@export var hygiene_behavior_path` を追加
+- `_hygiene_behavior` を保持
+- active flags に `hygiene=` を追加
+- `maintaining` / `hygiene` / `showering` を衛生行動として扱う
+- `_target_shower` と `_get_shower_use_cell()` をデバッグ対象に追加
+
+## 重要な設計メモ
+
+- ユーザーの方針: 本体スクリプトは本体、機能はモジュール形式。関係ないコードを消さない。
+- ロビン達の処理上のグラフィック基準は縦4 x 横2。物理当たり判定は下半身2 x 2。
+- AI移動処理はCodex側でかなり改善済み。今回の衛生行動は既存の水分補給系のグリッド移動に寄せた。
+- `ai_movement_behavior` グループに入れることで、RoomMapGridModuleの移動予定セルハイライト対象になる。
+- 家具は配置時に `grid_position` / `grid_footprint` メタが付く前提。
+
+## 確認済み
+
+- ロビンがシャワーを浴びるところまで確認済み。
+
+## 次にやると良さそうなこと
+
+1. シャワー行動のログを見て、`target_cell` / `next_cell` / `path` が期待通り出ているか確認。
+2. 水分補給・睡眠・衛生・制作の優先順が不自然でないか確認。
+3. 経路処理が水分補給・衛生・制作・着席で重複しているので、次の安定化段階で共通モジュール化を検討。
+4. シャワー用SE、湯気・水しぶき・清潔度回復エフェクトを追加すると見た目が分かりやすくなる。
+5. 衛生が低いのにシャワーが無い場合の代替行動やログ表示を追加するとデバッグしやすい。
+
+## 注意点
+
+- `res://Assets/Maps/Furniture/Utility/Shower_001.png` がローカル・GitHubに存在しない環境ではテクスチャ読み込みエラーになる。
+- 今後修正する時は、シャワー専用の挙動だけを直し、既存のキッチン・寝具・スツール・床配置処理を消さないこと。
+- 経路処理の根本整理をする場合も、まず共通モジュールを作ってから各行動モジュールを段階的に移すのが安全。
