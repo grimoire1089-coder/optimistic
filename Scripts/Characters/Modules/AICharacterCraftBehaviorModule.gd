@@ -6,8 +6,10 @@ signal craft_completed(recipe: CraftRecipeData, quantity: int)
 
 const INVALID_GRID_POSITION := Vector2i(-999999, -999999)
 const MOVE_PROGRESS_PORTION := 0.35
+const COOKING_CATEGORY_ID: StringName = &"cooking"
 
 @export var inventory_module_path: NodePath = NodePath("../RobinInventoryModule")
+@export var skills_module_path: NodePath = NodePath("../AICharacterSkillsModule")
 @export var furniture_root_path: NodePath = NodePath("../../RobinRoomMap/FurnitureRoot")
 @export var furniture_placement_module_path: NodePath = NodePath("../../FurniturePlacementModule")
 @export var room_map_path: NodePath = NodePath("../../RobinRoomMap")
@@ -15,9 +17,11 @@ const MOVE_PROGRESS_PORTION := 0.35
 @export var use_distance: float = 16.0
 @export var stuck_warp_seconds: float = 1.25
 @export var actor_grid_footprint: Vector2i = Vector2i(2, 4)
+@export_range(1, 999, 1) var cooking_experience_per_game_minute: int = 1
 
 var _body: CharacterBody2D
 var _inventory_module: RobinInventoryModule
+var _skills_module: AICharacterSkillsModule
 var _furniture_root: Node
 var _furniture_placement: Node
 var _room_map: RoomMapGridModule
@@ -170,6 +174,7 @@ func _complete_crafting() -> void:
 		_push_message("完成品を追加できませんでした。")
 		_reset_action()
 		return
+	_add_skill_experience_for_completed_craft()
 	_push_message("%s x%dを作りました。" % [_get_recipe_display_name(_recipe), output_amount])
 	craft_completed.emit(_recipe, _quantity)
 	_reset_action()
@@ -309,6 +314,15 @@ func _update_stuck(distance: float, delta: float) -> void:
 	_last_distance = distance
 
 
+func _add_skill_experience_for_completed_craft() -> void:
+	if _skills_module == null or _recipe == null:
+		return
+	if _recipe.category_id != COOKING_CATEGORY_ID:
+		return
+	var gained_experience := maxi(_recipe.craft_game_minutes, 1) * maxi(_quantity, 1) * maxi(cooking_experience_per_game_minute, 1)
+	_skills_module.add_skill_experience(AICharacterSkillsModule.SKILL_COOKING, gained_experience)
+
+
 func _reset_action() -> void:
 	_recipe = null
 	_quantity = 1
@@ -356,6 +370,8 @@ func _push_message(message: String) -> void:
 func _resolve_refs() -> void:
 	if _inventory_module == null:
 		_inventory_module = get_node_or_null(inventory_module_path) as RobinInventoryModule
+	if _skills_module == null:
+		_skills_module = get_node_or_null(skills_module_path) as AICharacterSkillsModule
 	if _furniture_root == null:
 		_furniture_root = get_node_or_null(furniture_root_path)
 	if _furniture_placement == null:
