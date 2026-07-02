@@ -8,6 +8,7 @@ const INVALID_DEBUG_GRID_POSITION := Vector2i(-999999, -999999)
 @export var room_map_path: NodePath = NodePath("../../RobinRoomMap")
 @export var furniture_root_path: NodePath = NodePath("../../RobinRoomMap/FurnitureRoot")
 @export var hydrate_behavior_path: NodePath = NodePath("../AICharacterHydrateBehaviorModule")
+@export var hygiene_behavior_path: NodePath = NodePath("../AICharacterHygieneBehaviorModule")
 @export var sleep_behavior_path: NodePath = NodePath("../AICharacterSleepBehaviorModule")
 @export var sit_behavior_path: NodePath = NodePath("../AICharacterSitBehaviorModule")
 @export var craft_behavior_path: NodePath = NodePath("../AICharacterCraftBehaviorModule")
@@ -26,6 +27,7 @@ var _body: CharacterBody2D
 var _room_map: RoomMapGridModule
 var _furniture_root: Node
 var _hydrate_behavior: Node
+var _hygiene_behavior: Node
 var _sleep_behavior: Node
 var _sit_behavior: Node
 var _craft_behavior: Node
@@ -215,13 +217,13 @@ func _get_behavior_target_cell(behavior: Node, path_cells: Array[Vector2i]) -> V
 
 
 func _get_behavior_target_cell_from_target_object(behavior: Node) -> Vector2i:
-	for property_name in [&"_target_bedding", &"_target_kitchen", &"_target_furniture", &"_target_entrance"]:
+	for property_name in [&"_target_bedding", &"_target_kitchen", &"_target_shower", &"_target_stool", &"_target_furniture", &"_target_entrance"]:
 		if not _has_property(behavior, property_name):
 			continue
 		var target_value: Variant = behavior.get(property_name)
 		if not (target_value is Node2D):
 			continue
-		for method_name in [&"_get_bedding_side_sleep_cell", &"_get_kitchen_use_cell", &"_get_furniture_use_cell", &"_get_entrance_use_cell"]:
+		for method_name in [&"_get_bedding_side_sleep_cell", &"_get_kitchen_use_cell", &"_get_shower_use_cell", &"_get_stool_use_cell", &"_get_furniture_use_cell", &"_get_entrance_use_cell"]:
 			if not behavior.has_method(method_name):
 				continue
 			var cell_value: Variant = behavior.call(method_name, target_value)
@@ -251,6 +253,8 @@ func _get_action_id() -> StringName:
 		return &"crafting"
 	if _hydrate_behavior != null and _hydrate_behavior.has_method("is_active") and _hydrate_behavior.call("is_active") == true:
 		return &"hydrating"
+	if _hygiene_behavior != null and _hygiene_behavior.has_method("is_active") and _hygiene_behavior.call("is_active") == true:
+		return &"maintaining"
 	if _sit_behavior != null and _sit_behavior.has_method("is_active") and _sit_behavior.call("is_active") == true:
 		return &"sitting"
 	if _sleep_behavior != null and _sleep_behavior.has_method("is_active") and _sleep_behavior.call("is_active") == true:
@@ -261,6 +265,7 @@ func _get_action_id() -> StringName:
 func _get_active_behavior_flags() -> String:
 	var flags: PackedStringArray = []
 	flags.append("hydrate=%s" % _is_behavior_active(_hydrate_behavior))
+	flags.append("hygiene=%s" % _is_behavior_active(_hygiene_behavior))
 	flags.append("sit=%s" % _is_behavior_active(_sit_behavior))
 	flags.append("sleep=%s" % _is_behavior_active(_sleep_behavior))
 	flags.append("craft=%s" % _is_behavior_active(_craft_behavior))
@@ -284,6 +289,8 @@ func _get_target_text(action: StringName) -> String:
 	var target: Object = null
 	if String(action) == "hydrating" or String(action) == "hydrate":
 		target = behavior.get("_target_kitchen")
+	elif String(action) == "maintaining" or String(action) == "hygiene" or String(action) == "showering":
+		target = behavior.get("_target_shower")
 	elif String(action) == "sitting" or String(action) == "sit":
 		target = behavior.get("_target_stool")
 	elif String(action) == "sleeping" or String(action) == "sleep":
@@ -312,6 +319,8 @@ func _get_behavior_for_action(action: StringName) -> Node:
 	var action_text: String = String(action)
 	if action_text == "hydrating" or action_text == "hydrate":
 		return _hydrate_behavior
+	if action_text == "maintaining" or action_text == "hygiene" or action_text == "showering":
+		return _hygiene_behavior
 	if action_text == "sitting" or action_text == "sit":
 		return _sit_behavior
 	if action_text == "sleeping" or action_text == "sleep":
@@ -407,6 +416,8 @@ func _resolve_refs() -> void:
 		_furniture_root = get_node_or_null(furniture_root_path)
 	if _hydrate_behavior == null and not hydrate_behavior_path.is_empty():
 		_hydrate_behavior = get_node_or_null(hydrate_behavior_path)
+	if _hygiene_behavior == null and not hygiene_behavior_path.is_empty():
+		_hygiene_behavior = get_node_or_null(hygiene_behavior_path)
 	if _sleep_behavior == null and not sleep_behavior_path.is_empty():
 		_sleep_behavior = get_node_or_null(sleep_behavior_path)
 	if _sit_behavior == null and not sit_behavior_path.is_empty():
