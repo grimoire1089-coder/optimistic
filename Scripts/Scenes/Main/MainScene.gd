@@ -20,14 +20,14 @@ var _last_build_mode_enabled: bool = false
 
 
 func _ready() -> void:
-	_push_debug_message("System", "MainScene _ready 開始")
+	_push_debug_message("System", "MainScene _ready start")
 	_ensure_runtime_children()
 	_apply_reserved_bottom_hud_layout()
 	var startup_debug_text := _get_startup_debug_text()
 	debug_label.text = startup_debug_text
 	_connect_robin_selection()
 	_push_startup_message(startup_debug_text)
-	_push_debug_result("System", "MainScene 初期化", true, startup_debug_text)
+	_push_debug_result("System", "MainScene init", true, startup_debug_text)
 	_sync_build_mode_ui_lock()
 
 
@@ -37,28 +37,28 @@ func _process(_delta: float) -> void:
 
 func _connect_robin_selection() -> void:
 	if robin == null:
-		_push_debug_result("System", "Robin selected signal 接続", false, "Robin が見つかりません")
+		_push_debug_result("System", "Robin selected signal connect", false, "Robin not found")
 		return
 	var callable := Callable(self, "_on_robin_selected")
 	if not robin.selected.is_connected(callable):
 		robin.selected.connect(callable)
-		_push_debug_result("System", "Robin selected signal 接続", true, "接続しました")
+		_push_debug_result("System", "Robin selected signal connect", true, "connected")
 		return
-	_push_debug_result("System", "Robin selected signal 接続", true, "すでに接続済み")
+	_push_debug_result("System", "Robin selected signal connect", true, "already connected")
 
 
 func _on_robin_selected(actor: RobinWanderActor) -> void:
 	var actor_name := "AI Character"
 	if actor != null:
 		actor_name = actor.display_name
-	_push_debug_message("AI:%s" % actor_name, "選択されました。HUD切り替えを試行します")
+	_push_debug_message("AI:%s" % actor_name, "selected. Try toggling HUD")
 
 	if _is_build_mode_enabled():
-		_push_debug_result("AI HUD", "toggle_actor", false, "ビルドモード中なのでHUDを開きません")
+		_push_debug_result("AI HUD", "toggle_actor", false, "Build mode is enabled")
 		return
 
 	if ai_character_hud == null:
-		_push_debug_result("AI HUD", "toggle_actor", false, "AICharacterHud が見つかりません")
+		_push_debug_result("AI HUD", "toggle_actor", false, "AICharacterHud not found")
 		return
 	ai_character_hud.toggle_actor(actor)
 	_push_debug_result("AI HUD", "toggle_actor", true, "target=%s" % actor_name)
@@ -193,13 +193,15 @@ func _apply_reserved_bottom_hud_layout() -> void:
 	if canvas_layer == null:
 		return
 
-	_place_top_right_control(canvas_layer.get_node_or_null("RobinHudButton") as Control, Vector2(-280.0, 184.0), RIGHT_TRAVEL_BUTTON_SIZE)
+	_place_top_right_control(canvas_layer.get_node_or_null("RobinHudButton") as Control, Vector2(-332.0, 184.0), RIGHT_TRAVEL_BUTTON_SIZE)
+	_place_top_right_control(canvas_layer.get_node_or_null("CraftButton") as Control, Vector2(-280.0, 184.0), RIGHT_TRAVEL_BUTTON_SIZE)
 	_place_top_right_control(canvas_layer.get_node_or_null("ShopButton") as Control, Vector2(-228.0, 184.0), RIGHT_TRAVEL_BUTTON_SIZE)
 	_place_top_right_control(canvas_layer.get_node_or_null("InventoryButton") as Control, Vector2(-176.0, 184.0), RIGHT_TRAVEL_BUTTON_SIZE)
 	_place_top_right_control(canvas_layer.get_node_or_null("BuildModeButton") as Control, Vector2(-124.0, 184.0), RIGHT_TRAVEL_BUTTON_SIZE)
 	_place_top_right_control(canvas_layer.get_node_or_null("WorkCreditButton") as Control, Vector2(-72.0, 184.0), RIGHT_TRAVEL_BUTTON_SIZE)
 	_place_top_right_control(canvas_layer.get_node_or_null("AICharacterHud") as Control, Vector2(-328.0, 252.0), Vector2(304.0, 274.0))
 	_place_top_right_control(canvas_layer.get_node_or_null("WorkMenu") as Control, Vector2(-328.0, 252.0), Vector2(304.0, 158.0))
+	_place_top_right_control(canvas_layer.get_node_or_null("CraftMenu") as Control, Vector2(-328.0, 252.0), Vector2(304.0, 172.0))
 
 
 func _place_top_right_control(control: Control, top_right_offset: Vector2, control_size: Vector2) -> void:
@@ -235,6 +237,7 @@ func _is_build_mode_enabled() -> bool:
 func _close_non_build_modal_ui() -> void:
 	_close_canvas_child("AICharacterHud", &"hide_hud")
 	_close_canvas_child("ShopMenu", &"close_menu")
+	_close_canvas_child("CraftMenu", &"close_menu")
 	_close_canvas_child("InventoryUI", &"close")
 	_close_canvas_child("WorkMenu", &"close_menu")
 
@@ -257,6 +260,7 @@ func _set_non_build_buttons_disabled(is_disabled: bool) -> void:
 	if canvas_layer == null:
 		return
 	_set_canvas_button_disabled("RobinHudButton", is_disabled)
+	_set_canvas_button_disabled("CraftButton", is_disabled)
 	_set_canvas_button_disabled("ShopButton", is_disabled)
 	_set_canvas_button_disabled("InventoryButton", is_disabled)
 	_set_canvas_button_disabled("WorkCreditButton", is_disabled)
