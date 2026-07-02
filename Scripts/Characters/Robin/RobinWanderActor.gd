@@ -28,6 +28,7 @@ const DEFAULT_CLICK_SFX_PATHS := [
 @onready var wander_module: RobinRandomWanderModule = $RobinRandomWanderModule
 @onready var sleep_behavior_module: AICharacterSleepBehaviorModule = $AICharacterSleepBehaviorModule
 @onready var hydrate_behavior_module: AICharacterHydrateBehaviorModule = $AICharacterHydrateBehaviorModule
+@onready var craft_behavior_module: AICharacterCraftBehaviorModule = $AICharacterCraftBehaviorModule
 @onready var entrance_travel_behavior_module: AICharacterEntranceTravelBehaviorModule = $AICharacterEntranceTravelBehaviorModule
 @onready var action_progress_bar_module: AICharacterActionProgressBarModule = $AICharacterActionProgressBarModule
 @onready var action_item_display_module: AICharacterActionItemDisplayModule = $AICharacterActionItemDisplayModule
@@ -41,6 +42,7 @@ func _ready() -> void:
 	wander_module.setup(self)
 	sleep_behavior_module.setup(self)
 	hydrate_behavior_module.setup(self)
+	craft_behavior_module.setup(self)
 	entrance_travel_behavior_module.setup(self)
 	_connect_entrance_travel_signal()
 	action_progress_bar_module.setup(self)
@@ -65,6 +67,16 @@ func _physics_process(delta: float) -> void:
 		if entrance_travel_behavior_module.is_active():
 			velocity = entrance_travel_velocity
 			facing_direction = entrance_travel_behavior_module.get_facing_direction()
+			move_and_slide()
+			if wander_module.clamp_body_to_movement_area():
+				velocity = Vector2.ZERO
+			walk_animator.update_animation(velocity, facing_direction, delta)
+			return
+	if craft_behavior_module != null:
+		var craft_velocity := craft_behavior_module.get_velocity(delta)
+		if craft_behavior_module.is_active():
+			velocity = craft_velocity
+			facing_direction = craft_behavior_module.get_facing_direction()
 			move_and_slide()
 			if wander_module.clamp_body_to_movement_area():
 				velocity = Vector2.ZERO
@@ -112,6 +124,12 @@ func cancel_entrance_travel() -> void:
 	entrance_travel_behavior_module.cancel_travel()
 
 
+func request_craft(recipe: CraftRecipeData, quantity: int) -> bool:
+	if craft_behavior_module == null:
+		return false
+	return craft_behavior_module.request_craft(recipe, quantity)
+
+
 func get_movement_area() -> Rect2:
 	return wander_module.get_movement_area()
 
@@ -136,6 +154,10 @@ func get_inventory_module() -> RobinInventoryModule:
 	return inventory_module
 
 
+func get_craft_behavior_module() -> AICharacterCraftBehaviorModule:
+	return craft_behavior_module
+
+
 func is_sleeping() -> bool:
 	if sleep_behavior_module == null:
 		return false
@@ -145,6 +167,8 @@ func is_sleeping() -> bool:
 func get_current_action_display_text() -> String:
 	if entrance_travel_behavior_module != null and entrance_travel_behavior_module.is_active():
 		return "マップ移動中"
+	if craft_behavior_module != null and craft_behavior_module.is_active():
+		return "制作中"
 	if is_sleeping():
 		return "睡眠中"
 	return String(get_current_need_action_id())
@@ -153,6 +177,8 @@ func get_current_action_display_text() -> String:
 func get_current_need_action_id() -> StringName:
 	if entrance_travel_behavior_module != null and entrance_travel_behavior_module.is_active():
 		return &"map_travel"
+	if craft_behavior_module != null and craft_behavior_module.is_active():
+		return &"crafting"
 	if is_sleeping():
 		return &"sleeping"
 	if need_planner == null:
@@ -168,6 +194,8 @@ func get_current_lowest_need_id() -> StringName:
 
 func _is_busy_for_entrance_travel() -> bool:
 	if entrance_travel_behavior_module != null and entrance_travel_behavior_module.is_active():
+		return true
+	if craft_behavior_module != null and craft_behavior_module.is_active():
 		return true
 	if sleep_behavior_module != null and sleep_behavior_module.is_active():
 		return true
