@@ -6,19 +6,27 @@ class_name RobinWalkSpriteAnimator
 @export var moving_bob_amount: float = 5.0
 @export var moving_rotation_degrees: float = 2.0
 @export var moving_scale_amount: float = 0.025
+@export var detect_position_delta_movement: bool = true
 
 var _sprite: Sprite2D
+var _actor: Node2D
 var _last_direction: Vector2 = Vector2.DOWN
 var _direction_cells: Dictionary = {}
 var _base_position: Vector2 = Vector2.ZERO
 var _base_scale: Vector2 = Vector2.ONE
 var _base_rotation: float = 0.0
 var _motion_time: float = 0.0
+var _last_actor_position: Vector2 = Vector2.ZERO
+var _has_last_actor_position := false
 
 
 func setup() -> void:
 	_setup_direction_cells()
 	_sprite = get_node_or_null(sprite_path) as Sprite2D
+	_actor = get_parent() as Node2D
+	if _actor != null:
+		_last_actor_position = _actor.global_position
+		_has_last_actor_position = true
 	if _sprite == null:
 		push_warning("RobinWalkSpriteAnimator: Sprite2D が見つかりません。")
 		return
@@ -36,11 +44,18 @@ func update_animation(move_velocity: Vector2, fallback_direction: Vector2, delta
 	if _sprite == null:
 		return
 
-	var is_moving := move_velocity.length_squared() > 1.0
+	var effective_velocity := move_velocity
+	if detect_position_delta_movement and effective_velocity.length_squared() <= 1.0:
+		var position_delta := _get_actor_position_delta()
+		if position_delta.length_squared() > 0.01:
+			var safe_delta := maxf(delta, 0.0001)
+			effective_velocity = position_delta / safe_delta
+
+	var is_moving := effective_velocity.length_squared() > 1.0
 	var direction := fallback_direction
 
 	if is_moving:
-		direction = move_velocity.normalized()
+		direction = effective_velocity.normalized()
 		_last_direction = direction
 	elif direction.length_squared() > 0.001:
 		direction = direction.normalized()
@@ -57,6 +72,20 @@ func update_animation(move_velocity: Vector2, fallback_direction: Vector2, delta
 
 	_motion_time += delta * maxf(frames_per_second, 0.1)
 	_apply_motion_offsets(direction)
+
+
+func _get_actor_position_delta() -> Vector2:
+	if _actor == null or not is_instance_valid(_actor):
+		_actor = get_parent() as Node2D
+	if _actor == null:
+		return Vector2.ZERO
+	if not _has_last_actor_position:
+		_last_actor_position = _actor.global_position
+		_has_last_actor_position = true
+		return Vector2.ZERO
+	var delta_position := _actor.global_position - _last_actor_position
+	_last_actor_position = _actor.global_position
+	return delta_position
 
 
 func _setup_direction_cells() -> void:
