@@ -50,21 +50,32 @@ func _physics_process(delta: float) -> void:
 
 	var action: StringName = _get_action_id()
 	var is_active: bool = action != &"idle"
+	var should_watch_movement: bool = _should_watch_movement_for_action(action)
 
 	if log_action_changes and action != _last_action:
 		_emit_debug(_make_state_message("action_changed", action))
 		_last_action = action
 		_reset_stuck_watch()
 
-	if is_active:
+	if is_active and should_watch_movement:
 		_update_stuck_watch(delta, action)
 		_update_heartbeat(delta, action)
 	else:
 		_reset_stuck_watch()
 		_normal_log_timer = 0.0
 
-	if log_slide_collisions:
+	if log_slide_collisions and should_watch_movement:
 		_log_slide_collision_if_changed(action)
+
+
+func _should_watch_movement_for_action(action: StringName) -> bool:
+	if action != &"sleeping":
+		return true
+	if _sleep_behavior == null:
+		return true
+	if _sleep_behavior.has_method("is_sleeping") and _sleep_behavior.call("is_sleeping") == true:
+		return false
+	return true
 
 
 func _update_heartbeat(delta: float, action: StringName) -> void:
