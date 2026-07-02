@@ -2,20 +2,56 @@
 
 [ext_resource type="Script" uid="uid://dik32ehksmive" path="res://Scripts/Shops/ShopData.gd" id="1_shop_data"]
 [ext_resource type="Script" uid="uid://8a0d3nyywiao" path="res://Scripts/Shops/ShopItemData.gd" id="2_shop_item"]
-[ext_resource type="Resource" uid="uid://khpl6knsr1ao" path="res://Data/Items/Food/Food_0001_Nikuman.tres" id="3_nikuman"]
-[ext_resource type="Script" path="res://Scripts/Shops/ShopTabData.gd" id="4_j2ce4"]
-[ext_resource type="AudioStream" uid="uid://b8ss10mmxvr1x" path="res://Assets/Audio/BGM/Supermarket.ogg" id="4_yiukw"]
-[ext_resource type="Texture2D" uid="uid://re6kfopavwo1" path="res://Assets/UI/Icons/Corporation/DBW.png" id="5_3ypht"]
+[ext_resource type="Script" path="res://Scripts/Shops/ShopTabData.gd" id="3_shop_tab"]
+[ext_resource type="AudioStream" uid="uid://b8ss10mmxvr1x" path="res://Assets/Audio/BGM/Supermarket.ogg" id="4_bgm"]
+[ext_resource type="Texture2D" uid="uid://re6kfopavwo1" path="res://Assets/UI/Icons/Corporation/DBW.png" id="5_sticker"]
+[ext_resource type="Resource" path="res://Data/Items/Ingredients/Ingredients_0001_RawRice.tres" id="6_ingredient_raw_rice"]
+[ext_resource type="Resource" path="res://Data/Items/Ingredients/Ingredients_0002_WheatFlour.tres" id="7_ingredient_wheat_flour"]
+[ext_resource type="Resource" path="res://Data/Items/Ingredients/Ingredients_0003_WhiteSugar.tres" id="8_ingredient_white_sugar"]
+[ext_resource type="Resource" path="res://Data/Items/Ingredients/Ingredients_0004_Salt.tres" id="9_ingredient_salt"]
+[ext_resource type="Resource" path="res://Data/Items/Ingredients/Ingredients_0005_PinkRockSalt.tres" id="10_ingredient_pink_rock_salt"]
 
-[sub_resource type="Resource" id="ShopItemData_nikuman"]
+[sub_resource type="Resource" id="ShopItemData_raw_rice"]
 script = ExtResource("2_shop_item")
-item_data = ExtResource("3_nikuman")
+item_data = ExtResource("6_ingredient_raw_rice")
+shop_tab_id = &"ingredients"
+price_override = 20
+
+[sub_resource type="Resource" id="ShopItemData_wheat_flour"]
+script = ExtResource("2_shop_item")
+item_data = ExtResource("7_ingredient_wheat_flour")
+shop_tab_id = &"ingredients"
+price_override = 20
+
+[sub_resource type="Resource" id="ShopItemData_white_sugar"]
+script = ExtResource("2_shop_item")
+item_data = ExtResource("8_ingredient_white_sugar")
+shop_tab_id = &"ingredients"
+price_override = 15
+
+[sub_resource type="Resource" id="ShopItemData_salt"]
+script = ExtResource("2_shop_item")
+item_data = ExtResource("9_ingredient_salt")
+shop_tab_id = &"ingredients"
+price_override = 10
+
+[sub_resource type="Resource" id="ShopItemData_pink_rock_salt"]
+script = ExtResource("2_shop_item")
+item_data = ExtResource("10_ingredient_pink_rock_salt")
+shop_tab_id = &"ingredients"
+price_override = 25
+
+[sub_resource type="Resource" id="ShopTabData_ingredients"]
+script = ExtResource("3_shop_tab")
+tab_id = &"ingredients"
+display_name = "食材"
 
 [resource]
 script = ExtResource("1_shop_data")
 shop_id = &"basic_food"
-display_name = "食品ショップ"
-description = "手軽に食べられる食品を扱う基本ショップ。"
-sticker = ExtResource("5_3ypht")
-shop_bgm = ExtResource("4_yiukw")
-items = Array[ExtResource("2_shop_item")]([SubResource("ShopItemData_nikuman")])
+display_name = "デカダンス\nバイトワークス"
+description = "手軽に使える食材を扱う基本ショップ。"
+sticker = ExtResource("5_sticker")
+shop_bgm = ExtResource("4_bgm")
+tabs = Array[ExtResource("3_shop_tab")]([SubResource("ShopTabData_ingredients")])
+items = Array[ExtResource("2_shop_item")]([SubResource("ShopItemData_raw_rice"), SubResource("ShopItemData_wheat_flour"), SubResource("ShopItemData_white_sugar"), SubResource("ShopItemData_salt"), SubResource("ShopItemData_pink_rock_salt")])
