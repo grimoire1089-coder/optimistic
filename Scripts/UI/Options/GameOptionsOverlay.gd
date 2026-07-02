@@ -14,6 +14,7 @@ var _has_saved_clock_pause: bool = false
 
 
 func _ready() -> void:
+	add_to_group("game_options_overlay")
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_set_process_mode_recursive(self, Node.PROCESS_MODE_ALWAYS)
 	mouse_filter = Control.MOUSE_FILTER_STOP
@@ -106,7 +107,7 @@ func _connect_close_button() -> void:
 		_close_button.pressed.connect(close_options)
 
 
-func _set_process_mode_recursive(node: Node, mode: ProcessMode) -> void:
+func _set_process_mode_recursive(node: Node, mode: int) -> void:
 	if node == null:
 		return
 	node.process_mode = mode
