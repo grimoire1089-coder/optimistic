@@ -32,11 +32,9 @@ const COOKING_GUIDE_CODES := [0x4f5c, 0x308a, 0x305f, 0x3044, 0x6599, 0x7406, 0x
 const DRINKS_GUIDE_CODES := [0x4f5c, 0x308a, 0x305f, 0x3044, 0x30c9, 0x30ea, 0x30f3, 0x30af, 0x3092, 0x9078, 0x3093, 0x3067, 0x304f, 0x3060, 0x3055, 0x3044, 0x3002]
 const UNCATEGORIZED_GUIDE_CODES := [0x30c7, 0x30d0, 0x30c3, 0x30b0, 0x7528, 0x306e, 0x672a, 0x5206, 0x985e, 0x30ab, 0x30c6, 0x30b4, 0x30ea, 0x3067, 0x3059, 0x3002]
 const NO_RECIPE_CODES := [0x3053, 0x306e, 0x30ab, 0x30c6, 0x30b4, 0x30ea, 0x306b, 0x30ec, 0x30b7, 0x30d4, 0x304c, 0x3042, 0x308a, 0x307e, 0x305b, 0x3093, 0x3002]
-const CRAFTED_SUFFIX_CODES := [0x3092, 0x4f5c, 0x308a, 0x307e, 0x3057, 0x305f, 0x3002]
 const MISSING_MATERIAL_PREFIX_CODES := [0x6750, 0x6599, 0x304c, 0x8db3, 0x308a, 0x307e, 0x305b, 0x3093, 0x3a, 0x20]
 const MISSING_FURNITURE_PREFIX_CODES := [0x5fc5, 0x8981, 0x5bb6, 0x5177, 0x304c, 0x3042, 0x308a, 0x307e, 0x305b, 0x3093, 0x3a, 0x20]
 const INVENTORY_NOT_FOUND_CODES := [0x30a4, 0x30f3, 0x30d9, 0x30f3, 0x30c8, 0x30ea, 0x304c, 0x898b, 0x3064, 0x304b, 0x308a, 0x307e, 0x305b, 0x3093, 0x3002]
-const OUTPUT_FAILED_CODES := [0x5b8c, 0x6210, 0x54c1, 0x3092, 0x8ffd, 0x52a0, 0x3067, 0x304d, 0x307e, 0x305b, 0x3093, 0x3067, 0x3057, 0x305f, 0x3002]
 const KITCHEN_MODULE_NAME_CODES := [0x30ad, 0x30c3, 0x30c1, 0x30f3, 0x30e2, 0x30b8, 0x30e5, 0x30fc, 0x30eb]
 const WHITE_RICE_NAME_CODES := [0x767d, 0x7c73]
 const WATER_BOTTLE_NAME_CODES := [0x6c34, 0x5165, 0x308a, 0x30dc, 0x30c8, 0x30eb]
@@ -44,6 +42,10 @@ const REQUIRED_MATERIALS_LABEL_CODES := [0x5fc5, 0x8981, 0x6750, 0x6599, 0x3a, 0
 const REQUIRED_FURNITURE_LABEL_CODES := [0x5fc5, 0x8981, 0x5bb6, 0x5177, 0x3a, 0x20]
 const QUANTITY_LABEL_CODES := [0x4f5c, 0x308b, 0x6570, 0x3a, 0x20]
 const NONE_CODES := [0x306a, 0x3057]
+const STARTED_TEXT_CODES := [0x5236, 0x4f5c, 0x3092, 0x958b, 0x59cb, 0x3057, 0x307e, 0x3057, 0x305f, 0x3002]
+const START_FAILED_TEXT_CODES := [0x5236, 0x4f5c, 0x3092, 0x958b, 0x59cb, 0x3067, 0x304d, 0x307e, 0x305b, 0x3093, 0x3067, 0x3057, 0x305f, 0x3002]
+const CRAFT_TIME_LABEL_CODES := [0x5236, 0x4f5c, 0x6642, 0x9593, 0x3a, 0x20]
+const MINUTE_LABEL_CODES := [0x5206]
 
 @export var cooking_method_id: StringName = CATEGORY_COOKING
 @export var actor_path: NodePath = NodePath("../../Robin")
@@ -210,20 +212,17 @@ func _add_quantity_controls() -> void:
 	row.add_theme_constant_override("separation", 8)
 	category_list.add_child(row)
 	_dynamic_nodes.append(row)
-
 	var minus_button := Button.new()
 	minus_button.custom_minimum_size = Vector2(48.0, 36.0)
 	minus_button.text = "-"
 	minus_button.pressed.connect(_on_quantity_minus_pressed)
 	row.add_child(minus_button)
-
 	var quantity_label := Label.new()
 	quantity_label.custom_minimum_size = Vector2(408.0, 36.0)
 	quantity_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	quantity_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	quantity_label.text = "%s%d" % [_string_from_codes(QUANTITY_LABEL_CODES), _craft_quantity]
 	row.add_child(quantity_label)
-
 	var plus_button := Button.new()
 	plus_button.custom_minimum_size = Vector2(48.0, 36.0)
 	plus_button.text = "+"
@@ -237,46 +236,38 @@ func _add_recipe_card(recipe: CraftRecipeData) -> void:
 	var card := PanelContainer.new()
 	card.custom_minimum_size = RECIPE_CARD_SIZE
 	card.add_theme_stylebox_override("panel", _make_card_style())
-
 	var margin := MarginContainer.new()
 	margin.add_theme_constant_override("margin_left", 12)
 	margin.add_theme_constant_override("margin_top", 10)
 	margin.add_theme_constant_override("margin_right", 12)
 	margin.add_theme_constant_override("margin_bottom", 10)
 	card.add_child(margin)
-
 	var card_row := HBoxContainer.new()
 	card_row.add_theme_constant_override("separation", 12)
 	margin.add_child(card_row)
-
 	var icon_rect := TextureRect.new()
 	icon_rect.custom_minimum_size = RECIPE_ICON_SIZE
 	icon_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	icon_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	icon_rect.texture = _load_recipe_icon(recipe)
 	card_row.add_child(icon_rect)
-
 	var rows := VBoxContainer.new()
 	rows.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	rows.add_theme_constant_override("separation", 8)
 	card_row.add_child(rows)
-
 	var name_label := Label.new()
 	name_label.text = _get_recipe_display_name(recipe)
 	name_label.add_theme_font_size_override("font_size", 22)
 	rows.add_child(name_label)
-
 	var requirements_label := Label.new()
 	requirements_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	requirements_label.text = _build_requirement_text(recipe)
 	rows.add_child(requirements_label)
-
 	var button := Button.new()
 	button.custom_minimum_size = Vector2(420.0, 42.0)
 	button.text = "%s x%d" % [_string_from_codes(MAKE_BUTTON_CODES), _craft_quantity]
 	button.pressed.connect(Callable(self, "_on_recipe_pressed").bind(recipe))
 	rows.add_child(button)
-
 	category_list.add_child(card)
 	_dynamic_nodes.append(card)
 
@@ -307,29 +298,25 @@ func _on_recipe_pressed(recipe: CraftRecipeData) -> void:
 	if inventory == null:
 		_show_and_push(_string_from_codes(INVENTORY_NOT_FOUND_CODES))
 		return
-
 	var missing_text := _get_missing_text(recipe, inventory)
 	if not missing_text.is_empty():
 		_show_and_push(missing_text)
 		return
-
-	for ingredient in recipe.ingredients:
-		if ingredient == null or ingredient.item_data == null:
-			continue
-		inventory.remove_item(ingredient.item_data.category_id, ingredient.item_data.item_id, ingredient.amount * _craft_quantity)
-
-	var added := false
-	if recipe.output_item != null and inventory.has_method("add_food_item"):
-		added = bool(inventory.call("add_food_item", recipe.output_item, recipe.output_amount * _craft_quantity))
-	if not added:
-		_refund_ingredients(recipe, inventory)
-		_show_and_push(_string_from_codes(OUTPUT_FAILED_CODES))
+	if _request_craft_action(recipe):
+		detail_label.text = "%s x%d %s" % [_get_recipe_display_name(recipe), _craft_quantity, _string_from_codes(STARTED_TEXT_CODES)]
+		if close_after_craft:
+			close_menu()
 		return
+	_show_and_push(_string_from_codes(START_FAILED_TEXT_CODES))
 
-	var crafted_text := "%s x%d%s" % [_get_recipe_display_name(recipe), recipe.output_amount * _craft_quantity, _string_from_codes(CRAFTED_SUFFIX_CODES)]
-	_show_and_push(crafted_text)
-	if close_after_craft:
-		close_menu()
+
+func _request_craft_action(recipe: CraftRecipeData) -> bool:
+	var actor := get_node_or_null(actor_path)
+	if actor == null:
+		return false
+	if not actor.has_method("request_craft"):
+		return false
+	return actor.call("request_craft", recipe, _craft_quantity) == true
 
 
 func _load_recipes_once() -> void:
@@ -355,12 +342,21 @@ func _get_recipes_for_category(category_id: StringName) -> Array[CraftRecipeData
 
 
 func _build_requirement_text(recipe: CraftRecipeData) -> String:
-	return "%s%s\n%s%s" % [
+	return "%s%s\n%s%s\n%s%d%s" % [
 		_string_from_codes(REQUIRED_MATERIALS_LABEL_CODES),
 		_build_materials_text(recipe),
 		_string_from_codes(REQUIRED_FURNITURE_LABEL_CODES),
 		_build_furniture_text(recipe),
+		_string_from_codes(CRAFT_TIME_LABEL_CODES),
+		_get_total_craft_game_minutes(recipe),
+		_string_from_codes(MINUTE_LABEL_CODES),
 	]
+
+
+func _get_total_craft_game_minutes(recipe: CraftRecipeData) -> int:
+	if recipe == null:
+		return 0
+	return maxi(recipe.craft_game_minutes, 1) * maxi(_craft_quantity, 1)
 
 
 func _build_materials_text(recipe: CraftRecipeData) -> String:
@@ -415,15 +411,6 @@ func _get_inventory_item_amount(inventory: Node, category_id: StringName, item_i
 		if entry.get("id", &"") == item_id:
 			total += int(entry.get("amount", 0))
 	return total
-
-
-func _refund_ingredients(recipe: CraftRecipeData, inventory: Node) -> void:
-	if recipe == null or inventory == null or not inventory.has_method("add_food_item"):
-		return
-	for ingredient in recipe.ingredients:
-		if ingredient == null or ingredient.item_data == null:
-			continue
-		inventory.call("add_food_item", ingredient.item_data, ingredient.amount * _craft_quantity)
 
 
 func _has_furniture(furniture_id: StringName) -> bool:
