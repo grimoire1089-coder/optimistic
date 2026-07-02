@@ -25,6 +25,7 @@ const BUILD_LOCK_REASON_META := &"build_lock_reason"
 @export var retry_cooldown_range: Vector2 = Vector2(20.0, 45.0)
 @export var actor_grid_footprint: Vector2i = Vector2i(2, 4)
 @export var snap_to_stool_when_sitting: bool = true
+@export var pre_action_settle_seconds: float = 0.25
 
 var _body: CharacterBody2D
 var _needs_module: CharacterNeedsModule
@@ -42,6 +43,8 @@ var _using_lapis_standing := false
 var _sit_timer := 0.0
 var _standing_lapis_timer := 0.0
 var _retry_cooldown := 0.0
+var _pre_action_settle_timer := 0.0
+var _pre_action_settle_action: StringName = &""
 var _facing_direction := Vector2.DOWN
 var _rng := RandomNumberGenerator.new()
 
@@ -88,7 +91,7 @@ func get_facing_direction() -> Vector2:
 
 func get_debug_path_cells() -> Array[Vector2i]:
 	var result: Array[Vector2i] = []
-	if _sitting or _using_lapis_standing:
+	if _sitting or _using_lapis_standing or _is_pre_action_settling():
 		return result
 	for cell in _path_cells:
 		result.append(cell)
@@ -96,13 +99,13 @@ func get_debug_path_cells() -> Array[Vector2i]:
 
 
 func get_debug_target_cell() -> Vector2i:
-	if _sitting or _using_lapis_standing:
+	if _sitting or _using_lapis_standing or _is_pre_action_settling():
 		return INVALID_GRID_POSITION
 	return _target_cell
 
 
 func get_debug_next_cell() -> Vector2i:
-	if _sitting or _using_lapis_standing:
+	if _sitting or _using_lapis_standing or _is_pre_action_settling():
 		return INVALID_GRID_POSITION
 	if _path_cells.is_empty():
 		return INVALID_GRID_POSITION
@@ -114,6 +117,12 @@ func get_debug_actor_footprint() -> Vector2i:
 
 
 func get_debug_movement_summary() -> String:
+	if _is_pre_action_settling():
+		return "settling=true action=%s timer=%.2f footprint=%s" % [
+			String(_pre_action_settle_action),
+			_pre_action_settle_timer,
+			str(get_debug_actor_footprint()),
+		]
 	if _sitting:
 		return "sitting=true lapis=true stool_cell=%s lower_body_footprint=%s" % [
 			str(_get_furniture_grid_position(_sitting_stool)),
@@ -141,6 +150,11 @@ func get_velocity(delta: float) -> Vector2:
 		_reset()
 		return Vector2.ZERO
 
+	if _is_pre_action_settling():
+		_active = true
+		_update_pre_action_settle(delta)
+		return Vector2.ZERO
+
 	if _sitting:
 		_active = true
 		_update_sitting(delta)
@@ -156,14 +170,14 @@ func get_velocity(delta: float) -> Vector2:
 		return Vector2.ZERO
 
 	if not _ensure_target_stool():
-		_start_standing_lapis()
+		_begin_pre_action_settle(&"lapis")
 		return Vector2.ZERO
 
 	_active = true
 	var target_position := _get_stool_use_position(_target_cell)
 	var to_target := target_position - _body.global_position
 	if to_target.length() <= arrive_distance:
-		_start_sitting()
+		_begin_pre_action_settle(&"sit")
 		return Vector2.ZERO
 
 	var path_velocity := _get_grid_path_velocity_to_target(_target_cell)
@@ -172,7 +186,7 @@ func get_velocity(delta: float) -> Vector2:
 
 	to_target = target_position - _body.global_position
 	if to_target.length() <= arrive_distance:
-		_start_sitting()
+		_begin_pre_action_settle(&"sit")
 		return Vector2.ZERO
 
 	_clear_target()
@@ -233,10 +247,43 @@ func _clear_target() -> void:
 	_path_cells.clear()
 
 
+func _begin_pre_action_settle(action_id: StringName) -> void:
+	_active = true
+	_pre_action_settle_action = action_id
+	_pre_action_settle_timer = maxf(pre_action_settle_seconds, 0.0)
+	_path_cells.clear()
+	_snap_body_to_current_grid_center()
+	if _pre_action_settle_timer <= 0.0:
+		_finish_pre_action_settle()
+
+
+func _update_pre_action_settle(delta: float) -> void:
+	_snap_body_to_current_grid_center()
+	_pre_action_settle_timer -= maxf(delta, 0.0)
+	if _pre_action_settle_timer <= 0.0:
+		_finish_pre_action_settle()
+
+
+func _finish_pre_action_settle() -> void:
+	var action_id := _pre_action_settle_action
+	_pre_action_settle_timer = 0.0
+	_pre_action_settle_action = &""
+	if action_id == &"sit":
+		_start_sitting()
+	elif action_id == &"lapis":
+		_start_standing_lapis()
+
+
+func _is_pre_action_settling() -> bool:
+	return _pre_action_settle_timer > 0.0 or _pre_action_settle_action != &""
+
+
 func _start_sitting() -> void:
 	_active = true
 	_sitting = true
 	_using_lapis_standing = false
+	_pre_action_settle_timer = 0.0
+	_pre_action_settle_action = &""
 	_standing_lapis_timer = 0.0
 	_sit_timer = _rng.randf_range(maxf(sit_duration_range.x, 0.1), maxf(sit_duration_range.y, sit_duration_range.x + 0.1))
 	_path_cells.clear()
@@ -258,9 +305,12 @@ func _update_sitting(delta: float) -> void:
 func _start_standing_lapis() -> void:
 	_clear_sitting_stool_lock()
 	_clear_target()
+	_snap_body_to_current_grid_center()
 	_active = true
 	_sitting = false
 	_using_lapis_standing = true
+	_pre_action_settle_timer = 0.0
+	_pre_action_settle_action = &""
 	_sit_timer = 0.0
 	_standing_lapis_timer = _rng.randf_range(
 		maxf(standing_lapis_duration_range.x, 0.1),
@@ -271,10 +321,12 @@ func _start_standing_lapis() -> void:
 
 func _update_standing_lapis(delta: float) -> void:
 	_facing_direction = Vector2.DOWN
+	_snap_body_to_current_grid_center()
 	_recover_fun(delta)
 	_standing_lapis_timer -= maxf(delta, 0.0)
 	if _standing_lapis_timer <= 0.0:
 		_reset()
+		_snap_body_to_current_grid_center()
 		_start_retry_cooldown()
 
 
@@ -303,6 +355,8 @@ func _reset() -> void:
 	_using_lapis_standing = false
 	_sit_timer = 0.0
 	_standing_lapis_timer = 0.0
+	_pre_action_settle_timer = 0.0
+	_pre_action_settle_action = &""
 	_clear_target()
 
 
@@ -615,6 +669,22 @@ func _get_nearest_walkable_top_left_to_world_position(world_position: Vector2) -
 				nearest_distance = distance
 				nearest_cell = cell
 	return nearest_cell
+
+
+func _snap_body_to_current_grid_center() -> bool:
+	if _body == null or _room_map == null:
+		return false
+	var footprint := _get_actor_grid_footprint()
+	var snap_cell := _get_current_actor_top_left_grid_position()
+	if not _is_target_cell_walkable(snap_cell, footprint):
+		snap_cell = _get_nearest_walkable_top_left_to_world_position(_body.global_position)
+	if not _is_valid_grid_position(snap_cell):
+		return false
+	var snap_position := _room_map.grid_to_world_area_center(snap_cell, footprint)
+	var changed := _body.global_position.distance_squared_to(snap_position) > 0.001
+	_body.global_position = snap_position
+	_path_cells.clear()
+	return changed
 
 
 func _is_target_cell_walkable(cell: Vector2i, footprint: Vector2i) -> bool:
