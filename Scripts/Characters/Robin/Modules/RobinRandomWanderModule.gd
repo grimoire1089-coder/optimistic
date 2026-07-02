@@ -12,6 +12,7 @@ const INVALID_GRID_POSITION := Vector2i(-999999, -999999)
 @export var idle_time_range: Vector2 = Vector2(2.5, 5.5)
 @export var walk_time_range: Vector2 = Vector2(1.0, 2.2)
 @export var use_grid_path_movement: bool = true
+@export var use_grid_step_movement: bool = true
 @export var actor_grid_footprint: Vector2i = Vector2i(2, 4)
 @export var grid_arrival_distance: float = 6.0
 
@@ -34,6 +35,11 @@ var _walkable_cells_cache_version := -1
 var _walkable_cells_cache_room_map: RoomMapGridModule
 var _walkable_cells_cache_placement: Node
 var _walkable_cells_cache_footprint := Vector2i.ZERO
+var _grid_step_active := false
+var _grid_step_start_position := Vector2.ZERO
+var _grid_step_target_position := Vector2.ZERO
+var _grid_step_elapsed := 0.0
+var _grid_step_duration := 0.0
 
 
 func setup(body: Node2D) -> void:
@@ -54,6 +60,7 @@ func set_movement_area_provider_path(next_provider_path: NodePath) -> void:
 	_invalidate_walkable_cells_cache()
 	_resolve_movement_area_provider()
 	_path_cells.clear()
+	_clear_grid_step()
 	_pick_next_action()
 	clamp_body_to_movement_area()
 
@@ -71,6 +78,9 @@ func get_velocity(delta: float) -> Vector2:
 		return Vector2.ZERO
 
 	if _uses_grid_path_movement():
+		if use_grid_step_movement:
+			_update_grid_step_movement(delta)
+			return Vector2.ZERO
 		return _get_grid_path_velocity()
 
 	_timer -= delta
@@ -189,6 +199,7 @@ func _setup_walk_directions() -> void:
 func _pick_next_action() -> void:
 	_setup_walk_directions()
 	_path_cells.clear()
+	_clear_grid_step()
 	_is_idle = _rng.randf() < idle_chance
 
 	if _is_idle:
@@ -207,7 +218,51 @@ func _pick_next_action() -> void:
 
 func _start_idle() -> void:
 	_is_idle = true
+	_clear_grid_step()
 	_timer = _rng.randf_range(idle_time_range.x, idle_time_range.y)
+
+
+func _update_grid_step_movement(delta: float) -> void:
+	while true:
+		if _grid_step_active:
+			_grid_step_elapsed += maxf(delta, 0.0)
+			var ratio := 1.0
+			if _grid_step_duration > 0.0:
+				ratio = clampf(_grid_step_elapsed / _grid_step_duration, 0.0, 1.0)
+			_body.global_position = _grid_step_start_position.lerp(_grid_step_target_position, ratio)
+			if ratio < 1.0:
+				return
+			_body.global_position = _grid_step_target_position
+			_grid_step_active = false
+			if not _path_cells.is_empty():
+				_path_cells.remove_at(0)
+			if _path_cells.is_empty():
+				_start_idle()
+			return
+
+		if _path_cells.is_empty():
+			_start_idle()
+			return
+
+		var waypoint_cell := _path_cells[0]
+		if not _is_actor_grid_area_walkable(waypoint_cell):
+			_pick_next_action()
+			return
+
+		var waypoint_position := _get_actor_grid_area_center(waypoint_cell)
+		var to_waypoint := waypoint_position - _body.global_position
+		if to_waypoint.length_squared() <= 0.001:
+			_body.global_position = waypoint_position
+			_path_cells.remove_at(0)
+			continue
+
+		_direction = to_waypoint.normalized()
+		_grid_step_start_position = _body.global_position
+		_grid_step_target_position = waypoint_position
+		_grid_step_elapsed = 0.0
+		_grid_step_duration = maxf(to_waypoint.length() / maxf(walk_speed, 1.0), 0.01)
+		_grid_step_active = true
+		continue
 
 
 func _get_grid_path_velocity() -> Vector2:
@@ -400,6 +455,7 @@ func _clamp_body_to_grid_footprint_area() -> bool:
 
 	_body.global_position = clamped_position
 	_path_cells.clear()
+	_clear_grid_step()
 	return true
 
 
@@ -427,6 +483,14 @@ func _keep_inside_movement_area() -> void:
 		_direction = target_direction.normalized()
 		_is_idle = false
 		_timer = max(_timer, 0.35)
+
+
+func _clear_grid_step() -> void:
+	_grid_step_active = false
+	_grid_step_start_position = Vector2.ZERO
+	_grid_step_target_position = Vector2.ZERO
+	_grid_step_elapsed = 0.0
+	_grid_step_duration = 0.0
 
 
 func _uses_grid_path_movement() -> bool:
