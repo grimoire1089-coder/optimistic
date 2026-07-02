@@ -1,4 +1,4 @@
-[gd_scene load_steps=20 format=3 uid="uid://cb0fyv6e2f40m"]
+[gd_scene load_steps=21 format=3 uid="uid://cb0fyv6e2f40m"]
 
 [ext_resource type="Script" path="res://Scripts/Characters/Robin/RobinWanderActor.gd" id="1_actor"]
 [ext_resource type="Texture2D" path="res://Assets/Characters/Robin/Walk/robin_8dir_standing.png" id="2_standing_texture"]
@@ -17,6 +17,7 @@
 [ext_resource type="Script" path="res://Scripts/Characters/Modules/AICharacterSkillsModule.gd" id="14_skills_module"]
 [ext_resource type="Script" path="res://Scripts/Characters/Modules/AICharacterFootprintShapeModule.gd" id="15_footprint_shape"]
 [ext_resource type="Script" path="res://Scripts/Characters/Modules/AICharacterMovementDebugModule.gd" id="16_movement_debug"]
+[ext_resource type="Script" path="res://Scripts/Characters/Modules/AICharacterHygieneBehaviorModule.gd" id="17_hygiene_behavior"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_robin_collision"]
 size = Vector2(70.4, 70.4)
@@ -94,6 +95,20 @@ drink_duration_seconds = 3.0
 drink_sfx_path = "res://Assets/Audio/SFX/Game/drink.ogg"
 drink_sfx_delay_seconds = 0.75
 
+[node name="AICharacterHygieneBehaviorModule" type="Node" parent="." groups=["ai_movement_behavior"]]
+script = ExtResource("17_hygiene_behavior")
+needs_module_path = NodePath("../AICharacterNeedsBundle/CharacterNeedsModule")
+need_planner_path = NodePath("../AICharacterNeedsBundle/NeedDrivenAIPlanner")
+furniture_root_path = NodePath("../../RobinRoomMap/FurnitureRoot")
+furniture_placement_module_path = NodePath("../../FurniturePlacementModule")
+room_map_path = NodePath("../../RobinRoomMap")
+actor_grid_footprint = Vector2i(2, 4)
+hygiene_request_ratio = 0.45
+nearby_shower_distance = 48.0
+shower_cooldown_seconds = 0.0
+shower_duration_seconds = 5.0
+hygiene_recovery_value = 100.0
+
 [node name="AICharacterSitBehaviorModule" type="Node" parent="." groups=["ai_movement_behavior"]]
 script = ExtResource("10_sit_behavior")
 need_planner_path = NodePath("../AICharacterNeedsBundle/NeedDrivenAIPlanner")
@@ -137,11 +152,13 @@ script = ExtResource("16_movement_debug")
 normal_log_interval_seconds = 4.0
 stuck_log_seconds = 1.0
 nearby_furniture_radius = 120.0
+hygiene_behavior_path = NodePath("../AICharacterHygieneBehaviorModule")
 sit_behavior_path = NodePath("../AICharacterSitBehaviorModule")
 
 [node name="AICharacterActionProgressBarModule" type="Node" parent="."]
 script = ExtResource("10_action_progress_bar")
 hydrate_behavior_path = NodePath("../AICharacterHydrateBehaviorModule")
+hygiene_behavior_path = NodePath("../AICharacterHygieneBehaviorModule")
 sleep_behavior_path = NodePath("../AICharacterSleepBehaviorModule")
 craft_behavior_path = NodePath("../AICharacterCraftBehaviorModule")
 bar_offset = Vector2(-42, -88)
