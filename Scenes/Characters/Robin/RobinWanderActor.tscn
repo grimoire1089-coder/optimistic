@@ -17,7 +17,7 @@
 [ext_resource type="Script" path="res://Scripts/Characters/Modules/AICharacterFootprintShapeModule.gd" id="15_footprint_shape"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_robin_collision"]
-size = Vector2(70.4, 70.4)
+size = Vector2(70.4, 35.2)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_click_area"]
 size = Vector2(70, 140)
@@ -38,7 +38,7 @@ centered = true
 scale = Vector2(0.32, 0.32)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
-position = Vector2(0, 35.2)
+position = Vector2(0, 52.8)
 shape = SubResource("RectangleShape2D_robin_collision")
 
 [node name="ClickArea2D" type="Area2D" parent="."]
@@ -112,8 +112,8 @@ use_time_seconds = 0.45
 script = ExtResource("15_footprint_shape")
 shape_path = NodePath("../CollisionShape2D")
 room_map_path = NodePath("../../RobinRoomMap")
-footprint_cells = Vector2i(2, 2)
-center_cell_offset = Vector2(0, 1)
+footprint_cells = Vector2i(2, 1)
+center_cell_offset = Vector2(0, 1.5)
 
 [node name="AICharacterActionProgressBarModule" type="Node" parent="."]
 script = ExtResource("10_action_progress_bar")
