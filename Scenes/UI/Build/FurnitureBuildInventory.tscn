@@ -1,9 +1,10 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=7 format=3]
 
 [ext_resource type="Script" path="res://Scripts/UI/Build/FurnitureBuildInventory.gd" id="1_furniture_inventory"]
 [ext_resource type="PackedScene" path="res://Scenes/Maps/Furniture/SimpleMattressFurniture.tscn" id="2_simple_mattress"]
 [ext_resource type="PackedScene" path="res://Scenes/Maps/Furniture/Kitchen/KitchenModuleFurniture.tscn" id="3_kitchen_module"]
 [ext_resource type="PackedScene" path="res://Scenes/Maps/Furniture/Utility/StoolFurniture.tscn" id="4_stool"]
+[ext_resource type="PackedScene" path="res://Scenes/Maps/Furniture/Utility/ShowerFurniture.tscn" id="5_shower"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_build_inventory_panel"]
 bg_color = Color(0.015, 0.025, 0.035, 1)
@@ -36,6 +37,7 @@ theme_override_styles/panel = SubResource("StyleBoxFlat_build_inventory_panel")
 script = ExtResource("1_furniture_inventory")
 simple_mattress_scene = ExtResource("2_simple_mattress")
 kitchen_module_scene = ExtResource("3_kitchen_module")
+shower_scene = ExtResource("5_shower")
 stool_scene = ExtResource("4_stool")
 
 [node name="MarginContainer" type="MarginContainer" parent="."]
@@ -136,6 +138,11 @@ text = "シンプルマットレス\n2 x 4 / Rで回転"
 custom_minimum_size = Vector2(280, 52)
 layout_mode = 2
 text = "キッチンモジュール\n4 x 2 / Rで回転"
+
+[node name="ShowerButton" type="Button" parent="MarginContainer/Rows/ItemList"]
+custom_minimum_size = Vector2(280, 52)
+layout_mode = 2
+text = "シャワー\n2 x 4 / Rで回転"
 
 [node name="StoolButton" type="Button" parent="MarginContainer/Rows/ItemList"]
 custom_minimum_size = Vector2(280, 52)
