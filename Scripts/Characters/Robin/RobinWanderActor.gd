@@ -328,6 +328,82 @@ func _cancel_sit_behavior() -> void:
 	sit_behavior_module.cancel_sitting()
 
 
+func _is_busy_for_entrance_travel() -> bool:
+	if entrance_travel_behavior_module != null and entrance_travel_behavior_module.is_active():
+		return true
+	if craft_behavior_module != null and craft_behavior_module.is_active():
+		return true
+	if sleep_behavior_module != null and sleep_behavior_module.is_active():
+		return true
+	if hydrate_behavior_module != null and hydrate_behavior_module.is_active():
+		return true
+	if hygiene_behavior_module != null and hygiene_behavior_module.is_active():
+		return true
+	return false
+
+
+func _connect_entrance_travel_signal() -> void:
+	if entrance_travel_behavior_module == null:
+		return
+	var callable := Callable(self, "_on_entrance_travel_completed")
+	if not entrance_travel_behavior_module.travel_completed.is_connected(callable):
+		entrance_travel_behavior_module.travel_completed.connect(callable)
+
+
+func _on_entrance_travel_completed(target_map_id: StringName) -> void:
+	entrance_travel_completed.emit(target_map_id)
+
+
+func _setup_click_area() -> void:
+	if click_area == null:
+		return
+	click_area.input_pickable = true
+	var callable := Callable(self, "_on_click_area_input_event")
+	if not click_area.input_event.is_connected(callable):
+		click_area.input_event.connect(callable)
+
+
+func _on_click_area_input_event(_viewport: Viewport, event: InputEvent, _shape_idx: int) -> void:
+	if event is InputEventMouseButton:
+		var mouse_event := event as InputEventMouseButton
+		if mouse_event.button_index == MOUSE_BUTTON_LEFT and mouse_event.pressed:
+			_select_actor()
+
+
+func _is_mouse_inside_sprite_click_rect(global_mouse_position: Vector2) -> bool:
+	if sprite == null:
+		return false
+	var local_position := sprite.to_local(global_mouse_position)
+	var rect := sprite.get_rect().grow_individual(
+		sprite_click_padding.x,
+		sprite_click_padding.y,
+		sprite_click_padding.x,
+		sprite_click_padding.y
+	)
+	return rect.has_point(local_position)
+
+
+func _select_actor() -> void:
+	_play_click_sfx()
+	selected.emit(self)
+	get_viewport().set_input_as_handled()
+
+
+func _play_click_sfx() -> void:
+	if click_sfx == null:
+		return
+	AudioPlayer.play_sfx(click_sfx, 1.0, click_sfx_volume_db)
+
+
+func _load_default_click_sfx_if_needed() -> void:
+	if click_sfx != null:
+		return
+	for path in DEFAULT_CLICK_SFX_PATHS:
+		if ResourceLoader.exists(path):
+			click_sfx = load(path) as AudioStream
+			return
+
+
 func _debug_reset_behavior(behavior: Node) -> bool:
 	if behavior == null:
 		return false
@@ -360,7 +436,6 @@ func _debug_reset_behavior(behavior: Node) -> bool:
 		return true
 
 	_debug_set_property_if_exists(behavior, &"_is_active", false)
-	_debug_set_property_if_exists(behavior, &"_path_cells", [])
 	return was_active
 
 
