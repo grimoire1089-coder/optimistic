@@ -98,12 +98,12 @@ func _setup_tabs() -> void:
 
 func _update_action_label() -> void:
 	if _actor == null:
-		action_label.text = "欲求行動: -"
+		action_label.text = "行動: -"
 		return
 	var need_id := _actor.get_current_lowest_need_id()
 	var action_id := _actor.get_current_need_action_id()
 	var action_text := _actor.get_current_action_display_text()
-	action_label.text = "最低欲求: %s / 行動: %s" % [String(need_id), action_text]
+	action_label.text = "行動: %s" % action_text
 	_log_ai_action_if_changed(need_id, action_id)
 
 func _log_ai_action_if_changed(need_id: StringName, action_id: StringName) -> void:
