@@ -1,4 +1,4 @@
-[gd_scene load_steps=15 format=3 uid="uid://cb0fyv6e2f40m"]
+[gd_scene load_steps=16 format=3 uid="uid://cb0fyv6e2f40m"]
 
 [ext_resource type="Script" path="res://Scripts/Characters/Robin/RobinWanderActor.gd" id="1_actor"]
 [ext_resource type="Texture2D" path="res://Assets/Characters/Robin/Walk/robin_8dir_standing.png" id="2_standing_texture"]
@@ -12,6 +12,7 @@
 [ext_resource type="Script" path="res://Scripts/Characters/Modules/AICharacterActionProgressBarModule.gd" id="10_action_progress_bar"]
 [ext_resource type="Script" path="res://Scripts/Characters/Modules/AICharacterActionItemDisplayModule.gd" id="11_action_item_display"]
 [ext_resource type="Script" path="res://Scripts/Characters/Modules/AICharacterEntranceTravelBehaviorModule.gd" id="12_entrance_travel"]
+[ext_resource type="Script" path="res://Scripts/Characters/Modules/AICharacterCraftBehaviorModule.gd" id="13_craft_behavior"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_robin"]
 radius = 8.0
@@ -80,6 +81,15 @@ drink_duration_seconds = 3.0
 drink_sfx_path = "res://Assets/Audio/SFX/Game/drink.ogg"
 drink_sfx_delay_seconds = 0.75
 
+[node name="AICharacterCraftBehaviorModule" type="Node" parent="."]
+script = ExtResource("13_craft_behavior")
+inventory_module_path = NodePath("../RobinInventoryModule")
+furniture_root_path = NodePath("../../RobinRoomMap/FurnitureRoot")
+furniture_placement_module_path = NodePath("../../FurniturePlacementModule")
+room_map_path = NodePath("../../RobinRoomMap")
+walk_speed = 80.0
+actor_grid_footprint = Vector2i(2, 4)
+
 [node name="AICharacterEntranceTravelBehaviorModule" type="Node" parent="."]
 script = ExtResource("12_entrance_travel")
 room_map_path = NodePath("../../RobinRoomMap")
@@ -95,12 +105,14 @@ use_time_seconds = 0.45
 script = ExtResource("10_action_progress_bar")
 hydrate_behavior_path = NodePath("../AICharacterHydrateBehaviorModule")
 sleep_behavior_path = NodePath("../AICharacterSleepBehaviorModule")
+craft_behavior_path = NodePath("../AICharacterCraftBehaviorModule")
 bar_offset = Vector2(-42, -88)
 bar_size = Vector2(84, 10)
 
 [node name="AICharacterActionItemDisplayModule" type="Node" parent="."]
 script = ExtResource("11_action_item_display")
 hydrate_behavior_path = NodePath("../AICharacterHydrateBehaviorModule")
+craft_behavior_path = NodePath("../AICharacterCraftBehaviorModule")
 item_center_offset = Vector2(0, -18)
 item_display_size = Vector2(70, 70)
 
