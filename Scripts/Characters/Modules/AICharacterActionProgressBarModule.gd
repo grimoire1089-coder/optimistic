@@ -2,6 +2,7 @@ extends Node
 class_name AICharacterActionProgressBarModule
 
 @export var hydrate_behavior_path: NodePath = NodePath("../AICharacterHydrateBehaviorModule")
+@export var hygiene_behavior_path: NodePath = NodePath("../AICharacterHygieneBehaviorModule")
 @export var sleep_behavior_path: NodePath = NodePath("../AICharacterSleepBehaviorModule")
 @export var craft_behavior_path: NodePath = NodePath("../AICharacterCraftBehaviorModule")
 @export var bar_offset: Vector2 = Vector2(-42.0, -88.0)
@@ -13,6 +14,7 @@ class_name AICharacterActionProgressBarModule
 
 var _body: Node2D
 var _hydrate_behavior: Node
+var _hygiene_behavior: Node
 var _sleep_behavior: Node
 var _craft_behavior: Node
 var _bar: ProgressBar
@@ -56,6 +58,8 @@ func _update_bar() -> void:
 func _get_active_progress_source() -> Node:
 	if _craft_behavior != null and _should_show_source(_craft_behavior):
 		return _craft_behavior
+	if _hygiene_behavior != null and _should_show_source(_hygiene_behavior):
+		return _hygiene_behavior
 	if _hydrate_behavior != null and _should_show_source(_hydrate_behavior):
 		return _hydrate_behavior
 	if _sleep_behavior != null and _should_show_source(_sleep_behavior):
@@ -137,6 +141,8 @@ func _resolve_refs() -> void:
 		_body = get_parent() as Node2D
 	if _hydrate_behavior == null and not hydrate_behavior_path.is_empty():
 		_hydrate_behavior = get_node_or_null(hydrate_behavior_path)
+	if _hygiene_behavior == null and not hygiene_behavior_path.is_empty():
+		_hygiene_behavior = get_node_or_null(hygiene_behavior_path)
 	if _sleep_behavior == null and not sleep_behavior_path.is_empty():
 		_sleep_behavior = get_node_or_null(sleep_behavior_path)
 	if _craft_behavior == null and not craft_behavior_path.is_empty():
