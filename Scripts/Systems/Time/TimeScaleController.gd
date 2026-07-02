@@ -37,7 +37,7 @@ func set_time_scale_request(reason: String, enabled: bool, scale: float) -> void
 		return
 
 	if enabled:
-		_scale_requests[reason] = max(scale, NORMAL_SCALE)
+		_scale_requests[reason] = maxf(scale, NORMAL_SCALE)
 	else:
 		_scale_requests.erase(reason)
 
@@ -55,7 +55,7 @@ func reset_time_scale() -> void:
 
 
 func update_sleep_fast_forward(map_ai_count: int, sleeping_ai_count: int, can_fast_forward: bool = true) -> void:
-	var should_fast_forward := can_fast_forward and map_ai_count == 1 and sleeping_ai_count == 1
+	var should_fast_forward: bool = can_fast_forward and map_ai_count == 1 and sleeping_ai_count == 1
 	set_sleep_fast_forward(should_fast_forward)
 
 
@@ -68,11 +68,11 @@ func get_current_scale() -> float:
 
 
 func _apply_highest_request() -> void:
-	var next_reason := "normal"
-	var next_scale := NORMAL_SCALE
+	var next_reason: String = "normal"
+	var next_scale: float = NORMAL_SCALE
 
 	for reason in _scale_requests.keys():
-		var scale := float(_scale_requests[reason])
+		var scale: float = float(_scale_requests[reason])
 		if scale > next_scale:
 			next_scale = scale
 			next_reason = str(reason)
@@ -81,7 +81,7 @@ func _apply_highest_request() -> void:
 
 
 func _set_engine_time_scale(scale: float, reason: String) -> void:
-	var safe_scale := max(scale, NORMAL_SCALE)
+	var safe_scale: float = maxf(scale, NORMAL_SCALE)
 
 	if is_equal_approx(Engine.time_scale, safe_scale) and current_reason == reason:
 		return
