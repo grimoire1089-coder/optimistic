@@ -3,6 +3,10 @@ class_name CraftButton
 
 const DEFAULT_CLICK_SFX_PATH := "res://Assets/Audio/SFX/UI/UI_Click_001.ogg"
 const DEFAULT_LABEL_CODES := [0x5236, 0x4f5c]
+const SECOND_ROW_TOP_RIGHT_OFFSET := Vector2(-280.0, 236.0)
+const SECOND_ROW_BUTTON_SIZE := Vector2(48.0, 48.0)
+const SECOND_ROW_MENU_TOP_RIGHT_OFFSET := Vector2(-328.0, 304.0)
+const SECOND_ROW_MENU_SIZE := Vector2(304.0, 172.0)
 
 @export var label_text: String = ""
 @export var craft_menu_path: NodePath = NodePath("../CraftMenu")
@@ -16,6 +20,7 @@ func _ready() -> void:
 	text = _get_label_text()
 	_load_default_click_sfx_if_needed()
 	pressed.connect(_on_pressed)
+	call_deferred("_apply_second_row_layout_after_parent")
 
 
 func _on_pressed() -> void:
@@ -76,12 +81,33 @@ func _apply_square_button_layout() -> void:
 	anchor_right = 1.0
 	anchor_bottom = 0.0
 	offset_left = -280.0
-	offset_top = 176.0
+	offset_top = 236.0
 	offset_right = -224.0
-	offset_bottom = 232.0
+	offset_bottom = 292.0
 	mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	add_theme_font_size_override("font_size", 11)
 	_add_rounded_button_styles()
+
+
+func _apply_second_row_layout_after_parent() -> void:
+	_place_top_right_control(self, SECOND_ROW_TOP_RIGHT_OFFSET, SECOND_ROW_BUTTON_SIZE)
+	var craft_menu := _find_craft_menu() as Control
+	if craft_menu == null:
+		return
+	_place_top_right_control(craft_menu, SECOND_ROW_MENU_TOP_RIGHT_OFFSET, SECOND_ROW_MENU_SIZE)
+
+
+func _place_top_right_control(control: Control, top_right_offset: Vector2, control_size: Vector2) -> void:
+	if control == null:
+		return
+	control.anchor_left = 1.0
+	control.anchor_top = 0.0
+	control.anchor_right = 1.0
+	control.anchor_bottom = 0.0
+	control.offset_left = top_right_offset.x
+	control.offset_top = top_right_offset.y
+	control.offset_right = top_right_offset.x + control_size.x
+	control.offset_bottom = top_right_offset.y + control_size.y
 
 
 func _add_rounded_button_styles() -> void:
