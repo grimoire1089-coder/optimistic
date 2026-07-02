@@ -1,0 +1,48 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://Scripts/UI/Options/GameOptionsOverlay.gd" id="1_game_options_overlay"]
+[ext_resource type="PackedScene" uid="uid://iqk0ojpmgrh1" path="res://Scenes/UI/Options/AudioSettingsPanel.tscn" id="2_audio_panel"]
+
+[node name="GameOptionsOverlay" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+script = ExtResource("1_game_options_overlay")
+
+[node name="DimBackground" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+color = Color(0, 0, 0, 0.55)
+
+[node name="CenterContainer" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 1
+
+[node name="OverlayBox" type="VBoxContainer" parent="CenterContainer"]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+mouse_filter = 1
+theme_override_constants/separation = 12
+
+[node name="AudioSettingsPanel" parent="CenterContainer/OverlayBox" instance=ExtResource("2_audio_panel")]
+layout_mode = 2
+
+[node name="CloseOptionsButton" type="Button" parent="CenterContainer/OverlayBox"]
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+text = "閉じる"
