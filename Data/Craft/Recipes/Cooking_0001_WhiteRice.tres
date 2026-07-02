@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="CraftRecipeData" load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Craft/CraftRecipeData.gd" id="1_recipe_script"]
+[ext_resource type="Script" path="res://Scripts/Craft/CraftIngredientData.gd" id="2_ingredient_script"]
+[ext_resource type="Resource" path="res://Data/Items/Ingredients/Ingredients_0001_RawRice.tres" id="3_raw_rice"]
+[ext_resource type="Resource" path="res://Data/Items/Food/Food_0008_WaterBottle.tres" id="4_water_bottle"]
+[ext_resource type="Resource" path="res://Data/Items/Food/Food_0013_WhiteRice.tres" id="5_white_rice"]
+
+[sub_resource type="Resource" id="CraftIngredientData_raw_rice"]
+script = ExtResource("2_ingredient_script")
+item_data = ExtResource("3_raw_rice")
+amount = 1
+
+[sub_resource type="Resource" id="CraftIngredientData_water_bottle"]
+script = ExtResource("2_ingredient_script")
+item_data = ExtResource("4_water_bottle")
+amount = 1
+
+[resource]
+script = ExtResource("1_recipe_script")
+recipe_id = &"cooking_0001_white_rice"
+category_id = &"cooking"
+output_item = ExtResource("5_white_rice")
+output_amount = 1
+ingredients = Array[ExtResource("2_ingredient_script")]([SubResource("CraftIngredientData_raw_rice"), SubResource("CraftIngredientData_water_bottle")])
+required_furniture_ids = PackedStringArray("kitchen_module")
