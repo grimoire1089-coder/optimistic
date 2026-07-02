@@ -1,4 +1,4 @@
-[gd_scene load_steps=18 format=3 uid="uid://cb0fyv6e2f40m"]
+[gd_scene load_steps=19 format=3 uid="uid://cb0fyv6e2f40m"]
 
 [ext_resource type="Script" path="res://Scripts/Characters/Robin/RobinWanderActor.gd" id="1_actor"]
 [ext_resource type="Texture2D" path="res://Assets/Characters/Robin/Walk/robin_8dir_standing.png" id="2_standing_texture"]
@@ -15,6 +15,7 @@
 [ext_resource type="Script" path="res://Scripts/Characters/Modules/AICharacterCraftBehaviorModule.gd" id="13_craft_behavior"]
 [ext_resource type="Script" path="res://Scripts/Characters/Modules/AICharacterSkillsModule.gd" id="14_skills_module"]
 [ext_resource type="Script" path="res://Scripts/Characters/Modules/AICharacterFootprintShapeModule.gd" id="15_footprint_shape"]
+[ext_resource type="Script" path="res://Scripts/Characters/Modules/AICharacterMovementDebugModule.gd" id="16_movement_debug"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_robin_collision"]
 size = Vector2(70.4, 35.2)
@@ -116,6 +117,12 @@ shape_path = NodePath("../CollisionShape2D")
 room_map_path = NodePath("../../RobinRoomMap")
 footprint_cells = Vector2i(2, 1)
 center_cell_offset = Vector2(0, 1.5)
+
+[node name="AICharacterMovementDebugModule" type="Node" parent="."]
+script = ExtResource("16_movement_debug")
+normal_log_interval_seconds = 4.0
+stuck_log_seconds = 1.0
+nearby_furniture_radius = 120.0
 
 [node name="AICharacterActionProgressBarModule" type="Node" parent="."]
 script = ExtResource("10_action_progress_bar")
