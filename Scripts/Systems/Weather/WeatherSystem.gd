@@ -1,5 +1,5 @@
 extends Node
-class_name WeatherSystem
+class_name GameWeatherSystem
 
 signal weather_changed(weather_id: StringName, display_name: String)
 signal daily_weather_updated(day: int, weather_id: StringName, display_name: String)
