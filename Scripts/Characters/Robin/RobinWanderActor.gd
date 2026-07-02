@@ -174,6 +174,8 @@ func get_current_action_display_text() -> String:
 		return "マップ移動中"
 	if craft_behavior_module != null and craft_behavior_module.is_active():
 		return "制作中"
+	if hydrate_behavior_module != null and hydrate_behavior_module.is_active():
+		return "水分補給中"
 	if is_sleeping():
 		return "睡眠中"
 	return String(get_current_need_action_id())
@@ -184,6 +186,8 @@ func get_current_need_action_id() -> StringName:
 		return &"map_travel"
 	if craft_behavior_module != null and craft_behavior_module.is_active():
 		return &"crafting"
+	if hydrate_behavior_module != null and hydrate_behavior_module.is_active():
+		return &"hydrating"
 	if is_sleeping():
 		return &"sleeping"
 	if need_planner == null:
