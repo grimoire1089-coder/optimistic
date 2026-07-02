@@ -28,16 +28,16 @@ corner_radius_bottom_right = 6
 corner_radius_bottom_left = 6
 
 [node name="ShopMenu" type="PanelContainer"]
-custom_minimum_size = Vector2(620, 520)
+custom_minimum_size = Vector2(620, 620)
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
 offset_left = -310.0
-offset_top = -260.0
+offset_top = -310.0
 offset_right = 310.0
-offset_bottom = 260.0
+offset_bottom = 310.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_shop_panel")
@@ -85,7 +85,7 @@ autowrap_mode = 3
 text = "Select shop"
 
 [node name="ShopListScroll" type="ScrollContainer" parent="MarginContainer/Rows/ShopListView"]
-custom_minimum_size = Vector2(0, 392)
+custom_minimum_size = Vector2(0, 492)
 layout_mode = 2
 size_flags_vertical = 3
 horizontal_scroll_mode = 0
@@ -136,7 +136,7 @@ text = "Description"
 layout_mode = 2
 
 [node name="ItemScroll" type="ScrollContainer" parent="MarginContainer/Rows/ShopDetailView/ShopContent"]
-custom_minimum_size = Vector2(0, 300)
+custom_minimum_size = Vector2(0, 400)
 layout_mode = 2
 size_flags_vertical = 3
 horizontal_scroll_mode = 0
