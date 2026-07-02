@@ -7,7 +7,7 @@ layout_mode = 3
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
-offset_left = -328.0
+offset_left = -360.0
 offset_top = 16.0
 offset_right = -16.0
 offset_bottom = 92.0
@@ -25,7 +25,7 @@ theme_override_constants/separation = 8
 
 [node name="BGMMuteButton" type="Button" parent="HBoxContainer"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(52, 76)
+custom_minimum_size = Vector2(76, 76)
 layout_mode = 2
 size_flags_vertical = 3
 tooltip_text = "BGMミュート"
