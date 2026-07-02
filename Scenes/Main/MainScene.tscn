@@ -23,6 +23,8 @@
 [ext_resource type="PackedScene" path="res://Scenes/UI/HUD/CraftButton.tscn" id="20_craft_button"]
 [ext_resource type="PackedScene" path="res://Scenes/UI/HUD/ProductionMenu.tscn" id="21_production_menu"]
 [ext_resource type="PackedScene" path="res://Scenes/Main/Modules/MainSceneSleepFastForwardModule.tscn" id="22_sleep_fast_forward"]
+[ext_resource type="PackedScene" path="res://Scenes/UI/HUD/SettingsButton.tscn" id="23_settings_button"]
+[ext_resource type="PackedScene" path="res://Scenes/UI/Options/GameOptionsOverlay.tscn" id="24_game_options_overlay"]
 
 [sub_resource type="Environment" id="Environment_ctt6t"]
 glow_enabled = true
@@ -97,9 +99,13 @@ text = "Robin Room / Grid 15 x 15"
 [node name="InventoryUI" parent="CanvasLayer" unique_id=520989565 instance=ExtResource("10_inventory_ui")]
 anchors_preset = 8
 
+[node name="GameOptionsOverlay" parent="CanvasLayer" instance=ExtResource("24_game_options_overlay")]
+
 [node name="RobinHudButton" parent="CanvasLayer" unique_id=109920417 instance=ExtResource("19_robin_hud_button")]
 
 [node name="CraftButton" parent="CanvasLayer" instance=ExtResource("20_craft_button")]
+
+[node name="SettingsButton" parent="CanvasLayer" instance=ExtResource("23_settings_button")]
 
 [node name="ShopButton" parent="CanvasLayer" unique_id=2139128007 instance=ExtResource("14_shop_button")]
 
