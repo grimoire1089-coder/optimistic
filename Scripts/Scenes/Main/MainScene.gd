@@ -199,7 +199,7 @@ func _apply_reserved_bottom_hud_layout() -> void:
 	_place_top_right_control(canvas_layer.get_node_or_null("InventoryButton") as Control, Vector2(-176.0, 184.0), RIGHT_TRAVEL_BUTTON_SIZE)
 	_place_top_right_control(canvas_layer.get_node_or_null("BuildModeButton") as Control, Vector2(-124.0, 184.0), RIGHT_TRAVEL_BUTTON_SIZE)
 	_place_top_right_control(canvas_layer.get_node_or_null("WorkCreditButton") as Control, Vector2(-72.0, 184.0), RIGHT_TRAVEL_BUTTON_SIZE)
-	_place_top_right_control(canvas_layer.get_node_or_null("AICharacterHud") as Control, Vector2(-328.0, 252.0), Vector2(304.0, 274.0))
+	_place_top_right_control(canvas_layer.get_node_or_null("AICharacterHud") as Control, Vector2(-328.0, 400.0), Vector2(304.0, 288.0))
 	_place_top_right_control(canvas_layer.get_node_or_null("WorkMenu") as Control, Vector2(-328.0, 252.0), Vector2(304.0, 158.0))
 	_place_top_right_control(canvas_layer.get_node_or_null("CraftMenu") as Control, Vector2(-328.0, 252.0), Vector2(304.0, 172.0))
 
