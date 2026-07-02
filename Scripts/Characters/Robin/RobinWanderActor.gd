@@ -43,7 +43,7 @@ func _ready() -> void:
 	wander_module.setup(self)
 	sleep_behavior_module.setup(self)
 	hydrate_behavior_module.setup(self)
-	craft_behavior_module.setup(self)
+	craft_behavior_module.setup(self)	
 	entrance_travel_behavior_module.setup(self)
 	_connect_entrance_travel_signal()
 	action_progress_bar_module.setup(self)
@@ -88,7 +88,10 @@ func _physics_process(delta: float) -> void:
 		if sleep_behavior_module.is_active():
 			velocity = sleep_velocity
 			facing_direction = sleep_behavior_module.get_facing_direction()
-			move_and_slide()
+			if _should_skip_sleep_move_and_slide():
+				velocity = Vector2.ZERO
+			else:
+				move_and_slide()
 			if not sleep_behavior_module.is_sleeping() and wander_module.clamp_body_to_movement_area():
 				velocity = Vector2.ZERO
 			walk_animator.update_animation(velocity, facing_direction, delta)
@@ -199,6 +202,15 @@ func get_current_lowest_need_id() -> StringName:
 	if needs_module == null:
 		return &""
 	return needs_module.get_lowest_need_id()
+
+
+func _should_skip_sleep_move_and_slide() -> bool:
+	if sleep_behavior_module == null:
+		return false
+	if sleep_behavior_module.is_sleeping():
+		return false
+	var direct_movement_value: Variant = sleep_behavior_module.get("use_direct_grid_path_movement")
+	return bool(direct_movement_value)
 
 
 func _is_busy_for_entrance_travel() -> bool:
