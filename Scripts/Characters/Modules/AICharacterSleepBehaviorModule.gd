@@ -60,8 +60,13 @@ var _path_target_cell: Vector2i = INVALID_GRID_POSITION
 var _last_direct_move_target_position: Vector2 = Vector2(INF, INF)
 
 
+func _ready() -> void:
+	add_to_group(&"ai_sleep_behavior")
+
+
 func setup(body: CharacterBody2D) -> void:
 	_body = body
+	add_to_group(&"ai_sleep_behavior")
 	_resolve_refs()
 
 
