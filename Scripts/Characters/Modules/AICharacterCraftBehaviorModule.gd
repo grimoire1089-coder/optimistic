@@ -3,7 +3,6 @@ class_name AICharacterCraftBehaviorModule
 
 signal craft_started(recipe: CraftRecipeData, quantity: int)
 signal craft_completed(recipe: CraftRecipeData, quantity: int)
-signal craft_failed(message: String)
 
 const INVALID_GRID_POSITION := Vector2i(-999999, -999999)
 const MOVE_PROGRESS_PORTION := 0.35
