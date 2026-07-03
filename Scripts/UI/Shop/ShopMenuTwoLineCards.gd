@@ -31,9 +31,9 @@ func _create_shop_button(shop: ShopData, index: int) -> Button:
 	button.text = ""
 	button.tooltip_text = shop.description
 	button.add_theme_stylebox_override("normal", _create_shop_card_style())
-	button.add_theme_stylebox_override("hover", _create_shop_card_style())
-	button.add_theme_stylebox_override("pressed", _create_shop_card_style())
-	button.add_theme_stylebox_override("focus", _create_shop_card_style())
+	button.add_theme_stylebox_override("hover", _create_shop_card_style(SHOP_CARD_HOVER_BORDER_WIDTH, true))
+	button.add_theme_stylebox_override("pressed", _create_shop_card_style(SHOP_CARD_HOVER_BORDER_WIDTH, true))
+	button.add_theme_stylebox_override("focus", _create_shop_card_style(SHOP_CARD_HOVER_BORDER_WIDTH, true))
 	button.pressed.connect(Callable(self, "_on_shop_selected").bind(index))
 
 	var card := VBoxContainer.new()
