@@ -149,6 +149,7 @@ func _update_moving(delta: float) -> Vector2:
 
 
 func _begin_crafting() -> void:
+	_snap_body_to_target_cell()
 	_is_active = true
 	_is_moving = false
 	_is_crafting = true
@@ -160,6 +161,18 @@ func _begin_crafting() -> void:
 		var to_furniture := _target_furniture.global_position - _body.global_position
 		if to_furniture.length() > 0.1:
 			_facing_direction = AICharacterGridMovementHelper.get_axis_aligned_direction(to_furniture)
+
+
+func _snap_body_to_target_cell() -> void:
+	if _body == null or _room_map == null:
+		return
+	if not _is_valid_grid_position(_target_cell):
+		return
+	var target_position := _room_map.grid_to_world_area_center(_target_cell, _get_actor_grid_footprint())
+	if _body.global_position.distance_squared_to(target_position) <= 0.001:
+		return
+	_body.global_position = target_position
+	_last_distance = INF
 
 
 func _update_crafting(delta: float) -> void:

@@ -452,9 +452,13 @@ func _get_safe_cell_size() -> Vector2:
 
 func _get_logical_cell_size_for_screen_cap(screen_cell_size: Vector2) -> Vector2:
 	var screen_scale := _get_window_to_viewport_scale()
+	var cap_scale := Vector2(
+		maxf(screen_scale.x, 1.0),
+		maxf(screen_scale.y, 1.0)
+	)
 	return Vector2(
-		maxf(screen_cell_size.x / maxf(screen_scale.x, 0.001), 1.0),
-		maxf(screen_cell_size.y / maxf(screen_scale.y, 0.001), 1.0)
+		maxf(screen_cell_size.x / maxf(cap_scale.x, 0.001), 1.0),
+		maxf(screen_cell_size.y / maxf(cap_scale.y, 0.001), 1.0)
 	)
 
 

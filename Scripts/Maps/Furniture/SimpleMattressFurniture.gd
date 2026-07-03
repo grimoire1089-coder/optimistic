@@ -8,7 +8,7 @@ class_name SimpleMattressFurniture
 @export var sprite_path: NodePath = NodePath("Sprite2D")
 @export var use_sprite_when_available: bool = true
 @export var preserve_sprite_aspect: bool = true
-@export var sprite_fill_ratio: float = 0.96
+@export var sprite_fill_ratio: float = 1.0
 @export var base_color: Color = Color(0.86, 0.92, 0.98, 1.0)
 @export var edge_color: Color = Color(0.28, 0.74, 0.92, 1.0)
 @export var seam_color: Color = Color(0.50, 0.82, 0.95, 0.72)
@@ -65,7 +65,17 @@ func get_pixel_size() -> Vector2:
 	return Vector2(float(safe_footprint.x), float(safe_footprint.y)) * safe_cell_size
 
 
+func set_grid_cell_size(next_cell_size: Vector2) -> void:
+	var safe_cell_size := Vector2(maxf(next_cell_size.x, 1.0), maxf(next_cell_size.y, 1.0))
+	if cell_size.is_equal_approx(safe_cell_size):
+		return
+	cell_size = safe_cell_size
+	_fit_sprite_to_grid_size()
+	queue_redraw()
+
+
 func _fit_sprite_to_grid_size() -> void:
+	_resolve_sprite()
 	if _sprite == null or _sprite.texture == null:
 		return
 

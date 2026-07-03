@@ -17,16 +17,16 @@ shadow_color = Color(0.08, 0.62, 0.95, 0.24)
 shadow_size = 10
 
 [node name="WorkMenu" type="PanelContainer"]
-custom_minimum_size = Vector2(320, 196)
+custom_minimum_size = Vector2(356, 196)
 anchors_preset = 3
 anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -344.0
-offset_top = -220.0
+offset_left = -380.0
+offset_top = -288.0
 offset_right = -24.0
-offset_bottom = -24.0
+offset_bottom = -92.0
 grow_horizontal = 0
 grow_vertical = 0
 theme_override_styles/panel = SubResource("StyleBoxFlat_work_menu_panel")
@@ -64,7 +64,7 @@ layout_mode = 2
 theme_override_constants/separation = 6
 
 [node name="Job001Button" type="Button" parent="MarginContainer/Rows/JobList"]
-custom_minimum_size = Vector2(280, 56)
+custom_minimum_size = Vector2(316, 56)
 layout_mode = 2
 text = "Job001\n8h"
 

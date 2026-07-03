@@ -12,6 +12,9 @@ const RIGHT_TRAVEL_BUTTON_SIZE := Vector2(48.0, 48.0)
 const MAP_GRID_TOGGLE_BUTTON_NAME := "MapGridToggleButton"
 const MAP_GRID_TOGGLE_BUTTON_POSITION := Vector2(-328.0, 108.0)
 const MAP_GRID_TOGGLE_BUTTON_SIZE := Vector2(48.0, 48.0)
+const AI_CHARACTER_HUD_SIZE := Vector2(356.0, 336.0)
+const AI_CHARACTER_HUD_BOTTOM_RIGHT_MARGIN := Vector2(24.0, 92.0)
+const WORK_MENU_SIZE := Vector2(356.0, 196.0)
 
 @onready var debug_label: Label = $CanvasLayer/DebugLabel
 @onready var robin: RobinWanderActor = $Robin
@@ -277,8 +280,8 @@ func _apply_reserved_bottom_hud_layout() -> void:
 	_place_top_right_control(canvas_layer.get_node_or_null("InventoryButton") as Control, Vector2(-176.0, 184.0), RIGHT_TRAVEL_BUTTON_SIZE)
 	_place_top_right_control(canvas_layer.get_node_or_null("BuildModeButton") as Control, Vector2(-124.0, 184.0), RIGHT_TRAVEL_BUTTON_SIZE)
 	_place_top_right_control(canvas_layer.get_node_or_null("WorkCreditButton") as Control, Vector2(-72.0, 184.0), RIGHT_TRAVEL_BUTTON_SIZE)
-	_place_top_right_control(canvas_layer.get_node_or_null("AICharacterHud") as Control, Vector2(-328.0, 400.0), Vector2(304.0, 288.0))
-	_place_top_right_control(canvas_layer.get_node_or_null("WorkMenu") as Control, Vector2(-328.0, 252.0), Vector2(304.0, 158.0))
+	_place_bottom_right_control(canvas_layer.get_node_or_null("AICharacterHud") as Control, AI_CHARACTER_HUD_BOTTOM_RIGHT_MARGIN, AI_CHARACTER_HUD_SIZE)
+	_place_bottom_right_control(canvas_layer.get_node_or_null("WorkMenu") as Control, AI_CHARACTER_HUD_BOTTOM_RIGHT_MARGIN, WORK_MENU_SIZE)
 	_place_top_right_control(canvas_layer.get_node_or_null("CraftMenu") as Control, Vector2(-328.0, 252.0), Vector2(304.0, 172.0))
 	_configure_map_grid_toggle_button(canvas_layer.get_node_or_null(MAP_GRID_TOGGLE_BUTTON_NAME) as Button)
 
@@ -294,6 +297,20 @@ func _place_top_right_control(control: Control, top_right_offset: Vector2, contr
 	control.offset_top = top_right_offset.y
 	control.offset_right = top_right_offset.x + control_size.x
 	control.offset_bottom = top_right_offset.y + control_size.y
+
+
+func _place_bottom_right_control(control: Control, bottom_right_margin: Vector2, control_size: Vector2) -> void:
+	if control == null:
+		return
+	control.custom_minimum_size = control_size
+	control.anchor_left = 1.0
+	control.anchor_top = 1.0
+	control.anchor_right = 1.0
+	control.anchor_bottom = 1.0
+	control.offset_left = -bottom_right_margin.x - control_size.x
+	control.offset_top = -bottom_right_margin.y - control_size.y
+	control.offset_right = -bottom_right_margin.x
+	control.offset_bottom = -bottom_right_margin.y
 
 
 func _sync_build_mode_ui_lock() -> void:

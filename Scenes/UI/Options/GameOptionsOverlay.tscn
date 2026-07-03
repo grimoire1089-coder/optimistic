@@ -39,7 +39,56 @@ size_flags_vertical = 4
 mouse_filter = 1
 theme_override_constants/separation = 12
 
-[node name="AudioSettingsPanel" parent="CenterContainer/OverlayBox" instance=ExtResource("2_audio_panel")]
+[node name="SettingsTabs" type="TabContainer" parent="CenterContainer/OverlayBox"]
+custom_minimum_size = Vector2(560, 440)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="GraphicsPage" type="PanelContainer" parent="CenterContainer/OverlayBox/SettingsTabs"]
+custom_minimum_size = Vector2(560, 390)
+layout_mode = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="CenterContainer/OverlayBox/SettingsTabs/GraphicsPage"]
+layout_mode = 2
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 24
+
+[node name="Rows" type="VBoxContainer" parent="CenterContainer/OverlayBox/SettingsTabs/GraphicsPage/MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="TitleLabel" type="Label" parent="CenterContainer/OverlayBox/SettingsTabs/GraphicsPage/MarginContainer/Rows"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "グラフィック設定"
+horizontal_alignment = 1
+
+[node name="DisplayModeRow" type="HBoxContainer" parent="CenterContainer/OverlayBox/SettingsTabs/GraphicsPage/MarginContainer/Rows"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="DisplayModeLabel" type="Label" parent="CenterContainer/OverlayBox/SettingsTabs/GraphicsPage/MarginContainer/Rows/DisplayModeRow"]
+custom_minimum_size = Vector2(160, 0)
+layout_mode = 2
+text = "表示モード"
+vertical_alignment = 1
+
+[node name="DisplayModeOption" type="OptionButton" parent="CenterContainer/OverlayBox/SettingsTabs/GraphicsPage/MarginContainer/Rows/DisplayModeRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(260, 44)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="DisplayModeHintLabel" type="Label" parent="CenterContainer/OverlayBox/SettingsTabs/GraphicsPage/MarginContainer/Rows"]
+layout_mode = 2
+text = "変更はすぐに反映されます。"
+theme_override_colors/font_color = Color(0.72, 0.86, 0.92, 0.82)
+theme_override_font_sizes/font_size = 14
+
+[node name="SoundPage" parent="CenterContainer/OverlayBox/SettingsTabs" instance=ExtResource("2_audio_panel")]
 layout_mode = 2
 
 [node name="CloseOptionsButton" type="Button" parent="CenterContainer/OverlayBox"]

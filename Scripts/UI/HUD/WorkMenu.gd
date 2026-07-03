@@ -1,8 +1,8 @@
 extends PanelContainer
 class_name WorkMenu
 
-const BOTTOM_RIGHT_MARGIN := Vector2(24.0, 24.0)
-const BOTTOM_RIGHT_PANEL_SIZE := Vector2(320.0, 196.0)
+const BOTTOM_RIGHT_MARGIN := Vector2(24.0, 92.0)
+const BOTTOM_RIGHT_PANEL_SIZE := Vector2(356.0, 196.0)
 
 @export var first_job_name: String = "仕事001"
 @export var first_job_minutes: int = 8 * 60
