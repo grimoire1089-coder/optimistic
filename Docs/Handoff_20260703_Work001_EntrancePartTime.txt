@@ -1,0 +1,100 @@
+# Optimistic 引き継ぎメモ 2026-07-03
+
+目的
+- 仕事001を「アルバイト」カテゴリーの仕事として扱う。
+- 仕事開始時、ロビン達AIキャラクターがエントランス家具へ移動する。
+- エントランス到着後、画面外へ出て透明になり、勤務時間が進む。
+- 勤務終了後、エントランス家具の前へ戻ってくる。
+
+対象リポジトリ
+- C:/Users/grimo/Documents/test-002
+
+今回の主な変更ファイル
+- Scripts/UI/HUD/WorkMenu.gd
+- Scripts/Characters/Robin/RobinWanderActor.gd
+- Scripts/Characters/Modules/AICharacterEntranceTravelBehaviorModule.gd
+- Scripts/Maps/RoomMapGridModule.gd
+
+実装概要
+1. WorkMenu.gd
+- 仕事001を以下の扱いにした。
+  - job_id: part_time_001
+  - 表示名: 仕事001
+  - カテゴリー: アルバイト
+  - 勤務時間: 8時間 / 480分
+- 以前はボタン押下時に GameClock.advance_minutes(first_job_minutes) で即時に時間を進めていた。
+- 現在は即時時間進行をやめ、worker.request_work_at_entrance(first_job_id, first_job_name, first_job_minutes) を呼ぶ。
+- 睡眠中、または仕事へ移動中/勤務中は仕事ボタンを無効化する。
+
+2. RobinWanderActor.gd
+- request_work_at_entrance(job_id, job_display_name, duration_minutes) を追加。
+- 現在アクティブなマップの FurnitureRoot から EntranceFurniture / furniture_id=entrance を探す。
+- 見つかったエントランスを AICharacterEntranceTravelBehaviorModule.request_work_at_entrance() に渡す。
+- 行動表示を追加。
+  - エントランスへ向かっている仕事状態: 仕事へ移動中
+  - 画面外勤務中: アルバイト中
+- get_current_need_action_id() では仕事状態を part_time_work として返す。
+- 勤務中はエントランス移動モジュールが active でも move_and_slide / movement area clamp をスキップする。
+  - 画面外へ出した位置がクランプで戻されないようにするため。
+
+3. AICharacterEntranceTravelBehaviorModule.gd
+- 既存のエントランス移動処理に mode を追加。
+  - MODE_MAP_TRAVEL
+  - MODE_WORK
+- 既存の request_travel_to_entrance() はマップ移動として維持。
+- 新規 request_work_at_entrance(entrance, job_id, duration_minutes, display_name) を追加。
+- 仕事モードの流れ:
+  1. エントランス横の使用セルへ移動
+  2. use_time_seconds だけ入口を使う待機
+  3. _start_offscreen_work()
+  4. ロビンを非表示にする
+  5. マップ外方向へ座標を逃がす
+  6. _tick_offscreen_work(delta) でゲーム内分を加算
+  7. 勤務時間に到達したら _complete_offscreen_work()
+  8. エントランス前の空きセルへ戻す
+  9. 表示状態を戻す
+- 睡眠と同じ発想で、delta / GameClock.real_seconds_per_game_minute からゲーム内分を計算している。
+- 勤務中は TimeScaleController に set_time_scale_request(reason, true, work_fast_forward_scale) を出す。
+  - 既定倍率は 8.0。
+  - reason は offscreen_work_{instance_id}。
+  - 終了/リセット時に false で解除する。
+- signal を追加。
+  - work_started(job_id)
+  - work_completed(job_id)
+- get_work_progress_ratio() を追加。
+  - まだUIには未接続。
+
+4. RoomMapGridModule.gd
+- AI移動デバッグ表示で、behavior.is_working() == true の場合は移動中ハイライト対象から外す。
+- 勤務中はロビンが画面外かつ非表示なので、デバッグ枠を出さない意図。
+
+現在の確認状況
+- git diff --check は通過。
+- Codex環境では Godot 実行ファイルが PATH に無く、エディタ実行確認は未実施。
+
+ユーザーに確認してほしいこと
+- 仕事001を押すと、ロビンがエントランス家具の前まで移動するか。
+- 到着後、ロビンが画面外へ出て非表示になるか。
+- 8時間相当の勤務終了後、エントランス家具の前へ戻るか。
+- 勤務中に移動デバッグの緑/水色枠が残らないか。
+- 勤務中にAIキャラHUDの行動表示が「アルバイト中」になるか。
+- 勤務開始前の移動中に「仕事へ移動中」になるか。
+
+未実装/次に見るポイント
+- 報酬CR付与はまだ未実装。
+  - work_completed(job_id) signal があるので、ここに報酬処理を接続するのがよさそう。
+  - 報酬額、スキル補正、疲労/満足度/水分などの欲求変化は未設計。
+- 勤務中の進捗バーUIは未接続。
+  - AICharacterEntranceTravelBehaviorModule.get_work_progress_ratio() は用意済み。
+  - AICharacterActionProgressBarModule に entrance/work source を追加すれば表示できる。
+- 仕事データはまだ WorkMenu.gd の export 値に直書き。
+  - 今後、Data/Work/Job_*.tres のようなResource化を検討。
+- 複数AIキャラクター対応時は、誰が仕事に行くか、同時勤務可能か、エントランス前の復帰セル競合を設計する必要がある。
+- 勤務中のTimeScaleは sleep_fast_forward と同じ TimeScaleController の request 方式を使っている。
+  - 複数の高速化要求が同時に出た場合は、TimeScaleController が最大倍率を採用する。
+
+注意点
+- エントランス家具がない場合は仕事開始に失敗する。
+- request_work_at_entrance() は現在アクティブなマップのエントランスを優先し、見つからない場合はRobinRoomMap側をフォールバックする。
+- 勤務中のロビンは visible=false かつ画面外座標にいるが、Node自体は存在している。
+- 勤務中にリセット/デバッグ復帰を行う場合、AICharacterEntranceTravelBehaviorModule._reset() が表示状態とTimeScale要求を戻す。
