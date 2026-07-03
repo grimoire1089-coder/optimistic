@@ -179,8 +179,9 @@ func _draw() -> void:
 	if visual_rect.size.x <= 0.0 or visual_rect.size.y <= 0.0:
 		return
 
+	var grid_rect := get_grid_rect()
 	if show_neon_frame:
-		_draw_neon_frame(visual_rect)
+		_draw_neon_frame(grid_rect)
 
 	if show_grid:
 		_draw_grid()

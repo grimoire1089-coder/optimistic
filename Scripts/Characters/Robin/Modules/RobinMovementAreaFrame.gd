@@ -31,7 +31,7 @@ func _draw() -> void:
 	if _actor == null:
 		return
 
-	var area := _actor.get_visual_movement_area()
+	var area := _actor.get_grid_movement_area()
 	if area.size.x <= 0.0 or area.size.y <= 0.0:
 		return
 

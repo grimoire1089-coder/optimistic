@@ -6,7 +6,7 @@ extends Control
 @export var auto_fullscreen_on_matching_monitor: bool = true
 @export var fullscreen_monitor_size: Vector2i = Vector2i(1920, 1080)
 @export var allow_same_aspect_fullscreen: bool = true
-@export var apply_fullscreen_in_editor: bool = false
+@export var apply_fullscreen_in_editor: bool = true
 
 @onready var start_button: Button = $CenterContainer/CenterBox/StartButton
 @onready var options_button: Button = $CenterContainer/CenterBox/OptionsButton

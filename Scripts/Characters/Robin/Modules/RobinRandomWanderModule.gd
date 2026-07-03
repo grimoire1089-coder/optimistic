@@ -18,7 +18,7 @@ const INVALID_GRID_POSITION := Vector2i(-999999, -999999)
 
 # 枠線からキャラクター画像がはみ出さないよう、原点の移動範囲を内側へ縮める量です。
 # 物理コリジョンではなく、見た目サイズ用の余白です。
-@export var visual_half_extents: Vector2 = Vector2(48.0, 76.0)
+@export var visual_half_extents: Vector2 = Vector2(48.0, 96.0)
 @export var keep_visual_inside_frame: bool = true
 
 var _body: Node2D

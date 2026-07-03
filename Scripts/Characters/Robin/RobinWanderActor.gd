@@ -191,6 +191,13 @@ func get_visual_movement_area() -> Rect2:
 	return wander_module.get_visual_movement_area()
 
 
+func get_grid_movement_area() -> Rect2:
+	var room_map := _get_room_map()
+	if room_map != null:
+		return room_map.get_grid_rect()
+	return get_visual_movement_area()
+
+
 func get_needs_module() -> CharacterNeedsModule:
 	return needs_module
 

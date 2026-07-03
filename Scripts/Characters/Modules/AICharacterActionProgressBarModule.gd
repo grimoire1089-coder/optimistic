@@ -5,7 +5,7 @@ class_name AICharacterActionProgressBarModule
 @export var hygiene_behavior_path: NodePath = NodePath("../AICharacterHygieneBehaviorModule")
 @export var sleep_behavior_path: NodePath = NodePath("../AICharacterSleepBehaviorModule")
 @export var craft_behavior_path: NodePath = NodePath("../AICharacterCraftBehaviorModule")
-@export var bar_offset: Vector2 = Vector2(-42.0, -88.0)
+@export var bar_offset: Vector2 = Vector2(-42.0, -116.0)
 @export var bar_size: Vector2 = Vector2(84.0, 10.0)
 @export var background_color: Color = Color(0.02, 0.025, 0.035, 0.82)
 @export var fill_color: Color = Color(0.1, 0.85, 1.0, 0.96)
