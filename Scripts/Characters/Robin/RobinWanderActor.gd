@@ -88,7 +88,9 @@ func _physics_process(delta: float) -> void:
 			_cancel_sit_behavior()
 			velocity = entrance_travel_velocity
 			facing_direction = entrance_travel_behavior_module.get_facing_direction()
-			var is_offscreen_working := entrance_travel_behavior_module.has_method("is_working") and entrance_travel_behavior_module.call("is_working") == true
+			var is_offscreen_working: bool = false
+			if entrance_travel_behavior_module.has_method("is_working"):
+				is_offscreen_working = entrance_travel_behavior_module.call("is_working") == true
 			if not is_offscreen_working:
 				move_and_slide()
 				if wander_module.clamp_body_to_movement_area(true):
