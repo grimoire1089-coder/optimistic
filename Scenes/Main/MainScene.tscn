@@ -66,21 +66,21 @@ click_sfx = ExtResource("4_ctt6t")
 [node name="LeftBackgroundPanel" type="TextureRect" parent="CanvasLayer" unique_id=104457291]
 modulate = Color(1, 1, 1, 0.72)
 z_index = -100
-offset_left = 32.0
-offset_top = 16.0
-offset_right = 352.0
-offset_bottom = 688.0
+offset_left = 36.0
+offset_top = 20.0
+offset_right = 432.0
+offset_bottom = 812.0
 mouse_filter = 2
 texture = ExtResource("18_left_panel_bg")
 expand_mode = 1
 
 [node name="DebugLabel" type="Label" parent="CanvasLayer" unique_id=210733485]
-offset_left = 52.0
-offset_top = 32.0
-offset_right = 340.0
-offset_bottom = 60.0
+offset_left = 62.0
+offset_top = 40.0
+offset_right = 410.0
+offset_bottom = 72.0
 theme_override_colors/font_color = Color(0.88, 0.98, 1, 1)
-theme_override_font_sizes/font_size = 15
+theme_override_font_sizes/font_size = 18
 text = "Robin Room / Grid 15 x 15"
 
 [node name="AIDebugPanel" type="Control" parent="CanvasLayer" unique_id=187734902]

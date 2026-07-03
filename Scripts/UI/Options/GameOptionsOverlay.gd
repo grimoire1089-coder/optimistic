@@ -2,10 +2,12 @@ extends Control
 class_name GameOptionsOverlay
 
 @export var close_button_path: NodePath = NodePath("CenterContainer/OverlayBox/CloseOptionsButton")
+@export var quit_button_path: NodePath = NodePath("CenterContainer/OverlayBox/QuitGameButton")
 @export var pause_scene_tree: bool = true
 @export var pause_game_clock: bool = true
 
 var _close_button: Button
+var _quit_button: Button
 var _game_clock: Node
 var _was_tree_paused: bool = false
 var _has_saved_tree_pause: bool = false
@@ -21,6 +23,7 @@ func _ready() -> void:
 	visible = false
 	_resolve_refs()
 	_connect_close_button()
+	_connect_quit_button()
 	set_process_unhandled_input(true)
 
 
@@ -52,6 +55,13 @@ func close_options() -> void:
 
 	visible = false
 	_restore_pause_state()
+
+
+func quit_game() -> void:
+	if visible:
+		visible = false
+	_restore_pause_state()
+	get_tree().quit()
 
 
 func toggle_options() -> void:
@@ -98,6 +108,8 @@ func _restore_pause_state() -> void:
 func _resolve_refs() -> void:
 	if _close_button == null and not close_button_path.is_empty():
 		_close_button = get_node_or_null(close_button_path) as Button
+	if _quit_button == null and not quit_button_path.is_empty():
+		_quit_button = get_node_or_null(quit_button_path) as Button
 
 
 func _connect_close_button() -> void:
@@ -105,6 +117,13 @@ func _connect_close_button() -> void:
 		return
 	if not _close_button.pressed.is_connected(close_options):
 		_close_button.pressed.connect(close_options)
+
+
+func _connect_quit_button() -> void:
+	if _quit_button == null:
+		return
+	if not _quit_button.pressed.is_connected(quit_game):
+		_quit_button.pressed.connect(quit_game)
 
 
 func _set_process_mode_recursive(node: Node, mode: Node.ProcessMode) -> void:

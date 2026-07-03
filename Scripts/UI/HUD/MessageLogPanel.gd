@@ -17,11 +17,11 @@ enum LogChannel { NORMAL, DEBUG }
 ## 旧設定との互換用。デバッグログはコード側で常に無音にする。
 @export var play_notice_sfx_for_debug: bool = false
 @export_range(0.0, 10.0, 0.1) var queued_message_delay_seconds: float = 2.0
-@export var card_height: float = 64.0
+@export var card_height: float = 72.0
 @export var card_horizontal_inset: float = 4.0
-@export_range(8, 64, 1) var card_estimated_chars_per_line: int = 18
-@export var card_estimated_line_height: float = 18.0
-@export var card_estimated_vertical_padding: float = 24.0
+@export_range(8, 64, 1) var card_estimated_chars_per_line: int = 22
+@export var card_estimated_line_height: float = 21.0
+@export var card_estimated_vertical_padding: float = 30.0
 @export var card_enter_offset_y: float = 18.0
 @export var card_enter_duration: float = 0.22
 @export var card_background_color: Color = Color(0.035, 0.04, 0.06, 0.96)
@@ -66,7 +66,7 @@ func add_message(message: String) -> void:
 
 
 func add_debug_message(message: String) -> void:
-	_queue_message_to_channel(message, LogChannel.DEBUG, false)
+	_add_message_to_channel_immediate(message, LogChannel.DEBUG, false)
 
 
 func add_debug_result(source: String, action: String, success: bool, detail: String = "") -> void:
@@ -325,10 +325,10 @@ func _make_card_node(message: String, channel: int, animate_card: bool, target_c
 	card.add_theme_stylebox_override("panel", _make_card_style(channel))
 
 	var margin := MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 10)
-	margin.add_theme_constant_override("margin_top", 8)
-	margin.add_theme_constant_override("margin_right", 10)
-	margin.add_theme_constant_override("margin_bottom", 8)
+	margin.add_theme_constant_override("margin_left", 14)
+	margin.add_theme_constant_override("margin_top", 10)
+	margin.add_theme_constant_override("margin_right", 14)
+	margin.add_theme_constant_override("margin_bottom", 10)
 	card.add_child(margin)
 
 	var label := Label.new()
@@ -337,7 +337,7 @@ func _make_card_node(message: String, channel: int, animate_card: bool, target_c
 	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	label.add_theme_color_override("font_color", _get_card_text_color(channel))
-	label.add_theme_font_size_override("font_size", 13)
+	label.add_theme_font_size_override("font_size", 15)
 	margin.add_child(label)
 
 	return card

@@ -46,3 +46,8 @@ layout_mode = 2
 custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 text = "閉じる"
+
+[node name="QuitGameButton" type="Button" parent="CenterContainer/OverlayBox"]
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+text = "ゲーム終了"
