@@ -134,7 +134,7 @@ func _resolve_worker() -> void:
 
 func _get_duration_text() -> String:
 	if first_job_minutes % 60 == 0:
-		return "%d時間" % int(first_job_minutes / 60)
+		return "%d時間" % int(first_job_minutes / 60.0)
 	return "%d分" % first_job_minutes
 
 
