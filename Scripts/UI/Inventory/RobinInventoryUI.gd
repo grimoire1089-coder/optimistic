@@ -1,6 +1,9 @@
 extends PanelContainer
 class_name RobinInventoryUI
 
+const BOTTOM_RIGHT_MARGIN := Vector2(24.0, 92.0)
+const PANEL_SIZE := Vector2(436.0, 420.0)
+
 @export var actor_path: NodePath = NodePath("../../Robin")
 @export var inventory_module_child_name: StringName = &"RobinInventoryModule"
 @export var slot_size: Vector2 = Vector2(68, 68)
@@ -19,6 +22,9 @@ var _current_category_index: int = 0
 
 func _ready() -> void:
 	visible = false
+	add_to_group(&"inventory_ui")
+	_apply_bottom_right_layout()
+	call_deferred("_apply_bottom_right_layout")
 	close_button.pressed.connect(close)
 	tab_bar.tab_changed.connect(_on_tab_changed)
 	_resolve_inventory_module()
@@ -27,6 +33,7 @@ func _ready() -> void:
 
 
 func open() -> void:
+	_apply_bottom_right_layout()
 	visible = true
 	_resolve_inventory_module()
 	_refresh()
@@ -39,6 +46,7 @@ func close() -> void:
 func toggle() -> void:
 	visible = not visible
 	if visible:
+		_apply_bottom_right_layout()
 		_resolve_inventory_module()
 		_refresh()
 
@@ -185,3 +193,17 @@ func _clear_grid() -> void:
 func _on_tab_changed(tab_index: int) -> void:
 	_current_category_index = tab_index
 	_refresh()
+
+
+func _apply_bottom_right_layout() -> void:
+	custom_minimum_size = PANEL_SIZE
+	anchor_left = 1.0
+	anchor_top = 1.0
+	anchor_right = 1.0
+	anchor_bottom = 1.0
+	offset_left = -BOTTOM_RIGHT_MARGIN.x - PANEL_SIZE.x
+	offset_top = -BOTTOM_RIGHT_MARGIN.y - PANEL_SIZE.y
+	offset_right = -BOTTOM_RIGHT_MARGIN.x
+	offset_bottom = -BOTTOM_RIGHT_MARGIN.y
+	grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	grow_vertical = Control.GROW_DIRECTION_BEGIN
