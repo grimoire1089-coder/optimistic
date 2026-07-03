@@ -229,7 +229,7 @@ func _get_windowed_size_for_screen(screen_size: Vector2i) -> Vector2i:
 		maxi(screen_size.x - WINDOWED_SCREEN_MARGIN.x, WINDOWED_MIN_SIZE.x),
 		maxi(screen_size.y - WINDOWED_SCREEN_MARGIN.y, WINDOWED_MIN_SIZE.y)
 	)
-	var scale := minf(
+	var window_scale := minf(
 		1.0,
 		minf(
 			float(max_size.x) / float(WINDOWED_BASE_SIZE.x),
@@ -237,8 +237,8 @@ func _get_windowed_size_for_screen(screen_size: Vector2i) -> Vector2i:
 		)
 	)
 	return Vector2i(
-		maxi(int(round(float(WINDOWED_BASE_SIZE.x) * scale)), WINDOWED_MIN_SIZE.x),
-		maxi(int(round(float(WINDOWED_BASE_SIZE.y) * scale)), WINDOWED_MIN_SIZE.y)
+		maxi(int(round(float(WINDOWED_BASE_SIZE.x) * window_scale)), WINDOWED_MIN_SIZE.x),
+		maxi(int(round(float(WINDOWED_BASE_SIZE.y) * window_scale)), WINDOWED_MIN_SIZE.y)
 	)
 
 
