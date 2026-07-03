@@ -6,8 +6,9 @@ const DEFAULT_LABEL_CODES := [0x5236, 0x4f5c]
 const HUD_BUTTON_SIZE := Vector2(56.0, 56.0)
 const FIRST_ROW_BUTTON_SIZE := HUD_BUTTON_SIZE
 const FIRST_ROW_TOP := 184.0
-const FIRST_ROW_ROBIN_LEFT := -296.0
-const FIRST_ROW_SHOP_LEFT := -224.0
+const FIRST_ROW_ROBIN_LEFT := -368.0
+const FIRST_ROW_SHOP_LEFT := -296.0
+const FIRST_ROW_BOOK_LEFT := -224.0
 const FIRST_ROW_INVENTORY_LEFT := -152.0
 const FIRST_ROW_BUILD_LEFT := -80.0
 const SECOND_ROW_WORK_LEFT := -296.0
@@ -103,6 +104,7 @@ func _apply_square_button_layout() -> void:
 func _apply_hud_button_layout_after_parent() -> void:
 	_place_canvas_sibling("RobinHudButton", Vector2(FIRST_ROW_ROBIN_LEFT, FIRST_ROW_TOP), FIRST_ROW_BUTTON_SIZE)
 	_place_canvas_sibling("ShopButton", Vector2(FIRST_ROW_SHOP_LEFT, FIRST_ROW_TOP), FIRST_ROW_BUTTON_SIZE)
+	_place_canvas_sibling("BookButton", Vector2(FIRST_ROW_BOOK_LEFT, FIRST_ROW_TOP), FIRST_ROW_BUTTON_SIZE)
 	_place_canvas_sibling("InventoryButton", Vector2(FIRST_ROW_INVENTORY_LEFT, FIRST_ROW_TOP), FIRST_ROW_BUTTON_SIZE)
 	_place_canvas_sibling("BuildModeButton", Vector2(FIRST_ROW_BUILD_LEFT, FIRST_ROW_TOP), FIRST_ROW_BUTTON_SIZE)
 	_place_canvas_sibling("WorkCreditButton", Vector2(SECOND_ROW_WORK_LEFT, SECOND_ROW_TOP), SECOND_ROW_BUTTON_SIZE)

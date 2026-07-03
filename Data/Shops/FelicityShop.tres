@@ -1,10 +1,11 @@
-[gd_resource type="Resource" script_class="ShopData" format=3]
+[gd_resource type="Resource" script_class="ShopData" format=3 uid="uid://h2xu326y85wb"]
 
 [ext_resource type="Script" uid="uid://dik32ehksmive" path="res://Scripts/Shops/ShopData.gd" id="1_shop_data"]
 [ext_resource type="Script" uid="uid://8a0d3nyywiao" path="res://Scripts/Shops/ShopItemData.gd" id="2_shop_item"]
 [ext_resource type="Script" path="res://Scripts/Shops/ShopTabData.gd" id="3_shop_tab"]
 [ext_resource type="Texture2D" uid="uid://bq72espqpoyh1" path="res://Assets/UI/Icons/Felicity.png" id="4_felicity_sticker"]
 [ext_resource type="Resource" uid="uid://khpl6knsr1ao" path="res://Data/Items/Food/Food_0001_Nikuman.tres" id="5_nikuman"]
+[ext_resource type="Texture2D" uid="uid://bg8advhkwtatt" path="res://Assets/UI/Parts/Felicity_Shop.png" id="6_f8oiv"]
 [ext_resource type="Resource" uid="uid://cpms561gltt7f" path="res://Data/Items/Food/Food_0013_WhiteRice.tres" id="6_white_rice"]
 [ext_resource type="Resource" uid="uid://dm0hqdwdx8tfo" path="res://Data/Items/Food/Drink_1002_OolongTea.tres" id="7_oolong_tea"]
 [ext_resource type="Resource" uid="uid://bbcfo6cl1qi0" path="res://Data/Items/Food/Food_0008_WaterBottle.tres" id="8_water_bottle"]
@@ -48,6 +49,7 @@ script = ExtResource("1_shop_data")
 shop_id = &"felicity"
 display_name = "Felicity"
 description = "デカダンスの中心街に灯る安息のバー。グリムの料理、マスターの気配り、仲間たちの温もりが集まる帰る場所。"
+portrait = ExtResource("6_f8oiv")
 sticker = ExtResource("4_felicity_sticker")
 tabs = Array[ExtResource("3_shop_tab")]([SubResource("ShopTabData_foods"), SubResource("ShopTabData_drinks")])
 items = Array[ExtResource("2_shop_item")]([SubResource("ShopItemData_nikuman"), SubResource("ShopItemData_white_rice"), SubResource("ShopItemData_oolong_tea"), SubResource("ShopItemData_water_bottle")])

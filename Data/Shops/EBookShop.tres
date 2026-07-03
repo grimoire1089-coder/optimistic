@@ -1,0 +1,34 @@
+[gd_resource type="Resource" script_class="ShopData" format=3]
+
+[ext_resource type="Script" path="res://Scripts/Shops/ShopData.gd" id="1_shop_data"]
+[ext_resource type="Script" path="res://Scripts/Shops/ShopItemData.gd" id="2_shop_item"]
+[ext_resource type="Script" path="res://Scripts/Shops/ShopTabData.gd" id="3_shop_tab"]
+[ext_resource type="Texture2D" path="res://Assets/Items/Icons/Tool/Lapis_001.png" id="4_lapis_icon"]
+[ext_resource type="Resource" path="res://Data/Books/Book_0001_LapisPrimer.tres" id="5_lapis_primer"]
+[ext_resource type="Resource" path="res://Data/Books/Book_0002_DecadanceLivingGuide.tres" id="6_living_guide"]
+
+[sub_resource type="Resource" id="ShopItemData_lapis_primer"]
+script = ExtResource("2_shop_item")
+item_data = ExtResource("5_lapis_primer")
+shop_tab_id = &"books"
+price_override = 120
+
+[sub_resource type="Resource" id="ShopItemData_living_guide"]
+script = ExtResource("2_shop_item")
+item_data = ExtResource("6_living_guide")
+shop_tab_id = &"books"
+price_override = 180
+
+[sub_resource type="Resource" id="ShopTabData_books"]
+script = ExtResource("3_shop_tab")
+tab_id = &"books"
+display_name = "電子書籍"
+
+[resource]
+script = ExtResource("1_shop_data")
+shop_id = &"lapis_ebook_store"
+display_name = "ラピス\n電子書籍店"
+description = "ラピスで読める電子書籍を扱うショップ。購入した本は書籍UIから閲覧できます。"
+sticker = ExtResource("4_lapis_icon")
+tabs = Array[ExtResource("3_shop_tab")]([SubResource("ShopTabData_books")])
+items = Array[ExtResource("2_shop_item")]([SubResource("ShopItemData_lapis_primer"), SubResource("ShopItemData_living_guide")])

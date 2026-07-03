@@ -1,11 +1,12 @@
-[gd_resource type="Resource" script_class="ShopDatabase" load_steps=6 format=3]
+[gd_resource type="Resource" script_class="ShopDatabase" load_steps=7 format=3]
 
 [ext_resource type="Script" path="res://Scripts/Shops/ShopDatabase.gd" id="1_shop_database"]
 [ext_resource type="Script" path="res://Scripts/Shops/ShopData.gd" id="2_shop_data"]
 [ext_resource type="Resource" path="res://Data/Shops/BasicFoodShop.tres" id="3_basic_food_shop"]
 [ext_resource type="Resource" path="res://Data/Shops/YuzhouShop.tres" id="4_yuzhou_shop"]
 [ext_resource type="Resource" path="res://Data/Shops/FelicityShop.tres" id="5_felicity_shop"]
+[ext_resource type="Resource" path="res://Data/Shops/EBookShop.tres" id="6_ebook_shop"]
 
 [resource]
 script = ExtResource("1_shop_database")
-shops = Array[ExtResource("2_shop_data")]([ExtResource("3_basic_food_shop"), ExtResource("4_yuzhou_shop"), ExtResource("5_felicity_shop")])
+shops = Array[ExtResource("2_shop_data")]([ExtResource("3_basic_food_shop"), ExtResource("4_yuzhou_shop"), ExtResource("5_felicity_shop"), ExtResource("6_ebook_shop")])

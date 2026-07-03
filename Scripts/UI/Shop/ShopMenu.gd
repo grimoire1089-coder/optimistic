@@ -20,6 +20,7 @@ class_name ShopMenu
 @onready var detail_label: Label = $MarginContainer/Rows/DetailLabel
 
 var _inventory_module: RobinInventoryModule
+var _book_library: Node
 var _shops: Array[ShopData] = []
 var _selected_shop_index: int = -1
 var _current_shop_tab_index: int = 0
@@ -45,6 +46,7 @@ func _ready() -> void:
 	item_tab_bar.tab_changed.connect(_on_item_tab_changed)
 	_setup_item_popup()
 	_connect_wallet_signal()
+	_connect_book_library_signal()
 	_resolve_inventory_module()
 	_reload_shops()
 	_show_shop_list()
@@ -53,6 +55,7 @@ func _ready() -> void:
 func open_menu() -> void:
 	visible = true
 	_resolve_inventory_module()
+	_resolve_book_library()
 	_reload_shops()
 	_show_shop_list()
 
@@ -77,6 +80,22 @@ func _connect_wallet_signal() -> void:
 	var callable := Callable(self, "_on_wallet_balance_changed")
 	if not wallet.is_connected("balance_changed", callable):
 		wallet.connect("balance_changed", callable)
+
+
+func _connect_book_library_signal() -> void:
+	var library := _resolve_book_library()
+	if library == null:
+		return
+	var callable := Callable(self, "_on_book_library_changed")
+	if not library.is_connected("library_changed", callable):
+		library.connect("library_changed", callable)
+
+
+func _resolve_book_library() -> Node:
+	if _book_library != null and is_instance_valid(_book_library):
+		return _book_library
+	_book_library = get_node_or_null("/root/BookLibrary")
+	return _book_library
 
 
 func _resolve_inventory_module() -> void:
@@ -370,14 +389,19 @@ func _create_item_card(entry: ShopItemData, credits: int) -> Control:
 	name_marquee.set_display_text(entry.get_display_name())
 	card.add_child(name_marquee)
 
+	var is_book := entry.is_book_product()
+	var is_owned_book := is_book and _is_book_owned(entry)
+
 	var price_label := Label.new()
 	price_label.text = "%d C" % entry.get_unit_price()
 	price_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	price_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	price_label.add_theme_font_size_override("font_size", 14)
 	card.add_child(price_label)
+	if is_owned_book:
+		price_label.text = "購入済み"
 
-	var base_amount: int = maxi(entry.amount, 1)
+	var base_amount: int = 1 if is_book else maxi(entry.amount, 1)
 	var buy_button := Button.new()
 	buy_button.custom_minimum_size = Vector2(0, 30)
 	buy_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -386,6 +410,10 @@ func _create_item_card(entry: ShopItemData, credits: int) -> Control:
 	buy_button.text = "%d個購入" % base_amount
 	buy_button.tooltip_text = "購入数: 通常 %d個 / Shift %d個 / Ctrl %d個" % [base_amount, base_amount * 10, base_amount * 100]
 	buy_button.disabled = not entry.is_available or entry.get_unit_price() * base_amount > credits
+	if is_book:
+		buy_button.text = "購入済み" if is_owned_book else "購入"
+		buy_button.tooltip_text = "購入後、書籍UIから閲覧できます。"
+		buy_button.disabled = not entry.is_available or is_owned_book or entry.get_unit_price() > credits
 	buy_button.add_theme_stylebox_override("normal", _create_purchase_button_style())
 	buy_button.add_theme_stylebox_override("hover", _create_purchase_button_style())
 	buy_button.add_theme_stylebox_override("pressed", _create_purchase_button_style())
@@ -470,10 +498,15 @@ func _show_item_popup(entry: ShopItemData, anchor: Control) -> void:
 		return
 	_setup_item_popup()
 
-	var base_amount: int = maxi(entry.amount, 1)
+	var is_book := entry.is_book_product()
+	var is_owned_book := is_book and _is_book_owned(entry)
+	var base_amount: int = 1 if is_book else maxi(entry.amount, 1)
 	_item_popup_name_label.text = entry.get_display_name()
 	_item_popup_description_label.text = entry.get_description()
 	_item_popup_price_label.text = "単価: %d C\n購入: %d個 / Shift %d個 / Ctrl %d個" % [entry.get_unit_price(), base_amount, base_amount * 10, base_amount * 100]
+
+	if is_book:
+		_item_popup_price_label.text = "購入済み" if is_owned_book else "価格: %d C\n購入後、書籍UIから閲覧できます。" % entry.get_unit_price()
 
 	var global_rect := anchor.get_global_rect()
 	var viewport_size := get_viewport_rect().size
@@ -527,6 +560,9 @@ func _on_item_tab_changed(tab_index: int) -> void:
 func _on_buy_pressed(entry: ShopItemData) -> void:
 	if entry == null:
 		return
+	if entry.is_book_product():
+		_on_book_buy_pressed(entry)
+		return
 	_resolve_inventory_module()
 	if _inventory_module == null:
 		detail_label.text = "購入先のインベントリが見つかりません。"
@@ -549,7 +585,43 @@ func _on_buy_pressed(entry: ShopItemData) -> void:
 	detail_label.text = "購入しました: %s x%d" % [entry.get_display_name(), purchase_amount]
 
 
+func _on_book_buy_pressed(entry: ShopItemData) -> void:
+	var book := entry.get_book_data()
+	if book == null:
+		_refresh_current_shop_detail()
+		detail_label.text = "書籍データが見つかりません。"
+		return
+
+	var library := _resolve_book_library()
+	if library == null or not library.has_method("add_book"):
+		_refresh_current_shop_detail()
+		detail_label.text = "書籍ライブラリが見つかりません。"
+		return
+
+	if _is_book_owned(entry):
+		_refresh_current_shop_detail()
+		detail_label.text = "購入済みです: %s" % entry.get_display_name()
+		return
+
+	var total_price := entry.get_unit_price()
+	if not _spend_credits(total_price, entry):
+		_refresh_current_shop_detail()
+		detail_label.text = "クレジットが足りません。必要: %d / 所持: %d" % [total_price, _get_wallet_credits()]
+		return
+
+	if library.call("add_book", book) != true:
+		_refund_credits(total_price, entry)
+		_refresh_current_shop_detail()
+		detail_label.text = "書籍の登録に失敗しました。購入を取り消しました。"
+		return
+
+	_refresh_current_shop_detail()
+	detail_label.text = "電子書籍を購入しました: %s" % entry.get_display_name()
+
+
 func _get_purchase_amount(entry: ShopItemData) -> int:
+	if entry != null and entry.is_book_product():
+		return 1
 	return maxi(entry.amount, 1) * _get_purchase_multiplier()
 
 
@@ -566,6 +638,15 @@ func _refresh_current_shop_detail() -> void:
 		_show_shop_list()
 		return
 	_show_shop_detail(_selected_shop_index)
+
+
+func _is_book_owned(entry: ShopItemData) -> bool:
+	if entry == null:
+		return false
+	var library := _resolve_book_library()
+	if library == null or not library.has_method("has_book_id"):
+		return false
+	return library.call("has_book_id", entry.get_item_id()) == true
 
 
 func _spend_credits(amount: int, entry: ShopItemData) -> bool:
@@ -620,6 +701,13 @@ func _clear_item_grid() -> void:
 
 
 func _on_wallet_balance_changed(_new_balance: int, _delta: int, _reason: String) -> void:
+	if not visible:
+		return
+	if _selected_shop_index >= 0:
+		_refresh_current_shop_detail()
+
+
+func _on_book_library_changed() -> void:
 	if not visible:
 		return
 	if _selected_shop_index >= 0:

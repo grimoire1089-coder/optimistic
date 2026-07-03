@@ -129,6 +129,8 @@ func _create_item_card(entry: ShopItemData, credits: int) -> Control:
 	name_marquee.set_display_text(entry.get_display_name())
 	card.add_child(name_marquee)
 
+	var is_book := entry.is_book_product()
+	var is_owned_book := is_book and _is_book_owned(entry)
 	var purchase_amount := _get_purchase_amount(entry)
 	var total_price := entry.get_unit_price() * purchase_amount
 
@@ -138,6 +140,8 @@ func _create_item_card(entry: ShopItemData, credits: int) -> Control:
 	price_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	price_label.add_theme_font_size_override("font_size", 14)
 	card.add_child(price_label)
+	if is_owned_book:
+		price_label.text = "購入済み"
 
 	var buy_button := Button.new()
 	buy_button.custom_minimum_size = Vector2(0, 30)
@@ -147,6 +151,10 @@ func _create_item_card(entry: ShopItemData, credits: int) -> Control:
 	buy_button.text = "%d個購入" % purchase_amount
 	buy_button.tooltip_text = "現在の購入数: %d個 / Shift 10倍 / Ctrl 100倍" % purchase_amount
 	buy_button.disabled = not entry.is_available or total_price > credits
+	if is_book:
+		buy_button.text = "購入済み" if is_owned_book else "購入"
+		buy_button.tooltip_text = "購入後、書籍UIから閲覧できます。"
+		buy_button.disabled = not entry.is_available or is_owned_book or total_price > credits
 	buy_button.add_theme_stylebox_override("normal", _create_purchase_button_style())
 	buy_button.add_theme_stylebox_override("hover", _create_purchase_button_style())
 	buy_button.add_theme_stylebox_override("pressed", _create_purchase_button_style())

@@ -1,6 +1,8 @@
 extends Resource
 class_name ShopItemData
 
+const BOOK_CATEGORY_ID := &"books"
+
 @export var item_data: Resource
 @export var shop_tab_id: StringName = &""
 @export_range(1, 999, 1) var amount: int = 1
@@ -13,7 +15,16 @@ class_name ShopItemData
 func get_item_id() -> StringName:
 	if item_data == null:
 		return &""
+	if item_data.has_method("get_item_id"):
+		var method_value = item_data.call("get_item_id")
+		if method_value is StringName:
+			return method_value
+		return StringName(String(method_value))
 	var value = item_data.get("item_id")
+	if value == null:
+		value = item_data.get("book_id")
+	if value == null:
+		return &""
 	if value is StringName:
 		return value
 	return StringName(String(value))
@@ -34,6 +45,16 @@ func get_shop_tab_id() -> StringName:
 	if shop_tab_id != &"":
 		return shop_tab_id
 	return get_category_id()
+
+
+func get_book_data() -> BookData:
+	if item_data is BookData:
+		return item_data as BookData
+	return null
+
+
+func is_book_product() -> bool:
+	return get_book_data() != null or get_category_id() == BOOK_CATEGORY_ID
 
 
 func get_display_name() -> String:

@@ -26,6 +26,8 @@
 [ext_resource type="PackedScene" path="res://Scenes/UI/HUD/SettingsButton.tscn" id="23_settings_button"]
 [ext_resource type="PackedScene" path="res://Scenes/UI/Options/GameOptionsOverlay.tscn" id="24_game_options_overlay"]
 [ext_resource type="Script" uid="uid://dn8k76f4b7b67" path="res://Scripts/UI/Debug/AIDebugPanel.gd" id="25_ai_debug_panel"]
+[ext_resource type="PackedScene" path="res://Scenes/UI/HUD/BookButton.tscn" id="26_book_button"]
+[ext_resource type="PackedScene" path="res://Scenes/UI/Books/BookLibraryUI.tscn" id="27_book_library_ui"]
 
 [sub_resource type="Environment" id="Environment_ctt6t"]
 glow_enabled = true
@@ -105,6 +107,8 @@ script = ExtResource("25_ai_debug_panel")
 [node name="InventoryUI" parent="CanvasLayer" unique_id=520989565 instance=ExtResource("10_inventory_ui")]
 anchors_preset = 8
 
+[node name="BookLibraryUI" parent="CanvasLayer" instance=ExtResource("27_book_library_ui")]
+
 [node name="GameOptionsOverlay" parent="CanvasLayer" unique_id=411112730 instance=ExtResource("24_game_options_overlay")]
 
 [node name="RobinHudButton" parent="CanvasLayer" unique_id=109920417 instance=ExtResource("19_robin_hud_button")]
@@ -114,6 +118,8 @@ anchors_preset = 8
 [node name="SettingsButton" parent="CanvasLayer" unique_id=1466624736 instance=ExtResource("23_settings_button")]
 
 [node name="ShopButton" parent="CanvasLayer" unique_id=2139128007 instance=ExtResource("14_shop_button")]
+
+[node name="BookButton" parent="CanvasLayer" instance=ExtResource("26_book_button")]
 
 [node name="InventoryButton" parent="CanvasLayer" unique_id=15107441 instance=ExtResource("9_inventory_button")]
 
