@@ -298,6 +298,8 @@ func _is_active_ai_movement_behavior(node: Node) -> bool:
 		return false
 	if node.has_method("is_using_lapis") and node.call("is_using_lapis") == true:
 		return false
+	if node.has_method("is_working") and node.call("is_working") == true:
+		return false
 	return _has_movement_debug_data(node)
 
 

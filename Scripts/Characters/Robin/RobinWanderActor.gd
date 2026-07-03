@@ -3,6 +3,8 @@ class_name RobinWanderActor
 
 signal selected(actor: RobinWanderActor)
 signal entrance_travel_completed(target_map_id: StringName)
+signal work_started(job_id: StringName)
+signal work_completed(job_id: StringName)
 
 const DEFAULT_CLICK_SFX_PATHS := [
 	"res://Assets/Audio/SFX/UI/click.ogg",
@@ -86,10 +88,12 @@ func _physics_process(delta: float) -> void:
 			_cancel_sit_behavior()
 			velocity = entrance_travel_velocity
 			facing_direction = entrance_travel_behavior_module.get_facing_direction()
-			move_and_slide()
-			if wander_module.clamp_body_to_movement_area(true):
-				velocity = Vector2.ZERO
-			walk_animator.update_animation(velocity, facing_direction, delta)
+			var is_offscreen_working := entrance_travel_behavior_module.has_method("is_working") and entrance_travel_behavior_module.call("is_working") == true
+			if not is_offscreen_working:
+				move_and_slide()
+				if wander_module.clamp_body_to_movement_area(true):
+					velocity = Vector2.ZERO
+				walk_animator.update_animation(velocity, facing_direction, delta)
 			_update_grid_alignment_after_motion()
 			return
 	if craft_behavior_module != null:
@@ -171,6 +175,25 @@ func request_entrance_travel(entrance: Node2D, target_map_id: StringName) -> boo
 	return entrance_travel_behavior_module.request_travel_to_entrance(entrance, target_map_id)
 
 
+func request_work_at_entrance(job_id: StringName, job_display_name: String, duration_minutes: int) -> bool:
+	if entrance_travel_behavior_module == null:
+		return false
+	if _is_busy_for_entrance_travel():
+		return false
+	var entrance := _find_work_entrance()
+	if entrance == null:
+		return false
+	if not entrance_travel_behavior_module.has_method("request_work_at_entrance"):
+		return false
+	return entrance_travel_behavior_module.call(
+		"request_work_at_entrance",
+		entrance,
+		job_id,
+		duration_minutes,
+		job_display_name
+	) == true
+
+
 func cancel_entrance_travel() -> void:
 	if entrance_travel_behavior_module == null:
 		return
@@ -228,8 +251,20 @@ func is_sleeping() -> bool:
 	return sleep_behavior_module.is_sleeping()
 
 
+func is_working() -> bool:
+	if entrance_travel_behavior_module == null:
+		return false
+	if not entrance_travel_behavior_module.has_method("is_work_requested"):
+		return false
+	return entrance_travel_behavior_module.call("is_work_requested") == true
+
+
 func get_current_action_display_text() -> String:
 	if entrance_travel_behavior_module != null and entrance_travel_behavior_module.is_active():
+		if entrance_travel_behavior_module.has_method("is_working") and entrance_travel_behavior_module.call("is_working") == true:
+			return "アルバイト中"
+		if entrance_travel_behavior_module.has_method("is_work_requested") and entrance_travel_behavior_module.call("is_work_requested") == true:
+			return "仕事へ移動中"
 		return "マップ移動中"
 	if craft_behavior_module != null and craft_behavior_module.is_active():
 		return "制作中"
@@ -253,6 +288,8 @@ func get_current_action_display_text() -> String:
 
 func get_current_need_action_id() -> StringName:
 	if entrance_travel_behavior_module != null and entrance_travel_behavior_module.is_active():
+		if entrance_travel_behavior_module.has_method("is_work_requested") and entrance_travel_behavior_module.call("is_work_requested") == true:
+			return &"part_time_work"
 		return &"map_travel"
 	if craft_behavior_module != null and craft_behavior_module.is_active():
 		return &"crafting"
@@ -450,13 +487,29 @@ func _is_busy_for_entrance_travel() -> bool:
 func _connect_entrance_travel_signal() -> void:
 	if entrance_travel_behavior_module == null:
 		return
-	var callable := Callable(self, "_on_entrance_travel_completed")
-	if not entrance_travel_behavior_module.travel_completed.is_connected(callable):
-		entrance_travel_behavior_module.travel_completed.connect(callable)
+	var travel_callable := Callable(self, "_on_entrance_travel_completed")
+	if not entrance_travel_behavior_module.travel_completed.is_connected(travel_callable):
+		entrance_travel_behavior_module.travel_completed.connect(travel_callable)
+	if entrance_travel_behavior_module.has_signal("work_started"):
+		var work_started_callable := Callable(self, "_on_entrance_work_started")
+		if not entrance_travel_behavior_module.work_started.is_connected(work_started_callable):
+			entrance_travel_behavior_module.work_started.connect(work_started_callable)
+	if entrance_travel_behavior_module.has_signal("work_completed"):
+		var work_completed_callable := Callable(self, "_on_entrance_work_completed")
+		if not entrance_travel_behavior_module.work_completed.is_connected(work_completed_callable):
+			entrance_travel_behavior_module.work_completed.connect(work_completed_callable)
 
 
 func _on_entrance_travel_completed(target_map_id: StringName) -> void:
 	entrance_travel_completed.emit(target_map_id)
+
+
+func _on_entrance_work_started(job_id: StringName) -> void:
+	work_started.emit(job_id)
+
+
+func _on_entrance_work_completed(job_id: StringName) -> void:
+	work_completed.emit(job_id)
 
 
 func _setup_click_area() -> void:
@@ -604,6 +657,40 @@ func _get_debug_actor_grid_footprint() -> Vector2i:
 
 func _get_room_map() -> RoomMapGridModule:
 	return get_node_or_null("../RobinRoomMap") as RoomMapGridModule
+
+
+func _get_active_room_map() -> RoomMapGridModule:
+	var map_travel_module := get_node_or_null("../MainSceneMapTravelModule")
+	if map_travel_module == null:
+		return null
+	if not map_travel_module.has_method("get_active_map"):
+		return null
+	return map_travel_module.call("get_active_map") as RoomMapGridModule
+
+
+func _find_work_entrance() -> Node2D:
+	var active_map := _get_active_room_map()
+	var entrance := _find_entrance_in_room_map(active_map)
+	if entrance != null:
+		return entrance
+	return _find_entrance_in_room_map(_get_room_map())
+
+
+func _find_entrance_in_room_map(room_map: RoomMapGridModule) -> Node2D:
+	if room_map == null:
+		return null
+	var furniture_root := room_map.get_node_or_null("FurnitureRoot") as Node2D
+	if furniture_root == null:
+		return null
+	for child in furniture_root.get_children():
+		var furniture := child as Node2D
+		if furniture == null:
+			continue
+		if furniture is EntranceFurniture:
+			return furniture
+		if furniture.has_meta("furniture_id") and StringName(furniture.get_meta("furniture_id", &"")) == &"entrance":
+			return furniture
+	return null
 
 
 func _get_furniture_placement_module() -> Node:

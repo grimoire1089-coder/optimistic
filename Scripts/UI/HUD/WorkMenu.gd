@@ -4,10 +4,14 @@ class_name WorkMenu
 const BOTTOM_RIGHT_MARGIN := Vector2(24.0, 92.0)
 const BOTTOM_RIGHT_PANEL_SIZE := Vector2(356.0, 196.0)
 
+@export var first_job_id: StringName = &"part_time_001"
 @export var first_job_name: String = "仕事001"
+@export var first_job_category_name: String = "アルバイト"
 @export var first_job_minutes: int = 8 * 60
 @export var worker_path: NodePath = NodePath("../../Robin")
 @export var sleeping_detail_text: String = "睡眠中なので、今は仕事できません。"
+@export var working_detail_text: String = "すでに仕事へ向かっているか勤務中です。"
+@export var work_unavailable_text: String = "今は仕事に行けません。"
 
 @onready var title_label: Label = $MarginContainer/Rows/Header/TitleLabel
 @onready var close_button: Button = $MarginContainer/Rows/Header/CloseButton
@@ -58,13 +62,17 @@ func toggle_menu() -> void:
 
 func _refresh() -> void:
 	title_label.text = "仕事"
-	job_001_button.text = "%s\n8時間" % first_job_name
+	job_001_button.text = "%s\n%s / %s" % [first_job_name, first_job_category_name, _get_duration_text()]
 	var sleeping := _is_worker_sleeping()
-	job_001_button.disabled = sleeping
+	var working := _is_worker_working()
+	job_001_button.disabled = sleeping or working
 	if sleeping:
 		detail_label.text = sleeping_detail_text
 		return
-	detail_label.text = "%s: ゲーム内時間を8時間進めます。" % first_job_name
+	if working:
+		detail_label.text = working_detail_text
+		return
+	detail_label.text = "%s / %s: エントランスから出勤します。" % [first_job_name, first_job_category_name]
 
 
 func _on_job_001_pressed() -> void:
@@ -72,8 +80,24 @@ func _on_job_001_pressed() -> void:
 		_refresh()
 		_push_message(sleeping_detail_text)
 		return
-	GameClock.advance_minutes(first_job_minutes)
-	close_menu()
+	if _is_worker_working():
+		_refresh()
+		_push_message(working_detail_text)
+		return
+
+	var worker := _get_worker()
+	if worker == null or not worker.has_method("request_work_at_entrance"):
+		_refresh()
+		_push_message(work_unavailable_text)
+		return
+
+	if worker.call("request_work_at_entrance", first_job_id, first_job_name, first_job_minutes) == true:
+		_push_message("%sへ向かいます。" % first_job_name)
+		close_menu()
+		return
+
+	_refresh()
+	_push_message(work_unavailable_text)
 
 
 func _is_worker_sleeping() -> bool:
@@ -83,6 +107,15 @@ func _is_worker_sleeping() -> bool:
 	if not worker.has_method("is_sleeping"):
 		return false
 	return worker.call("is_sleeping") == true
+
+
+func _is_worker_working() -> bool:
+	var worker := _get_worker()
+	if worker == null:
+		return false
+	if not worker.has_method("is_working"):
+		return false
+	return worker.call("is_working") == true
 
 
 func _get_worker() -> Node:
@@ -97,6 +130,12 @@ func _resolve_worker() -> void:
 	if worker_path.is_empty():
 		return
 	_worker = get_node_or_null(worker_path)
+
+
+func _get_duration_text() -> String:
+	if first_job_minutes % 60 == 0:
+		return "%d時間" % int(first_job_minutes / 60)
+	return "%d分" % first_job_minutes
 
 
 func _apply_bottom_right_layout() -> void:

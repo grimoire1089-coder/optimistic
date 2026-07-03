@@ -2,30 +2,44 @@ extends Node
 class_name AICharacterEntranceTravelBehaviorModule
 
 signal travel_completed(target_map_id: StringName)
+signal work_started(job_id: StringName)
+signal work_completed(job_id: StringName)
 
 const INVALID_GRID_POSITION := Vector2i(-999999, -999999)
+const MODE_MAP_TRAVEL: StringName = &"map_travel"
+const MODE_WORK: StringName = &"work"
 
 @export var room_map_path: NodePath = NodePath("../../RobinRoomMap")
 @export var map_travel_module_path: NodePath = NodePath("../../MainSceneMapTravelModule")
 @export var furniture_placement_module_path: NodePath = NodePath("../../FurniturePlacementModule")
+@export var time_scale_controller_path: NodePath = NodePath("/root/TimeScaleController")
 @export var walk_speed: float = 80.0
 @export var arrive_distance: float = 14.0
 @export var grid_arrive_distance: float = 6.0
 @export var actor_grid_footprint: Vector2i = Vector2i(2, 4)
 @export var use_time_seconds: float = 0.45
+@export var work_fast_forward_scale: float = 8.0
 
 var _body: CharacterBody2D
 var _room_map: RoomMapGridModule
 var _map_travel_module: Node
 var _furniture_placement_module: Node
+var _time_scale_controller: Node
 var _target_entrance: Node2D
 var _target_cell: Vector2i = INVALID_GRID_POSITION
 var _target_entrance_grid_position: Vector2i = INVALID_GRID_POSITION
 var _target_entrance_grid_footprint: Vector2i = Vector2i.ZERO
 var _target_map_id: StringName = &""
+var _mode: StringName = MODE_MAP_TRAVEL
 var _active := false
 var _using := false
 var _use_timer := 0.0
+var _offscreen_working := false
+var _work_job_id: StringName = &""
+var _work_display_name := ""
+var _work_duration_minutes := 0.0
+var _work_elapsed_minutes := 0.0
+var _body_visible_before_work := true
 var _facing_direction := Vector2.DOWN
 var _path_cells: Array[Vector2i] = []
 
@@ -35,8 +49,30 @@ func setup(body: CharacterBody2D) -> void:
 	_resolve_refs()
 
 
+func _exit_tree() -> void:
+	_set_work_fast_forward(false)
+
+
 func is_active() -> bool:
 	return _active
+
+
+func is_working() -> bool:
+	return _offscreen_working
+
+
+func is_work_requested() -> bool:
+	return _active and _mode == MODE_WORK
+
+
+func get_work_progress_ratio() -> float:
+	if _work_duration_minutes <= 0.0:
+		return 0.0
+	return clampf(_work_elapsed_minutes / _work_duration_minutes, 0.0, 1.0)
+
+
+func get_work_display_name() -> String:
+	return _work_display_name
 
 
 func get_facing_direction() -> Vector2:
@@ -49,6 +85,33 @@ func request_travel_to_entrance(entrance: Node2D, target_map_id: StringName) -> 
 		return false
 	if _body == null or entrance == null or target_map_id == &"":
 		return false
+	if not _begin_entrance_request(entrance, MODE_MAP_TRAVEL):
+		return false
+	_target_map_id = target_map_id
+	return true
+
+
+func request_work_at_entrance(
+	entrance: Node2D,
+	job_id: StringName,
+	duration_minutes: int,
+	display_name: String = ""
+) -> bool:
+	_resolve_refs()
+	if _active:
+		return false
+	if _body == null or entrance == null or job_id == &"" or duration_minutes <= 0:
+		return false
+	if not _begin_entrance_request(entrance, MODE_WORK):
+		return false
+	_work_job_id = job_id
+	_work_display_name = display_name
+	_work_duration_minutes = float(duration_minutes)
+	_work_elapsed_minutes = 0.0
+	return true
+
+
+func _begin_entrance_request(entrance: Node2D, mode: StringName) -> bool:
 	var entrance_map := _get_room_map_for_entrance(entrance)
 	if entrance_map != null:
 		_room_map = entrance_map
@@ -61,10 +124,12 @@ func request_travel_to_entrance(entrance: Node2D, target_map_id: StringName) -> 
 	_target_cell = use_cell
 	_target_entrance_grid_position = _get_furniture_grid_position(entrance)
 	_target_entrance_grid_footprint = _get_furniture_footprint(entrance)
-	_target_map_id = target_map_id
+	_target_map_id = &""
+	_mode = mode
 	_active = true
 	_using = false
 	_use_timer = 0.0
+	_offscreen_working = false
 	_path_cells.clear()
 	return true
 
@@ -105,6 +170,14 @@ func get_velocity(delta: float) -> Vector2:
 	_resolve_refs()
 	if not _active:
 		return Vector2.ZERO
+
+	if _offscreen_working:
+		if _body == null or _room_map == null or _target_entrance == null or not is_instance_valid(_target_entrance):
+			_reset()
+			return Vector2.ZERO
+		_tick_offscreen_work(delta)
+		return Vector2.ZERO
+
 	if _body == null or _room_map == null or _target_entrance == null or not is_instance_valid(_target_entrance):
 		_reset()
 		return Vector2.ZERO
@@ -149,10 +222,38 @@ func _tick_use(delta: float) -> void:
 	_use_timer += maxf(delta, 0.0)
 	if _use_timer < maxf(use_time_seconds, 0.01):
 		return
+	if _mode == MODE_WORK:
+		_start_offscreen_work()
+		return
 	var completed_target_map_id := _target_map_id
 	_reset()
 	_perform_map_travel(completed_target_map_id)
 	travel_completed.emit(completed_target_map_id)
+
+
+func _start_offscreen_work() -> void:
+	_using = false
+	_offscreen_working = true
+	_work_elapsed_minutes = 0.0
+	_path_cells.clear()
+	_set_body_hidden_for_work(true)
+	_move_body_to_offscreen_exit()
+	_set_work_fast_forward(true)
+	work_started.emit(_work_job_id)
+
+
+func _tick_offscreen_work(delta: float) -> void:
+	_work_elapsed_minutes = minf(_work_elapsed_minutes + _get_game_minutes_from_delta(delta), _work_duration_minutes)
+	if _work_elapsed_minutes < _work_duration_minutes:
+		return
+	_complete_offscreen_work()
+
+
+func _complete_offscreen_work() -> void:
+	var completed_job_id := _work_job_id
+	_place_body_near_entrance(_room_map, _target_entrance)
+	_reset()
+	work_completed.emit(completed_job_id)
 
 
 func _perform_map_travel(target_map_id: StringName) -> void:
@@ -175,11 +276,17 @@ func _place_body_near_active_map_entrance() -> void:
 	var entrance := _find_entrance_in_map(active_map)
 	if entrance == null:
 		return
-	var use_cell := _get_entrance_spawn_cell(active_map, entrance)
+	_place_body_near_entrance(active_map, entrance)
+
+
+func _place_body_near_entrance(room_map: RoomMapGridModule, entrance: Node2D) -> void:
+	if _body == null or room_map == null or entrance == null:
+		return
+	var use_cell := _get_entrance_spawn_cell(room_map, entrance)
 	if not _is_valid_grid_position(use_cell):
 		return
-	_room_map = active_map
-	_body.global_position = active_map.grid_to_world_area_center(use_cell, _get_actor_grid_footprint())
+	_room_map = room_map
+	_body.global_position = room_map.grid_to_world_area_center(use_cell, _get_actor_grid_footprint())
 	_face_node(entrance)
 
 
@@ -451,6 +558,61 @@ func _face_node(target: Node2D) -> void:
 		_facing_direction = AICharacterGridMovementHelper.get_axis_aligned_direction(to_target)
 
 
+func _get_game_minutes_from_delta(delta: float) -> float:
+	var game_clock := get_node_or_null("/root/GameClock")
+	if game_clock != null and game_clock.has_method("get"):
+		var seconds_per_minute := float(game_clock.get("real_seconds_per_game_minute"))
+		if seconds_per_minute > 0.0:
+			return delta / seconds_per_minute
+	return delta
+
+
+func _set_body_hidden_for_work(hidden: bool) -> void:
+	if _body == null:
+		return
+	if hidden:
+		_body_visible_before_work = _body.visible
+		_body.visible = false
+		return
+	if not _offscreen_working:
+		return
+	_body.visible = _body_visible_before_work
+
+
+func _move_body_to_offscreen_exit() -> void:
+	if _body == null or _room_map == null or _target_entrance == null:
+		return
+	if not _room_map.has_method("get_grid_rect"):
+		return
+	var grid_rect: Rect2 = _room_map.get_grid_rect()
+	if grid_rect.size.x <= 0.0 or grid_rect.size.y <= 0.0:
+		return
+	var from_center := _target_entrance.global_position - grid_rect.get_center()
+	var exit_direction := AICharacterGridMovementHelper.get_axis_aligned_direction(from_center)
+	if exit_direction == Vector2.ZERO:
+		exit_direction = Vector2.DOWN
+	var exit_margin := maxf(grid_rect.size.x, grid_rect.size.y) + 192.0
+	_body.global_position = _target_entrance.global_position + exit_direction * exit_margin
+
+
+func _set_work_fast_forward(enabled: bool) -> void:
+	_resolve_refs()
+	if _time_scale_controller == null:
+		return
+	if not _time_scale_controller.has_method("set_time_scale_request"):
+		return
+	_time_scale_controller.call(
+		"set_time_scale_request",
+		_get_work_fast_forward_reason(),
+		enabled,
+		work_fast_forward_scale
+	)
+
+
+func _get_work_fast_forward_reason() -> String:
+	return "offscreen_work_%d" % get_instance_id()
+
+
 func _get_furniture_footprint(furniture: Node2D) -> Vector2i:
 	if furniture == null:
 		return Vector2i(1, 1)
@@ -478,14 +640,22 @@ func _get_actor_grid_footprint() -> Vector2i:
 
 
 func _reset() -> void:
+	_set_body_hidden_for_work(false)
+	_set_work_fast_forward(false)
 	_target_entrance = null
 	_target_cell = INVALID_GRID_POSITION
 	_target_entrance_grid_position = INVALID_GRID_POSITION
 	_target_entrance_grid_footprint = Vector2i.ZERO
 	_target_map_id = &""
+	_mode = MODE_MAP_TRAVEL
 	_active = false
 	_using = false
 	_use_timer = 0.0
+	_offscreen_working = false
+	_work_job_id = &""
+	_work_display_name = ""
+	_work_duration_minutes = 0.0
+	_work_elapsed_minutes = 0.0
 	_path_cells.clear()
 
 
@@ -504,3 +674,5 @@ func _resolve_refs() -> void:
 		_map_travel_module = get_node_or_null(map_travel_module_path)
 	if _furniture_placement_module == null and not furniture_placement_module_path.is_empty():
 		_furniture_placement_module = get_node_or_null(furniture_placement_module_path)
+	if _time_scale_controller == null and not time_scale_controller_path.is_empty():
+		_time_scale_controller = get_node_or_null(time_scale_controller_path)
