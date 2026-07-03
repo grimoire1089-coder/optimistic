@@ -6,6 +6,7 @@ extends Control
 @export var auto_fullscreen_on_matching_monitor: bool = true
 @export var fullscreen_monitor_size: Vector2i = Vector2i(1920, 1080)
 @export var allow_same_aspect_fullscreen: bool = true
+@export var apply_fullscreen_in_editor: bool = false
 
 @onready var start_button: Button = $CenterContainer/CenterBox/StartButton
 @onready var options_button: Button = $CenterContainer/CenterBox/OptionsButton
@@ -85,6 +86,8 @@ func _close_options() -> void:
 
 func _apply_startup_display_mode() -> void:
 	if not auto_fullscreen_on_matching_monitor:
+		return
+	if OS.has_feature("editor") and not apply_fullscreen_in_editor:
 		return
 
 	var screen_index := DisplayServer.window_get_current_screen()
