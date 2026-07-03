@@ -255,8 +255,8 @@ func _update_grid_step_movement(delta: float) -> void:
 			_body.global_position = _grid_step_target_position
 			_grid_step_active = false
 			if not _path_cells.is_empty():
-				var waypoint_position := _get_actor_grid_area_center(_path_cells[0])
-				if _body.global_position.distance_squared_to(waypoint_position) <= 0.001:
+				var completed_waypoint_position := _get_actor_grid_area_center(_path_cells[0])
+				if _body.global_position.distance_squared_to(completed_waypoint_position) <= 0.001:
 					_path_cells.remove_at(0)
 			if _path_cells.is_empty():
 				_start_idle()
