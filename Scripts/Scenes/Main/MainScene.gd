@@ -32,6 +32,7 @@ func _ready() -> void:
 	_connect_robin_selection()
 	_push_startup_message(startup_debug_text)
 	_push_debug_result("System", "MainScene init", true, startup_debug_text)
+	_push_debug_result("System", "Display", true, _get_display_debug_text())
 	_sync_build_mode_ui_lock()
 
 
@@ -386,3 +387,26 @@ func _get_startup_debug_text() -> String:
 		return "Main Scene"
 	var grid_size := robin_room_map.get_grid_size()
 	return "%s / Grid %d x %d" % [robin_room_map.map_display_name, grid_size.x, grid_size.y]
+
+
+func _get_display_debug_text() -> String:
+	var screen_index := DisplayServer.window_get_current_screen()
+	var screen_size := DisplayServer.screen_get_size(screen_index)
+	var window_size := DisplayServer.window_get_size()
+	var window_mode := DisplayServer.window_get_mode()
+	var viewport_size := get_viewport().get_visible_rect().size
+	var cell_size_text := "none"
+	var screen_cell_size_text := "none"
+	var robin_room_map := get_node_or_null("RobinRoomMap") as RoomMapGridModule
+	if robin_room_map != null:
+		cell_size_text = str(robin_room_map.get_cell_size())
+		if robin_room_map.has_method("get_screen_cell_size"):
+			screen_cell_size_text = str(robin_room_map.get_screen_cell_size())
+	return "screen=%s window=%s mode=%d viewport=%s cell=%s screen_cell=%s" % [
+		str(screen_size),
+		str(window_size),
+		int(window_mode),
+		str(viewport_size),
+		cell_size_text,
+		screen_cell_size_text,
+	]

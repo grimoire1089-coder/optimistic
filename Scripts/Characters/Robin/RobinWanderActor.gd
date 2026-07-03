@@ -39,6 +39,9 @@ const DEFAULT_CLICK_SFX_PATHS := [
 @onready var action_item_display_module: AICharacterActionItemDisplayModule = $AICharacterActionItemDisplayModule
 @onready var walk_animator: RobinWalkSpriteAnimator = $RobinWalkSpriteAnimator
 
+var _connected_room_map: RoomMapGridModule
+var _last_actor_top_left_grid_position := AICharacterGridMovementHelper.INVALID_GRID_POSITION
+
 
 func _ready() -> void:
 	input_pickable = false
@@ -59,6 +62,12 @@ func _ready() -> void:
 	if snap_start_position_to_grid:
 		call_deferred("_snap_start_position_to_grid_deferred")
 	walk_animator.setup()
+	_connect_room_map_rect_changed()
+	_remember_current_actor_grid_position()
+
+
+func _exit_tree() -> void:
+	_disconnect_room_map_rect_changed()
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -78,9 +87,10 @@ func _physics_process(delta: float) -> void:
 			velocity = entrance_travel_velocity
 			facing_direction = entrance_travel_behavior_module.get_facing_direction()
 			move_and_slide()
-			if wander_module.clamp_body_to_movement_area():
+			if wander_module.clamp_body_to_movement_area(true):
 				velocity = Vector2.ZERO
 			walk_animator.update_animation(velocity, facing_direction, delta)
+			_update_grid_alignment_after_motion()
 			return
 	if craft_behavior_module != null:
 		var craft_velocity := craft_behavior_module.get_velocity(delta)
@@ -89,9 +99,10 @@ func _physics_process(delta: float) -> void:
 			velocity = craft_velocity
 			facing_direction = craft_behavior_module.get_facing_direction()
 			move_and_slide()
-			if wander_module.clamp_body_to_movement_area():
+			if wander_module.clamp_body_to_movement_area(true):
 				velocity = Vector2.ZERO
 			walk_animator.update_animation(velocity, facing_direction, delta)
+			_update_grid_alignment_after_motion()
 			return
 	if sleep_behavior_module != null:
 		var sleep_velocity := sleep_behavior_module.get_velocity(delta)
@@ -103,9 +114,10 @@ func _physics_process(delta: float) -> void:
 				velocity = Vector2.ZERO
 			else:
 				move_and_slide()
-			if not sleep_behavior_module.is_sleeping() and wander_module.clamp_body_to_movement_area():
+			if not sleep_behavior_module.is_sleeping() and wander_module.clamp_body_to_movement_area(true):
 				velocity = Vector2.ZERO
 			walk_animator.update_animation(velocity, facing_direction, delta)
+			_update_grid_alignment_after_motion()
 			return
 	if hydrate_behavior_module != null:
 		var hydrate_velocity := hydrate_behavior_module.get_velocity(delta)
@@ -114,9 +126,10 @@ func _physics_process(delta: float) -> void:
 			velocity = hydrate_velocity
 			facing_direction = hydrate_behavior_module.get_facing_direction()
 			move_and_slide()
-			if wander_module.clamp_body_to_movement_area():
+			if wander_module.clamp_body_to_movement_area(true):
 				velocity = Vector2.ZERO
 			walk_animator.update_animation(velocity, facing_direction, delta)
+			_update_grid_alignment_after_motion()
 			return
 	if hygiene_behavior_module != null:
 		var hygiene_velocity := hygiene_behavior_module.get_velocity(delta)
@@ -125,9 +138,10 @@ func _physics_process(delta: float) -> void:
 			velocity = hygiene_velocity
 			facing_direction = hygiene_behavior_module.get_facing_direction()
 			move_and_slide()
-			if wander_module.clamp_body_to_movement_area():
+			if wander_module.clamp_body_to_movement_area(true):
 				velocity = Vector2.ZERO
 			walk_animator.update_animation(velocity, facing_direction, delta)
+			_update_grid_alignment_after_motion()
 			return
 	if sit_behavior_module != null:
 		var sit_velocity := sit_behavior_module.get_velocity(delta)
@@ -135,9 +149,10 @@ func _physics_process(delta: float) -> void:
 			velocity = sit_velocity
 			facing_direction = sit_behavior_module.get_facing_direction()
 			move_and_slide()
-			if not sit_behavior_module.is_sitting() and wander_module.clamp_body_to_movement_area():
+			if not sit_behavior_module.is_sitting() and wander_module.clamp_body_to_movement_area(true):
 				velocity = Vector2.ZERO
 			walk_animator.update_animation(velocity, facing_direction, delta)
+			_update_grid_alignment_after_motion()
 			return
 
 	velocity = wander_module.get_velocity(delta)
@@ -145,6 +160,7 @@ func _physics_process(delta: float) -> void:
 	if wander_module.clamp_body_to_movement_area():
 		velocity = Vector2.ZERO
 	walk_animator.update_animation(velocity, facing_direction, delta)
+	_update_grid_alignment_after_motion()
 
 
 func request_entrance_travel(entrance: Node2D, target_map_id: StringName) -> bool:
@@ -301,9 +317,15 @@ func get_debug_actor_grid_summary() -> String:
 	var footprint := _get_debug_actor_grid_footprint()
 	var top_left := _get_actor_top_left_grid_position(footprint)
 	var can_stand := _is_debug_grid_area_walkable(top_left, footprint)
-	return "grid=%s footprint=%s walkable=%s pos=(%.1f, %.1f)" % [
+	var cell_size := room_map.get_cell_size()
+	var screen_cell_size := room_map.get_screen_cell_size() if room_map.has_method("get_screen_cell_size") else cell_size
+	return "grid=%s footprint=%s cell=(%.1f, %.1f) screen_cell=(%.1f, %.1f) walkable=%s pos=(%.1f, %.1f)" % [
 		str(top_left),
 		str(footprint),
+		cell_size.x,
+		cell_size.y,
+		screen_cell_size.x,
+		screen_cell_size.y,
 		str(can_stand),
 		global_position.x,
 		global_position.y,
@@ -314,6 +336,77 @@ func _snap_start_position_to_grid_deferred() -> void:
 	if not snap_start_position_to_grid:
 		return
 	snap_to_nearest_walkable_grid()
+	_remember_current_actor_grid_position()
+
+
+func _update_grid_alignment_after_motion() -> void:
+	_connect_room_map_rect_changed()
+	_remember_current_actor_grid_position()
+
+
+func _connect_room_map_rect_changed() -> void:
+	var room_map := _get_room_map()
+	if _connected_room_map == room_map:
+		return
+	_disconnect_room_map_rect_changed()
+	if room_map == null:
+		return
+	_connected_room_map = room_map
+	var callable := Callable(self, "_on_room_map_rect_changed")
+	if not _connected_room_map.map_rect_changed.is_connected(callable):
+		_connected_room_map.map_rect_changed.connect(callable)
+
+
+func _disconnect_room_map_rect_changed() -> void:
+	if _connected_room_map == null:
+		return
+	var callable := Callable(self, "_on_room_map_rect_changed")
+	if is_instance_valid(_connected_room_map) and _connected_room_map.map_rect_changed.is_connected(callable):
+		_connected_room_map.map_rect_changed.disconnect(callable)
+	_connected_room_map = null
+
+
+func _on_room_map_rect_changed(_visual_rect: Rect2, _grid_rect: Rect2, _grid_size: Vector2i) -> void:
+	_realign_to_cached_grid_position()
+	_notify_room_map_changed_to_movement_modules()
+	_remember_current_actor_grid_position()
+
+
+func _realign_to_cached_grid_position() -> void:
+	var room_map := _get_room_map()
+	if room_map == null:
+		return
+
+	var footprint := _get_debug_actor_grid_footprint()
+	var top_left_cell := _last_actor_top_left_grid_position
+	if not _is_valid_debug_grid_position(top_left_cell) or not room_map.is_grid_area_inside(top_left_cell, footprint):
+		top_left_cell = _get_actor_top_left_grid_position(footprint)
+	if not _is_valid_debug_grid_position(top_left_cell) or not room_map.is_grid_area_inside(top_left_cell, footprint):
+		return
+
+	var target_position := room_map.grid_to_world_area_center(top_left_cell, footprint)
+	if global_position.distance_squared_to(target_position) <= 0.001:
+		return
+	global_position = target_position
+	velocity = Vector2.ZERO
+
+
+func _notify_room_map_changed_to_movement_modules() -> void:
+	if wander_module != null and wander_module.has_method("handle_room_map_changed"):
+		wander_module.call("handle_room_map_changed")
+
+
+func _remember_current_actor_grid_position() -> void:
+	var footprint := _get_debug_actor_grid_footprint()
+	var top_left_cell := _get_actor_top_left_grid_position(footprint)
+	var room_map := _get_room_map()
+	if room_map == null:
+		return
+	if not _is_valid_debug_grid_position(top_left_cell):
+		return
+	if not room_map.is_grid_area_inside(top_left_cell, footprint):
+		return
+	_last_actor_top_left_grid_position = top_left_cell
 
 
 func _should_skip_sleep_move_and_slide() -> bool:

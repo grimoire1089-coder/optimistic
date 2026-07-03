@@ -71,6 +71,12 @@ func get_velocity(delta: float) -> Vector2:
 
 	_keep_inside_movement_area()
 
+	if _uses_grid_path_movement() and _should_step_out_of_occupied_grid_area():
+		_is_idle = false
+		_timer = 0.0
+		if not _pick_next_grid_path():
+			_start_idle()
+
 	if _is_idle:
 		_timer -= delta
 		if _timer <= 0.0:
@@ -104,6 +110,12 @@ func is_moving() -> bool:
 	if _uses_grid_path_movement():
 		return _grid_step_active or not _path_cells.is_empty()
 	return _timer > 0.0
+
+
+func handle_room_map_changed() -> void:
+	_invalidate_walkable_cells_cache()
+	_path_cells.clear()
+	_clear_grid_step()
 
 
 func get_movement_center() -> Vector2:
@@ -160,12 +172,12 @@ func get_movement_area() -> Rect2:
 	return _get_inset_area_for_actor_origin(visual_area)
 
 
-func clamp_body_to_movement_area() -> bool:
+func clamp_body_to_movement_area(allow_occupied: bool = false) -> bool:
 	if _body == null:
 		return false
 
 	if _uses_grid_path_movement():
-		return _clamp_body_to_grid_footprint_area()
+		return _clamp_body_to_grid_footprint_area(allow_occupied)
 
 	var movement_area := get_movement_area()
 	var area_end := movement_area.end
@@ -300,10 +312,11 @@ func _get_grid_path_velocity() -> Vector2:
 func _pick_next_grid_path() -> bool:
 	var start_cell := _get_current_actor_top_left_grid_position()
 	if not _is_actor_grid_area_walkable(start_cell):
-		start_cell = _get_nearest_walkable_top_left_to_world_position(_body.global_position)
-		if not _is_valid_grid_position(start_cell):
-			return false
-		_body.global_position = _get_actor_grid_area_center(start_cell)
+		if not _is_actor_grid_area_inside(start_cell):
+			start_cell = _get_nearest_walkable_top_left_to_world_position(_body.global_position)
+			if not _is_valid_grid_position(start_cell):
+				return false
+			_body.global_position = _get_actor_grid_area_center(start_cell)
 
 	var target_cell := _pick_random_walkable_top_left_excluding(start_cell)
 	if not _is_valid_grid_position(target_cell) or target_cell == start_cell:
@@ -400,6 +413,19 @@ func _get_nearest_walkable_top_left_to_world_position(world_position: Vector2) -
 	)
 
 
+func _get_nearest_inside_top_left_to_world_position(world_position: Vector2) -> Vector2i:
+	var room_map := _get_room_map()
+	if room_map == null:
+		return INVALID_GRID_POSITION
+	return AICharacterGridMovementHelper.get_nearest_top_left_cell_from_cells(
+		room_map,
+		world_position,
+		_get_safe_actor_grid_footprint(),
+		_get_all_fallback_top_left_cells(),
+		INVALID_GRID_POSITION
+	)
+
+
 func _get_current_actor_top_left_grid_position() -> Vector2i:
 	var room_map := _get_room_map()
 	if room_map == null or _body == null:
@@ -445,12 +471,25 @@ func _is_actor_grid_area_inside(top_left_cell: Vector2i, footprint_override: Vec
 	return room_map.is_grid_area_inside(top_left_cell, footprint)
 
 
-func _clamp_body_to_grid_footprint_area() -> bool:
+func _should_step_out_of_occupied_grid_area() -> bool:
+	if _body == null:
+		return false
+	if _grid_step_active or not _path_cells.is_empty():
+		return false
 	var current_cell := _get_current_actor_top_left_grid_position()
 	if _is_actor_grid_area_walkable(current_cell):
 		return false
+	return _is_actor_grid_area_inside(current_cell)
 
-	var nearest_cell := _get_nearest_walkable_top_left_to_world_position(_body.global_position)
+
+func _clamp_body_to_grid_footprint_area(allow_occupied: bool = false) -> bool:
+	var current_cell := _get_current_actor_top_left_grid_position()
+	if _is_actor_grid_area_walkable(current_cell):
+		return false
+	if _is_actor_grid_area_inside(current_cell):
+		return false
+
+	var nearest_cell := _get_nearest_inside_top_left_to_world_position(_body.global_position) if allow_occupied else _get_nearest_walkable_top_left_to_world_position(_body.global_position)
 	if not _is_valid_grid_position(nearest_cell):
 		return false
 

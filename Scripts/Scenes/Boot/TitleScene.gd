@@ -3,6 +3,9 @@ extends Control
 @export var title_bgm: AudioStream
 @export var start_button_sfx: AudioStream
 @export var exit_button_sfx: AudioStream
+@export var auto_fullscreen_on_matching_monitor: bool = true
+@export var fullscreen_monitor_size: Vector2i = Vector2i(1920, 1080)
+@export var allow_same_aspect_fullscreen: bool = true
 
 @onready var start_button: Button = $CenterContainer/CenterBox/StartButton
 @onready var options_button: Button = $CenterContainer/CenterBox/OptionsButton
@@ -11,7 +14,13 @@ extends Control
 @onready var close_options_button: Button = $AudioSettingsLayer/CenterContainer/OverlayBox/CloseOptionsButton
 
 
+func _enter_tree() -> void:
+	_apply_startup_display_mode()
+
+
 func _ready() -> void:
+	call_deferred("_apply_startup_display_mode")
+
 	start_button.text = "はじめる"
 	options_button.text = "設定"
 	exit_button.text = "おわる"
@@ -72,3 +81,31 @@ func _on_exit_button_pressed() -> void:
 
 func _close_options() -> void:
 	audio_settings_layer.visible = false
+
+
+func _apply_startup_display_mode() -> void:
+	if not auto_fullscreen_on_matching_monitor:
+		return
+
+	var screen_index := DisplayServer.window_get_current_screen()
+	var screen_size := DisplayServer.screen_get_size(screen_index)
+	if not _should_start_fullscreen_for_screen(screen_size):
+		return
+
+	DisplayServer.window_set_size(screen_size)
+	DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
+
+
+func _should_start_fullscreen_for_screen(screen_size: Vector2i) -> bool:
+	if fullscreen_monitor_size.x <= 0 or fullscreen_monitor_size.y <= 0:
+		return true
+	if screen_size == fullscreen_monitor_size:
+		return true
+	if not allow_same_aspect_fullscreen:
+		return false
+	if screen_size.x <= 0 or screen_size.y <= 0:
+		return false
+
+	var target_aspect := float(fullscreen_monitor_size.x) / float(fullscreen_monitor_size.y)
+	var screen_aspect := float(screen_size.x) / float(screen_size.y)
+	return absf(screen_aspect - target_aspect) <= 0.02

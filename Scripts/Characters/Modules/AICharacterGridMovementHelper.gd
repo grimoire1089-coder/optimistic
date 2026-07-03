@@ -46,8 +46,14 @@ static func get_current_actor_top_left_grid_position(
 	if room_map == null:
 		return invalid_grid_position
 	var safe_footprint := get_safe_footprint(footprint)
-	var center_cell := room_map.world_to_grid(world_position)
-	return center_cell - Vector2i(floori(float(safe_footprint.x) * 0.5), floori(float(safe_footprint.y) * 0.5))
+	var cell_size := room_map.get_cell_size()
+	if cell_size.x <= 0.0 or cell_size.y <= 0.0:
+		return invalid_grid_position
+	var local_position := world_position - room_map.get_grid_origin()
+	return Vector2i(
+		roundi(local_position.x / cell_size.x - float(safe_footprint.x) * 0.5),
+		roundi(local_position.y / cell_size.y - float(safe_footprint.y) * 0.5)
+	)
 
 
 static func get_all_walkable_top_left_cells(

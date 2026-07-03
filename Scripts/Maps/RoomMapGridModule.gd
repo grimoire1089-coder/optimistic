@@ -109,6 +109,12 @@ func get_cell_size() -> Vector2:
 	return _get_safe_cell_size()
 
 
+func get_screen_cell_size() -> Vector2:
+	var safe_cell_size := _get_safe_cell_size()
+	var screen_scale := _get_window_to_viewport_scale()
+	return Vector2(safe_cell_size.x * screen_scale.x, safe_cell_size.y * screen_scale.y)
+
+
 func grid_to_world_cell_center(grid_position: Vector2i) -> Vector2:
 	var cell_rect := get_grid_cell_rect(grid_position)
 	return cell_rect.position + cell_rect.size * 0.5
@@ -239,7 +245,12 @@ func _draw_ai_movement_debug_highlight() -> void:
 
 	var actor := behavior.get_parent() as Node2D
 	if actor != null:
-		var actor_top_left := world_to_grid(actor.global_position) - Vector2i(floori(float(footprint.x) * 0.5), floori(float(footprint.y) * 0.5))
+		var actor_top_left := AICharacterGridMovementHelper.get_current_actor_top_left_grid_position(
+			self,
+			actor.global_position,
+			footprint,
+			INVALID_DEBUG_GRID_POSITION
+		)
 		if is_grid_area_inside(actor_top_left, footprint):
 			_draw_grid_area_highlight(actor_top_left, footprint, ai_movement_footprint_fill_color, ai_movement_footprint_border_color, 2.0)
 
@@ -427,7 +438,35 @@ func _get_safe_cell_size() -> Vector2:
 	if visual_rect.size.x <= 0.0 or visual_rect.size.y <= 0.0:
 		return safe_base_cell_size
 
-	return Vector2(
+	var fitted_cell_size := Vector2(
 		maxf(visual_rect.size.x / float(fixed_grid_size.x), 1.0),
 		maxf(visual_rect.size.y / float(fixed_grid_size.y), 1.0)
+	)
+	var screen_cell_cap := _get_logical_cell_size_for_screen_cap(safe_base_cell_size)
+	return Vector2(
+		minf(fitted_cell_size.x, screen_cell_cap.x),
+		minf(fitted_cell_size.y, screen_cell_cap.y)
+	)
+
+
+func _get_logical_cell_size_for_screen_cap(screen_cell_size: Vector2) -> Vector2:
+	var screen_scale := _get_window_to_viewport_scale()
+	return Vector2(
+		maxf(screen_cell_size.x / maxf(screen_scale.x, 0.001), 1.0),
+		maxf(screen_cell_size.y / maxf(screen_scale.y, 0.001), 1.0)
+	)
+
+
+func _get_window_to_viewport_scale() -> Vector2:
+	var viewport_rect := get_viewport().get_visible_rect()
+	if viewport_rect.size.x <= 0.0 or viewport_rect.size.y <= 0.0:
+		return Vector2.ONE
+
+	var window_size := DisplayServer.window_get_size()
+	if window_size.x <= 0 or window_size.y <= 0:
+		return Vector2.ONE
+
+	return Vector2(
+		maxf(float(window_size.x) / viewport_rect.size.x, 0.001),
+		maxf(float(window_size.y) / viewport_rect.size.y, 0.001)
 	)

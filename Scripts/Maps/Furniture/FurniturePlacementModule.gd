@@ -7,6 +7,7 @@ const BUILD_LOCK_META := &"build_locked_by_sleep"
 @export var furniture_root_path: NodePath
 
 var _room_map: RoomMapGridModule
+var _connected_room_map: RoomMapGridModule
 var _furniture_root: Node2D
 var _occupied_cells: Dictionary = {}
 var _layout_version := 0
@@ -15,6 +16,11 @@ var _layout_version := 0
 func _ready() -> void:
 	_resolve_refs()
 	sync_occupied_cells_from_furniture_root()
+	sync_all_furniture_to_room_grid()
+
+
+func _exit_tree() -> void:
+	_disconnect_room_map_signal()
 
 
 func set_room_map_path(next_room_map_path: NodePath) -> void:
@@ -22,10 +28,12 @@ func set_room_map_path(next_room_map_path: NodePath) -> void:
 		_resolve_refs()
 		return
 	room_map_path = next_room_map_path
+	_disconnect_room_map_signal()
 	_room_map = null
 	_occupied_cells.clear()
 	_resolve_refs()
 	sync_occupied_cells_from_furniture_root()
+	sync_all_furniture_to_room_grid()
 
 
 func set_furniture_root_path(next_furniture_root_path: NodePath) -> void:
@@ -251,6 +259,34 @@ func sync_furniture_to_room_grid(furniture: Node2D) -> void:
 		furniture.queue_redraw()
 
 
+func sync_all_furniture_to_room_grid() -> void:
+	_resolve_refs()
+	if _room_map == null or _furniture_root == null:
+		return
+
+	var changed := false
+	for child in _furniture_root.get_children():
+		var furniture := child as Node2D
+		if furniture == null:
+			continue
+		if not furniture.has_meta("grid_position"):
+			continue
+
+		var grid_position: Vector2i = furniture.get_meta("grid_position", Vector2i.ZERO)
+		var footprint := get_furniture_footprint(furniture, Vector2i(1, 1))
+		if furniture.has_meta("grid_footprint"):
+			footprint = furniture.get_meta("grid_footprint", footprint)
+
+		sync_furniture_to_room_grid(furniture)
+		var target_position := _room_map.grid_to_world_area_center(grid_position, footprint)
+		if furniture.global_position.distance_squared_to(target_position) > 0.001:
+			furniture.global_position = target_position
+			changed = true
+
+	if changed:
+		_mark_layout_changed()
+
+
 func clear_furniture() -> void:
 	for furniture in _get_unique_furniture_nodes():
 		if furniture != null:
@@ -354,3 +390,30 @@ func _resolve_refs() -> void:
 
 	if _furniture_root == null and not furniture_root_path.is_empty():
 		_furniture_root = get_node_or_null(furniture_root_path) as Node2D
+
+	_connect_room_map_signal()
+
+
+func _connect_room_map_signal() -> void:
+	if _connected_room_map == _room_map:
+		return
+	_disconnect_room_map_signal()
+	if _room_map == null:
+		return
+	_connected_room_map = _room_map
+	var callable := Callable(self, "_on_room_map_rect_changed")
+	if not _connected_room_map.map_rect_changed.is_connected(callable):
+		_connected_room_map.map_rect_changed.connect(callable)
+
+
+func _disconnect_room_map_signal() -> void:
+	if _connected_room_map == null:
+		return
+	var callable := Callable(self, "_on_room_map_rect_changed")
+	if is_instance_valid(_connected_room_map) and _connected_room_map.map_rect_changed.is_connected(callable):
+		_connected_room_map.map_rect_changed.disconnect(callable)
+	_connected_room_map = null
+
+
+func _on_room_map_rect_changed(_visual_rect: Rect2, _grid_rect: Rect2, _grid_size: Vector2i) -> void:
+	sync_all_furniture_to_room_grid()

@@ -522,7 +522,7 @@ func _get_grid_path_velocity_to_target(target_cell: Vector2i) -> Vector2:
 	if not _is_valid_grid_position(target_cell):
 		return Vector2.ZERO
 
-	var start_cell := _get_current_or_nearest_walkable_top_left_cell(true)
+	var start_cell := _get_current_or_nearest_walkable_top_left_cell(true, true)
 	if not _is_valid_grid_position(start_cell):
 		return Vector2.ZERO
 
@@ -598,9 +598,11 @@ func _find_grid_path(start_cell: Vector2i, target_cell: Vector2i) -> Array[Vecto
 	)
 
 
-func _get_current_or_nearest_walkable_top_left_cell(allow_snap: bool) -> Vector2i:
+func _get_current_or_nearest_walkable_top_left_cell(allow_snap: bool, allow_occupied: bool = false) -> Vector2i:
 	var current_cell := _get_current_actor_top_left_grid_position()
 	if _is_target_cell_walkable(current_cell, _get_actor_grid_footprint()):
+		return current_cell
+	if allow_occupied and _is_target_cell_inside(current_cell, _get_actor_grid_footprint()):
 		return current_cell
 
 	var nearest_cell := _get_nearest_walkable_top_left_to_world_position(_body.global_position)

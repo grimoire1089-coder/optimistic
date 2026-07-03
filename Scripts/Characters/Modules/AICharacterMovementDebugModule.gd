@@ -161,12 +161,16 @@ func _make_state_message(reason: String, action: StringName) -> String:
 	var nearest_furniture_text: String = _get_nearest_furniture_text()
 	var active_flags: String = _get_active_behavior_flags()
 	var movement_plan_text: String = _get_movement_plan_text(action)
-	return "%s action=%s active=%s pos=%s grid=%s vel=%s target=%s path=%d plan=%s near=%s" % [
+	var cell_size_text := _get_cell_size_text()
+	var screen_cell_size_text := _get_screen_cell_size_text()
+	return "%s action=%s active=%s pos=%s grid=%s cell=%s screen_cell=%s vel=%s target=%s path=%d plan=%s near=%s" % [
 		reason,
 		String(action),
 		active_flags,
 		_format_vec2(_body.global_position),
 		_format_vec2i(grid_cell),
+		cell_size_text,
+		screen_cell_size_text,
 		_format_vec2(_body.velocity),
 		target_text,
 		path_size,
@@ -196,6 +200,21 @@ func _get_movement_plan_text(action: StringName) -> String:
 		path_cells.size(),
 		str(footprint),
 	]
+
+
+func _get_cell_size_text() -> String:
+	if _room_map == null:
+		return "none"
+	return _format_vec2(_room_map.get_cell_size())
+
+
+func _get_screen_cell_size_text() -> String:
+	if _room_map == null:
+		return "none"
+	if _room_map.has_method("get_screen_cell_size"):
+		var screen_cell_size: Vector2 = _room_map.call("get_screen_cell_size")
+		return _format_vec2(screen_cell_size)
+	return _format_vec2(_room_map.get_cell_size())
 
 
 func _get_behavior_path_cells(behavior: Node) -> Array[Vector2i]:
