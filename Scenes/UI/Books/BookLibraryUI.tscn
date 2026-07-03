@@ -107,6 +107,12 @@ theme_override_font_sizes/font_size = 12
 text = ""
 autowrap_mode = 3
 
+[node name="ReadButton" type="Button" parent="MarginContainer/Rows/Body/Reader"]
+custom_minimum_size = Vector2(0, 32)
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "読む"
+
 [node name="HSeparator" type="HSeparator" parent="MarginContainer/Rows/Body/Reader"]
 layout_mode = 2
 

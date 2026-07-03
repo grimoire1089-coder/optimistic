@@ -5,6 +5,7 @@ class_name AICharacterActionProgressBarModule
 @export var hygiene_behavior_path: NodePath = NodePath("../AICharacterHygieneBehaviorModule")
 @export var sleep_behavior_path: NodePath = NodePath("../AICharacterSleepBehaviorModule")
 @export var craft_behavior_path: NodePath = NodePath("../AICharacterCraftBehaviorModule")
+@export var read_book_behavior_path: NodePath = NodePath("../AICharacterReadBookBehaviorModule")
 @export var bar_offset: Vector2 = Vector2(-42.0, -116.0)
 @export var bar_size: Vector2 = Vector2(84.0, 10.0)
 @export var background_color: Color = Color(0.02, 0.025, 0.035, 0.82)
@@ -17,6 +18,7 @@ var _hydrate_behavior: Node
 var _hygiene_behavior: Node
 var _sleep_behavior: Node
 var _craft_behavior: Node
+var _read_book_behavior: Node
 var _bar: ProgressBar
 var _bar_add_deferred := false
 
@@ -58,6 +60,8 @@ func _update_bar() -> void:
 func _get_active_progress_source() -> Node:
 	if _craft_behavior != null and _should_show_source(_craft_behavior):
 		return _craft_behavior
+	if _read_book_behavior != null and _should_show_source(_read_book_behavior):
+		return _read_book_behavior
 	if _hygiene_behavior != null and _should_show_source(_hygiene_behavior):
 		return _hygiene_behavior
 	if _hydrate_behavior != null and _should_show_source(_hydrate_behavior):
@@ -147,3 +151,5 @@ func _resolve_refs() -> void:
 		_sleep_behavior = get_node_or_null(sleep_behavior_path)
 	if _craft_behavior == null and not craft_behavior_path.is_empty():
 		_craft_behavior = get_node_or_null(craft_behavior_path)
+	if _read_book_behavior == null and not read_book_behavior_path.is_empty():
+		_read_book_behavior = get_node_or_null(read_book_behavior_path)

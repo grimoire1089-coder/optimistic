@@ -72,6 +72,8 @@ func _create_skill_row(row_data: Dictionary) -> void:
 	var max_level := int(row_data.get("max_level", 0))
 	var experience := int(row_data.get("experience", 0))
 	var next_exp := int(row_data.get("next_level_experience", 0))
+	var bonus_multiplier := float(row_data.get("experience_bonus_multiplier", 0.0))
+	var bonus_until_level := int(row_data.get("experience_bonus_until_level", 0))
 
 	var row := VBoxContainer.new()
 	row.name = String(skill_id)
@@ -109,6 +111,8 @@ func _create_skill_row(row_data: Dictionary) -> void:
 
 	var exp_label := Label.new()
 	exp_label.text = "EXP 完了" if next_exp <= 0 else "EXP %d / %d" % [experience, next_exp]
+	if bonus_multiplier > 0.0 and bonus_until_level > 0:
+		exp_label.text += "  +%d%% Lv%dまで" % [roundi(bonus_multiplier * 100.0), bonus_until_level]
 	exp_label.add_theme_color_override("font_color", Color(0.72, 0.88, 1.0, 0.92))
 	exp_label.add_theme_font_size_override("font_size", 12)
 	row.add_child(exp_label)

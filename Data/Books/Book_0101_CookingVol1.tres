@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="BookData" format=3]
+
+[ext_resource type="Script" path="res://Scripts/Books/BookData.gd" id="1_book_data"]
+[ext_resource type="Texture2D" path="res://Assets/Items/Icons/Tool/Lapis_001.png" id="2_lapis_icon"]
+
+[resource]
+script = ExtResource("1_book_data")
+book_id = &"book_skill_cooking_vol1"
+display_name = "料理の本 Vol.1（仮）"
+description = "料理の基礎を学べるスキル本。読破すると料理Lv10まで料理経験値に補正がかかります。"
+author_name = "デカダンス家庭料理研究会"
+body_text = "料理の本 Vol.1（仮）\n\n火加減、下ごしらえ、保存食の扱い、簡単な栄養設計までをまとめた入門書。\n\n読書を進めると料理スキル経験値を少しずつ獲得します。\n読破すると、料理スキルLv10まで料理経験値の獲得量に補正がかかります。"
+icon = ExtResource("2_lapis_icon")
+genre_id = &"skill"
+genre_display_name = "スキル"
+buy_price = 320
+page_count = 100
+skill_id = &"cooking"
+skill_experience_per_page = 1
+completion_bonus_skill_id = &"cooking"
+completion_bonus_until_level = 10
+completion_bonus_multiplier = 0.25

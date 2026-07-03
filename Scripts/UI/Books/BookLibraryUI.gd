@@ -10,6 +10,8 @@ const GENRES := [
 	{"id": &"log", "label": "ログ"},
 ]
 
+@export var reader_actor_path: NodePath = NodePath("../../Robin")
+
 @onready var title_label: Label = $MarginContainer/Rows/Header/TitleLabel
 @onready var close_button: Button = $MarginContainer/Rows/Header/CloseButton
 @onready var genre_tabs: HBoxContainer = $MarginContainer/Rows/GenreTabs
@@ -18,6 +20,7 @@ const GENRES := [
 @onready var empty_label: Label = $MarginContainer/Rows/Body/Reader/EmptyLabel
 @onready var book_title_label: Label = $MarginContainer/Rows/Body/Reader/BookTitleLabel
 @onready var book_meta_label: Label = $MarginContainer/Rows/Body/Reader/BookMetaLabel
+@onready var read_button: Button = $MarginContainer/Rows/Body/Reader/ReadButton
 @onready var reader_separator: HSeparator = $MarginContainer/Rows/Body/Reader/HSeparator
 @onready var reader_scroll: ScrollContainer = $MarginContainer/Rows/Body/Reader/ReaderScroll
 @onready var book_body_label: Label = $MarginContainer/Rows/Body/Reader/ReaderScroll/BookBodyLabel
@@ -32,6 +35,7 @@ func _ready() -> void:
 	visible = false
 	add_to_group(&"book_library_ui")
 	close_button.pressed.connect(close)
+	read_button.pressed.connect(_on_read_button_pressed)
 	_connect_library_signal()
 	_apply_bottom_right_layout()
 	call_deferred("_apply_bottom_right_layout")
@@ -129,10 +133,25 @@ func _show_book(book: BookData) -> void:
 		return
 	book_title_label.text = book.display_name
 	if book.author_name.is_empty():
-		book_meta_label.text = book.description
+		book_meta_label.text = _make_book_meta_text(book, book.description)
 	else:
-		book_meta_label.text = "%s / %s" % [book.author_name, book.description]
+		book_meta_label.text = _make_book_meta_text(book, "%s / %s" % [book.author_name, book.description])
 	book_body_label.text = book.body_text
+	_update_read_button(book)
+
+
+func _on_read_button_pressed() -> void:
+	var book := _get_selected_book()
+	if book == null or not book.is_skill_book():
+		return
+	if _is_book_completed(book):
+		return
+	var actor := get_node_or_null(reader_actor_path)
+	if actor == null or not actor.has_method("request_read_skill_book"):
+		push_warning("Reader actor not found: %s" % reader_actor_path)
+		return
+	if actor.call("request_read_skill_book", book) == true:
+		close()
 
 
 func _create_genre_tabs(owned_books: Array[BookData]) -> void:
@@ -206,6 +225,7 @@ func _show_empty_state(no_owned_books: bool) -> void:
 	empty_label.text = "購入済みの電子書籍はありません。" if no_owned_books else "このジャンルの電子書籍はありません。"
 	book_title_label.visible = false
 	book_meta_label.visible = false
+	read_button.visible = false
 	reader_separator.visible = false
 	reader_scroll.visible = false
 	book_title_label.text = ""
@@ -218,8 +238,49 @@ func _show_reader_state() -> void:
 	empty_label.visible = false
 	book_title_label.visible = true
 	book_meta_label.visible = true
+	read_button.visible = false
 	reader_separator.visible = true
 	reader_scroll.visible = true
+
+
+func _make_book_meta_text(book: BookData, base_text: String) -> String:
+	if book == null or not book.is_skill_book():
+		return base_text
+	var page_text := "%d/%dページ" % [_get_book_read_pages(book), maxi(book.page_count, 1)]
+	if base_text.is_empty():
+		return page_text
+	return "%s / %s" % [base_text, page_text]
+
+
+func _update_read_button(book: BookData) -> void:
+	if book == null or not book.is_skill_book():
+		read_button.visible = false
+		read_button.disabled = true
+		return
+	read_button.visible = true
+	var is_completed := _is_book_completed(book)
+	read_button.text = "読破済み" if is_completed else "読む"
+	read_button.disabled = is_completed
+
+
+func _get_selected_book() -> BookData:
+	if _selected_book_index < 0 or _selected_book_index >= _books.size():
+		return null
+	return _books[_selected_book_index]
+
+
+func _get_book_read_pages(book: BookData) -> int:
+	var library := _get_book_library()
+	if book == null or library == null or not library.has_method("get_read_pages"):
+		return 0
+	return maxi(int(library.call("get_read_pages", book.get_item_id())), 0)
+
+
+func _is_book_completed(book: BookData) -> bool:
+	var library := _get_book_library()
+	if book == null or library == null or not library.has_method("is_book_completed"):
+		return false
+	return library.call("is_book_completed", book.get_item_id()) == true
 
 
 func _get_genre_id_from_config(genre: Dictionary) -> StringName:

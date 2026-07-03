@@ -12,6 +12,7 @@ const INVALID_DEBUG_GRID_POSITION := Vector2i(-999999, -999999)
 @export var sleep_behavior_path: NodePath = NodePath("../AICharacterSleepBehaviorModule")
 @export var sit_behavior_path: NodePath = NodePath("../AICharacterSitBehaviorModule")
 @export var craft_behavior_path: NodePath = NodePath("../AICharacterCraftBehaviorModule")
+@export var read_book_behavior_path: NodePath = NodePath("../AICharacterReadBookBehaviorModule")
 @export var entrance_travel_behavior_path: NodePath = NodePath("../AICharacterEntranceTravelBehaviorModule")
 @export var normal_log_interval_seconds: float = 3.0
 @export var stuck_log_seconds: float = 1.0
@@ -31,6 +32,7 @@ var _hygiene_behavior: Node
 var _sleep_behavior: Node
 var _sit_behavior: Node
 var _craft_behavior: Node
+var _read_book_behavior: Node
 var _entrance_travel_behavior: Node
 
 var _last_action: StringName = &""
@@ -85,6 +87,9 @@ func _should_watch_movement_for_action(action: StringName) -> bool:
 		if _has_property(_craft_behavior, &"_is_crafting") and _craft_behavior.get("_is_crafting") == true:
 			return false
 	if action != &"sleeping":
+		if action == &"reading_book" and _read_book_behavior != null:
+			if _read_book_behavior.has_method("is_reading") and _read_book_behavior.call("is_reading") == true:
+				return false
 		if action == &"sitting" and _sit_behavior != null:
 			if _sit_behavior.has_method("is_using_lapis") and _sit_behavior.call("is_using_lapis") == true:
 				return false
@@ -283,6 +288,8 @@ func _get_action_id() -> StringName:
 		return &"hydrating"
 	if _hygiene_behavior != null and _hygiene_behavior.has_method("is_active") and _hygiene_behavior.call("is_active") == true:
 		return &"maintaining"
+	if _read_book_behavior != null and _read_book_behavior.has_method("is_active") and _read_book_behavior.call("is_active") == true:
+		return &"reading_book"
 	if _sit_behavior != null and _sit_behavior.has_method("is_active") and _sit_behavior.call("is_active") == true:
 		return &"sitting"
 	if _sleep_behavior != null and _sleep_behavior.has_method("is_active") and _sleep_behavior.call("is_active") == true:
@@ -294,6 +301,7 @@ func _get_active_behavior_flags() -> String:
 	var flags: PackedStringArray = []
 	flags.append("hydrate=%s" % _is_behavior_active(_hydrate_behavior))
 	flags.append("hygiene=%s" % _is_behavior_active(_hygiene_behavior))
+	flags.append("read=%s" % _is_behavior_active(_read_book_behavior))
 	flags.append("sit=%s" % _is_behavior_active(_sit_behavior))
 	flags.append("sleep=%s" % _is_behavior_active(_sleep_behavior))
 	flags.append("craft=%s" % _is_behavior_active(_craft_behavior))
@@ -320,6 +328,8 @@ func _get_target_text(action: StringName) -> String:
 	elif String(action) == "maintaining" or String(action) == "hygiene" or String(action) == "showering":
 		target = behavior.get("_target_shower")
 	elif String(action) == "sitting" or String(action) == "sit":
+		target = behavior.get("_target_stool")
+	elif String(action) == "reading_book" or String(action) == "reading":
 		target = behavior.get("_target_stool")
 	elif String(action) == "sleeping" or String(action) == "sleep":
 		target = behavior.get("_target_bedding")
@@ -351,6 +361,8 @@ func _get_behavior_for_action(action: StringName) -> Node:
 		return _hygiene_behavior
 	if action_text == "sitting" or action_text == "sit":
 		return _sit_behavior
+	if action_text == "reading_book" or action_text == "reading":
+		return _read_book_behavior
 	if action_text == "sleeping" or action_text == "sleep":
 		return _sleep_behavior
 	if action_text == "crafting" or action_text == "craft":
@@ -452,5 +464,7 @@ func _resolve_refs() -> void:
 		_sit_behavior = get_node_or_null(sit_behavior_path)
 	if _craft_behavior == null and not craft_behavior_path.is_empty():
 		_craft_behavior = get_node_or_null(craft_behavior_path)
+	if _read_book_behavior == null and not read_book_behavior_path.is_empty():
+		_read_book_behavior = get_node_or_null(read_book_behavior_path)
 	if _entrance_travel_behavior == null and not entrance_travel_behavior_path.is_empty():
 		_entrance_travel_behavior = get_node_or_null(entrance_travel_behavior_path)

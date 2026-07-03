@@ -35,6 +35,7 @@ const DEFAULT_CLICK_SFX_PATHS := [
 @onready var hydrate_behavior_module: AICharacterHydrateBehaviorModule = $AICharacterHydrateBehaviorModule
 @onready var hygiene_behavior_module: AICharacterHygieneBehaviorModule = $AICharacterHygieneBehaviorModule
 @onready var sit_behavior_module: AICharacterSitBehaviorModule = $AICharacterSitBehaviorModule
+@onready var read_book_behavior_module: AICharacterReadBookBehaviorModule = $AICharacterReadBookBehaviorModule
 @onready var craft_behavior_module: AICharacterCraftBehaviorModule = $AICharacterCraftBehaviorModule
 @onready var entrance_travel_behavior_module: AICharacterEntranceTravelBehaviorModule = $AICharacterEntranceTravelBehaviorModule
 @onready var action_progress_bar_module: AICharacterActionProgressBarModule = $AICharacterActionProgressBarModule
@@ -54,6 +55,7 @@ func _ready() -> void:
 	hydrate_behavior_module.setup(self)
 	hygiene_behavior_module.setup(self)
 	sit_behavior_module.setup(self)
+	read_book_behavior_module.setup(self)
 	craft_behavior_module.setup(self)	
 	entrance_travel_behavior_module.setup(self)
 	_connect_entrance_travel_signal()
@@ -86,6 +88,7 @@ func _physics_process(delta: float) -> void:
 		var entrance_travel_velocity := entrance_travel_behavior_module.get_velocity(delta)
 		if entrance_travel_behavior_module.is_active():
 			_cancel_sit_behavior()
+			_cancel_read_book_behavior()
 			velocity = entrance_travel_velocity
 			facing_direction = entrance_travel_behavior_module.get_facing_direction()
 			var is_offscreen_working: bool = false
@@ -102,6 +105,7 @@ func _physics_process(delta: float) -> void:
 		var craft_velocity := craft_behavior_module.get_velocity(delta)
 		if craft_behavior_module.is_active():
 			_cancel_sit_behavior()
+			_cancel_read_book_behavior()
 			velocity = craft_velocity
 			facing_direction = craft_behavior_module.get_facing_direction()
 			move_and_slide()
@@ -114,6 +118,7 @@ func _physics_process(delta: float) -> void:
 		var sleep_velocity := sleep_behavior_module.get_velocity(delta)
 		if sleep_behavior_module.is_active():
 			_cancel_sit_behavior()
+			_cancel_read_book_behavior()
 			velocity = sleep_velocity
 			facing_direction = sleep_behavior_module.get_facing_direction()
 			if _should_skip_sleep_move_and_slide():
@@ -129,6 +134,7 @@ func _physics_process(delta: float) -> void:
 		var hydrate_velocity := hydrate_behavior_module.get_velocity(delta)
 		if hydrate_behavior_module.is_active():
 			_cancel_sit_behavior()
+			_cancel_read_book_behavior()
 			velocity = hydrate_velocity
 			facing_direction = hydrate_behavior_module.get_facing_direction()
 			move_and_slide()
@@ -141,10 +147,23 @@ func _physics_process(delta: float) -> void:
 		var hygiene_velocity := hygiene_behavior_module.get_velocity(delta)
 		if hygiene_behavior_module.is_active():
 			_cancel_sit_behavior()
+			_cancel_read_book_behavior()
 			velocity = hygiene_velocity
 			facing_direction = hygiene_behavior_module.get_facing_direction()
 			move_and_slide()
 			if wander_module.clamp_body_to_movement_area(true):
+				velocity = Vector2.ZERO
+			walk_animator.update_animation(velocity, facing_direction, delta)
+			_update_grid_alignment_after_motion()
+			return
+	if read_book_behavior_module != null:
+		var read_velocity := read_book_behavior_module.get_velocity(delta)
+		if read_book_behavior_module.is_active():
+			_cancel_sit_behavior()
+			velocity = read_velocity
+			facing_direction = read_book_behavior_module.get_facing_direction()
+			move_and_slide()
+			if not read_book_behavior_module.is_reading() and wander_module.clamp_body_to_movement_area(true):
 				velocity = Vector2.ZERO
 			walk_animator.update_animation(velocity, facing_direction, delta)
 			_update_grid_alignment_after_motion()
@@ -206,6 +225,12 @@ func request_craft(recipe: CraftRecipeData, quantity: int) -> bool:
 	if craft_behavior_module == null:
 		return false
 	return craft_behavior_module.request_craft(recipe, quantity)
+
+
+func request_read_skill_book(book: BookData) -> bool:
+	if read_book_behavior_module == null:
+		return false
+	return read_book_behavior_module.request_read_book(book)
 
 
 func get_movement_area() -> Rect2:
@@ -274,6 +299,10 @@ func get_current_action_display_text() -> String:
 		return "水分補給中"
 	if hygiene_behavior_module != null and hygiene_behavior_module.is_active():
 		return "シャワー中"
+	if read_book_behavior_module != null and read_book_behavior_module.is_active():
+		if read_book_behavior_module.is_reading():
+			return "読書中"
+		return "移動中"
 	if sit_behavior_module != null and sit_behavior_module.is_active():
 		if sit_behavior_module.is_using_lapis():
 			return "ラピス操作中"
@@ -299,6 +328,8 @@ func get_current_need_action_id() -> StringName:
 		return &"hydrating"
 	if hygiene_behavior_module != null and hygiene_behavior_module.is_active():
 		return &"maintaining"
+	if read_book_behavior_module != null and read_book_behavior_module.is_active():
+		return &"reading_book"
 	if sit_behavior_module != null and sit_behavior_module.is_active():
 		return &"sitting"
 	if is_sleeping():
@@ -330,6 +361,7 @@ func debug_reset_all_actions() -> bool:
 	reset_any = _debug_reset_behavior(sleep_behavior_module) or reset_any
 	reset_any = _debug_reset_behavior(hydrate_behavior_module) or reset_any
 	reset_any = _debug_reset_behavior(hygiene_behavior_module) or reset_any
+	reset_any = _debug_reset_behavior(read_book_behavior_module) or reset_any
 	reset_any = _debug_reset_behavior(sit_behavior_module) or reset_any
 	velocity = Vector2.ZERO
 	return reset_any
@@ -472,6 +504,14 @@ func _cancel_sit_behavior() -> void:
 	sit_behavior_module.cancel_sitting()
 
 
+func _cancel_read_book_behavior() -> void:
+	if read_book_behavior_module == null:
+		return
+	if not read_book_behavior_module.is_active():
+		return
+	read_book_behavior_module.cancel_reading()
+
+
 func _is_busy_for_entrance_travel() -> bool:
 	if entrance_travel_behavior_module != null and entrance_travel_behavior_module.is_active():
 		return true
@@ -482,6 +522,8 @@ func _is_busy_for_entrance_travel() -> bool:
 	if hydrate_behavior_module != null and hydrate_behavior_module.is_active():
 		return true
 	if hygiene_behavior_module != null and hygiene_behavior_module.is_active():
+		return true
+	if read_book_behavior_module != null and read_book_behavior_module.is_active():
 		return true
 	return false
 

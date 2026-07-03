@@ -11,6 +11,12 @@ class_name BookData
 @export var genre_id: StringName = &"guide"
 @export var genre_display_name: String = "ガイド"
 @export_range(0, 999999, 1) var buy_price: int = 0
+@export_range(1, 9999, 1) var page_count: int = 1
+@export var skill_id: StringName = &""
+@export_range(0, 999999, 1) var skill_experience_per_page: int = 0
+@export var completion_bonus_skill_id: StringName = &""
+@export_range(1, 100, 1) var completion_bonus_until_level: int = 1
+@export_range(0.0, 10.0, 0.01) var completion_bonus_multiplier: float = 0.0
 
 
 func get_item_id() -> StringName:
@@ -31,3 +37,7 @@ func get_icon_path() -> String:
 	if icon == null:
 		return ""
 	return icon.resource_path
+
+
+func is_skill_book() -> bool:
+	return skill_id != &"" and page_count > 0 and skill_experience_per_page > 0

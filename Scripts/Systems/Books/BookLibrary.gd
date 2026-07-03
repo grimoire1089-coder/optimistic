@@ -3,15 +3,20 @@ extends Node
 signal library_changed
 
 const SAVE_KEY := "owned_book_ids"
+const READ_PAGES_SAVE_KEY := "book_read_pages"
+const COMPLETED_BOOK_IDS_SAVE_KEY := "completed_book_ids"
 
 @export var book_resource_paths: PackedStringArray = PackedStringArray([
 	"res://Data/Books/Book_0001_LapisPrimer.tres",
 	"res://Data/Books/Book_0002_DecadanceLivingGuide.tres",
+	"res://Data/Books/Book_0101_CookingVol1.tres",
 ])
 
 var _known_books: Dictionary = {}
 var _known_book_ids_by_path: Dictionary = {}
 var _owned_book_ids: Dictionary = {}
+var _book_read_pages: Dictionary = {}
+var _completed_book_ids: Dictionary = {}
 
 
 func _ready() -> void:
@@ -82,24 +87,111 @@ func get_book_count() -> int:
 	return _owned_book_ids.size()
 
 
+func get_read_pages(book_or_id: Variant) -> int:
+	var book_id := _get_book_id_from_variant(book_or_id)
+	if book_id == &"":
+		return 0
+	return maxi(int(_book_read_pages.get(book_id, 0)), 0)
+
+
+func add_read_pages(book: BookData, page_delta: int) -> int:
+	if book == null or page_delta <= 0:
+		return 0
+	register_book(book)
+	var book_id := book.get_item_id()
+	if book_id == &"":
+		return 0
+	var max_pages := maxi(book.page_count, 1)
+	var next_pages := clampi(get_read_pages(book_id) + page_delta, 0, max_pages)
+	_book_read_pages[book_id] = next_pages
+	if next_pages >= max_pages:
+		_completed_book_ids[book_id] = true
+	library_changed.emit()
+	return next_pages
+
+
+func set_read_pages(book: BookData, pages: int) -> int:
+	if book == null:
+		return 0
+	register_book(book)
+	var book_id := book.get_item_id()
+	if book_id == &"":
+		return 0
+	var max_pages := maxi(book.page_count, 1)
+	var next_pages := clampi(pages, 0, max_pages)
+	_book_read_pages[book_id] = next_pages
+	if next_pages >= max_pages:
+		_completed_book_ids[book_id] = true
+	elif _completed_book_ids.has(book_id):
+		_completed_book_ids.erase(book_id)
+	library_changed.emit()
+	return next_pages
+
+
+func is_book_completed(book_or_id: Variant) -> bool:
+	var book_id := _get_book_id_from_variant(book_or_id)
+	if book_id == &"":
+		return false
+	return _completed_book_ids.has(book_id)
+
+
+func mark_book_completed(book: BookData) -> void:
+	if book == null:
+		return
+	register_book(book)
+	var book_id := book.get_item_id()
+	if book_id == &"":
+		return
+	_book_read_pages[book_id] = maxi(book.page_count, 1)
+	_completed_book_ids[book_id] = true
+	library_changed.emit()
+
+
 func to_save_data() -> Dictionary:
 	var ids: Array[String] = []
 	for raw_id in _owned_book_ids.keys():
 		ids.append(String(raw_id))
 	ids.sort()
+
+	var read_pages := {}
+	for raw_id in _book_read_pages.keys():
+		read_pages[String(raw_id)] = maxi(int(_book_read_pages[raw_id]), 0)
+
+	var completed_ids: Array[String] = []
+	for raw_id in _completed_book_ids.keys():
+		completed_ids.append(String(raw_id))
+	completed_ids.sort()
+
 	return {
 		SAVE_KEY: ids,
+		READ_PAGES_SAVE_KEY: read_pages,
+		COMPLETED_BOOK_IDS_SAVE_KEY: completed_ids,
 	}
 
 
 func apply_save_data(data: Dictionary) -> void:
 	_owned_book_ids.clear()
+	_book_read_pages.clear()
+	_completed_book_ids.clear()
 	if data.has(SAVE_KEY):
 		var ids = data[SAVE_KEY]
 		for raw_id in ids:
 			var book_id := StringName(String(raw_id))
 			if book_id != &"":
 				_owned_book_ids[book_id] = true
+	if data.has(READ_PAGES_SAVE_KEY):
+		var read_pages = data[READ_PAGES_SAVE_KEY]
+		if read_pages is Dictionary:
+			for raw_id in read_pages.keys():
+				var book_id := StringName(String(raw_id))
+				if book_id != &"":
+					_book_read_pages[book_id] = maxi(int(read_pages[raw_id]), 0)
+	if data.has(COMPLETED_BOOK_IDS_SAVE_KEY):
+		var completed_ids = data[COMPLETED_BOOK_IDS_SAVE_KEY]
+		for raw_id in completed_ids:
+			var book_id := StringName(String(raw_id))
+			if book_id != &"":
+				_completed_book_ids[book_id] = true
 	_load_known_books()
 	library_changed.emit()
 
@@ -120,3 +212,11 @@ func _load_book_from_path(path: String) -> BookData:
 	var book := load(path) as BookData
 	register_book(book)
 	return book
+
+
+func _get_book_id_from_variant(value: Variant) -> StringName:
+	if value is BookData:
+		return (value as BookData).get_item_id()
+	if value is StringName:
+		return value
+	return StringName(String(value))
