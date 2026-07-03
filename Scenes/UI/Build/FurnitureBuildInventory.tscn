@@ -21,16 +21,16 @@ shadow_color = Color(0.08, 0.62, 0.95, 0.24)
 shadow_size = 10
 
 [node name="FurnitureBuildInventory" type="PanelContainer"]
-custom_minimum_size = Vector2(320, 468)
+custom_minimum_size = Vector2(356, 468)
 anchors_preset = 3
 anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -392.0
-offset_top = -580.0
+offset_left = -380.0
+offset_top = -560.0
 offset_right = -24.0
-offset_bottom = -112.0
+offset_bottom = -92.0
 grow_horizontal = 0
 grow_vertical = 0
 theme_override_styles/panel = SubResource("StyleBoxFlat_build_inventory_panel")
@@ -71,17 +71,17 @@ layout_mode = 2
 theme_override_constants/separation = 6
 
 [node name="PlaceModeButton" type="Button" parent="MarginContainer/Rows/ModeButtons"]
-custom_minimum_size = Vector2(88, 36)
+custom_minimum_size = Vector2(102, 36)
 layout_mode = 2
 text = "配置"
 
 [node name="MoveModeButton" type="Button" parent="MarginContainer/Rows/ModeButtons"]
-custom_minimum_size = Vector2(88, 36)
+custom_minimum_size = Vector2(102, 36)
 layout_mode = 2
 text = "移動"
 
 [node name="StoreModeButton" type="Button" parent="MarginContainer/Rows/ModeButtons"]
-custom_minimum_size = Vector2(88, 36)
+custom_minimum_size = Vector2(102, 36)
 layout_mode = 2
 text = "しまう"
 
@@ -130,37 +130,37 @@ layout_mode = 2
 theme_override_constants/separation = 6
 
 [node name="SimpleMattressButton" type="Button" parent="MarginContainer/Rows/ItemList"]
-custom_minimum_size = Vector2(280, 52)
+custom_minimum_size = Vector2(316, 52)
 layout_mode = 2
 text = "シンプルマットレス\n2 x 4 / Rで回転"
 
 [node name="KitchenModuleButton" type="Button" parent="MarginContainer/Rows/ItemList"]
-custom_minimum_size = Vector2(280, 52)
+custom_minimum_size = Vector2(316, 52)
 layout_mode = 2
 text = "キッチンモジュール\n4 x 2 / Rで回転"
 
 [node name="ShowerButton" type="Button" parent="MarginContainer/Rows/ItemList"]
-custom_minimum_size = Vector2(280, 52)
+custom_minimum_size = Vector2(316, 52)
 layout_mode = 2
 text = "シャワー\n2 x 4 / Rで回転"
 
 [node name="StoolButton" type="Button" parent="MarginContainer/Rows/ItemList"]
-custom_minimum_size = Vector2(280, 52)
+custom_minimum_size = Vector2(316, 52)
 layout_mode = 2
 text = "スツール\n2 x 2 / Rで回転"
 
 [node name="FloorPlaceButton" type="Button" parent="MarginContainer/Rows/ItemList"]
-custom_minimum_size = Vector2(280, 52)
+custom_minimum_size = Vector2(316, 52)
 layout_mode = 2
 text = "角丸フロアパネル\nFloor_001 / 15 x 15"
 
 [node name="Floor002PlaceButton" type="Button" parent="MarginContainer/Rows/ItemList"]
-custom_minimum_size = Vector2(280, 52)
+custom_minimum_size = Vector2(316, 52)
 layout_mode = 2
 text = "金属フロアパネル\nFloor_002 / 15 x 15"
 
 [node name="FloorStoreButton" type="Button" parent="MarginContainer/Rows/ItemList"]
-custom_minimum_size = Vector2(280, 52)
+custom_minimum_size = Vector2(316, 52)
 layout_mode = 2
 text = "床をしまう"
 

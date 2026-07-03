@@ -52,6 +52,7 @@ var _floor_sleep_mood_entry: CharacterMoodEntryData
 var _is_active := false
 var _is_sleeping := false
 var _is_floor_sleeping := false
+var _sleep_start_energy_ratio := 0.0
 var _sleep_need_was_disabled_by_sleep := false
 var _facing_direction := Vector2.DOWN
 var _last_walk_position := Vector2(INF, INF)
@@ -85,12 +86,16 @@ func is_floor_sleeping() -> bool:
 
 
 func is_action_progress_visible() -> bool:
-	return _is_active
+	return _is_sleeping
 
 
 func get_action_progress_ratio() -> float:
-	var safe_wake_ratio := maxf(wake_ratio, 0.01)
-	return clampf(_get_energy_ratio() / safe_wake_ratio, 0.0, 1.0)
+	if not _is_sleeping:
+		return 0.0
+	var target_ratio := maxf(wake_ratio, 0.01)
+	var start_ratio := clampf(_sleep_start_energy_ratio, 0.0, target_ratio)
+	var progress_span := maxf(target_ratio - start_ratio, 0.01)
+	return clampf((_get_energy_ratio() - start_ratio) / progress_span, 0.0, 1.0)
 
 
 func get_facing_direction() -> Vector2:
@@ -246,6 +251,7 @@ func _start_sleeping(floor_sleeping: bool) -> void:
 	_is_active = true
 	_is_sleeping = true
 	_is_floor_sleeping = floor_sleeping
+	_sleep_start_energy_ratio = _get_energy_ratio()
 	_clear_bedding_target()
 	_facing_direction = Vector2.DOWN
 	_reset_stuck_watch()
@@ -332,6 +338,7 @@ func _stop_sleeping() -> void:
 	_is_active = false
 	_is_sleeping = false
 	_is_floor_sleeping = false
+	_sleep_start_energy_ratio = 0.0
 	_clear_bedding_target()
 	_reset_stuck_watch()
 

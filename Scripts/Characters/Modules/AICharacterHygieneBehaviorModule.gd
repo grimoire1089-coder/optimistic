@@ -2,7 +2,6 @@ extends Node
 class_name AICharacterHygieneBehaviorModule
 
 const INVALID_GRID_POSITION := Vector2i(-999999, -999999)
-const MOVEMENT_PROGRESS_PORTION := 0.35
 
 @export var needs_module_path: NodePath = NodePath("../AICharacterNeedsBundle/CharacterNeedsModule")
 @export var need_planner_path: NodePath = NodePath("../AICharacterNeedsBundle/NeedDrivenAIPlanner")
@@ -59,7 +58,7 @@ func is_showering() -> bool:
 
 
 func is_action_progress_visible() -> bool:
-	return _is_active or _is_showering
+	return _is_showering
 
 
 func get_action_progress_ratio() -> float:
@@ -130,7 +129,7 @@ func get_velocity(delta: float) -> Vector2:
 	var target_cell: Vector2i = _target_cell
 	if not _is_valid_grid_position(target_cell):
 		if _is_close_enough_to_shower(_target_shower):
-			_begin_showering(MOVEMENT_PROGRESS_PORTION)
+			_begin_showering(0.0)
 			return Vector2.ZERO
 		_finish_hygiene_action()
 		return Vector2.ZERO
@@ -142,7 +141,7 @@ func get_velocity(delta: float) -> Vector2:
 	_sync_movement_progress_target(target_distance)
 
 	if target_distance <= shower_use_distance or _is_close_enough_to_shower(_target_shower):
-		_begin_showering(MOVEMENT_PROGRESS_PORTION)
+		_begin_showering(0.0)
 		return Vector2.ZERO
 
 	var path_velocity: Vector2 = _get_grid_path_velocity_to_target(target_cell, target_distance)
@@ -155,7 +154,7 @@ func get_velocity(delta: float) -> Vector2:
 	can_shower_after_path_failure = can_shower_after_path_failure or _is_close_enough_to_shower(_target_shower)
 	can_shower_after_path_failure = can_shower_after_path_failure or _is_near_shower_target_cell(target_cell)
 	if can_shower_after_path_failure:
-		_begin_showering(MOVEMENT_PROGRESS_PORTION)
+		_begin_showering(0.0)
 		return Vector2.ZERO
 
 	_finish_hygiene_action()
@@ -220,11 +219,8 @@ func _sync_movement_progress_target(target_distance: float) -> void:
 		_path_cells.clear()
 
 
-func _update_movement_progress(target_distance: float) -> void:
-	var move_span := maxf(_move_start_distance - shower_use_distance, 1.0)
-	var remaining := maxf(target_distance - shower_use_distance, 0.0)
-	var move_ratio := clampf(1.0 - (remaining / move_span), 0.0, 1.0)
-	_action_progress_ratio = move_ratio * MOVEMENT_PROGRESS_PORTION
+func _update_movement_progress(_target_distance: float) -> void:
+	_action_progress_ratio = 0.0
 
 
 func _ensure_hygiene_target() -> bool:

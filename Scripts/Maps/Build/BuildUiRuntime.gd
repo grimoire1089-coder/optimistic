@@ -5,8 +5,8 @@ const PANEL_PATH := "res://Scenes/UI/Build/FurnitureBuildInventory.tscn"
 const PLACEMENT_PREVIEW_SCRIPT_PATH := "res://Scripts/Maps/Build/BuildFurniturePlacementPreview.gd"
 const FLOOR_PLACEMENT_MODULE_SCRIPT_PATH := "res://Scripts/Maps/Floor/FloorPlacementModule.gd"
 const DEFAULT_FLOOR_TEXTURE_PATH := "res://Assets/Maps/Furniture/Floor/Floor_001.png"
-const PANEL_TOP_RIGHT_OFFSET := Vector2(-344.0, -492.0)
-const PANEL_SIZE := Vector2(320.0, 468.0)
+const PANEL_BOTTOM_RIGHT_MARGIN := Vector2(24.0, 92.0)
+const PANEL_SIZE := Vector2(356.0, 468.0)
 
 
 static func setup(button: Button, room_ok: bool) -> BuildModeController:
@@ -120,9 +120,10 @@ static func _place_panel_bottom_right(panel: Control) -> void:
 	panel.anchor_top = 1.0
 	panel.anchor_right = 1.0
 	panel.anchor_bottom = 1.0
-	panel.offset_left = PANEL_TOP_RIGHT_OFFSET.x
-	panel.offset_top = PANEL_TOP_RIGHT_OFFSET.y
-	panel.offset_right = PANEL_TOP_RIGHT_OFFSET.x + PANEL_SIZE.x
-	panel.offset_bottom = PANEL_TOP_RIGHT_OFFSET.y + PANEL_SIZE.y
+	panel.custom_minimum_size = PANEL_SIZE
+	panel.offset_left = -PANEL_BOTTOM_RIGHT_MARGIN.x - PANEL_SIZE.x
+	panel.offset_top = -PANEL_BOTTOM_RIGHT_MARGIN.y - PANEL_SIZE.y
+	panel.offset_right = -PANEL_BOTTOM_RIGHT_MARGIN.x
+	panel.offset_bottom = -PANEL_BOTTOM_RIGHT_MARGIN.y
 	panel.grow_horizontal = Control.GROW_DIRECTION_BEGIN
 	panel.grow_vertical = Control.GROW_DIRECTION_BEGIN

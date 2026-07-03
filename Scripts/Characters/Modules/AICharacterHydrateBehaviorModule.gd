@@ -2,7 +2,6 @@ extends Node
 class_name AICharacterHydrateBehaviorModule
 
 const INVALID_GRID_POSITION := Vector2i(-999999, -999999)
-const MOVEMENT_PROGRESS_PORTION := 0.35
 
 @export var needs_module_path: NodePath = NodePath("../AICharacterNeedsBundle/CharacterNeedsModule")
 @export var need_planner_path: NodePath = NodePath("../AICharacterNeedsBundle/NeedDrivenAIPlanner")
@@ -69,7 +68,7 @@ func is_drinking() -> bool:
 
 
 func is_action_progress_visible() -> bool:
-	return _is_active or _is_drinking
+	return _is_drinking
 
 
 func get_action_progress_ratio() -> float:
@@ -219,7 +218,7 @@ func _begin_existing_water_bottle_drink() -> bool:
 func _begin_created_water_bottle_drink() -> void:
 	var created_food_data := _create_water_bottle_for_drinking()
 	if created_food_data != null:
-		_begin_drinking(created_food_data, MOVEMENT_PROGRESS_PORTION)
+		_begin_drinking(created_food_data, 0.0)
 	else:
 		_finish_hydrate_action()
 
@@ -363,11 +362,8 @@ func _sync_movement_progress_target(target_distance: float) -> void:
 		_path_cells.clear()
 
 
-func _update_movement_progress(target_distance: float) -> void:
-	var move_span := maxf(_move_start_distance - refill_distance, 1.0)
-	var remaining := maxf(target_distance - refill_distance, 0.0)
-	var move_ratio := clampf(1.0 - (remaining / move_span), 0.0, 1.0)
-	_action_progress_ratio = move_ratio * MOVEMENT_PROGRESS_PORTION
+func _update_movement_progress(_target_distance: float) -> void:
+	_action_progress_ratio = 0.0
 
 
 func _get_water_bottle_item() -> FoodItemData:

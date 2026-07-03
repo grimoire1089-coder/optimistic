@@ -5,7 +5,6 @@ signal craft_started(recipe: CraftRecipeData, quantity: int)
 signal craft_completed(recipe: CraftRecipeData, quantity: int)
 
 const INVALID_GRID_POSITION := Vector2i(-999999, -999999)
-const MOVE_PROGRESS_PORTION := 0.35
 const COOKING_CATEGORY_ID: StringName = &"cooking"
 
 @export var inventory_module_path: NodePath = NodePath("../RobinInventoryModule")
@@ -95,7 +94,7 @@ func is_active() -> bool:
 
 
 func is_action_progress_visible() -> bool:
-	return _is_active
+	return _is_crafting
 
 
 func get_action_progress_ratio() -> float:
@@ -133,7 +132,7 @@ func _update_moving(delta: float) -> Vector2:
 	var to_target := target_position - _body.global_position
 	var distance := to_target.length()
 	_update_stuck(distance, delta)
-	_action_progress_ratio = MOVE_PROGRESS_PORTION * clampf(1.0 - distance / 240.0, 0.0, 1.0)
+	_action_progress_ratio = 0.0
 	if distance <= use_distance:
 		_begin_crafting()
 		return Vector2.ZERO
@@ -155,7 +154,7 @@ func _begin_crafting() -> void:
 	_is_crafting = true
 	_path_cells.clear()
 	_craft_timer = 0.0
-	_action_progress_ratio = MOVE_PROGRESS_PORTION
+	_action_progress_ratio = 0.0
 	_craft_duration_seconds = _get_craft_duration_seconds()
 	if _target_furniture != null:
 		var to_furniture := _target_furniture.global_position - _body.global_position
@@ -181,7 +180,7 @@ func _update_crafting(delta: float) -> void:
 	var duration := maxf(_craft_duration_seconds, 0.1)
 	_craft_timer = minf(_craft_timer + maxf(delta, 0.0), duration)
 	var local_ratio := clampf(_craft_timer / duration, 0.0, 1.0)
-	_action_progress_ratio = lerpf(MOVE_PROGRESS_PORTION, 1.0, local_ratio)
+	_action_progress_ratio = local_ratio
 	if _craft_timer >= duration:
 		_complete_crafting()
 
