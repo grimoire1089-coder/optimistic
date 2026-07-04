@@ -2,6 +2,7 @@ extends Button
 class_name InventoryButton
 
 const DEFAULT_CLICK_SFX_PATH := "res://Assets/Audio/SFX/UI/UI_Click_001.ogg"
+const INVENTORY_BUTTON_GROUP: StringName = &"inventory_button"
 
 @export var inventory_ui_path: NodePath = NodePath("../InventoryUI")
 @export var fallback_group_name: StringName = &"inventory_ui"
@@ -10,6 +11,8 @@ const DEFAULT_CLICK_SFX_PATH := "res://Assets/Audio/SFX/UI/UI_Click_001.ogg"
 
 
 func _ready() -> void:
+	if not is_in_group(INVENTORY_BUTTON_GROUP):
+		add_to_group(INVENTORY_BUTTON_GROUP)
 	_apply_square_button_layout()
 	_load_default_click_sfx_if_needed()
 	pressed.connect(_on_pressed)
