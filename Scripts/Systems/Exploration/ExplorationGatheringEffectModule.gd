@@ -5,7 +5,7 @@ const INVENTORY_BUTTON_GROUP: StringName = &"inventory_button"
 
 @export var effect_canvas_layer: int = 128
 @export var icon_size: float = 48.0
-@export var foot_anchor_extra_offset: Vector2 = Vector2(-8.0, 132.0)
+@export var foot_anchor_extra_offset: Vector2 = Vector2(-56.0, 86.0)
 @export var sprout_duration: float = 4.00
 @export var bounce_expand_duration: float = 0.34
 @export var bounce_settle_duration: float = 0.76
