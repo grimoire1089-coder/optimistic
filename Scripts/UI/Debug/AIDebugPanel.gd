@@ -5,6 +5,8 @@ const PANEL_SIZE := Vector2(356.0, 392.0)
 const PANEL_MARGIN := Vector2(24.0, 76.0)
 const TOGGLE_SIZE := Vector2(64.0, 44.0)
 const TOGGLE_MARGIN := Vector2(24.0, 24.0)
+const FPS_LABEL_SIZE := Vector2(86.0, 32.0)
+const FPS_LABEL_MARGIN := Vector2(96.0, 30.0)
 
 @export var show_only_in_debug_build: bool = true
 @export var actor_path: NodePath = NodePath("../../Robin")
@@ -15,6 +17,8 @@ var _actor: RobinWanderActor
 var _needs_module: CharacterNeedsModule
 var _modal_guard: Control
 var _toggle_button: Button
+var _fps_panel: PanelContainer
+var _fps_label: Label
 var _panel: PanelContainer
 var _status_label: Label
 var _needs_rows: Dictionary = {}
@@ -41,6 +45,7 @@ func _ready() -> void:
 	_resolve_refs()
 	_build_modal_guard()
 	_build_toggle_button()
+	_build_fps_display()
 	_build_panel()
 	call_deferred("_bring_debug_ui_to_front")
 	_refresh_panel()
@@ -90,6 +95,36 @@ func _build_toggle_button() -> void:
 	_apply_button_style(_toggle_button, Color(0.02, 0.025, 0.035, 0.94), Color(0.95, 0.55, 1.0, 0.95), Color(1.0, 0.78, 1.0, 1.0))
 	_toggle_button.pressed.connect(_on_toggle_pressed)
 	add_child(_toggle_button)
+
+
+func _build_fps_display() -> void:
+	_fps_panel = PanelContainer.new()
+	_fps_panel.name = "GameFpsDisplay"
+	_fps_panel.z_index = 3
+	_fps_panel.custom_minimum_size = FPS_LABEL_SIZE
+	_fps_panel.size = FPS_LABEL_SIZE
+	_fps_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_place_bottom_right_control(_fps_panel, FPS_LABEL_MARGIN, FPS_LABEL_SIZE)
+	_apply_fps_panel_style(_fps_panel)
+	add_child(_fps_panel)
+
+	var margin := MarginContainer.new()
+	margin.name = "MarginContainer"
+	margin.add_theme_constant_override("margin_left", 8)
+	margin.add_theme_constant_override("margin_top", 4)
+	margin.add_theme_constant_override("margin_right", 8)
+	margin.add_theme_constant_override("margin_bottom", 4)
+	_fps_panel.add_child(margin)
+
+	_fps_label = Label.new()
+	_fps_label.name = "FpsLabel"
+	_fps_label.text = "FPS --"
+	_fps_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_fps_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_fps_label.add_theme_color_override("font_color", Color(0.76, 1.0, 0.78, 1.0))
+	_fps_label.add_theme_font_size_override("font_size", 12)
+	margin.add_child(_fps_label)
+	_refresh_fps_label()
 
 
 func _build_panel() -> void:
@@ -268,6 +303,8 @@ func _bring_debug_ui_to_front() -> void:
 		_modal_guard.move_to_front()
 	if _panel != null:
 		_panel.move_to_front()
+	if _fps_panel != null:
+		_fps_panel.move_to_front()
 	if _toggle_button != null:
 		_toggle_button.move_to_front()
 
@@ -314,6 +351,8 @@ func _on_snap_grid_pressed() -> void:
 
 
 func _refresh_panel() -> void:
+	_refresh_fps_label()
+
 	if _status_label != null:
 		_status_label.text = _make_status_text()
 
@@ -329,6 +368,12 @@ func _refresh_panel() -> void:
 		if label == null:
 			continue
 		label.text = "%.1f / %.0f" % [need.value, need.definition.max_value]
+
+
+func _refresh_fps_label() -> void:
+	if _fps_label == null:
+		return
+	_fps_label.text = "FPS %d" % int(Engine.get_frames_per_second())
 
 
 func _make_status_text() -> String:
@@ -365,6 +410,18 @@ func _place_bottom_right_control(control: Control, margin: Vector2, control_size
 	control.offset_top = -margin.y - control_size.y
 	control.offset_right = -margin.x
 	control.offset_bottom = -margin.y
+
+
+func _apply_fps_panel_style(panel: PanelContainer) -> void:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.012, 0.02, 0.018, 0.88)
+	style.border_color = Color(0.38, 1.0, 0.48, 0.72)
+	style.set_border_width_all(1)
+	style.set_corner_radius_all(9)
+	style.shadow_color = Color(0.18, 1.0, 0.32, 0.2)
+	style.shadow_size = 8
+	style.shadow_offset = Vector2.ZERO
+	panel.add_theme_stylebox_override("panel", style)
 
 
 func _apply_panel_style(panel: PanelContainer) -> void:
