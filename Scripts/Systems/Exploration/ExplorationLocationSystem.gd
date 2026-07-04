@@ -537,10 +537,10 @@ func _get_worker_display_name() -> String:
 	if worker == null:
 		return "ロビン"
 	var value: Variant = worker.get("display_name")
-	var name: String = String(value)
-	if name.is_empty():
+	var worker_name: String = String(value)
+	if worker_name.is_empty():
 		return "ロビン"
-	return name
+	return worker_name
 
 
 func _get_worker() -> Node:
