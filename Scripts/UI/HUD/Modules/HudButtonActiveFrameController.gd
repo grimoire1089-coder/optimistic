@@ -39,6 +39,7 @@ const BUTTON_TO_UI := {
 	"ShopButton": "ShopMenu",
 	"BookButton": "BookLibraryUI",
 	"InventoryButton": "InventoryUI",
+	"MoveButton": "MoveMenu",
 	"WorkCreditButton": "WorkMenu",
 	"CraftButton": "CraftMenu",
 	"SettingsButton": "GameOptionsOverlay",
