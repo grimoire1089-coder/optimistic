@@ -16,9 +16,26 @@ func _process(_delta: float) -> void:
 	_refresh_current_shop_detail()
 
 
+func _setup_item_popup() -> void:
+	pass
+
+
+func _show_item_popup(_entry: ShopItemData, _anchor: Control) -> void:
+	pass
+
+
+func _hide_item_popup() -> void:
+	pass
+
+
 func _show_shop_list() -> void:
 	super._show_shop_list()
 	_clear_duplicated_shop_list_detail()
+
+
+func _refresh_item_grid(shop: ShopData) -> void:
+	super._refresh_item_grid(shop)
+	_apply_purchase_guide_to_detail_label()
 
 
 func _create_shop_button(shop: ShopData, index: int) -> Button:
@@ -97,10 +114,8 @@ func _create_item_card(entry: ShopItemData, credits: int) -> Control:
 	card_panel.custom_minimum_size = Vector2(0, 132)
 	card_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	card_panel.mouse_filter = Control.MOUSE_FILTER_STOP
-	card_panel.tooltip_text = entry.get_description()
+	card_panel.tooltip_text = ""
 	card_panel.add_theme_stylebox_override("panel", _create_item_card_style())
-	card_panel.mouse_entered.connect(Callable(self, "_show_item_popup").bind(entry, card_panel))
-	card_panel.mouse_exited.connect(_hide_item_popup)
 
 	var card := HBoxContainer.new()
 	card.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -187,22 +202,28 @@ func _create_item_card(entry: ShopItemData, credits: int) -> Control:
 	buy_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	buy_button.focus_mode = Control.FOCUS_NONE
 	buy_button.text = "%d個購入" % purchase_amount
-	buy_button.tooltip_text = "現在の購入数: %d個 / Shift 10倍 / Ctrl 100倍" % purchase_amount
+	buy_button.tooltip_text = ""
 	buy_button.disabled = not entry.is_available or total_price > credits
 	if is_book:
 		buy_button.text = "購入済み" if is_owned_book else "購入"
-		buy_button.tooltip_text = "購入後、書籍UIから閲覧できます。"
 		buy_button.disabled = not entry.is_available or is_owned_book or total_price > credits
 	buy_button.add_theme_stylebox_override("normal", _create_purchase_button_style())
 	buy_button.add_theme_stylebox_override("hover", _create_purchase_button_style())
 	buy_button.add_theme_stylebox_override("pressed", _create_purchase_button_style())
 	buy_button.add_theme_stylebox_override("focus", _create_purchase_button_style())
 	buy_button.pressed.connect(Callable(self, "_on_buy_pressed").bind(entry))
-	buy_button.mouse_entered.connect(Callable(self, "_show_item_popup").bind(entry, card_panel))
-	buy_button.mouse_exited.connect(_hide_item_popup)
 	action_column.add_child(buy_button)
 
 	return card_panel
+
+
+func _apply_purchase_guide_to_detail_label() -> void:
+	if detail_label == null:
+		return
+	var text := detail_label.text.strip_edges()
+	if not text.begins_with("所持クレジット:"):
+		return
+	detail_label.text = "%s　購入数: 通常 / Shift 10倍 / Ctrl 100倍" % text
 
 
 func _clear_duplicated_shop_list_detail() -> void:
