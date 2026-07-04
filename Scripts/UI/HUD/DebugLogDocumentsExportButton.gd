@@ -6,7 +6,7 @@ const EXPORT_FILE_PREFIX := "debug_log"
 
 @export var message_log_path: NodePath = NodePath("../../../..")
 @export var tab_bar_path: NodePath = NodePath("../../LogTabBar")
-@export var debug_tab_index: int = 1
+@export var debug_tab_index: int = 3
 @export var disabled_when_empty: bool = true
 
 var _message_log: Node

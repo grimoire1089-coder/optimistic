@@ -8,7 +8,7 @@ const DEFAULT_NOTICE_SFX_PATH := "res://Assets/Audio/SFX/UI/UI_Notice_001.ogg"
 const DEBUG_LOG_EXPORT_DIRECTORY := "user://debug_logs"
 const DEBUG_LOG_EXPORT_PREFIX := "debug_log"
 
-enum LogChannel { NORMAL, DEBUG }
+enum LogChannel { NORMAL, CHARACTER, EXPLORATION, DEBUG }
 
 @export_range(1, 300, 1) var max_messages: int = 100
 @export var notice_sfx: AudioStream
@@ -30,6 +30,12 @@ enum LogChannel { NORMAL, DEBUG }
 @export var debug_card_background_color: Color = Color(0.045, 0.035, 0.055, 0.96)
 @export var debug_card_border_color: Color = Color(0.95, 0.65, 0.22, 0.92)
 @export var debug_card_text_color: Color = Color(1.0, 0.92, 0.78, 1.0)
+@export var character_card_background_color: Color = Color(0.035, 0.050, 0.060, 0.96)
+@export var character_card_border_color: Color = Color(0.42, 0.90, 0.62, 0.92)
+@export var character_card_text_color: Color = Color(0.88, 1.0, 0.92, 1.0)
+@export var exploration_card_background_color: Color = Color(0.040, 0.045, 0.060, 0.96)
+@export var exploration_card_border_color: Color = Color(0.72, 0.72, 1.0, 0.92)
+@export var exploration_card_text_color: Color = Color(0.90, 0.92, 1.0, 1.0)
 
 @onready var title_label: Label = %TitleLabel
 @onready var count_label: Label = %CountLabel
@@ -40,11 +46,17 @@ enum LogChannel { NORMAL, DEBUG }
 @onready var message_list: VBoxContainer = %MessageList
 
 var _normal_messages: Array[String] = []
+var _character_messages: Array[String] = []
+var _exploration_messages: Array[String] = []
 var _debug_messages: Array[String] = []
 var _queued_normal_messages: Array[Dictionary] = []
+var _queued_character_messages: Array[Dictionary] = []
+var _queued_exploration_messages: Array[Dictionary] = []
 var _queued_debug_messages: Array[Dictionary] = []
 var _current_channel: int = LogChannel.NORMAL
 var _is_processing_normal_queue: bool = false
+var _is_processing_character_queue: bool = false
+var _is_processing_exploration_queue: bool = false
 var _is_processing_debug_queue: bool = false
 var _last_exported_debug_log_path: String = ""
 
@@ -65,6 +77,14 @@ func add_message(message: String) -> void:
 	_queue_message_to_channel(message, LogChannel.NORMAL, true)
 
 
+func add_character_message(message: String) -> void:
+	_queue_message_to_channel(message, LogChannel.CHARACTER, true)
+
+
+func add_exploration_message(message: String) -> void:
+	_queue_message_to_channel(message, LogChannel.EXPLORATION, true)
+
+
 func add_debug_message(message: String) -> void:
 	_add_message_to_channel_immediate(message, LogChannel.DEBUG, false)
 
@@ -80,6 +100,16 @@ func add_debug_result(source: String, action: String, success: bool, detail: Str
 func add_messages(messages: PackedStringArray) -> void:
 	for message in messages:
 		add_message(message)
+
+
+func add_character_messages(messages: PackedStringArray) -> void:
+	for message in messages:
+		add_character_message(message)
+
+
+func add_exploration_messages(messages: PackedStringArray) -> void:
+	for message in messages:
+		add_exploration_message(message)
 
 
 func add_debug_messages(messages: PackedStringArray) -> void:
@@ -107,10 +137,34 @@ func clear_debug_messages() -> void:
 	_update_export_debug_button()
 
 
+func clear_character_messages() -> void:
+	_queued_character_messages.clear()
+	_character_messages.clear()
+	if _current_channel == LogChannel.CHARACTER:
+		_rebuild_visible_messages(false)
+	_update_header()
+	_update_empty_state()
+	_update_export_debug_button()
+
+
+func clear_exploration_messages() -> void:
+	_queued_exploration_messages.clear()
+	_exploration_messages.clear()
+	if _current_channel == LogChannel.EXPLORATION:
+		_rebuild_visible_messages(false)
+	_update_header()
+	_update_empty_state()
+	_update_export_debug_button()
+
+
 func clear_all_messages() -> void:
 	_queued_normal_messages.clear()
+	_queued_character_messages.clear()
+	_queued_exploration_messages.clear()
 	_queued_debug_messages.clear()
 	_normal_messages.clear()
+	_character_messages.clear()
+	_exploration_messages.clear()
 	_debug_messages.clear()
 	_rebuild_visible_messages(false)
 	_update_header()
@@ -122,12 +176,28 @@ func get_messages() -> PackedStringArray:
 	return _to_packed_string_array(_normal_messages)
 
 
+func get_character_messages() -> PackedStringArray:
+	return _to_packed_string_array(_character_messages)
+
+
+func get_exploration_messages() -> PackedStringArray:
+	return _to_packed_string_array(_exploration_messages)
+
+
 func get_debug_messages() -> PackedStringArray:
 	return _to_packed_string_array(_debug_messages)
 
 
 func switch_to_normal_log() -> void:
 	_set_current_channel(LogChannel.NORMAL)
+
+
+func switch_to_character_log() -> void:
+	_set_current_channel(LogChannel.CHARACTER)
+
+
+func switch_to_exploration_log() -> void:
+	_set_current_channel(LogChannel.EXPLORATION)
 
 
 func switch_to_debug_log() -> void:
@@ -240,6 +310,8 @@ func _setup_tabs() -> void:
 	while tab_bar.tab_count > 0:
 		tab_bar.remove_tab(0)
 	tab_bar.add_tab("通常")
+	tab_bar.add_tab("キャラクター")
+	tab_bar.add_tab("探索")
 	tab_bar.add_tab("デバッグ")
 	tab_bar.current_tab = _current_channel
 	var callable := Callable(self, "_on_log_tab_changed")
@@ -259,7 +331,7 @@ func _on_log_tab_changed(tab: int) -> void:
 
 
 func _set_current_channel(channel: int) -> void:
-	if channel != LogChannel.NORMAL and channel != LogChannel.DEBUG:
+	if not _is_valid_channel(channel):
 		return
 	if _current_channel == channel:
 		return
@@ -270,6 +342,10 @@ func _set_current_channel(channel: int) -> void:
 	_update_export_debug_button()
 	if auto_scroll_to_latest:
 		call_deferred("_scroll_to_latest")
+
+
+func _is_valid_channel(channel: int) -> bool:
+	return channel >= LogChannel.NORMAL and channel <= LogChannel.DEBUG
 
 
 func _apply_bottom_stack_layout() -> void:
@@ -402,9 +478,21 @@ func _update_empty_state() -> void:
 	var is_empty := _get_current_messages_count() <= 0
 	if empty_label != null:
 		empty_label.visible = is_empty
-		empty_label.text = "通常ログはありません" if _current_channel == LogChannel.NORMAL else "デバッグログはありません"
+		empty_label.text = _get_empty_text_for_channel(_current_channel)
 	if scroll_container != null:
 		scroll_container.visible = not is_empty
+
+
+func _get_empty_text_for_channel(channel: int) -> String:
+	match channel:
+		LogChannel.CHARACTER:
+			return "キャラクターログはありません"
+		LogChannel.EXPLORATION:
+			return "探索ログはありません"
+		LogChannel.DEBUG:
+			return "デバッグログはありません"
+		_:
+			return "通常ログはありません"
 
 
 func _update_export_debug_button() -> void:
@@ -445,24 +533,42 @@ func _get_current_messages_count() -> int:
 func _get_messages_for_channel(channel: int) -> Array[String]:
 	if channel == LogChannel.DEBUG:
 		return _debug_messages
+	if channel == LogChannel.CHARACTER:
+		return _character_messages
+	if channel == LogChannel.EXPLORATION:
+		return _exploration_messages
 	return _normal_messages
 
 
 func _get_queued_messages_for_channel(channel: int) -> Array[Dictionary]:
 	if channel == LogChannel.DEBUG:
 		return _queued_debug_messages
+	if channel == LogChannel.CHARACTER:
+		return _queued_character_messages
+	if channel == LogChannel.EXPLORATION:
+		return _queued_exploration_messages
 	return _queued_normal_messages
 
 
 func _is_processing_queue(channel: int) -> bool:
 	if channel == LogChannel.DEBUG:
 		return _is_processing_debug_queue
+	if channel == LogChannel.CHARACTER:
+		return _is_processing_character_queue
+	if channel == LogChannel.EXPLORATION:
+		return _is_processing_exploration_queue
 	return _is_processing_normal_queue
 
 
 func _set_processing_queue(channel: int, processing: bool) -> void:
 	if channel == LogChannel.DEBUG:
 		_is_processing_debug_queue = processing
+		return
+	if channel == LogChannel.CHARACTER:
+		_is_processing_character_queue = processing
+		return
+	if channel == LogChannel.EXPLORATION:
+		_is_processing_exploration_queue = processing
 		return
 	_is_processing_normal_queue = processing
 
@@ -518,6 +624,10 @@ func _to_packed_string_array(messages: Array[String]) -> PackedStringArray:
 func _get_card_text_color(channel: int) -> Color:
 	if channel == LogChannel.DEBUG:
 		return debug_card_text_color
+	if channel == LogChannel.CHARACTER:
+		return character_card_text_color
+	if channel == LogChannel.EXPLORATION:
+		return exploration_card_text_color
 	return card_text_color
 
 
@@ -526,6 +636,12 @@ func _make_card_style(channel: int) -> StyleBoxFlat:
 	if channel == LogChannel.DEBUG:
 		style.bg_color = debug_card_background_color
 		style.border_color = debug_card_border_color
+	elif channel == LogChannel.CHARACTER:
+		style.bg_color = character_card_background_color
+		style.border_color = character_card_border_color
+	elif channel == LogChannel.EXPLORATION:
+		style.bg_color = exploration_card_background_color
+		style.border_color = exploration_card_border_color
 	else:
 		style.bg_color = card_background_color
 		style.border_color = card_border_color
