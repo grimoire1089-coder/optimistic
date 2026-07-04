@@ -1,0 +1,70 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://Scripts/UI/HUD/MoveMenu.gd" id="1_move_menu"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
+bg_color = Color(0.025, 0.03, 0.045, 0.96)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.14, 0.8, 0.95, 1)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+
+[node name="MoveMenu" type="PanelContainer"]
+custom_minimum_size = Vector2(760, 760)
+offset_left = 580.0
+offset_top = 80.0
+offset_right = 1340.0
+offset_bottom = 840.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+script = ExtResource("1_move_menu")
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 10
+
+[node name="Rows" type="VBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Header" type="HBoxContainer" parent="MarginContainer/Rows"]
+layout_mode = 2
+
+[node name="TitleLabel" type="Label" parent="MarginContainer/Rows/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "移動"
+theme_override_font_sizes/font_size = 18
+
+[node name="CloseButton" type="Button" parent="MarginContainer/Rows/Header"]
+custom_minimum_size = Vector2(32, 28)
+layout_mode = 2
+text = "X"
+
+[node name="ActionList" type="VBoxContainer" parent="MarginContainer/Rows"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="MoveActionButton" type="Button" parent="MarginContainer/Rows/ActionList"]
+custom_minimum_size = Vector2(280, 56)
+layout_mode = 2
+text = "移動"
+
+[node name="ExploreActionButton" type="Button" parent="MarginContainer/Rows/ActionList"]
+custom_minimum_size = Vector2(280, 56)
+layout_mode = 2
+text = "探索"
+
+[node name="DetailLabel" type="Label" parent="MarginContainer/Rows"]
+layout_mode = 2
+autowrap_mode = 3
+text = "移動または探索を選んでください。"
