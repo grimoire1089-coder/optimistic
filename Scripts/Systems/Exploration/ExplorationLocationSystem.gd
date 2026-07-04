@@ -7,19 +7,7 @@ const DEFAULT_DISPLAY_NAME := "カプセルファーム きのこ採取地区"
 const DEFAULT_LOCATION_TEXTURE_PATH := "res://Assets/Maps/Location/Location_005.png"
 const DEFAULT_BGM_PATH := "res://Assets/Audio/BGM/Forest_001.ogg"
 const DEFAULT_LOCATION_BACKGROUND_TEXTURE_PATH := "res://Assets/Maps/Location/Location_001.png"
-
-const EVENT_REWARDS: Array[Dictionary] = [
-	{
-		"category_id": &"ingredients",
-		"item_id": &"brown_mushroom",
-		"display_name": "ブラウンマッシュルーム",
-		"amount_min": 1,
-		"amount_max": 3,
-		"icon_path": "res://Assets/Items/Icons/Mushroom/Brown mushroom.png",
-		"description": "カプセルファームの湿潤ドームで採れた食用きのこ。",
-		"sell_price": 18,
-	},
-]
+const DEFAULT_GATHERING_TABLE_PATH := "res://Data/Exploration/GatheringTables/CapsuleFarmMushroomDistrictGatheringTable.tres"
 
 @export var worker_path: NodePath = NodePath("../Robin")
 @export var location_background_path: NodePath = NodePath("../LocationBackground")
@@ -34,6 +22,7 @@ const EVENT_REWARDS: Array[Dictionary] = [
 @export var event_interval_minutes: int = 45
 @export var enable_time_acceleration: bool = false
 @export var exploration_time_scale: float = 1.0
+@export var gathering_table_path: String = DEFAULT_GATHERING_TABLE_PATH
 @export var location_texture_path: String = DEFAULT_LOCATION_TEXTURE_PATH
 @export var restore_location_texture_path: String = DEFAULT_LOCATION_BACKGROUND_TEXTURE_PATH
 @export var bgm_paths: PackedStringArray = PackedStringArray([DEFAULT_BGM_PATH])
@@ -41,6 +30,7 @@ const EVENT_REWARDS: Array[Dictionary] = [
 var _worker: Node
 var _location_background: Node
 var _stay_overlay: Node
+var _gathering_table: ExplorationGatheringTable
 var _active: bool = false
 var _active_duration_minutes: int = 0
 var _event_elapsed_minutes: float = 0.0
@@ -154,45 +144,60 @@ func _on_worker_work_completed(job_id: StringName) -> void:
 
 
 func _grant_exploration_event_reward() -> void:
-	if EVENT_REWARDS.is_empty():
+	var table: ExplorationGatheringTable = _get_gathering_table()
+	if table == null or table.is_empty():
+		_push_message("探索イベントが発生しましたが、採取テーブルが空です。")
 		return
+
 	var inventory: Node = _get_worker_inventory_module()
-	if inventory == null or not inventory.has_method("add_item"):
+	if inventory == null:
 		_push_message("探索イベントが発生しましたが、インベントリが見つかりません。")
 		return
 
-	var reward: Dictionary = EVENT_REWARDS[_rng.randi_range(0, EVENT_REWARDS.size() - 1)]
-	var amount_min: int = maxi(int(reward.get("amount_min", 1)), 1)
-	var amount_max: int = maxi(int(reward.get("amount_max", amount_min)), amount_min)
-	var amount: int = _rng.randi_range(amount_min, amount_max)
-	var category_id: StringName = _to_string_name(reward.get("category_id", &"ingredients"))
-	var item_id: StringName = _to_string_name(reward.get("item_id", &""))
-	var item_name: String = String(reward.get("display_name", String(item_id)))
-	var icon_path: String = String(reward.get("icon_path", ""))
-	var description: String = String(reward.get("description", ""))
-	var sell_price: int = int(reward.get("sell_price", 0))
-
-	if item_id == &"":
+	var item_path: String = table.get_random_item_path(_rng)
+	if item_path.is_empty() or not ResourceLoader.exists(item_path):
+		_push_message("探索イベントが発生しましたが、食材データが見つかりません。")
 		return
 
-	var add_result: Variant = inventory.call(
-		"add_item",
-		category_id,
-		item_id,
-		item_name,
-		amount,
-		icon_path,
-		99,
-		description,
-		0,
-		sell_price
-	)
-	var added: bool = add_result == true
+	var food_data: FoodItemData = load(item_path) as FoodItemData
+	if food_data == null:
+		_push_message("探索イベントが発生しましたが、食材データを読み込めませんでした。")
+		return
+
+	var amount: int = table.get_random_amount(_rng)
+	var added: bool = false
+	if inventory.has_method("add_food_item"):
+		added = inventory.call("add_food_item", food_data, amount) == true
+	elif inventory.has_method("add_item"):
+		added = inventory.call(
+			"add_item",
+			food_data.category_id,
+			food_data.item_id,
+			food_data.display_name,
+			amount,
+			food_data.get_icon_path(),
+			food_data.stack_max,
+			food_data.description,
+			food_data.buy_price,
+			food_data.sell_price,
+			food_data.get_need_effect_path(),
+			food_data.can_discard,
+			food_data.can_transfer
+		) == true
 
 	if added:
-		_push_message("探索イベント: %s x%d を見つけました。" % [item_name, amount])
+		_push_message("探索イベント: %s x%d を見つけました。" % [food_data.display_name, amount])
 	else:
-		_push_message("探索イベント: %s を見つけましたが、インベントリに空きがありません。" % item_name)
+		_push_message("探索イベント: %s を見つけましたが、インベントリに空きがありません。" % food_data.display_name)
+
+
+func _get_gathering_table() -> ExplorationGatheringTable:
+	if _gathering_table != null:
+		return _gathering_table
+	if gathering_table_path.is_empty() or not ResourceLoader.exists(gathering_table_path):
+		return null
+	_gathering_table = load(gathering_table_path) as ExplorationGatheringTable
+	return _gathering_table
 
 
 func _configure_worker_time_scale_for_exploration() -> void:
