@@ -288,7 +288,7 @@ func _get_gathering_level() -> int:
 
 func _get_gathering_amount_bonus(skill_level: int) -> int:
 	var safe_step: int = maxi(gathering_amount_bonus_level_step, 1)
-	var raw_bonus: int = skill_level / safe_step
+	var raw_bonus: int = floori(float(skill_level) / float(safe_step))
 	return clampi(raw_bonus, 0, maxi(gathering_amount_bonus_max, 0))
 
 
