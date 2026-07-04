@@ -17,12 +17,24 @@ const ACTIVITY_KIND_EXPLORATION: StringName = &"exploration"
 @export var partner_standing_texture_path: String = DEFAULT_PARTNER_STANDING_TEXTURE_PATH
 @export var partner_facing_direction: Vector2 = Vector2(-1.0, 1.0)
 @export var worker_position_ratio: Vector2 = Vector2(0.44, 0.58)
+@export var exploration_worker_position_ratio: Vector2 = Vector2(0.50, 0.48)
 @export var partner_position_ratio: Vector2 = Vector2(0.58, 0.58)
 @export var portrait_position_ratio: Vector2 = Vector2(0.16, 0.50)
 @export var standing_target_height_ratio: float = 0.82
 @export var standing_target_max_height: float = 132.0
+@export var exploration_standing_target_height_ratio: float = 0.68
+@export var exploration_standing_target_max_height: float = 116.0
 @export var portrait_target_height_ratio: float = 0.62
 @export var portrait_target_max_height: float = 98.0
+@export var status_card_width_ratio_to_map: float = 0.66
+@export var status_card_max_width: float = 520.0
+@export var status_card_height: float = 44.0
+@export var hud_top_margin: float = 12.0
+@export var hud_left_margin: float = 12.0
+@export var hud_gap: float = 8.0
+@export var progress_width_ratio_to_map: float = 0.48
+@export var progress_max_width: float = 360.0
+@export var progress_height: float = 8.0
 @export var status_text_color: Color = Color(0.88, 0.98, 1.0, 1.0)
 @export var status_shadow_color: Color = Color(0.0, 0.72, 1.0, 0.6)
 @export var status_card_color: Color = Color(0.01, 0.02, 0.035, 0.76)
@@ -104,9 +116,10 @@ func _draw() -> void:
 	var panel_rect := _get_panel_global_rect()
 	if panel_rect.size.x <= 0.0 or panel_rect.size.y <= 0.0:
 		return
-	var local_rect := Rect2(to_local(panel_rect.position), panel_rect.size)
-	_draw_status_card(local_rect)
-	_draw_work_progress(local_rect)
+	var status_card_rect := _get_status_card_global_rect(panel_rect)
+	var progress_bar_rect := _get_progress_bar_global_rect(panel_rect, status_card_rect)
+	_draw_status_card(Rect2(to_local(status_card_rect.position), status_card_rect.size))
+	_draw_work_progress(Rect2(to_local(progress_bar_rect.position), progress_bar_rect.size))
 
 
 func _ensure_children() -> void:
@@ -161,7 +174,18 @@ func _sync_layout() -> void:
 		return
 	_set_content_visible(true)
 
+	var worker_ratio := worker_position_ratio
+	var worker_height_ratio := standing_target_height_ratio
+	var worker_max_height := standing_target_max_height
+	if _activity_kind == ACTIVITY_KIND_EXPLORATION:
+		worker_ratio = exploration_worker_position_ratio
+		worker_height_ratio = exploration_standing_target_height_ratio
+		worker_max_height = exploration_standing_target_max_height
 	var standing_target_height := minf(
+		panel_rect.size.y * clampf(worker_height_ratio, 0.1, 2.0),
+		maxf(worker_max_height, 1.0)
+	)
+	var partner_target_height := minf(
 		panel_rect.size.y * clampf(standing_target_height_ratio, 0.1, 2.0),
 		maxf(standing_target_max_height, 1.0)
 	)
@@ -170,15 +194,16 @@ func _sync_layout() -> void:
 		maxf(portrait_target_max_height, 1.0)
 	)
 
-	_worker_sprite.global_position = _point_in_rect(panel_rect, worker_position_ratio)
+	_worker_sprite.global_position = _point_in_rect(panel_rect, worker_ratio)
 	_partner_sprite.global_position = _point_in_rect(panel_rect, partner_position_ratio)
 	_partner_portrait_sprite.global_position = _point_in_rect(panel_rect, portrait_position_ratio)
 	_scale_sprite_to_height(_worker_sprite, standing_target_height)
-	_scale_sprite_to_height(_partner_sprite, standing_target_height)
+	_scale_sprite_to_height(_partner_sprite, partner_target_height)
 	_scale_sprite_to_height(_partner_portrait_sprite, portrait_target_height)
 
-	_status_label.global_position = panel_rect.position + Vector2(22.0, 14.0)
-	_status_label.size = Vector2(panel_rect.size.x * 0.72, 32.0)
+	var status_card_rect := _get_status_card_global_rect(panel_rect)
+	_status_label.global_position = status_card_rect.position + Vector2(14.0, 10.0)
+	_status_label.size = Vector2(maxf(status_card_rect.size.x - 28.0, 1.0), maxf(status_card_rect.size.y - 12.0, 1.0))
 	_partner_name_label.global_position = _partner_portrait_sprite.global_position + Vector2(-70.0, portrait_target_height * 0.42)
 	_partner_name_label.size = Vector2(140.0, 24.0)
 
@@ -209,9 +234,7 @@ func _update_status_text() -> void:
 	_partner_name_label.text = partner_display_name
 
 
-func _draw_status_card(local_rect: Rect2) -> void:
-	var card_width := minf(local_rect.size.x * 0.56, 420.0)
-	var card_rect := Rect2(local_rect.position + Vector2(14.0, 8.0), Vector2(card_width, 44.0))
+func _draw_status_card(card_rect: Rect2) -> void:
 	var style := StyleBoxFlat.new()
 	style.bg_color = status_card_color
 	style.border_color = status_card_border_color
@@ -223,16 +246,39 @@ func _draw_status_card(local_rect: Rect2) -> void:
 	draw_style_box(style, card_rect)
 
 
-func _draw_work_progress(local_rect: Rect2) -> void:
+func _draw_work_progress(bar_rect: Rect2) -> void:
 	var progress := _get_work_progress_ratio()
-	var bar_width := minf(local_rect.size.x * 0.48, 360.0)
-	var bar_height := 8.0
-	var bar_position := local_rect.position + Vector2((local_rect.size.x - bar_width) * 0.5, local_rect.size.y - 18.0)
-	var bar_rect := Rect2(bar_position, Vector2(bar_width, bar_height))
 	var fill_rect := Rect2(bar_rect.position, Vector2(bar_rect.size.x * progress, bar_rect.size.y))
 	draw_rect(bar_rect, progress_background_color, true)
 	draw_rect(fill_rect, progress_fill_color, true)
 	draw_rect(bar_rect, progress_border_color, false, 1.0)
+
+
+func _get_status_card_global_rect(panel_rect: Rect2) -> Rect2:
+	var map_rect := _get_map_global_rect()
+	var anchor_rect := map_rect if map_rect.size.x > 0.0 and map_rect.size.y > 0.0 else panel_rect
+	var card_width := minf(anchor_rect.size.x * clampf(status_card_width_ratio_to_map, 0.1, 1.4), maxf(status_card_max_width, 1.0))
+	var card_height := maxf(status_card_height, 1.0)
+	var reserved_height := card_height + maxf(progress_height, 1.0) + maxf(hud_gap, 0.0) + maxf(hud_top_margin, 0.0)
+	var card_position := Vector2(
+		anchor_rect.position.x + maxf(hud_left_margin, 0.0),
+		anchor_rect.position.y - reserved_height
+	)
+	if card_position.y < 8.0:
+		card_position.y = 8.0
+	return Rect2(card_position, Vector2(card_width, card_height))
+
+
+func _get_progress_bar_global_rect(panel_rect: Rect2, status_card_rect: Rect2) -> Rect2:
+	var map_rect := _get_map_global_rect()
+	var anchor_rect := map_rect if map_rect.size.x > 0.0 and map_rect.size.y > 0.0 else panel_rect
+	var bar_width := minf(anchor_rect.size.x * clampf(progress_width_ratio_to_map, 0.1, 1.4), maxf(progress_max_width, 1.0))
+	var bar_height := maxf(progress_height, 1.0)
+	var bar_position := Vector2(
+		anchor_rect.position.x + (anchor_rect.size.x - bar_width) * 0.5,
+		status_card_rect.end.y + maxf(hud_gap, 0.0)
+	)
+	return Rect2(bar_position, Vector2(bar_width, bar_height))
 
 
 func _sync_worker_sprite_texture() -> void:
@@ -330,6 +376,18 @@ func _get_panel_global_rect() -> Rect2:
 		if panel_rect_value is Rect2:
 			var panel_rect: Rect2 = panel_rect_value
 			return panel_rect
+	return Rect2()
+
+
+func _get_map_global_rect() -> Rect2:
+	_resolve_refs()
+	if _location_background == null:
+		return Rect2()
+	if not _location_background.has_method("get_room_map_global_rect"):
+		return Rect2()
+	var map_rect_value: Variant = _location_background.call("get_room_map_global_rect")
+	if map_rect_value is Rect2:
+		return map_rect_value
 	return Rect2()
 
 
