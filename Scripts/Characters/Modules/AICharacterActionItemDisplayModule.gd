@@ -9,6 +9,7 @@ class_name AICharacterActionItemDisplayModule
 @export var item_display_size: Vector2 = Vector2(70.0, 70.0)
 @export var item_z_index: int = 190
 @export var snap_standing_lapis_to_grid: bool = true
+@export var update_interval_seconds: float = 0.1
 
 var _body: Node2D
 var _hydrate_behavior: Node
@@ -19,6 +20,7 @@ var _item_rect: TextureRect
 var _display_add_deferred := false
 var _current_icon_path := ""
 var _was_standing_lapis := false
+var _update_timer := 0.0
 
 
 func _ready() -> void:
@@ -36,7 +38,11 @@ func setup(body: Node2D) -> void:
 	_request_display()
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
+	_update_timer -= maxf(delta, 0.0)
+	if _update_timer > 0.0:
+		return
+	_update_timer = maxf(update_interval_seconds, 0.05)
 	_resolve_refs()
 	_snap_lapis_position_if_needed()
 	_request_display()
