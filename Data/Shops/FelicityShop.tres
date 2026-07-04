@@ -10,7 +10,7 @@
 [ext_resource type="Resource" uid="uid://dm0hqdwdx8tfo" path="res://Data/Items/Food/Drink_1002_OolongTea.tres" id="7_oolong_tea"]
 [ext_resource type="AudioStream" uid="uid://bcmhj1ssto6nt" path="res://Assets/Audio/BGM/Felicity BGM 001.ogg" id="8_d32om"]
 [ext_resource type="Resource" uid="uid://bbcfo6cl1qi0" path="res://Data/Items/Food/Food_0008_WaterBottle.tres" id="8_water_bottle"]
-[ext_resource type="Resource" path="res://Data/Items/Food/Food_0016_FelicityClassicBurger.tres" id="9_classic_burger"]
+[ext_resource type="Resource" uid="uid://cw1jvr753g70c" path="res://Data/Items/Food/Food_0016_FelicityClassicBurger.tres" id="9_classic_burger"]
 
 [sub_resource type="Resource" id="ShopItemData_nikuman"]
 script = ExtResource("2_shop_item")
