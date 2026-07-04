@@ -14,8 +14,11 @@ const ACTIVITY_KIND_EXPLORATION: StringName = &"exploration"
 @export var worker_duplicate_facing_direction: Vector2 = Vector2(1.0, 1.0)
 @export var partner_display_name: String = "ガンテツ"
 @export var partner_portrait_texture_path: String = DEFAULT_PARTNER_PORTRAIT_TEXTURE_PATH
+@export var show_partner_portrait: bool = false
 @export var partner_standing_texture_path: String = DEFAULT_PARTNER_STANDING_TEXTURE_PATH
 @export var partner_facing_direction: Vector2 = Vector2(-1.0, 1.0)
+@export var partner_match_worker_visual_height: bool = true
+@export var partner_visual_scale_multiplier: float = 1.0
 @export var worker_position_ratio: Vector2 = Vector2(0.44, 0.58)
 @export var exploration_worker_position_ratio: Vector2 = Vector2(0.50, 0.48)
 @export var partner_position_ratio: Vector2 = Vector2(0.58, 0.58)
@@ -50,6 +53,7 @@ var _partner_sprite: Sprite2D
 var _partner_portrait_sprite: Sprite2D
 var _status_label: Label
 var _partner_name_label: Label
+var _visible_frame_size_cache: Dictionary = {}
 var _active := false
 var _activity_kind: StringName = ACTIVITY_KIND_WORK
 var _job_id: StringName = &""
@@ -135,7 +139,7 @@ func _ensure_children() -> void:
 		_partner_sprite.centered = true
 		_partner_sprite.z_index = 2
 		add_child(_partner_sprite)
-	if _partner_portrait_sprite == null:
+	if show_partner_portrait and _partner_portrait_sprite == null:
 		_partner_portrait_sprite = Sprite2D.new()
 		_partner_portrait_sprite.name = "PartnerPortrait"
 		_partner_portrait_sprite.centered = true
@@ -151,7 +155,7 @@ func _ensure_children() -> void:
 		_status_label.add_theme_constant_override("shadow_offset_y", 1)
 		_status_label.add_theme_font_size_override("font_size", 16)
 		add_child(_status_label)
-	if _partner_name_label == null:
+	if show_partner_portrait and _partner_name_label == null:
 		_partner_name_label = Label.new()
 		_partner_name_label.name = "PartnerNameLabel"
 		_partner_name_label.z_index = 5
@@ -164,7 +168,8 @@ func _ensure_children() -> void:
 		add_child(_partner_name_label)
 
 	_configure_direction_sprite(_partner_sprite, partner_standing_texture_path, partner_facing_direction)
-	_configure_plain_sprite(_partner_portrait_sprite, partner_portrait_texture_path)
+	if _partner_portrait_sprite != null:
+		_configure_plain_sprite(_partner_portrait_sprite, partner_portrait_texture_path)
 
 
 func _sync_layout() -> void:
@@ -189,6 +194,9 @@ func _sync_layout() -> void:
 		panel_rect.size.y * clampf(standing_target_height_ratio, 0.1, 2.0),
 		maxf(standing_target_max_height, 1.0)
 	)
+	if partner_match_worker_visual_height:
+		partner_target_height = _get_worker_visual_display_height(partner_target_height)
+	partner_target_height *= maxf(partner_visual_scale_multiplier, 0.01)
 	var portrait_target_height := minf(
 		panel_rect.size.y * clampf(portrait_target_height_ratio, 0.1, 2.0),
 		maxf(portrait_target_max_height, 1.0)
@@ -196,25 +204,32 @@ func _sync_layout() -> void:
 
 	_worker_sprite.global_position = _point_in_rect(panel_rect, worker_ratio)
 	_partner_sprite.global_position = _point_in_rect(panel_rect, partner_position_ratio)
-	_partner_portrait_sprite.global_position = _point_in_rect(panel_rect, portrait_position_ratio)
 	_scale_sprite_to_height(_worker_sprite, standing_target_height)
-	_scale_sprite_to_height(_partner_sprite, partner_target_height)
-	_scale_sprite_to_height(_partner_portrait_sprite, portrait_target_height)
+	if partner_match_worker_visual_height:
+		_scale_sprite_to_visible_height(_partner_sprite, partner_target_height)
+	else:
+		_scale_sprite_to_height(_partner_sprite, partner_target_height)
+	if _partner_portrait_sprite != null:
+		_partner_portrait_sprite.global_position = _point_in_rect(panel_rect, portrait_position_ratio)
+		_scale_sprite_to_height(_partner_portrait_sprite, portrait_target_height)
 
 	var status_card_rect := _get_status_card_global_rect(panel_rect)
 	_status_label.global_position = status_card_rect.position + Vector2(14.0, 10.0)
 	_status_label.size = Vector2(maxf(status_card_rect.size.x - 28.0, 1.0), maxf(status_card_rect.size.y - 12.0, 1.0))
-	_partner_name_label.global_position = _partner_portrait_sprite.global_position + Vector2(-70.0, portrait_target_height * 0.42)
-	_partner_name_label.size = Vector2(140.0, 24.0)
+	if _partner_name_label != null and _partner_portrait_sprite != null:
+		_partner_name_label.global_position = _partner_portrait_sprite.global_position + Vector2(-70.0, portrait_target_height * 0.42)
+		_partner_name_label.size = Vector2(140.0, 24.0)
 
 
 func _set_content_visible(content_visible: bool) -> void:
 	var show_partner := _activity_kind == ACTIVITY_KIND_WORK
 	_worker_sprite.visible = content_visible and show_worker_duplicate
 	_partner_sprite.visible = content_visible and show_partner
-	_partner_portrait_sprite.visible = content_visible and show_partner
+	if _partner_portrait_sprite != null:
+		_partner_portrait_sprite.visible = content_visible and show_partner and show_partner_portrait
 	_status_label.visible = content_visible
-	_partner_name_label.visible = content_visible and show_partner
+	if _partner_name_label != null:
+		_partner_name_label.visible = content_visible and show_partner and show_partner_portrait
 
 
 func _update_status_text() -> void:
@@ -228,10 +243,12 @@ func _update_status_text() -> void:
 		worker_name = "ロビン"
 	if _activity_kind == ACTIVITY_KIND_EXPLORATION:
 		_status_label.text = "%s / %s 探索中" % [activity_name, worker_name]
-		_partner_name_label.text = ""
+		if _partner_name_label != null:
+			_partner_name_label.text = ""
 		return
 	_status_label.text = "%s / %s -> %sさん" % [activity_name, worker_name, partner_display_name]
-	_partner_name_label.text = partner_display_name
+	if _partner_name_label != null:
+		_partner_name_label.text = partner_display_name if show_partner_portrait else ""
 
 
 func _draw_status_card(card_rect: Rect2) -> void:
@@ -325,6 +342,32 @@ func _scale_sprite_to_height(sprite: Sprite2D, target_height: float) -> void:
 	sprite.scale = Vector2(scale_value, scale_value)
 
 
+func _scale_sprite_to_visible_height(sprite: Sprite2D, target_height: float) -> void:
+	if sprite == null or sprite.texture == null:
+		return
+	var visible_frame_size := _get_sprite_visible_frame_size(sprite)
+	var source_height := visible_frame_size.y
+	if source_height <= 0.0:
+		source_height = _get_sprite_frame_size(sprite).y
+	if source_height <= 0.0:
+		return
+	var scale_value := maxf(target_height, 1.0) / source_height
+	sprite.scale = Vector2(scale_value, scale_value)
+
+
+func _get_worker_visual_display_height(fallback_height: float) -> float:
+	var source_sprite := _get_source_worker_sprite()
+	if source_sprite == null or source_sprite.texture == null:
+		return fallback_height
+	var visible_frame_size := _get_sprite_visible_frame_size(source_sprite)
+	var source_height := visible_frame_size.y
+	if source_height <= 0.0:
+		source_height = _get_sprite_frame_size(source_sprite).y
+	if source_height <= 0.0:
+		return fallback_height
+	return source_height * absf(source_sprite.global_scale.y)
+
+
 func _get_sprite_frame_size(sprite: Sprite2D) -> Vector2:
 	if sprite == null or sprite.texture == null:
 		return Vector2.ZERO
@@ -333,6 +376,66 @@ func _get_sprite_frame_size(sprite: Sprite2D) -> Vector2:
 		texture_size.x / float(maxi(sprite.hframes, 1)),
 		texture_size.y / float(maxi(sprite.vframes, 1))
 	)
+
+
+func _get_sprite_visible_frame_size(sprite: Sprite2D) -> Vector2:
+	if sprite == null or sprite.texture == null:
+		return Vector2.ZERO
+	var cache_key := _get_visible_frame_size_cache_key(sprite)
+	if _visible_frame_size_cache.has(cache_key):
+		return _visible_frame_size_cache[cache_key]
+	var texture_image := sprite.texture.get_image()
+	if texture_image == null or texture_image.get_width() <= 0 or texture_image.get_height() <= 0:
+		_visible_frame_size_cache[cache_key] = Vector2.ZERO
+		return Vector2.ZERO
+	var hframes := maxi(sprite.hframes, 1)
+	var vframes := maxi(sprite.vframes, 1)
+	var frame_width := int(float(texture_image.get_width()) / float(hframes))
+	var frame_height := int(float(texture_image.get_height()) / float(vframes))
+	if frame_width <= 0 or frame_height <= 0:
+		_visible_frame_size_cache[cache_key] = Vector2.ZERO
+		return Vector2.ZERO
+	var frame_coords := sprite.frame_coords
+	frame_coords.x = clampi(frame_coords.x, 0, hframes - 1)
+	frame_coords.y = clampi(frame_coords.y, 0, vframes - 1)
+	var start_x := clampi(frame_coords.x * frame_width, 0, texture_image.get_width())
+	var start_y := clampi(frame_coords.y * frame_height, 0, texture_image.get_height())
+	var end_x := mini(start_x + frame_width, texture_image.get_width())
+	var end_y := mini(start_y + frame_height, texture_image.get_height())
+	var min_x := frame_width
+	var min_y := frame_height
+	var max_x := -1
+	var max_y := -1
+	for y in range(start_y, end_y):
+		for x in range(start_x, end_x):
+			if texture_image.get_pixel(x, y).a <= 0.01:
+				continue
+			var local_x := x - start_x
+			var local_y := y - start_y
+			min_x = mini(min_x, local_x)
+			min_y = mini(min_y, local_y)
+			max_x = maxi(max_x, local_x)
+			max_y = maxi(max_y, local_y)
+	var visible_size := Vector2.ZERO
+	if max_x >= min_x and max_y >= min_y:
+		visible_size = Vector2(float(max_x - min_x + 1), float(max_y - min_y + 1))
+	_visible_frame_size_cache[cache_key] = visible_size
+	return visible_size
+
+
+func _get_visible_frame_size_cache_key(sprite: Sprite2D) -> String:
+	if sprite == null or sprite.texture == null:
+		return ""
+	var texture_id := sprite.texture.resource_path
+	if texture_id.is_empty():
+		texture_id = str(sprite.texture.get_rid())
+	return "%s|%d|%d|%d|%d" % [
+		texture_id,
+		maxi(sprite.hframes, 1),
+		maxi(sprite.vframes, 1),
+		clampi(sprite.frame_coords.x, 0, maxi(sprite.hframes, 1) - 1),
+		clampi(sprite.frame_coords.y, 0, maxi(sprite.vframes, 1) - 1)
+	]
 
 
 func _get_source_worker_sprite() -> Sprite2D:
