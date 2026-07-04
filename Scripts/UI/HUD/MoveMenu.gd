@@ -105,8 +105,12 @@ func _refresh_destination_buttons() -> void:
 
 func _clear_destination_buttons() -> void:
 	for button in _destination_buttons:
-		if button != null and is_instance_valid(button):
-			button.queue_free()
+		if button == null or not is_instance_valid(button):
+			continue
+		var parent := button.get_parent()
+		if parent != null:
+			parent.remove_child(button)
+		button.queue_free()
 	_destination_buttons.clear()
 
 
@@ -173,9 +177,10 @@ func _add_destination(
 
 
 func _get_book_unlocked_destinations() -> Array[Dictionary]:
+	var empty: Array[Dictionary] = []
 	var library := _resolve_book_library()
 	if library == null or not library.has_method("get_unlocked_travel_destinations"):
-		return []
+		return empty
 	var value: Variant = library.call("get_unlocked_travel_destinations")
 	if value is Array:
 		var destinations: Array[Dictionary] = []
@@ -183,7 +188,7 @@ func _get_book_unlocked_destinations() -> Array[Dictionary]:
 			if raw_destination is Dictionary:
 				destinations.append(raw_destination)
 		return destinations
-	return []
+	return empty
 
 
 func _try_entrance_travel(target_map_id: StringName) -> bool:
