@@ -2,7 +2,7 @@ extends Control
 class_name SimpleProfilerHud
 
 @export var update_interval_seconds: float = 0.5
-@export var panel_size: Vector2 = Vector2(340.0, 180.0)
+@export var panel_size: Vector2 = Vector2(420.0, 300.0)
 @export var panel_offset: Vector2 = Vector2(16.0, 16.0)
 @export var toggle_key: Key = KEY_F3
 
@@ -106,14 +106,34 @@ func _build_text() -> String:
 	var fps_ms := 0.0
 	if fps > 0:
 		fps_ms = 1000.0 / float(fps)
-	return "PROFILER HUD  F3: 表示切替\nFPS: %d / %.1f ms  avg: %.1f ms\nNodes: %d\n_process nodes: %d\n_physics nodes: %d\nCanvasItems: %d" % [
+	var process_ms := _seconds_to_ms(float(Performance.get_monitor(Performance.TIME_PROCESS)))
+	var physics_ms := _seconds_to_ms(float(Performance.get_monitor(Performance.TIME_PHYSICS_PROCESS)))
+	var draw_calls := int(Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME))
+	var render_objects := int(Performance.get_monitor(Performance.RENDER_TOTAL_OBJECTS_IN_FRAME))
+	var render_primitives := int(Performance.get_monitor(Performance.RENDER_TOTAL_PRIMITIVES_IN_FRAME))
+	var video_mb := _bytes_to_mb(float(Performance.get_monitor(Performance.RENDER_VIDEO_MEM_USED)))
+	var texture_mb := _bytes_to_mb(float(Performance.get_monitor(Performance.RENDER_TEXTURE_MEM_USED)))
+	var physics_objects := int(Performance.get_monitor(Performance.PHYSICS_2D_ACTIVE_OBJECTS))
+	var collision_pairs := int(Performance.get_monitor(Performance.PHYSICS_2D_COLLISION_PAIRS))
+	return "PROFILER HUD  F3: 表示切替\nFPS: %d / %.1f ms  avg: %.1f ms\nEngine.max_fps: %d  low_processor: %s\nProcess ms: %.2f  Physics ms: %.2f\nNodes: %d  _process: %d  _physics: %d\nCanvasItems: %d\nDraw calls: %d  Render objects: %d\nPrimitives: %d\nVideo MB: %.1f  Texture MB: %.1f\n2D physics objects: %d  pairs: %d" % [
 		fps,
 		fps_ms,
 		_last_average_frame_ms,
+		Engine.max_fps,
+		str(OS.low_processor_usage_mode),
+		process_ms,
+		physics_ms,
 		_total_node_count,
 		_process_node_count,
 		_physics_node_count,
 		_canvas_item_count,
+		draw_calls,
+		render_objects,
+		render_primitives,
+		video_mb,
+		texture_mb,
+		physics_objects,
+		collision_pairs,
 	]
 
 
@@ -137,3 +157,11 @@ func _count_node_recursive(node: Node) -> void:
 		_canvas_item_count += 1
 	for child in node.get_children():
 		_count_node_recursive(child)
+
+
+func _seconds_to_ms(seconds: float) -> float:
+	return seconds * 1000.0
+
+
+func _bytes_to_mb(bytes_value: float) -> float:
+	return bytes_value / 1048576.0
