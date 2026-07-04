@@ -10,10 +10,12 @@ const DEFAULT_CLICK_SFX_PATH := "res://Assets/Audio/SFX/UI/UI_Click_001.ogg"
 @export var fallback_room_is_buildable: bool = true
 @export var click_sfx: AudioStream
 @export var click_sfx_volume_db: float = 0.0
+@export var state_poll_interval_seconds: float = 0.25
 
 var _controller: BuildModeController
 var _room_map: Node
 var _local_enabled := false
+var _state_poll_timer := 0.0
 
 
 func _ready() -> void:
@@ -27,7 +29,11 @@ func _ready() -> void:
 	pressed.connect(_on_pressed)
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
+	_state_poll_timer -= maxf(delta, 0.0)
+	if _state_poll_timer > 0.0:
+		return
+	_state_poll_timer = maxf(state_poll_interval_seconds, 0.05)
 	_sync_button_state()
 
 
