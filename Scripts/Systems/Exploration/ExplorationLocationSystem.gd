@@ -8,8 +8,10 @@ const DEFAULT_LOCATION_TEXTURE_PATH := "res://Assets/Maps/Location/Location_005.
 const DEFAULT_BGM_PATH := "res://Assets/Audio/BGM/Forest_001.ogg"
 const DEFAULT_LOCATION_BACKGROUND_TEXTURE_PATH := "res://Assets/Maps/Location/Location_001.png"
 const DEFAULT_GATHERING_TABLE_PATH := "res://Data/Exploration/GatheringTables/CapsuleFarmMushroomDistrictGatheringTable.tres"
+const SKILL_GATHERING: StringName = &"gathering"
 
 @export var worker_path: NodePath = NodePath("../Robin")
+@export var skills_module_path: NodePath = NodePath("../Robin/AICharacterSkillsModule")
 @export var location_background_path: NodePath = NodePath("../LocationBackground")
 @export var stay_overlay_path: NodePath = NodePath("../WorkLocationStayOverlay")
 @export var location_id: StringName = DEFAULT_LOCATION_ID
@@ -20,6 +22,9 @@ const DEFAULT_GATHERING_TABLE_PATH := "res://Data/Exploration/GatheringTables/Ca
 @export var max_duration_minutes: int = 720
 @export var duration_step_minutes: int = 30
 @export var event_interval_minutes: int = 45
+@export var gathering_experience_per_event: int = 5
+@export var gathering_amount_bonus_level_step: int = 10
+@export var gathering_amount_bonus_max: int = 10
 @export var enable_time_acceleration: bool = false
 @export var exploration_time_scale: float = 1.0
 @export var gathering_table_path: String = DEFAULT_GATHERING_TABLE_PATH
@@ -28,6 +33,7 @@ const DEFAULT_GATHERING_TABLE_PATH := "res://Data/Exploration/GatheringTables/Ca
 @export var bgm_paths: PackedStringArray = PackedStringArray([DEFAULT_BGM_PATH])
 
 var _worker: Node
+var _skills_module: Node
 var _location_background: Node
 var _stay_overlay: Node
 var _gathering_table: Resource
@@ -145,8 +151,9 @@ func _on_worker_work_completed(job_id: StringName) -> void:
 
 func _grant_exploration_event_reward() -> void:
 	var table: Resource = _get_gathering_table()
-	if table == null or _is_gathering_table_empty(table):
-		_push_message("探索イベントが発生しましたが、採取テーブルが空です。")
+	var gathering_level: int = _get_gathering_level()
+	if table == null or _is_gathering_table_empty(table, gathering_level):
+		_push_message("探索イベントが発生しましたが、採取Lv%dで採れる食材がありません。" % gathering_level)
 		return
 
 	var inventory: Node = _get_worker_inventory_module()
@@ -154,7 +161,7 @@ func _grant_exploration_event_reward() -> void:
 		_push_message("探索イベントが発生しましたが、インベントリが見つかりません。")
 		return
 
-	var item_path: String = _get_random_gathering_item_path(table)
+	var item_path: String = _get_random_gathering_item_path(table, gathering_level)
 	if item_path.is_empty() or not ResourceLoader.exists(item_path):
 		_push_message("探索イベントが発生しましたが、食材データが見つかりません。")
 		return
@@ -164,7 +171,9 @@ func _grant_exploration_event_reward() -> void:
 		_push_message("探索イベントが発生しましたが、食材データを読み込めませんでした。")
 		return
 
-	var amount: int = _get_random_gathering_amount(table)
+	var base_amount: int = _get_random_gathering_amount(table)
+	var bonus_amount: int = _get_gathering_amount_bonus(gathering_level)
+	var amount: int = maxi(base_amount + bonus_amount, 1)
 	var added: bool = false
 	if inventory.has_method("add_food_item"):
 		added = inventory.call("add_food_item", food_data, amount) == true
@@ -186,7 +195,11 @@ func _grant_exploration_event_reward() -> void:
 		) == true
 
 	if added:
-		_push_message("探索イベント: %s x%d を見つけました。" % [food_data.display_name, amount])
+		_add_gathering_experience()
+		var bonus_text: String = ""
+		if bonus_amount > 0:
+			bonus_text = " / 採取Lv%dボーナス +%d" % [gathering_level, bonus_amount]
+		_push_message("探索イベント: %s x%d を見つけました。採取EXP +%d%s" % [food_data.display_name, amount, maxi(gathering_experience_per_event, 0), bonus_text])
 	else:
 		_push_message("探索イベント: %s を見つけましたが、インベントリに空きがありません。" % food_data.display_name)
 
@@ -200,9 +213,11 @@ func _get_gathering_table() -> Resource:
 	return _gathering_table
 
 
-func _is_gathering_table_empty(table: Resource) -> bool:
+func _is_gathering_table_empty(table: Resource, skill_level: int) -> bool:
 	if table == null:
 		return true
+	if table.has_method("is_empty_for_skill"):
+		return table.call("is_empty_for_skill", skill_level) == true
 	if table.has_method("is_empty"):
 		return table.call("is_empty") == true
 	var item_paths_value: Variant = table.get("item_paths")
@@ -213,23 +228,43 @@ func _is_gathering_table_empty(table: Resource) -> bool:
 	return true
 
 
-func _get_random_gathering_item_path(table: Resource) -> String:
+func _get_random_gathering_item_path(table: Resource, skill_level: int) -> String:
 	if table == null:
 		return ""
+	if table.has_method("get_random_item_path_for_skill"):
+		return String(table.call("get_random_item_path_for_skill", _rng, skill_level))
 	if table.has_method("get_random_item_path"):
 		return String(table.call("get_random_item_path", _rng))
 	var item_paths_value: Variant = table.get("item_paths")
+	var required_levels_value: Variant = table.get("required_skill_levels")
+	var available_paths: Array[String] = []
 	if item_paths_value is PackedStringArray:
 		var packed_paths: PackedStringArray = item_paths_value
-		if packed_paths.is_empty():
-			return ""
-		return String(packed_paths[_rng.randi_range(0, packed_paths.size() - 1)])
-	if item_paths_value is Array:
+		for index in range(packed_paths.size()):
+			var required_level: int = _get_required_level_from_value(required_levels_value, index)
+			if skill_level >= required_level:
+				available_paths.append(String(packed_paths[index]))
+	elif item_paths_value is Array:
 		var paths: Array = item_paths_value
-		if paths.is_empty():
-			return ""
-		return String(paths[_rng.randi_range(0, paths.size() - 1)])
-	return ""
+		for index in range(paths.size()):
+			var required_level: int = _get_required_level_from_value(required_levels_value, index)
+			if skill_level >= required_level:
+				available_paths.append(String(paths[index]))
+	if available_paths.is_empty():
+		return ""
+	return available_paths[_rng.randi_range(0, available_paths.size() - 1)]
+
+
+func _get_required_level_from_value(required_levels_value: Variant, index: int) -> int:
+	if required_levels_value is PackedInt32Array:
+		var packed_levels: PackedInt32Array = required_levels_value
+		if index >= 0 and index < packed_levels.size():
+			return maxi(packed_levels[index], 1)
+	if required_levels_value is Array:
+		var levels: Array = required_levels_value
+		if index >= 0 and index < levels.size():
+			return maxi(int(levels[index]), 1)
+	return 1
 
 
 func _get_random_gathering_amount(table: Resource) -> int:
@@ -242,6 +277,28 @@ func _get_random_gathering_amount(table: Resource) -> int:
 	var safe_min: int = maxi(int(amount_min_value), 1)
 	var safe_max: int = maxi(int(amount_max_value), safe_min)
 	return _rng.randi_range(safe_min, safe_max)
+
+
+func _get_gathering_level() -> int:
+	var skills_module: Node = _get_skills_module()
+	if skills_module == null or not skills_module.has_method("get_skill_level"):
+		return 1
+	return maxi(int(skills_module.call("get_skill_level", SKILL_GATHERING)), 1)
+
+
+func _get_gathering_amount_bonus(skill_level: int) -> int:
+	var safe_step: int = maxi(gathering_amount_bonus_level_step, 1)
+	var raw_bonus: int = skill_level / safe_step
+	return clampi(raw_bonus, 0, maxi(gathering_amount_bonus_max, 0))
+
+
+func _add_gathering_experience() -> void:
+	if gathering_experience_per_event <= 0:
+		return
+	var skills_module: Node = _get_skills_module()
+	if skills_module == null or not skills_module.has_method("add_skill_experience"):
+		return
+	skills_module.call("add_skill_experience", SKILL_GATHERING, gathering_experience_per_event)
 
 
 func _configure_worker_time_scale_for_exploration() -> void:
@@ -390,6 +447,18 @@ func _get_worker_entrance_behavior() -> Node:
 	return worker.get_node_or_null("AICharacterEntranceTravelBehaviorModule")
 
 
+func _get_skills_module() -> Node:
+	if _skills_module != null and is_instance_valid(_skills_module):
+		return _skills_module
+	_resolve_refs()
+	var worker: Node = _get_worker()
+	if _skills_module == null and worker != null and worker.has_method("get_skills_module"):
+		_skills_module = worker.call("get_skills_module") as Node
+	if _skills_module == null and worker != null:
+		_skills_module = worker.get_node_or_null("AICharacterSkillsModule")
+	return _skills_module
+
+
 func _get_worker_display_name() -> String:
 	var worker: Node = _get_worker()
 	if worker == null:
@@ -437,6 +506,8 @@ func _connect_worker_signals() -> void:
 func _resolve_refs() -> void:
 	if _worker == null and not worker_path.is_empty():
 		_worker = get_node_or_null(worker_path)
+	if _skills_module == null and not skills_module_path.is_empty():
+		_skills_module = get_node_or_null(skills_module_path)
 	if _location_background == null and not location_background_path.is_empty():
 		_location_background = get_node_or_null(location_background_path)
 	if _stay_overlay == null and not stay_overlay_path.is_empty():
