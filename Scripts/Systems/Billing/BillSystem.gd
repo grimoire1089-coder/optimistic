@@ -47,7 +47,7 @@ func reset_for_new_game() -> void:
 	usage_changed.emit(_water_usage_units, _electricity_usage_units)
 
 
-func record_water_usage(units: int, reason: String = "") -> void:
+func record_water_usage(units: int, _reason: String = "") -> void:
 	if units <= 0:
 		return
 	_water_usage_units += units
@@ -55,7 +55,7 @@ func record_water_usage(units: int, reason: String = "") -> void:
 	bills_changed.emit()
 
 
-func record_electricity_usage(units: int, reason: String = "") -> void:
+func record_electricity_usage(units: int, _reason: String = "") -> void:
 	if units <= 0:
 		return
 	_electricity_usage_units += units
