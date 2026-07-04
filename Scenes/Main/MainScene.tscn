@@ -32,6 +32,7 @@
 [ext_resource type="PackedScene" path="res://Scenes/UI/HUD/BillButton.tscn" id="29_bill_button"]
 [ext_resource type="Script" path="res://Scripts/UI/HUD/Modules/HudButtonActiveFrameController.gd" id="30_hud_active_frame"]
 [ext_resource type="PackedScene" path="res://Scenes/UI/HUD/MoveButton.tscn" id="31_move_button"]
+[ext_resource type="PackedScene" path="res://Scenes/UI/HUD/MoveMenu.tscn" id="32_move_menu"]
 
 [sub_resource type="Environment" id="Environment_ctt6t"]
 glow_enabled = true
@@ -107,6 +108,8 @@ script = ExtResource("25_ai_debug_panel")
 [node name="ShopMenu" parent="CanvasLayer" unique_id=1933516205 instance=ExtResource("15_shop_menu")]
 
 [node name="CraftMenu" parent="CanvasLayer" unique_id=877403541 instance=ExtResource("21_production_menu")]
+
+[node name="MoveMenu" parent="CanvasLayer" instance=ExtResource("32_move_menu")]
 
 [node name="InventoryUI" parent="CanvasLayer" unique_id=520989565 instance=ExtResource("10_inventory_ui")]
 anchors_preset = 8
