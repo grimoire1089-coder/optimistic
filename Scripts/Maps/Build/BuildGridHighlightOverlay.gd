@@ -16,12 +16,20 @@ var _build_mode_controller: BuildModeController
 func _ready() -> void:
 	z_as_relative = false
 	_resolve_refs()
+	visible = _is_build_mode_enabled()
+	set_process(_room_map == null or _build_mode_controller == null or visible)
 	queue_redraw()
 
 
 func _process(_delta: float) -> void:
 	_resolve_refs()
-	queue_redraw()
+	var next_visible := _is_build_mode_enabled()
+	if visible != next_visible:
+		visible = next_visible
+		queue_redraw()
+	set_process(_room_map == null or _build_mode_controller == null or visible)
+	if visible:
+		queue_redraw()
 
 
 func set_room_map_path(next_room_map_path: NodePath) -> void:
