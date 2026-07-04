@@ -5,18 +5,26 @@ class_name AICharacterFootprintShapeModule
 @export var room_map_path: NodePath = NodePath("../../RobinRoomMap")
 @export var footprint_cells: Vector2i = Vector2i(2, 2)
 @export var center_cell_offset: Vector2 = Vector2(0.0, 1.0)
+@export var resolve_interval_seconds: float = 0.25
 
 var _shape_node: CollisionShape2D
 var _room_map: RoomMapGridModule
 var _last_cell_size := Vector2(-1.0, -1.0)
+var _resolve_timer := 0.0
 
 
 func _ready() -> void:
 	_refresh_shape()
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
+	_resolve_timer -= maxf(delta, 0.0)
+	if _resolve_timer > 0.0:
+		return
+	_resolve_timer = maxf(resolve_interval_seconds, 0.05)
 	_refresh_shape()
+	if _shape_node != null and _room_map != null:
+		set_process(false)
 
 
 func _refresh_shape() -> void:
