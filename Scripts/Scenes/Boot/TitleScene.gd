@@ -8,10 +8,12 @@ extends Control
 @export var allow_same_aspect_fullscreen: bool = true
 @export var apply_fullscreen_in_editor: bool = true
 
+@onready var background: ColorRect = $Background
 @onready var start_button: Button = $CenterContainer/CenterBox/StartButton
 @onready var options_button: Button = $CenterContainer/CenterBox/OptionsButton
 @onready var exit_button: Button = $CenterContainer/CenterBox/ExitButton
 @onready var audio_settings_layer: CanvasLayer = $AudioSettingsLayer
+@onready var dim_background: ColorRect = $AudioSettingsLayer/DimBackground
 @onready var close_options_button: Button = $AudioSettingsLayer/CenterContainer/OverlayBox/CloseOptionsButton
 
 
@@ -21,6 +23,12 @@ func _enter_tree() -> void:
 
 func _ready() -> void:
 	call_deferred("_apply_startup_display_mode")
+
+	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if background != null:
+		background.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if dim_background != null:
+		dim_background.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	start_button.text = "はじめる"
 	options_button.text = "設定"
