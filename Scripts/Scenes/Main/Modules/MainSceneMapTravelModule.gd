@@ -43,8 +43,8 @@ func _ready() -> void:
 func _process(_delta: float) -> void:
 	_resolve_static_refs()
 	_connect_buttons()
-	_sync_runtime_build_nodes()
-	_sync_travel_buttons()
+	if _robin_room_map != null and _infrastructure_room_map != null and _robin != null:
+		set_process(false)
 
 
 func travel_to_infrastructure_room() -> void:
