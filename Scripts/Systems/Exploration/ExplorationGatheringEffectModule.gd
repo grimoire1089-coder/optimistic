@@ -41,7 +41,7 @@ func _ready() -> void:
 	_rng.randomize()
 
 
-func play_gathering_item_effect(icon_path: String, _item_display_name: String, amount: int, source_global_position: Vector2) -> void:
+func play_gathering_item_effect(icon_path: String, _item_display_name: String, _amount: int, source_global_position: Vector2) -> void:
 	layer = effect_canvas_layer
 	var side_spawn_offset := _get_random_side_spawn_offset()
 	var previous_facing_state := _face_worker_toward_effect(side_spawn_offset.x)
