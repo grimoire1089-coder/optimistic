@@ -1,6 +1,7 @@
 extends WorldEnvironment
 class_name CanvasGlowEnvironmentModule
 
+@export var canvas_glow_enabled: bool = false
 @export var glow_intensity: float = 1.0
 @export var glow_strength: float = 1.25
 @export var glow_hdr_threshold: float = 1.0
@@ -11,6 +12,11 @@ func _ready() -> void:
 	_setup_canvas_glow()
 
 
+func set_canvas_glow_enabled(is_enabled: bool) -> void:
+	canvas_glow_enabled = is_enabled
+	_setup_canvas_glow()
+
+
 func _setup_canvas_glow() -> void:
 	var canvas_environment := environment
 	if canvas_environment == null:
@@ -18,7 +24,10 @@ func _setup_canvas_glow() -> void:
 		environment = canvas_environment
 
 	canvas_environment.background_mode = Environment.BG_CANVAS
-	canvas_environment.glow_enabled = true
+	canvas_environment.glow_enabled = canvas_glow_enabled
+	if not canvas_glow_enabled:
+		return
+
 	canvas_environment.set("glow_intensity", glow_intensity)
 	canvas_environment.set("glow_strength", glow_strength)
 	canvas_environment.set("glow_hdr_threshold", glow_hdr_threshold)
