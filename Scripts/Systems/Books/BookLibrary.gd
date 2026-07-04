@@ -10,6 +10,7 @@ const COMPLETED_BOOK_IDS_SAVE_KEY := "completed_book_ids"
 	"res://Data/Books/Book_0001_LapisPrimer.tres",
 	"res://Data/Books/Book_0002_DecadanceLivingGuide.tres",
 	"res://Data/Books/Book_0101_CookingVol1.tres",
+	"res://Data/Books/Book_0201_CapsuleFarmMushroomGuide.tres",
 ])
 
 var _known_books: Dictionary = {}
@@ -85,6 +86,42 @@ func get_books() -> Array[BookData]:
 
 func get_book_count() -> int:
 	return _owned_book_ids.size()
+
+
+func get_unlocked_travel_destinations() -> Array[Dictionary]:
+	_load_known_books()
+	var destinations: Array[Dictionary] = []
+	var added_map_ids := {}
+
+	for raw_id in _owned_book_ids.keys():
+		var book := _known_books.get(raw_id, null) as BookData
+		if book == null:
+			continue
+		if not book.has_travel_unlock():
+			continue
+		var map_id := book.get_unlock_travel_map_id()
+		if map_id == &"" or added_map_ids.has(map_id):
+			continue
+		added_map_ids[map_id] = true
+		destinations.append({
+			"map_id": map_id,
+			"display_name": book.get_unlock_travel_display_name(),
+			"description": book.unlock_travel_description,
+			"source_book_id": book.get_item_id(),
+			"source_book_name": book.display_name,
+		})
+
+	return destinations
+
+
+func is_travel_map_unlocked(map_id: StringName) -> bool:
+	if map_id == &"":
+		return false
+	for destination in get_unlocked_travel_destinations():
+		var destination_map_id := _get_map_id_from_destination(destination)
+		if destination_map_id == map_id:
+			return true
+	return false
 
 
 func get_read_pages(book_or_id: Variant) -> int:
@@ -217,6 +254,13 @@ func _load_book_from_path(path: String) -> BookData:
 func _get_book_id_from_variant(value: Variant) -> StringName:
 	if value is BookData:
 		return (value as BookData).get_item_id()
+	if value is StringName:
+		return value
+	return StringName(String(value))
+
+
+func _get_map_id_from_destination(destination: Dictionary) -> StringName:
+	var value: Variant = destination.get("map_id", &"")
 	if value is StringName:
 		return value
 	return StringName(String(value))
