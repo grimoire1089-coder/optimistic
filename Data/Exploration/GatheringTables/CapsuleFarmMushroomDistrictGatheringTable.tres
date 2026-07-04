@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="ExplorationGatheringTable" format=3]
+
+[ext_resource type="Script" path="res://Scripts/Systems/Exploration/ExplorationGatheringTable.gd" id="1_table_script"]
+
+[resource]
+script = ExtResource("1_table_script")
+amount_min = 1
+amount_max = 3
+item_paths = PackedStringArray("res://Data/Items/Ingredients/Mushroom/Mushroom_0001_BrownMushroom.tres", "res://Data/Items/Ingredients/Mushroom/Mushroom_0002_WhiteMushroom.tres", "res://Data/Items/Ingredients/Mushroom/Mushroom_0003_EnokiMushroom.tres", "res://Data/Items/Ingredients/Mushroom/Mushroom_0004_TamogiMushroom.tres", "res://Data/Items/Ingredients/Mushroom/Mushroom_0005_NamekoMushroom.tres", "res://Data/Items/Ingredients/Mushroom/Mushroom_0006_Hiratake.tres", "res://Data/Items/Ingredients/Mushroom/Mushroom_0007_MaitakeMushroom.tres", "res://Data/Items/Ingredients/Mushroom/Mushroom_0008_BailingMushroom.tres", "res://Data/Items/Ingredients/Mushroom/Mushroom_0009_ShimejiMushroom.tres", "res://Data/Items/Ingredients/Mushroom/Mushroom_0010_ShiitakeMushroom.tres", "res://Data/Items/Ingredients/Mushroom/Mushroom_0011_CaesarsMushroom.tres", "res://Data/Items/Ingredients/Mushroom/Mushroom_0012_MatsutakeMushroom.tres", "res://Data/Items/Ingredients/Mushroom/Mushroom_0013_WhiteBeechMushroom.tres", "res://Data/Items/Ingredients/Mushroom/Mushroom_0014_WhiteMaitakeMushroom.tres", "res://Data/Items/Ingredients/Mushroom/Mushroom_0015_KingOysterMushrooms.tres", "res://Data/Items/Ingredients/Mushroom/Mushroom_0016_MorelMushroom.tres", "res://Data/Items/Ingredients/Mushroom/Mushroom_0017_Truffle.tres", "res://Data/Items/Ingredients/Mushroom/Mushroom_0018_Porcini.tres", "res://Data/Items/Ingredients/Mushroom/Mushroom_0019_Chanterelle.tres", "res://Data/Items/Ingredients/Mushroom/Mushroom_0020_WhiteTruffle.tres", "res://Data/Items/Ingredients/Mushroom/Mushroom_0021_CloudEarFungus.tres")
