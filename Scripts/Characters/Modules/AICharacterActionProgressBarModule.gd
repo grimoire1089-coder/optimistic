@@ -12,6 +12,7 @@ class_name AICharacterActionProgressBarModule
 @export var fill_color: Color = Color(0.1, 0.85, 1.0, 0.96)
 @export var border_color: Color = Color(0.0, 0.95, 1.0, 0.72)
 @export var corner_radius: int = 4
+@export var update_interval_seconds: float = 0.1
 
 var _body: Node2D
 var _hydrate_behavior: Node
@@ -21,6 +22,7 @@ var _craft_behavior: Node
 var _read_book_behavior: Node
 var _bar: ProgressBar
 var _bar_add_deferred := false
+var _update_timer := 0.0
 
 
 func _ready() -> void:
@@ -36,7 +38,11 @@ func setup(body: Node2D) -> void:
 	_request_bar()
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
+	_update_timer -= maxf(delta, 0.0)
+	if _update_timer > 0.0:
+		return
+	_update_timer = maxf(update_interval_seconds, 0.05)
 	_resolve_refs()
 	_request_bar()
 	_update_bar()
