@@ -36,6 +36,13 @@ enum LogChannel { NORMAL, CHARACTER, EXPLORATION, DEBUG }
 @export var exploration_card_background_color: Color = Color(0.040, 0.045, 0.060, 0.96)
 @export var exploration_card_border_color: Color = Color(0.72, 0.72, 1.0, 0.92)
 @export var exploration_card_text_color: Color = Color(0.90, 0.92, 1.0, 1.0)
+@export var show_game_timestamp_on_cards: bool = true
+@export var card_timestamp_text_color: Color = Color(0.50, 0.86, 1.0, 0.90)
+@export var debug_card_timestamp_text_color: Color = Color(1.0, 0.74, 0.38, 0.90)
+@export var character_card_timestamp_text_color: Color = Color(0.62, 1.0, 0.75, 0.90)
+@export var exploration_card_timestamp_text_color: Color = Color(0.76, 0.78, 1.0, 0.90)
+@export_range(8, 24, 1) var card_timestamp_font_size: int = 12
+@export_range(10, 28, 1) var card_message_font_size: int = 15
 
 @onready var title_label: Label = %TitleLabel
 @onready var count_label: Label = %CountLabel
@@ -45,10 +52,10 @@ enum LogChannel { NORMAL, CHARACTER, EXPLORATION, DEBUG }
 @onready var scroll_container: ScrollContainer = %ScrollContainer
 @onready var message_list: VBoxContainer = %MessageList
 
-var _normal_messages: Array[String] = []
-var _character_messages: Array[String] = []
-var _exploration_messages: Array[String] = []
-var _debug_messages: Array[String] = []
+var _normal_messages: Array[Dictionary] = []
+var _character_messages: Array[Dictionary] = []
+var _exploration_messages: Array[Dictionary] = []
+var _debug_messages: Array[Dictionary] = []
 var _queued_normal_messages: Array[Dictionary] = []
 var _queued_character_messages: Array[Dictionary] = []
 var _queued_exploration_messages: Array[Dictionary] = []
@@ -245,6 +252,7 @@ func _queue_message_to_channel(message: String, channel: int, should_play_sfx: b
 	var queue := _get_queued_messages_for_channel(channel)
 	queue.append({
 		"message": trimmed_message,
+		"issued_at_text": _make_game_issued_at_text(),
 		"should_play_sfx": should_play_sfx,
 	})
 
@@ -266,7 +274,8 @@ func _process_message_queue(channel: int) -> void:
 		_add_message_to_channel_immediate(
 			str(entry.get("message", "")),
 			channel,
-			bool(entry.get("should_play_sfx", false))
+			bool(entry.get("should_play_sfx", false)),
+			str(entry.get("issued_at_text", ""))
 		)
 
 		if not _get_queued_messages_for_channel(channel).is_empty() and queued_message_delay_seconds > 0.0:
@@ -278,7 +287,7 @@ func _process_message_queue(channel: int) -> void:
 		_start_queue_processor(channel)
 
 
-func _add_message_to_channel_immediate(message: String, channel: int, should_play_sfx: bool) -> void:
+func _add_message_to_channel_immediate(message: String, channel: int, should_play_sfx: bool, issued_at_text: String = "") -> void:
 	var trimmed_message := message.strip_edges()
 	if trimmed_message.is_empty():
 		return
@@ -286,11 +295,12 @@ func _add_message_to_channel_immediate(message: String, channel: int, should_pla
 	if channel == LogChannel.DEBUG:
 		should_play_sfx = false
 
+	var message_entry := _make_message_entry(trimmed_message, issued_at_text)
 	var messages := _get_messages_for_channel(channel)
-	messages.append(trimmed_message)
+	messages.append(message_entry)
 
 	if channel == _current_channel:
-		_create_message_card(trimmed_message, channel, true)
+		_create_message_card(message_entry, channel, true)
 
 	_trim_old_messages(channel)
 	_update_header()
@@ -361,18 +371,18 @@ func _rebuild_visible_messages(animate_cards: bool) -> void:
 		message_list.remove_child(child)
 		child.queue_free()
 
-	for message in _get_messages_for_channel(_current_channel):
-		_create_message_card(message, _current_channel, animate_cards)
+	for message_entry in _get_messages_for_channel(_current_channel):
+		_create_message_card(message_entry, _current_channel, animate_cards)
 
 
-func _create_message_card(message: String, channel: int, animate_card: bool) -> void:
-	var target_card_height := _get_message_card_height(message)
+func _create_message_card(message_entry: Dictionary, channel: int, animate_card: bool) -> void:
+	var target_card_height := _get_message_card_height(_get_message_entry_text(message_entry), _has_visible_timestamp(message_entry))
 	var holder := Control.new()
 	holder.clip_contents = true
 	holder.custom_minimum_size = Vector2(0.0, 0.0 if animate_card else target_card_height)
 	holder.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 
-	var card := _make_card_node(message, channel, animate_card, target_card_height)
+	var card := _make_card_node(message_entry, channel, animate_card, target_card_height)
 	holder.add_child(card)
 	message_list.add_child(holder)
 
@@ -380,7 +390,7 @@ func _create_message_card(message: String, channel: int, animate_card: bool) -> 
 		call_deferred("_animate_message_card", holder, card, target_card_height)
 
 
-func _make_card_node(message: String, channel: int, animate_card: bool, target_card_height: float) -> PanelContainer:
+func _make_card_node(message_entry: Dictionary, channel: int, animate_card: bool, target_card_height: float) -> PanelContainer:
 	var card := PanelContainer.new()
 	card.custom_minimum_size = Vector2(0.0, target_card_height)
 	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -407,25 +417,42 @@ func _make_card_node(message: String, channel: int, animate_card: bool, target_c
 	margin.add_theme_constant_override("margin_bottom", 10)
 	card.add_child(margin)
 
+	var content_box := VBoxContainer.new()
+	content_box.alignment = BoxContainer.ALIGNMENT_CENTER
+	content_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	content_box.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	content_box.add_theme_constant_override("separation", 2)
+	margin.add_child(content_box)
+
+	if _has_visible_timestamp(message_entry):
+		var timestamp_label := Label.new()
+		timestamp_label.text = _get_message_entry_issued_at_text(message_entry)
+		timestamp_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		timestamp_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+		timestamp_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		timestamp_label.add_theme_color_override("font_color", _get_card_timestamp_text_color(channel))
+		timestamp_label.add_theme_font_size_override("font_size", card_timestamp_font_size)
+		content_box.add_child(timestamp_label)
+
 	var label := Label.new()
-	label.text = message
+	label.text = _get_message_entry_text(message_entry)
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	label.add_theme_color_override("font_color", _get_card_text_color(channel))
-	label.add_theme_font_size_override("font_size", 15)
-	margin.add_child(label)
+	label.add_theme_font_size_override("font_size", card_message_font_size)
+	content_box.add_child(label)
 
 	return card
 
 
-func _get_message_card_height(message: String) -> float:
-	var estimated_line_count := 0
+func _get_message_card_height(message: String, has_timestamp: bool) -> float:
+	var estimated_line_count := 1 if has_timestamp else 0
 	var safe_chars_per_line := maxi(card_estimated_chars_per_line, 1)
 	var text_lines := message.split("\n", false)
 
 	if text_lines.is_empty():
-		estimated_line_count = 1
+		estimated_line_count += 1
 	else:
 		for text_line in text_lines:
 			var line_length: int = maxi(text_line.length(), 1)
@@ -530,7 +557,7 @@ func _get_current_messages_count() -> int:
 	return _get_messages_for_channel(_current_channel).size()
 
 
-func _get_messages_for_channel(channel: int) -> Array[String]:
+func _get_messages_for_channel(channel: int) -> Array[Dictionary]:
 	if channel == LogChannel.DEBUG:
 		return _debug_messages
 	if channel == LogChannel.CHARACTER:
@@ -582,7 +609,12 @@ func _build_debug_log_export_text() -> String:
 		lines.append("previous_export=%s" % ProjectSettings.globalize_path(_last_exported_debug_log_path))
 	lines.append("---")
 	for index in range(_debug_messages.size()):
-		lines.append("%03d: %s" % [index + 1, _debug_messages[index]])
+		var entry: Dictionary = _debug_messages[index]
+		var issued_at_text := _get_message_entry_issued_at_text(entry)
+		if issued_at_text.is_empty():
+			lines.append("%03d: %s" % [index + 1, _get_message_entry_text(entry)])
+		else:
+			lines.append("%03d [%s] %s" % [index + 1, issued_at_text, _get_message_entry_text(entry)])
 	return "\n".join(lines) + "\n"
 
 
@@ -614,10 +646,36 @@ func _make_timestamp_text() -> String:
 	]
 
 
-func _to_packed_string_array(messages: Array[String]) -> PackedStringArray:
+func _make_message_entry(message: String, issued_at_text: String = "") -> Dictionary:
+	var safe_issued_at_text := issued_at_text.strip_edges()
+	if safe_issued_at_text.is_empty():
+		safe_issued_at_text = _make_game_issued_at_text()
+	return {
+		"message": message,
+		"issued_at_text": safe_issued_at_text,
+	}
+
+
+func _make_game_issued_at_text() -> String:
+	return "発行: %s" % MessageLogTimestampModule.make_game_timestamp_text(self)
+
+
+func _get_message_entry_text(message_entry: Dictionary) -> String:
+	return str(message_entry.get("message", ""))
+
+
+func _get_message_entry_issued_at_text(message_entry: Dictionary) -> String:
+	return str(message_entry.get("issued_at_text", ""))
+
+
+func _has_visible_timestamp(message_entry: Dictionary) -> bool:
+	return show_game_timestamp_on_cards and not _get_message_entry_issued_at_text(message_entry).is_empty()
+
+
+func _to_packed_string_array(messages: Array[Dictionary]) -> PackedStringArray:
 	var result := PackedStringArray()
-	for message in messages:
-		result.append(message)
+	for message_entry in messages:
+		result.append(_get_message_entry_text(message_entry))
 	return result
 
 
@@ -629,6 +687,16 @@ func _get_card_text_color(channel: int) -> Color:
 	if channel == LogChannel.EXPLORATION:
 		return exploration_card_text_color
 	return card_text_color
+
+
+func _get_card_timestamp_text_color(channel: int) -> Color:
+	if channel == LogChannel.DEBUG:
+		return debug_card_timestamp_text_color
+	if channel == LogChannel.CHARACTER:
+		return character_card_timestamp_text_color
+	if channel == LogChannel.EXPLORATION:
+		return exploration_card_timestamp_text_color
+	return card_timestamp_text_color
 
 
 func _make_card_style(channel: int) -> StyleBoxFlat:
