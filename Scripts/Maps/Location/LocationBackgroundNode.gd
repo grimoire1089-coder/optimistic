@@ -66,6 +66,18 @@ func get_panel_global_rect() -> Rect2:
 	return Rect2(global_position + _draw_rect.position, _draw_rect.size)
 
 
+func get_room_map_global_rect() -> Rect2:
+	_resolve_refs()
+	if _room_map == null or not _room_map.visible:
+		return Rect2()
+	if not _room_map.has_method("get_grid_rect"):
+		return Rect2()
+	var grid_rect: Rect2 = _room_map.get_grid_rect()
+	if grid_rect.size.x <= 0.0 or grid_rect.size.y <= 0.0:
+		return Rect2()
+	return grid_rect
+
+
 func _draw() -> void:
 	if not visible or _draw_rect.size.x <= 0.0 or _draw_rect.size.y <= 0.0:
 		return
