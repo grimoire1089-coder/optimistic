@@ -2,13 +2,14 @@ extends Control
 class_name SimpleProfilerHud
 
 @export var update_interval_seconds: float = 0.5
-@export var panel_size: Vector2 = Vector2(460.0, 350.0)
+@export var panel_size: Vector2 = Vector2(560.0, 520.0)
 @export var panel_offset: Vector2 = Vector2(16.0, 16.0)
 @export var toggle_key: Key = KEY_F3
 @export var toggle_ui_key: Key = KEY_F4
 @export var toggle_map_key: Key = KEY_F5
 @export var toggle_background_key: Key = KEY_F6
 @export var toggle_actor_key: Key = KEY_F7
+@export var listed_process_node_limit: int = 14
 
 var _label: Label
 var _timer := 0.0
@@ -19,10 +20,12 @@ var _total_node_count := 0
 var _process_node_count := 0
 var _physics_node_count := 0
 var _canvas_item_count := 0
+var _process_node_paths: PackedStringArray = []
 var _ui_diagnostic_hidden := false
 var _map_diagnostic_hidden := false
 var _background_diagnostic_hidden := false
 var _actor_diagnostic_hidden := false
+var _ui_diagnostic_state: Dictionary = {}
 
 
 func _ready() -> void:
@@ -142,7 +145,7 @@ func _build_text() -> String:
 	var texture_mb := _bytes_to_mb(float(Performance.get_monitor(Performance.RENDER_TEXTURE_MEM_USED)))
 	var physics_objects := int(Performance.get_monitor(Performance.PHYSICS_2D_ACTIVE_OBJECTS))
 	var collision_pairs := int(Performance.get_monitor(Performance.PHYSICS_2D_COLLISION_PAIRS))
-	return "PROFILER HUD  F3: 表示切替\nF4:UI=%s F5:MAP=%s F6:BG=%s F7:ROBIN=%s\nFPS: %d / %.1f ms  avg: %.1f ms\nEngine.max_fps: %d  low_processor: %s\nProcess ms: %.2f  Physics ms: %.2f\nNodes: %d  _process: %d  _physics: %d\nCanvasItems: %d\nDraw calls: %d  Render objects: %d\nPrimitives: %d\nVideo MB: %.1f  Texture MB: %.1f\n2D physics objects: %d  pairs: %d" % [
+	return "PROFILER HUD  F3: 表示切替\nF4:UI=%s F5:MAP=%s F6:BG=%s F7:ROBIN=%s\nFPS: %d / %.1f ms  avg: %.1f ms\nEngine.max_fps: %d  low_processor: %s\nProcess ms: %.2f  Physics ms: %.2f\nNodes: %d  _process: %d  _physics: %d\nCanvasItems: %d\nDraw calls: %d  Render objects: %d\nPrimitives: %d\nVideo MB: %.1f  Texture MB: %.1f\n2D physics objects: %d  pairs: %d\n\n_process nodes:\n%s" % [
 		_hidden_label(_ui_diagnostic_hidden),
 		_hidden_label(_map_diagnostic_hidden),
 		_hidden_label(_background_diagnostic_hidden),
@@ -165,6 +168,7 @@ func _build_text() -> String:
 		texture_mb,
 		physics_objects,
 		collision_pairs,
+		_get_process_node_text(),
 	]
 
 
@@ -173,14 +177,52 @@ func _toggle_ui_diagnostic() -> void:
 	var parent_node := get_parent()
 	if parent_node == null:
 		return
-	for child in parent_node.get_children():
-		var canvas_item := child as CanvasItem
-		if canvas_item == null:
-			continue
-		if canvas_item == self:
-			continue
-		canvas_item.visible = not _ui_diagnostic_hidden
+	if _ui_diagnostic_hidden:
+		_ui_diagnostic_state.clear()
+		for child in parent_node.get_children():
+			if child == self:
+				continue
+			_capture_and_disable_ui_node(child)
+	else:
+		_restore_ui_diagnostic_state()
 	_refresh()
+
+
+func _capture_and_disable_ui_node(node: Node) -> void:
+	if node == null:
+		return
+	var canvas_item := node as CanvasItem
+	_ui_diagnostic_state[node.get_instance_id()] = {
+		"node": node,
+		"visible": canvas_item.visible if canvas_item != null else true,
+		"process": node.is_processing(),
+		"physics": node.is_physics_processing(),
+	}
+	if canvas_item != null:
+		canvas_item.visible = false
+	if node.is_processing():
+		node.set_process(false)
+	if node.is_physics_processing():
+		node.set_physics_process(false)
+	for child in node.get_children():
+		_capture_and_disable_ui_node(child)
+
+
+func _restore_ui_diagnostic_state() -> void:
+	for state in _ui_diagnostic_state.values():
+		if not state.has("node"):
+			continue
+		var node := state["node"] as Node
+		if node == null or not is_instance_valid(node):
+			continue
+		var canvas_item := node as CanvasItem
+		if canvas_item != null and state.has("visible"):
+			canvas_item.visible = bool(state["visible"])
+		if state.has("process"):
+			node.set_process(bool(state["process"]))
+		if state.has("physics"):
+			node.set_physics_process(bool(state["physics"]))
+	_ui_diagnostic_state.clear()
 
 
 func _toggle_main_child_visibility(node_name: String, flag_property: StringName) -> void:
@@ -214,6 +256,7 @@ func _scan_tree_counts() -> void:
 	_process_node_count = 0
 	_physics_node_count = 0
 	_canvas_item_count = 0
+	_process_node_paths.clear()
 	_count_node_recursive(get_tree().root)
 
 
@@ -223,12 +266,20 @@ func _count_node_recursive(node: Node) -> void:
 	_total_node_count += 1
 	if node.is_processing():
 		_process_node_count += 1
+		if _process_node_paths.size() < listed_process_node_limit:
+			_process_node_paths.append(str(node.get_path()))
 	if node.is_physics_processing():
 		_physics_node_count += 1
 	if node is CanvasItem:
 		_canvas_item_count += 1
 	for child in node.get_children():
 		_count_node_recursive(child)
+
+
+func _get_process_node_text() -> String:
+	if _process_node_paths.is_empty():
+		return "none"
+	return "\n".join(_process_node_paths)
 
 
 func _seconds_to_ms(seconds: float) -> float:
