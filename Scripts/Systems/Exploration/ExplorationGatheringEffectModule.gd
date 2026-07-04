@@ -3,13 +3,14 @@ class_name ExplorationGatheringEffectModule
 
 const INVENTORY_BUTTON_GROUP: StringName = &"inventory_button"
 
-@export var icon_size: float = 34.0
-@export var grow_duration: float = 0.28
-@export var hold_duration: float = 0.18
-@export var fly_duration: float = 0.56
-@export var pickup_rise_distance: float = 34.0
-@export var particle_count: int = 12
-@export var particle_spread: float = 42.0
+@export var icon_size: float = 44.0
+@export var sprout_duration: float = 1.05
+@export var particle_gather_duration: float = 0.46
+@export var hold_duration: float = 0.34
+@export var fly_duration: float = 1.15
+@export var sprout_rise_distance: float = 20.0
+@export var particle_count: int = 16
+@export var particle_spread: float = 34.0
 @export var fallback_target_position: Vector2 = Vector2(1516.0, 212.0)
 @export var glow_color: Color = Color(0.20, 1.0, 0.95, 0.88)
 @export var particle_color: Color = Color(0.42, 1.0, 0.90, 0.92)
@@ -26,7 +27,7 @@ func _ready() -> void:
 func play_gathering_item_effect(icon_path: String, item_display_name: String, amount: int, source_global_position: Vector2) -> void:
 	var effect_root := Node2D.new()
 	effect_root.name = "GatheringItemPickupEffect"
-	effect_root.global_position = source_global_position
+	effect_root.global_position = source_global_position + Vector2(0.0, 8.0)
 	effect_root.z_as_relative = false
 	effect_root.z_index = 120
 	add_child(effect_root)
@@ -39,22 +40,29 @@ func play_gathering_item_effect(icon_path: String, item_display_name: String, am
 	icon_sprite.centered = true
 	icon_sprite.texture = _load_texture(icon_path)
 	icon_sprite.z_index = 3
-	icon_sprite.scale = Vector2.ZERO
+	icon_sprite.position = Vector2(0.0, -icon_size * 0.5)
 	effect_root.add_child(icon_sprite)
-	_fit_sprite_to_size(icon_sprite, icon_size)
-	icon_sprite.scale = Vector2.ZERO
+	var icon_target_scale := _get_icon_target_scale(icon_sprite)
+	icon_sprite.scale = Vector2(icon_target_scale.x * 0.08, icon_target_scale.y * 0.02)
+	icon_sprite.modulate.a = 0.0
 
 	for index in range(maxi(particle_count, 0)):
 		var particle := _make_particle_square(index)
 		effect_root.add_child(particle)
 
 	var target_position := _get_inventory_button_center()
-	var grow_position := source_global_position + Vector2(0.0, -maxf(pickup_rise_distance, 0.0))
-	var tween := create_tween()
-	tween.set_parallel(true)
-	tween.tween_property(effect_root, "global_position", grow_position, maxf(grow_duration, 0.01)).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	tween.tween_property(icon_sprite, "scale", _get_icon_target_scale(icon_sprite), maxf(grow_duration, 0.01)).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	tween.tween_property(glow, "modulate:a", 0.96, maxf(grow_duration, 0.01))
+	var sprout_position := source_global_position + Vector2(0.0, -maxf(sprout_rise_distance, 0.0))
+
+	var sprout_tween := create_tween()
+	sprout_tween.set_parallel(true)
+	sprout_tween.tween_property(effect_root, "global_position", sprout_position, maxf(sprout_duration, 0.01)).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	sprout_tween.tween_property(icon_sprite, "scale", icon_target_scale, maxf(sprout_duration, 0.01)).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	sprout_tween.tween_property(icon_sprite, "modulate:a", 1.0, maxf(sprout_duration * 0.45, 0.01)).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	sprout_tween.tween_property(glow, "modulate:a", 0.64, maxf(sprout_duration * 0.7, 0.01)).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	sprout_tween.tween_property(glow, "scale", Vector2(1.18, 1.18), maxf(sprout_duration, 0.01)).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+
+	var particle_tween := create_tween()
+	particle_tween.tween_interval(maxf(sprout_duration * 0.72, 0.01))
 	for child in effect_root.get_children():
 		if child == icon_sprite or child == glow:
 			continue
@@ -65,14 +73,16 @@ func play_gathering_item_effect(icon_path: String, item_display_name: String, am
 			_rng.randf_range(-particle_spread, particle_spread),
 			_rng.randf_range(-particle_spread, particle_spread)
 		)
-		tween.tween_property(particle_node, "position", random_offset, maxf(grow_duration, 0.01)).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-		tween.tween_property(particle_node, "rotation", _rng.randf_range(-1.8, 1.8), maxf(grow_duration, 0.01))
+		var alpha := float(particle_node.get_meta(&"target_alpha", 0.82))
+		particle_tween.parallel().tween_property(particle_node, "position", random_offset, maxf(particle_gather_duration, 0.01)).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+		particle_tween.parallel().tween_property(particle_node, "rotation", _rng.randf_range(-2.2, 2.2), maxf(particle_gather_duration, 0.01)).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+		particle_tween.parallel().tween_property(particle_node, "modulate:a", alpha, maxf(particle_gather_duration, 0.01)).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 
 	var fly_tween := create_tween()
-	fly_tween.tween_interval(maxf(grow_duration + hold_duration, 0.01))
-	fly_tween.tween_property(effect_root, "global_position", target_position, maxf(fly_duration, 0.01)).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN_OUT)
-	fly_tween.parallel().tween_property(effect_root, "scale", Vector2(0.36, 0.36), maxf(fly_duration, 0.01)).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
-	fly_tween.parallel().tween_property(effect_root, "modulate:a", 0.0, maxf(fly_duration, 0.01)).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
+	fly_tween.tween_interval(maxf(sprout_duration + hold_duration, 0.01))
+	fly_tween.tween_property(effect_root, "global_position", target_position, maxf(fly_duration, 0.01)).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	fly_tween.parallel().tween_property(effect_root, "scale", Vector2(0.34, 0.34), maxf(fly_duration, 0.01)).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	fly_tween.parallel().tween_property(effect_root, "modulate:a", 0.0, maxf(fly_duration, 0.01)).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
 	fly_tween.tween_callback(Callable(effect_root, "queue_free"))
 
 
@@ -80,10 +90,12 @@ func _make_glow_square() -> ColorRect:
 	var glow := ColorRect.new()
 	glow.name = "GlowSquare"
 	glow.color = glow_color
-	glow.custom_minimum_size = Vector2(52.0, 52.0)
+	glow.custom_minimum_size = Vector2(58.0, 58.0)
 	glow.size = glow.custom_minimum_size
-	glow.position = -glow.size * 0.5
+	glow.position = -glow.size * 0.5 + Vector2(0.0, -icon_size * 0.5)
+	glow.pivot_offset = glow.size * 0.5
 	glow.modulate.a = 0.0
+	glow.scale = Vector2(0.30, 0.30)
 	glow.rotation = 0.78
 	glow.z_index = 1
 	return glow
@@ -96,23 +108,14 @@ func _make_particle_square(index: int) -> ColorRect:
 	particle.color = particle_color
 	particle.custom_minimum_size = Vector2(size, size)
 	particle.size = particle.custom_minimum_size
-	particle.position = -particle.size * 0.5
+	particle.position = Vector2(-size * 0.5, -icon_size * 0.5 - size * 0.5)
 	particle.pivot_offset = particle.size * 0.5
 	particle.rotation = _rng.randf_range(-1.0, 1.0)
-	particle.modulate.a = _rng.randf_range(0.55, 0.95)
+	var alpha := _rng.randf_range(0.55, 0.95)
+	particle.set_meta(&"target_alpha", alpha)
+	particle.modulate.a = 0.0
 	particle.z_index = 2
 	return particle
-
-
-func _fit_sprite_to_size(sprite: Sprite2D, target_size: float) -> void:
-	if sprite == null or sprite.texture == null:
-		return
-	var texture_size := sprite.texture.get_size()
-	var max_side := maxf(texture_size.x, texture_size.y)
-	if max_side <= 0.0:
-		return
-	var scale_value := maxf(target_size, 1.0) / max_side
-	sprite.scale = Vector2(scale_value, scale_value)
 
 
 func _get_icon_target_scale(sprite: Sprite2D) -> Vector2:
