@@ -8,6 +8,7 @@ const DEFAULT_LOCATION_TEXTURE_PATH := "res://Assets/Maps/Location/Location_001.
 @export var show_background: bool = true
 @export var width_ratio_to_map: float = 1.05
 @export var height_ratio_to_width: float = 0.36
+@export var preserve_texture_aspect_ratio: bool = true
 @export var min_height: float = 180.0
 @export var max_height: float = 320.0
 @export var bottom_gap: float = 18.0
@@ -88,8 +89,9 @@ func _sync_layout() -> void:
 		_draw_rect = Rect2()
 		return
 
-	var target_width := grid_rect.size.x * clampf(width_ratio_to_map, 0.1, 1.4)
-	var target_height := clampf(target_width * maxf(height_ratio_to_width, 0.01), min_height, max_height)
+	var target_size := _get_target_panel_size(grid_rect)
+	var target_width := target_size.x
+	var target_height := target_size.y
 	var target_top := grid_rect.end.y + maxf(bottom_gap, 0.0)
 	var viewport_rect := get_viewport().get_visible_rect()
 	var bottom_limit := viewport_rect.end.y - maxf(viewport_bottom_margin, 0.0)
@@ -100,6 +102,25 @@ func _sync_layout() -> void:
 
 	global_position = Vector2(grid_rect.position.x + grid_rect.size.x * 0.5, target_top + target_height * 0.5)
 	_draw_rect = Rect2(Vector2(-target_width * 0.5, -target_height * 0.5), Vector2(target_width, target_height))
+
+
+func _get_target_panel_size(grid_rect: Rect2) -> Vector2:
+	var target_width := grid_rect.size.x * clampf(width_ratio_to_map, 0.1, 1.4)
+	var target_height := target_width * maxf(height_ratio_to_width, 0.01)
+	if preserve_texture_aspect_ratio and _texture != null:
+		var texture_size := _texture.get_size()
+		if texture_size.x > 0.0 and texture_size.y > 0.0:
+			var texture_aspect := texture_size.x / texture_size.y
+			target_height = target_width / texture_aspect
+			if target_height > max_height:
+				target_height = max_height
+				target_width = target_height * texture_aspect
+			elif target_height < min_height:
+				target_height = min_height
+				target_width = target_height * texture_aspect
+			return Vector2(target_width, target_height)
+	target_height = clampf(target_height, min_height, max_height)
+	return Vector2(target_width, target_height)
 
 
 func _load_texture_if_needed() -> void:
