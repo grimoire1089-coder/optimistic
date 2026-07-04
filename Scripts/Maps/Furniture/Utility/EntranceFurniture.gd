@@ -12,6 +12,7 @@ class_name EntranceFurniture
 @export var sprite_fill_ratio: float = 1.0
 @export var built_in: bool = true
 @export var build_locked: bool = true
+@export var click_travel_enabled: bool = false
 
 var _sprite: Sprite2D
 var _click_shape: CollisionShape2D
@@ -51,13 +52,19 @@ func _configure_click_area() -> void:
 	var click_area := get_node_or_null("ClickArea2D") as Area2D
 	if click_area == null:
 		return
-	click_area.input_pickable = true
+	click_area.input_pickable = click_travel_enabled
 	var callable := Callable(self, "_on_click_area_input_event")
-	if not click_area.input_event.is_connected(callable):
-		click_area.input_event.connect(callable)
+	if click_travel_enabled:
+		if not click_area.input_event.is_connected(callable):
+			click_area.input_event.connect(callable)
+		return
+	if click_area.input_event.is_connected(callable):
+		click_area.input_event.disconnect(callable)
 
 
 func _on_click_area_input_event(_viewport: Viewport, event: InputEvent, _shape_idx: int) -> void:
+	if not click_travel_enabled:
+		return
 	if not (event is InputEventMouseButton):
 		return
 	var mouse_event := event as InputEventMouseButton
