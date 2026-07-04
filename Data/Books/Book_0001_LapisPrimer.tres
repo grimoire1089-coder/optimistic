@@ -1,7 +1,7 @@
 [gd_resource type="Resource" script_class="BookData" format=3]
 
 [ext_resource type="Script" path="res://Scripts/Books/BookData.gd" id="1_book_data"]
-[ext_resource type="Texture2D" path="res://Assets/Items/Icons/Tool/Lapis_001.png" id="2_lapis_icon"]
+[ext_resource type="Texture2D" path="res://Assets/Items/Icons/Tool/Chip_Books.png" id="2_book_chip"]
 
 [resource]
 script = ExtResource("1_book_data")
@@ -10,7 +10,7 @@ display_name = "ラピス入門"
 description = "スマート端末ラピスの基本操作をまとめた電子書籍。"
 author_name = "デカダンス生活局"
 body_text = "ラピスは通信、決済、魔導操作をひとつにまとめたスマート端末です。\n\n手首や耳元、胸部装甲に埋め込む型が一般的で、意識や声に反応してホログラム画面を展開します。\n\n日常ではメッセージ、支払い、予定管理、娯楽閲覧に使われます。慣れてきたら魔法回路の簡易操作や、ミラージュジェムとの連携にも挑戦できます。"
-icon = ExtResource("2_lapis_icon")
+icon = ExtResource("2_book_chip")
 genre_id = &"guide"
 genre_display_name = "ガイド"
 buy_price = 120
