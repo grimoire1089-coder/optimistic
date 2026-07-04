@@ -1,6 +1,8 @@
 extends PanelContainer
 class_name AICharacterHud
 
+const FRONT_Z_INDEX := 200
+
 @onready var title_label: Label = $MarginContainer/Rows/Header/TitleLabel
 @onready var action_label: Label = $MarginContainer/Rows/ActionLabel
 @onready var close_button: Button = $MarginContainer/Rows/Header/CloseButton
@@ -17,6 +19,7 @@ var _last_logged_action_id: StringName = &""
 
 func _ready() -> void:
 	visible = false
+	_apply_front_layer_priority()
 	close_button.pressed.connect(hide_hud)
 	_setup_tabs()
 	_push_debug_result("AI HUD", "ready", true, "非表示状態で待機します")
@@ -31,6 +34,7 @@ func show_actor(actor: RobinWanderActor) -> void:
 	_push_debug_message("AI HUD", "show_actor 開始")
 	_actor = actor
 	visible = true
+	_apply_front_layer_priority()
 	_last_logged_need_id = &""
 	_last_logged_action_id = &""
 	if tab_container != null:
@@ -82,6 +86,11 @@ func _process(delta: float) -> void:
 		return
 	_refresh_timer = 0.25
 	_update_action_label()
+
+func _apply_front_layer_priority() -> void:
+	z_as_relative = false
+	z_index = FRONT_Z_INDEX
+	move_to_front()
 
 func _setup_tabs() -> void:
 	if tab_container == null:
