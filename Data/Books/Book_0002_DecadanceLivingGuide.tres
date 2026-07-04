@@ -1,7 +1,7 @@
 [gd_resource type="Resource" script_class="BookData" format=3]
 
 [ext_resource type="Script" path="res://Scripts/Books/BookData.gd" id="1_book_data"]
-[ext_resource type="Texture2D" path="res://Assets/Items/Icons/Tool/Lapis_001.png" id="2_lapis_icon"]
+[ext_resource type="Texture2D" path="res://Assets/Items/Icons/Tool/Chip_Books.png" id="2_book_chip"]
 
 [resource]
 script = ExtResource("1_book_data")
@@ -10,7 +10,7 @@ display_name = "デカダンス生活ガイド"
 description = "都市での暮らし方をやさしく案内する電子書籍。"
 author_name = "市民サポート編集部"
 body_text = "デカダンスでの暮らしは、部屋、仕事、食事、娯楽の小さな積み重ねで安定していきます。\n\n住民は自分のペースで休み、働き、必要なものを買い、時にはラピスで静かに時間を過ごします。\n\n困ったときは欲求の低い項目から整えていきましょう。水分、体力、清潔度は行動の土台です。満たされているほど、新しい一日を穏やかに始められます。"
-icon = ExtResource("2_lapis_icon")
+icon = ExtResource("2_book_chip")
 genre_id = &"guide"
 genre_display_name = "ガイド"
 buy_price = 180
