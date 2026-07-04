@@ -6,8 +6,12 @@ class_name RobinMovementAreaFrame
 @export var outer_glow_width: float = 24.0
 @export var middle_glow_width: float = 12.0
 @export var core_line_width: float = 4.0
+@export var update_interval_seconds: float = 0.25
 
 var _actor: RobinWanderActor
+var _last_viewport_rect := Rect2()
+var _last_area := Rect2()
+var _update_timer := 0.0
 
 
 func _ready() -> void:
@@ -16,15 +20,17 @@ func _ready() -> void:
 	z_index = 10
 	self_modulate = raw_modulate_color
 	_actor = get_node_or_null(actor_path) as RobinWanderActor
-	_sync_to_viewport()
-	queue_redraw()
+	_sync_layout(true)
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
+	_update_timer -= maxf(delta, 0.0)
+	if _update_timer > 0.0:
+		return
+	_update_timer = maxf(update_interval_seconds, 0.05)
 	if _actor == null:
 		_actor = get_node_or_null(actor_path) as RobinWanderActor
-	_sync_to_viewport()
-	queue_redraw()
+	_sync_layout(false)
 
 
 func _draw() -> void:
@@ -53,7 +59,16 @@ func _draw_outside_rect_stroke(base_rect: Rect2, color: Color, width: float) -> 
 	draw_rect(base_rect.grow(stroke_width * 0.5), color, false, stroke_width)
 
 
-func _sync_to_viewport() -> void:
+func _sync_layout(force_redraw: bool) -> void:
 	var viewport_rect := get_viewport().get_visible_rect()
 	global_position = viewport_rect.position
 	size = viewport_rect.size
+
+	var area := Rect2()
+	if _actor != null:
+		area = _actor.get_grid_movement_area()
+
+	if force_redraw or not viewport_rect.is_equal_approx(_last_viewport_rect) or not area.is_equal_approx(_last_area):
+		_last_viewport_rect = viewport_rect
+		_last_area = area
+		queue_redraw()
