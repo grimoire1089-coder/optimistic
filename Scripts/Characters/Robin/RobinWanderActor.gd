@@ -101,6 +101,7 @@ func _physics_process(delta: float) -> void:
 				walk_animator.update_animation(velocity, facing_direction, delta)
 			else:
 				velocity = Vector2.ZERO
+				walk_animator.sync_actor_position_without_motion()
 				walk_animator.update_animation(velocity, facing_direction, delta)
 			_update_grid_alignment_after_motion()
 			return

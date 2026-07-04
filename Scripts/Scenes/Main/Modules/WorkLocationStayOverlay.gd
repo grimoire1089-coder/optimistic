@@ -9,9 +9,11 @@ const DEFAULT_PARTNER_STANDING_TEXTURE_PATH := "res://Assets/Characters/Gantetsu
 @export var worker_path: NodePath = NodePath("../Robin")
 @export var worker_fallback_texture_path: String = DEFAULT_WORKER_STANDING_TEXTURE_PATH
 @export var show_worker_duplicate: bool = false
+@export var worker_duplicate_facing_direction: Vector2 = Vector2(1.0, 1.0)
 @export var partner_display_name: String = "ガンテツ"
 @export var partner_portrait_texture_path: String = DEFAULT_PARTNER_PORTRAIT_TEXTURE_PATH
 @export var partner_standing_texture_path: String = DEFAULT_PARTNER_STANDING_TEXTURE_PATH
+@export var partner_facing_direction: Vector2 = Vector2(-1.0, 1.0)
 @export var worker_position_ratio: Vector2 = Vector2(0.44, 0.58)
 @export var partner_position_ratio: Vector2 = Vector2(0.58, 0.58)
 @export var portrait_position_ratio: Vector2 = Vector2(0.16, 0.50)
@@ -135,7 +137,7 @@ func _ensure_children() -> void:
 		_partner_name_label.add_theme_font_size_override("font_size", 14)
 		add_child(_partner_name_label)
 
-	_configure_direction_sprite(_partner_sprite, partner_standing_texture_path)
+	_configure_direction_sprite(_partner_sprite, partner_standing_texture_path, partner_facing_direction)
 	_configure_plain_sprite(_partner_portrait_sprite, partner_portrait_texture_path)
 
 
@@ -224,17 +226,17 @@ func _sync_worker_sprite_texture() -> void:
 		_worker_sprite.frame = clampi(source_sprite.frame, 0, _worker_sprite.hframes * _worker_sprite.vframes - 1)
 		_worker_sprite.flip_h = source_sprite.flip_h
 		return
-	_configure_direction_sprite(_worker_sprite, worker_fallback_texture_path)
+	_configure_direction_sprite(_worker_sprite, worker_fallback_texture_path, worker_duplicate_facing_direction)
 
 
-func _configure_direction_sprite(sprite: Sprite2D, texture_path: String) -> void:
+func _configure_direction_sprite(sprite: Sprite2D, texture_path: String, facing_direction: Vector2) -> void:
 	if sprite == null:
 		return
 	var texture := _load_texture(texture_path)
 	sprite.texture = texture
 	sprite.hframes = 2
 	sprite.vframes = 4
-	sprite.frame = 0
+	sprite.frame_coords = _direction_to_frame_coords(facing_direction)
 	sprite.visible = texture != null
 
 
@@ -326,6 +328,39 @@ func _load_texture(texture_path: String) -> Texture2D:
 	if not ResourceLoader.exists(texture_path):
 		return null
 	return load(texture_path) as Texture2D
+
+
+func _direction_to_frame_coords(direction: Vector2) -> Vector2i:
+	if direction.length_squared() <= 0.001:
+		return Vector2i(0, 0)
+	var normalized_direction := direction.normalized()
+	var x := 0
+	var y := 0
+	if normalized_direction.x > 0.35:
+		x = 1
+	elif normalized_direction.x < -0.35:
+		x = -1
+	if normalized_direction.y > 0.35:
+		y = 1
+	elif normalized_direction.y < -0.35:
+		y = -1
+	if x == 0 and y == 1:
+		return Vector2i(0, 0)
+	if x == 0 and y == -1:
+		return Vector2i(1, 0)
+	if x == 1 and y == 0:
+		return Vector2i(0, 1)
+	if x == -1 and y == 0:
+		return Vector2i(1, 1)
+	if x == 1 and y == 1:
+		return Vector2i(0, 2)
+	if x == -1 and y == 1:
+		return Vector2i(1, 2)
+	if x == 1 and y == -1:
+		return Vector2i(0, 3)
+	if x == -1 and y == -1:
+		return Vector2i(1, 3)
+	return Vector2i(0, 0)
 
 
 func _resolve_refs() -> void:

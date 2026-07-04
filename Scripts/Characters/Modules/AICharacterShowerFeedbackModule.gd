@@ -23,6 +23,7 @@ var _shower_sfx_player: AudioStreamPlayer
 var _visual_original_modulate: Color = Color.WHITE
 var _visual_alpha_applied := false
 var _missing_shower_log_timer := 0.0
+var _missing_shower_log_reported := false
 
 
 func _ready() -> void:
@@ -118,17 +119,22 @@ func _ensure_shower_sfx_player() -> void:
 func _log_missing_shower_if_needed() -> void:
 	if not log_missing_shower:
 		return
-	if _missing_shower_log_timer > 0.0:
-		return
 	if _needs_module == null:
 		return
 	if _needs_module.get_need_ratio(hygiene_need_id, 1.0) > hygiene_request_ratio:
+		_missing_shower_log_reported = false
 		return
 	if _has_hygiene_shower_furniture():
+		_missing_shower_log_reported = false
+		return
+	if _missing_shower_log_reported:
+		return
+	if _missing_shower_log_timer > 0.0:
 		return
 
 	var hygiene_percent := _needs_module.get_need_ratio(hygiene_need_id, 0.0) * 100.0
 	_emit_debug_message("[AI Hygiene] シャワー家具が見つかりません hygiene=%.1f%% 配置: ビルド > 衛生 > シャワー" % hygiene_percent)
+	_missing_shower_log_reported = true
 	_missing_shower_log_timer = maxf(missing_shower_log_cooldown_seconds, 0.1)
 
 

@@ -88,6 +88,15 @@ func update_animation(move_velocity: Vector2, fallback_direction: Vector2, delta
 	_apply_motion_offsets(direction)
 
 
+func sync_actor_position_without_motion() -> void:
+	if _actor == null or not is_instance_valid(_actor):
+		_actor = get_parent() as Node2D
+	if _actor == null:
+		return
+	_last_actor_position = _actor.global_position
+	_has_last_actor_position = true
+
+
 func _get_actor_position_delta() -> Vector2:
 	if _actor == null or not is_instance_valid(_actor):
 		_actor = get_parent() as Node2D

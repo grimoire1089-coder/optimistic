@@ -20,7 +20,7 @@ const INVALID_DEBUG_GRID_POSITION := Vector2i(-999999, -999999)
 @export var nearby_furniture_radius: float = 96.0
 @export var log_slide_collisions: bool = true
 @export var log_action_changes: bool = true
-@export var log_active_heartbeat: bool = true
+@export var log_active_heartbeat: bool = false
 @export var collapse_repeated_messages: bool = true
 @export_range(2, 100, 1) var repeated_message_report_interval: int = 10
 
@@ -77,6 +77,8 @@ func _physics_process(delta: float) -> void:
 
 
 func _should_watch_movement_for_action(action: StringName) -> bool:
+	if action == &"part_time_work":
+		return false
 	if action == &"hydrating" and _hydrate_behavior != null:
 		if _hydrate_behavior.has_method("is_drinking") and _hydrate_behavior.call("is_drinking") == true:
 			return false
@@ -281,6 +283,8 @@ func _get_action_id() -> StringName:
 	# NeedPlannerの次行動ではなく、実際に動いている行動モジュールを優先して見る。
 	# HUD上の表示ズレや、複数モジュールが同時にactiveになった時の切り分けに使う。
 	if _entrance_travel_behavior != null and _entrance_travel_behavior.has_method("is_active") and _entrance_travel_behavior.call("is_active") == true:
+		if _entrance_travel_behavior.has_method("is_working") and _entrance_travel_behavior.call("is_working") == true:
+			return &"part_time_work"
 		return &"map_travel"
 	if _craft_behavior != null and _craft_behavior.has_method("is_active") and _craft_behavior.call("is_active") == true:
 		return &"crafting"
@@ -367,7 +371,7 @@ func _get_behavior_for_action(action: StringName) -> Node:
 		return _sleep_behavior
 	if action_text == "crafting" or action_text == "craft":
 		return _craft_behavior
-	if action_text == "map_travel":
+	if action_text == "map_travel" or action_text == "part_time_work":
 		return _entrance_travel_behavior
 	return null
 

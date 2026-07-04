@@ -66,6 +66,10 @@ func _on_start_button_pressed() -> void:
 	if bill_system != null and bill_system.has_method("reset_for_new_game"):
 		bill_system.call("reset_for_new_game")
 
+	var work_rank_system := get_node_or_null("/root/WorkRankSystem")
+	if work_rank_system != null and work_rank_system.has_method("reset_for_new_game"):
+		work_rank_system.call("reset_for_new_game")
+
 	SceneRouter.go_to_main()
 
 

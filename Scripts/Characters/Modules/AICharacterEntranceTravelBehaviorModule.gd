@@ -21,6 +21,7 @@ const MODE_WORK: StringName = &"work"
 @export var use_time_seconds: float = 0.45
 @export var work_fast_forward_scale: float = 8.0
 @export var work_location_body_position_ratio: Vector2 = Vector2(0.44, 0.58)
+@export var work_location_body_facing_direction: Vector2 = Vector2(1.0, 1.0)
 
 var _body: CharacterBody2D
 var _room_map: RoomMapGridModule
@@ -604,7 +605,10 @@ func _move_body_to_work_location_panel() -> bool:
 		panel_rect.size.x * clampf(work_location_body_position_ratio.x, 0.0, 1.0),
 		panel_rect.size.y * clampf(work_location_body_position_ratio.y, 0.0, 1.0)
 	)
-	_facing_direction = Vector2.RIGHT
+	if work_location_body_facing_direction.length_squared() > 0.001:
+		_facing_direction = work_location_body_facing_direction.normalized()
+	else:
+		_facing_direction = Vector2(1.0, 1.0).normalized()
 	return true
 
 
