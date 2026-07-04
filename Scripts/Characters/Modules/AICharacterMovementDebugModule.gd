@@ -3,7 +3,7 @@ class_name AICharacterMovementDebugModule
 
 const INVALID_DEBUG_GRID_POSITION := Vector2i(-999999, -999999)
 
-@export var enabled: bool = true
+@export var enabled: bool = false
 @export var body_path: NodePath = NodePath("..")
 @export var room_map_path: NodePath = NodePath("../../RobinRoomMap")
 @export var furniture_root_path: NodePath = NodePath("../../RobinRoomMap/FurnitureRoot")
@@ -46,11 +46,25 @@ var _last_emitted_repeat_count: int = 0
 
 func _ready() -> void:
 	_resolve_refs()
-	_emit_debug("debug module ready")
+	set_physics_process(enabled)
+	if enabled:
+		_emit_debug("debug module ready")
+
+
+func set_enabled(next_enabled: bool) -> void:
+	enabled = next_enabled
+	set_physics_process(enabled)
+	if enabled:
+		_resolve_refs()
+		_emit_debug("debug module enabled")
+	else:
+		_reset_stuck_watch()
+		_normal_log_timer = 0.0
 
 
 func _physics_process(delta: float) -> void:
 	if not enabled:
+		set_physics_process(false)
 		return
 	_resolve_refs()
 	if _body == null:
