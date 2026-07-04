@@ -2,9 +2,13 @@ extends Control
 class_name SimpleProfilerHud
 
 @export var update_interval_seconds: float = 0.5
-@export var panel_size: Vector2 = Vector2(420.0, 300.0)
+@export var panel_size: Vector2 = Vector2(460.0, 350.0)
 @export var panel_offset: Vector2 = Vector2(16.0, 16.0)
 @export var toggle_key: Key = KEY_F3
+@export var toggle_ui_key: Key = KEY_F4
+@export var toggle_map_key: Key = KEY_F5
+@export var toggle_background_key: Key = KEY_F6
+@export var toggle_actor_key: Key = KEY_F7
 
 var _label: Label
 var _timer := 0.0
@@ -15,6 +19,10 @@ var _total_node_count := 0
 var _process_node_count := 0
 var _physics_node_count := 0
 var _canvas_item_count := 0
+var _ui_diagnostic_hidden := false
+var _map_diagnostic_hidden := false
+var _background_diagnostic_hidden := false
+var _actor_diagnostic_hidden := false
 
 
 func _ready() -> void:
@@ -37,11 +45,30 @@ func _process(delta: float) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event is InputEventKey:
-		var key_event := event as InputEventKey
-		if key_event.pressed and not key_event.echo and key_event.keycode == toggle_key:
-			visible = not visible
-			get_viewport().set_input_as_handled()
+	if not event is InputEventKey:
+		return
+	var key_event := event as InputEventKey
+	if not key_event.pressed or key_event.echo:
+		return
+	if key_event.keycode == toggle_key:
+		visible = not visible
+		get_viewport().set_input_as_handled()
+		return
+	if key_event.keycode == toggle_ui_key:
+		_toggle_ui_diagnostic()
+		get_viewport().set_input_as_handled()
+		return
+	if key_event.keycode == toggle_map_key:
+		_toggle_main_child_visibility("RobinRoomMap", "_map_diagnostic_hidden")
+		get_viewport().set_input_as_handled()
+		return
+	if key_event.keycode == toggle_background_key:
+		_toggle_main_child_visibility("LocationBackground", "_background_diagnostic_hidden")
+		get_viewport().set_input_as_handled()
+		return
+	if key_event.keycode == toggle_actor_key:
+		_toggle_main_child_visibility("Robin", "_actor_diagnostic_hidden")
+		get_viewport().set_input_as_handled()
 
 
 func _build_ui() -> void:
@@ -115,7 +142,11 @@ func _build_text() -> String:
 	var texture_mb := _bytes_to_mb(float(Performance.get_monitor(Performance.RENDER_TEXTURE_MEM_USED)))
 	var physics_objects := int(Performance.get_monitor(Performance.PHYSICS_2D_ACTIVE_OBJECTS))
 	var collision_pairs := int(Performance.get_monitor(Performance.PHYSICS_2D_COLLISION_PAIRS))
-	return "PROFILER HUD  F3: 表示切替\nFPS: %d / %.1f ms  avg: %.1f ms\nEngine.max_fps: %d  low_processor: %s\nProcess ms: %.2f  Physics ms: %.2f\nNodes: %d  _process: %d  _physics: %d\nCanvasItems: %d\nDraw calls: %d  Render objects: %d\nPrimitives: %d\nVideo MB: %.1f  Texture MB: %.1f\n2D physics objects: %d  pairs: %d" % [
+	return "PROFILER HUD  F3: 表示切替\nF4:UI=%s F5:MAP=%s F6:BG=%s F7:ROBIN=%s\nFPS: %d / %.1f ms  avg: %.1f ms\nEngine.max_fps: %d  low_processor: %s\nProcess ms: %.2f  Physics ms: %.2f\nNodes: %d  _process: %d  _physics: %d\nCanvasItems: %d\nDraw calls: %d  Render objects: %d\nPrimitives: %d\nVideo MB: %.1f  Texture MB: %.1f\n2D physics objects: %d  pairs: %d" % [
+		_hidden_label(_ui_diagnostic_hidden),
+		_hidden_label(_map_diagnostic_hidden),
+		_hidden_label(_background_diagnostic_hidden),
+		_hidden_label(_actor_diagnostic_hidden),
 		fps,
 		fps_ms,
 		_last_average_frame_ms,
@@ -135,6 +166,47 @@ func _build_text() -> String:
 		physics_objects,
 		collision_pairs,
 	]
+
+
+func _toggle_ui_diagnostic() -> void:
+	_ui_diagnostic_hidden = not _ui_diagnostic_hidden
+	var parent_node := get_parent()
+	if parent_node == null:
+		return
+	for child in parent_node.get_children():
+		var canvas_item := child as CanvasItem
+		if canvas_item == null:
+			continue
+		if canvas_item == self:
+			continue
+		canvas_item.visible = not _ui_diagnostic_hidden
+	_refresh()
+
+
+func _toggle_main_child_visibility(node_name: String, flag_property: StringName) -> void:
+	var main_scene := _get_main_scene()
+	if main_scene == null:
+		return
+	var target := main_scene.get_node_or_null(NodePath(node_name)) as CanvasItem
+	if target == null:
+		return
+	var hidden := not bool(get(flag_property))
+	set(flag_property, hidden)
+	target.visible = not hidden
+	_refresh()
+
+
+func _get_main_scene() -> Node:
+	var current := self as Node
+	while current != null:
+		if current.name == "MainScene":
+			return current
+		current = current.get_parent()
+	return null
+
+
+func _hidden_label(is_hidden: bool) -> String:
+	return "OFF" if is_hidden else "ON"
 
 
 func _scan_tree_counts() -> void:
