@@ -139,7 +139,7 @@ horizontal_scroll_mode = 0
 [node name="ItemGrid" type="GridContainer" parent="MarginContainer/Rows/ShopDetailView/ShopContent/ItemScroll"]
 layout_mode = 2
 size_flags_horizontal = 3
-columns = 4
+columns = 1
 theme_override_constants/h_separation = 8
 theme_override_constants/v_separation = 8
 
