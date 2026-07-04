@@ -1,9 +1,10 @@
 extends PanelContainer
 class_name MoveMenu
 
+const DESTINATION_KIND_MAP: StringName = &"map"
+const DESTINATION_KIND_EXPLORATION: StringName = &"exploration"
 const MAP_ID_ROBIN_ROOM: StringName = &"robin_room"
 const MAP_ID_INFRASTRUCTURE_ROOM: StringName = &"infrastructure_room"
-const MAP_ID_CAPSULE_FARM_MUSHROOM_DISTRICT: StringName = &"capsule_farm_mushroom_district"
 const MENU_SIZE := Vector2(760.0, 760.0)
 const MENU_OFFSET_LEFT := 580.0
 const MENU_OFFSET_TOP := 80.0
@@ -12,6 +13,7 @@ const MENU_OFFSET_BOTTOM := 840.0
 
 @export var robin_path: NodePath = NodePath("../../Robin")
 @export var map_travel_module_path: NodePath = NodePath("../../MainSceneMapTravelModule")
+@export var exploration_location_system_path: NodePath = NodePath("../../ExplorationLocationSystem")
 
 @onready var title_label: Label = $MarginContainer/Rows/Header/TitleLabel
 @onready var close_button: Button = $MarginContainer/Rows/Header/CloseButton
@@ -22,6 +24,7 @@ const MENU_OFFSET_BOTTOM := 840.0
 
 var _destination_buttons: Array[Button] = []
 var _book_library: Node
+var _exploration_location_system: Node
 
 
 func _ready() -> void:
@@ -57,10 +60,19 @@ func toggle_menu() -> void:
 
 
 func _on_destination_button_pressed(destination: Dictionary) -> void:
-	var target_map_id := _get_map_id_from_destination(destination)
-	if target_map_id == &"":
+	var target_id := _get_map_id_from_destination(destination)
+	if target_id == &"":
 		detail_label.text = "移動先データが壊れています。"
 		return
+	var destination_kind := _get_destination_kind(destination)
+	if destination_kind == DESTINATION_KIND_EXPLORATION:
+		_on_exploration_destination_pressed(destination)
+		return
+	_on_map_destination_pressed(destination)
+
+
+func _on_map_destination_pressed(destination: Dictionary) -> void:
+	var target_map_id := _get_map_id_from_destination(destination)
 	if target_map_id == _get_active_map_id():
 		detail_label.text = "すでに%sにいます。" % _get_destination_display_name(destination)
 		_refresh_destination_buttons()
@@ -80,8 +92,22 @@ func _on_destination_button_pressed(destination: Dictionary) -> void:
 	_refresh_destination_buttons()
 
 
+func _on_exploration_destination_pressed(destination: Dictionary) -> void:
+	var location_id := _get_map_id_from_destination(destination)
+	var system := _get_exploration_location_system()
+	if system == null or not system.has_method("request_exploration"):
+		detail_label.text = "探索システムが見つかりません。"
+		return
+	if system.call("request_exploration", location_id) == true:
+		detail_label.text = "%sへ探索に向かいます。" % _get_destination_display_name(destination)
+		close_menu()
+		return
+	detail_label.text = "今は探索へ出発できません: %s" % _get_destination_display_name(destination)
+	_refresh_destination_buttons()
+
+
 func _on_explore_action_pressed() -> void:
-	detail_label.text = "探索はまだ準備中です。"
+	detail_label.text = "探索先は電子書籍の購入で解禁されます。"
 
 
 func _refresh_destination_buttons() -> void:
@@ -115,18 +141,23 @@ func _clear_destination_buttons() -> void:
 
 
 func _create_destination_button(destination: Dictionary, active_map_id: StringName) -> Button:
-	var target_map_id := _get_map_id_from_destination(destination)
+	var target_id := _get_map_id_from_destination(destination)
 	var display_name := _get_destination_display_name(destination)
 	var description := String(destination.get("description", ""))
+	var destination_kind := _get_destination_kind(destination)
 
 	var button := Button.new()
 	button.custom_minimum_size = Vector2(280, 56)
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	button.focus_mode = Control.FOCUS_NONE
-	button.text = "%sへ移動" % display_name
+	if destination_kind == DESTINATION_KIND_EXPLORATION:
+		button.text = "%sへ探索" % display_name
+		button.disabled = false
+	else:
+		button.text = "%sへ移動" % display_name
+		button.disabled = target_id == active_map_id
 	button.tooltip_text = description
-	button.disabled = target_map_id == active_map_id
 	button.pressed.connect(Callable(self, "_on_destination_button_pressed").bind(destination))
 	return button
 
@@ -140,21 +171,23 @@ func _get_available_destinations() -> Array[Dictionary]:
 		added_map_ids,
 		MAP_ID_ROBIN_ROOM,
 		"ロビンの部屋",
-		"いつもの生活拠点へ戻ります。"
+		"いつもの生活拠点へ戻ります。",
+		DESTINATION_KIND_MAP
 	)
 	_add_destination(
 		destinations,
 		added_map_ids,
 		MAP_ID_INFRASTRUCTURE_ROOM,
 		"インフラルーム",
-		"設備や都市インフラに近い管理区画へ移動します。"
+		"設備や都市インフラに近い管理区画へ移動します。",
+		DESTINATION_KIND_MAP
 	)
 
 	for destination in _get_book_unlocked_destinations():
 		var map_id := _get_map_id_from_destination(destination)
 		var display_name := String(destination.get("display_name", String(map_id)))
 		var description := String(destination.get("description", ""))
-		_add_destination(destinations, added_map_ids, map_id, display_name, description)
+		_add_destination(destinations, added_map_ids, map_id, display_name, description, DESTINATION_KIND_EXPLORATION)
 
 	return destinations
 
@@ -164,7 +197,8 @@ func _add_destination(
 	added_map_ids: Dictionary,
 	map_id: StringName,
 	display_name: String,
-	description: String = ""
+	description: String = "",
+	destination_kind: StringName = DESTINATION_KIND_MAP
 ) -> void:
 	if map_id == &"" or added_map_ids.has(map_id):
 		return
@@ -173,6 +207,7 @@ func _add_destination(
 		"map_id": map_id,
 		"display_name": display_name,
 		"description": description,
+		"kind": destination_kind,
 	})
 
 
@@ -212,6 +247,13 @@ func _try_direct_travel(target_map_id: StringName) -> bool:
 	return _get_active_map_id() == target_map_id
 
 
+func _get_destination_kind(destination: Dictionary) -> StringName:
+	var value: Variant = destination.get("kind", DESTINATION_KIND_MAP)
+	if value is StringName:
+		return value
+	return StringName(String(value))
+
+
 func _get_map_id_from_destination(destination: Dictionary) -> StringName:
 	var value: Variant = destination.get("map_id", &"")
 	if value is StringName:
@@ -229,8 +271,6 @@ func _get_destination_display_name(destination: Dictionary) -> String:
 func _get_target_display_name(target_map_id: StringName) -> String:
 	if target_map_id == MAP_ID_INFRASTRUCTURE_ROOM:
 		return "インフラルーム"
-	if target_map_id == MAP_ID_CAPSULE_FARM_MUSHROOM_DISTRICT:
-		return "カプセルファーム きのこ採取地区"
 	return "ロビンの部屋"
 
 
@@ -297,6 +337,20 @@ func _get_map_travel_module() -> Node:
 	if scene_root == null:
 		return null
 	return scene_root.get_node_or_null("MainSceneMapTravelModule")
+
+
+func _get_exploration_location_system() -> Node:
+	if _exploration_location_system != null and is_instance_valid(_exploration_location_system):
+		return _exploration_location_system
+	if not exploration_location_system_path.is_empty():
+		_exploration_location_system = get_node_or_null(exploration_location_system_path)
+		if _exploration_location_system != null:
+			return _exploration_location_system
+	var scene_root := get_tree().current_scene
+	if scene_root == null:
+		return null
+	_exploration_location_system = scene_root.get_node_or_null("ExplorationLocationSystem")
+	return _exploration_location_system
 
 
 func _connect_book_library_signal() -> void:
