@@ -7,8 +7,9 @@ extends Control
 @export var panel_glow_color: Color = Color(0.12, 0.65, 1.0, 0.38)
 @export var time_text_color: Color = Color(0.86, 0.97, 1.0, 1.0)
 @export var phase_text_color: Color = Color(0.33, 0.85, 1.0, 1.0)
+@export_range(0, 8, 1) var panel_border_width: int = 3
 @export_range(0, 32, 1) var panel_corner_radius: int = 16
-@export_range(0, 32, 1) var panel_glow_size: int = 14
+@export_range(0, 32, 1) var panel_glow_size: int = 0
 
 @onready var bgm_mute_button: Button = %BGMMuteButton
 @onready var panel_container: PanelContainer = %PanelContainer
@@ -46,7 +47,7 @@ func _apply_neon_style() -> void:
 		var panel_style := StyleBoxFlat.new()
 		panel_style.bg_color = panel_bg_color
 		panel_style.border_color = panel_border_color
-		panel_style.set_border_width_all(1)
+		panel_style.set_border_width_all(panel_border_width)
 		panel_style.set_corner_radius_all(panel_corner_radius)
 		panel_style.shadow_color = panel_glow_color
 		panel_style.shadow_size = panel_glow_size
@@ -54,8 +55,8 @@ func _apply_neon_style() -> void:
 		panel_style.set_content_margin_all(0.0)
 		panel_container.add_theme_stylebox_override("panel", panel_style)
 
-	_apply_label_neon_style(time_label, time_text_color, 16, 1)
-	_apply_label_neon_style(phase_label, phase_text_color, 13, 1)
+	_apply_label_neon_style(time_label, time_text_color, 19, 1)
+	_apply_label_neon_style(phase_label, phase_text_color, 15, 1)
 
 	if bgm_mute_button != null:
 		_apply_bgm_mute_button_style(AudioSettings.is_muted(AudioSettings.BUS_BGM))
@@ -123,7 +124,7 @@ func _apply_bgm_mute_button_style(is_bgm_muted: bool) -> void:
 	bgm_mute_button.add_theme_color_override("font_color", button_font_color)
 	bgm_mute_button.add_theme_color_override("font_hover_color", button_font_color)
 	bgm_mute_button.add_theme_color_override("font_pressed_color", button_font_color)
-	bgm_mute_button.add_theme_font_size_override("font_size", 12)
+	bgm_mute_button.add_theme_font_size_override("font_size", 14)
 
 
 func _find_clock() -> GameClockSystem:

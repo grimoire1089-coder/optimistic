@@ -11,8 +11,8 @@ const ENTRANCE_TRAVEL_SFX_PATH := "res://Assets/Audio/SFX/Game/Sci-fi_door_openi
 const RIGHT_TRAVEL_BUTTON_POSITION := Vector2(-332.0, 184.0)
 const RIGHT_TRAVEL_BUTTON_SIZE := Vector2(48.0, 48.0)
 const MAP_GRID_TOGGLE_BUTTON_NAME := "MapGridToggleButton"
-const MAP_GRID_TOGGLE_BUTTON_POSITION := Vector2(-328.0, 108.0)
-const MAP_GRID_TOGGLE_BUTTON_SIZE := Vector2(48.0, 48.0)
+const MAP_GRID_TOGGLE_BUTTON_POSITION := Vector2(-376.0, 116.0)
+const MAP_GRID_TOGGLE_BUTTON_SIZE := Vector2(64.0, 64.0)
 const HUD_BUTTON_SIZE := Vector2(56.0, 56.0)
 const AI_CHARACTER_HUD_SIZE := Vector2(356.0, 336.0)
 const AI_CHARACTER_HUD_BOTTOM_RIGHT_MARGIN := Vector2(24.0, 92.0)
@@ -329,7 +329,7 @@ func _apply_map_grid_toggle_button_style(button: Button, is_grid_visible: bool) 
 	var style := StyleBoxFlat.new()
 	style.bg_color = bg_color
 	style.border_color = border_color
-	style.set_border_width_all(1)
+	style.set_border_width_all(2)
 	style.set_corner_radius_all(14)
 	style.shadow_color = Color(border_color.r, border_color.g, border_color.b, 0.35)
 	style.shadow_size = 10
@@ -341,7 +341,7 @@ func _apply_map_grid_toggle_button_style(button: Button, is_grid_visible: bool) 
 	button.add_theme_color_override("font_color", font_color)
 	button.add_theme_color_override("font_hover_color", font_color)
 	button.add_theme_color_override("font_pressed_color", font_color)
-	button.add_theme_font_size_override("font_size", 10)
+	button.add_theme_font_size_override("font_size", 12)
 
 
 func _apply_reserved_bottom_hud_layout() -> void:

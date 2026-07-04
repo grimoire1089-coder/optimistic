@@ -7,10 +7,10 @@ layout_mode = 3
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
-offset_left = -360.0
+offset_left = -400.0
 offset_top = 16.0
 offset_right = -16.0
-offset_bottom = 92.0
+offset_bottom = 104.0
 grow_horizontal = 0
 script = ExtResource("1_clock_display")
 
@@ -25,7 +25,7 @@ theme_override_constants/separation = 8
 
 [node name="BGMMuteButton" type="Button" parent="HBoxContainer"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(76, 76)
+custom_minimum_size = Vector2(88, 88)
 layout_mode = 2
 size_flags_vertical = 3
 tooltip_text = "BGMミュート"
@@ -34,17 +34,17 @@ text = "BGM"
 
 [node name="PanelContainer" type="PanelContainer" parent="HBoxContainer"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(252, 0)
+custom_minimum_size = Vector2(288, 0)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
 [node name="MarginContainer" type="MarginContainer" parent="HBoxContainer/PanelContainer"]
 layout_mode = 2
-theme_override_constants/margin_left = 16
-theme_override_constants/margin_top = 10
-theme_override_constants/margin_right = 16
-theme_override_constants/margin_bottom = 10
+theme_override_constants/margin_left = 18
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 18
+theme_override_constants/margin_bottom = 12
 
 [node name="VBoxContainer" type="VBoxContainer" parent="HBoxContainer/PanelContainer/MarginContainer"]
 layout_mode = 2

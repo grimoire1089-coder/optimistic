@@ -7,8 +7,9 @@ extends Label
 @export var panel_border_color: Color = Color(0.33, 0.85, 1.0, 0.95)
 @export var panel_glow_color: Color = Color(0.12, 0.65, 1.0, 0.38)
 @export var text_color: Color = Color(0.86, 0.97, 1.0, 1.0)
+@export_range(0, 8, 1) var panel_border_width: int = 3
 @export_range(0, 32, 1) var panel_corner_radius: int = 16
-@export_range(0, 32, 1) var panel_glow_size: int = 14
+@export_range(0, 32, 1) var panel_glow_size: int = 0
 
 
 func _ready() -> void:
@@ -37,7 +38,7 @@ func _apply_neon_style() -> void:
 		var panel_style := StyleBoxFlat.new()
 		panel_style.bg_color = panel_bg_color
 		panel_style.border_color = panel_border_color
-		panel_style.set_border_width_all(1)
+		panel_style.set_border_width_all(panel_border_width)
 		panel_style.set_corner_radius_all(panel_corner_radius)
 		panel_style.shadow_color = panel_glow_color
 		panel_style.shadow_size = panel_glow_size
@@ -47,7 +48,7 @@ func _apply_neon_style() -> void:
 
 	add_theme_color_override("font_color", text_color)
 	add_theme_color_override("font_shadow_color", Color(panel_border_color.r, panel_border_color.g, panel_border_color.b, 0.55))
-	add_theme_font_size_override("font_size", 16)
+	add_theme_font_size_override("font_size", 19)
 	add_theme_constant_override("shadow_offset_x", 0)
 	add_theme_constant_override("shadow_offset_y", 0)
 	add_theme_constant_override("shadow_outline_size", 1)
