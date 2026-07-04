@@ -3,11 +3,13 @@ class_name MainSceneMapTravelModule
 
 const MAP_ID_ROBIN_ROOM: StringName = &"robin_room"
 const MAP_ID_INFRASTRUCTURE_ROOM: StringName = &"infrastructure_room"
+const MAP_ID_CAPSULE_FARM_MUSHROOM_DISTRICT: StringName = &"capsule_farm_mushroom_district"
 const DEFAULT_TRAVEL_SFX_PATH := "res://Assets/Audio/SFX/Game/Sci-fi_door_opening.ogg"
 
 @export var default_map_id: StringName = MAP_ID_ROBIN_ROOM
 @export var robin_room_map_path: NodePath = NodePath("../RobinRoomMap")
 @export var infrastructure_room_map_path: NodePath = NodePath("../InfrastructureRoomMap")
+@export var capsule_farm_mushroom_district_map_path: NodePath = NodePath("../CapsuleFarmMushroomDistrictMap")
 @export var robin_path: NodePath = NodePath("../Robin")
 @export var to_infrastructure_button_path: NodePath = NodePath("../CanvasLayer/MainSceneTravelButtons/ToInfrastructureRoomButton")
 @export var to_robin_room_button_path: NodePath = NodePath("../CanvasLayer/MainSceneTravelButtons/ToRobinRoomButton")
@@ -25,6 +27,7 @@ const DEFAULT_TRAVEL_SFX_PATH := "res://Assets/Audio/SFX/Game/Sci-fi_door_openin
 
 var _robin_room_map: RoomMapGridModule
 var _infrastructure_room_map: RoomMapGridModule
+var _capsule_farm_mushroom_district_map: RoomMapGridModule
 var _robin: Node2D
 var _to_infrastructure_button: Button
 var _to_robin_room_button: Button
@@ -96,42 +99,56 @@ func set_active_map(map_id: StringName, force: bool = false) -> void:
 func _get_map_for_id(map_id: StringName) -> RoomMapGridModule:
 	if map_id == MAP_ID_INFRASTRUCTURE_ROOM:
 		return _infrastructure_room_map
+	if map_id == MAP_ID_CAPSULE_FARM_MUSHROOM_DISTRICT:
+		return _capsule_farm_mushroom_district_map
 	return _robin_room_map
 
 
 func _get_active_runtime_room_map_path() -> NodePath:
 	if _active_map_id == MAP_ID_INFRASTRUCTURE_ROOM:
 		return infrastructure_room_map_path
+	if _active_map_id == MAP_ID_CAPSULE_FARM_MUSHROOM_DISTRICT:
+		return capsule_farm_mushroom_district_map_path
 	return robin_room_map_path
 
 
 func _get_active_floor_root_path() -> NodePath:
 	if _active_map_id == MAP_ID_INFRASTRUCTURE_ROOM:
 		return NodePath("../InfrastructureRoomMap/FloorRoot")
+	if _active_map_id == MAP_ID_CAPSULE_FARM_MUSHROOM_DISTRICT:
+		return NodePath("../CapsuleFarmMushroomDistrictMap/FloorRoot")
 	return NodePath("../RobinRoomMap/FloorRoot")
 
 
 func _get_active_furniture_root_path_for_scene_modules() -> NodePath:
 	if _active_map_id == MAP_ID_INFRASTRUCTURE_ROOM:
 		return NodePath("../InfrastructureRoomMap/FurnitureRoot")
+	if _active_map_id == MAP_ID_CAPSULE_FARM_MUSHROOM_DISTRICT:
+		return NodePath("../CapsuleFarmMushroomDistrictMap/FurnitureRoot")
 	return NodePath("../RobinRoomMap/FurnitureRoot")
 
 
 func _get_active_wander_provider_path() -> NodePath:
 	if _active_map_id == MAP_ID_INFRASTRUCTURE_ROOM:
 		return NodePath("../InfrastructureRoomMap")
+	if _active_map_id == MAP_ID_CAPSULE_FARM_MUSHROOM_DISTRICT:
+		return NodePath("../CapsuleFarmMushroomDistrictMap")
 	return NodePath("../RobinRoomMap")
 
 
 func _get_active_furniture_root_path_for_robin_modules() -> NodePath:
 	if _active_map_id == MAP_ID_INFRASTRUCTURE_ROOM:
 		return NodePath("../../InfrastructureRoomMap/FurnitureRoot")
+	if _active_map_id == MAP_ID_CAPSULE_FARM_MUSHROOM_DISTRICT:
+		return NodePath("../../CapsuleFarmMushroomDistrictMap/FurnitureRoot")
 	return NodePath("../../RobinRoomMap/FurnitureRoot")
 
 
 func _get_active_room_map_path_for_robin_modules() -> NodePath:
 	if _active_map_id == MAP_ID_INFRASTRUCTURE_ROOM:
 		return NodePath("../../InfrastructureRoomMap")
+	if _active_map_id == MAP_ID_CAPSULE_FARM_MUSHROOM_DISTRICT:
+		return NodePath("../../CapsuleFarmMushroomDistrictMap")
 	return NodePath("../../RobinRoomMap")
 
 
@@ -140,6 +157,8 @@ func _apply_map_visibility() -> void:
 		_robin_room_map.visible = _active_map_id == MAP_ID_ROBIN_ROOM
 	if _infrastructure_room_map != null:
 		_infrastructure_room_map.visible = _active_map_id == MAP_ID_INFRASTRUCTURE_ROOM
+	if _capsule_farm_mushroom_district_map != null:
+		_capsule_farm_mushroom_district_map.visible = _active_map_id == MAP_ID_CAPSULE_FARM_MUSHROOM_DISTRICT
 
 
 func _sync_robin_to_active_map() -> void:
@@ -215,7 +234,7 @@ func _sync_runtime_build_nodes() -> void:
 	var preview := get_node_or_null(build_preview_path)
 	if preview != null:
 		if preview.has_method("set_room_map_path"):
-			preview.call("set_room_map_path", active_map_path)
+			overlay.call("set_room_map_path", active_map_path)
 		else:
 			preview.set("room_map_path", active_map_path)
 			preview.set("_room_map", null)
@@ -322,6 +341,8 @@ func _resolve_static_refs() -> void:
 		_robin_room_map = get_node_or_null(robin_room_map_path) as RoomMapGridModule
 	if _infrastructure_room_map == null and not infrastructure_room_map_path.is_empty():
 		_infrastructure_room_map = get_node_or_null(infrastructure_room_map_path) as RoomMapGridModule
+	if _capsule_farm_mushroom_district_map == null and not capsule_farm_mushroom_district_map_path.is_empty():
+		_capsule_farm_mushroom_district_map = get_node_or_null(capsule_farm_mushroom_district_map_path) as RoomMapGridModule
 	if _robin == null and not robin_path.is_empty():
 		_robin = get_node_or_null(robin_path) as Node2D
 	if _to_infrastructure_button == null and not to_infrastructure_button_path.is_empty():
