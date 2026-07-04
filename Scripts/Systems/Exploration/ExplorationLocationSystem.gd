@@ -30,7 +30,7 @@ const DEFAULT_GATHERING_TABLE_PATH := "res://Data/Exploration/GatheringTables/Ca
 var _worker: Node
 var _location_background: Node
 var _stay_overlay: Node
-var _gathering_table: ExplorationGatheringTable
+var _gathering_table: Resource
 var _active: bool = false
 var _active_duration_minutes: int = 0
 var _event_elapsed_minutes: float = 0.0
@@ -144,8 +144,8 @@ func _on_worker_work_completed(job_id: StringName) -> void:
 
 
 func _grant_exploration_event_reward() -> void:
-	var table: ExplorationGatheringTable = _get_gathering_table()
-	if table == null or table.is_empty():
+	var table: Resource = _get_gathering_table()
+	if table == null or _is_gathering_table_empty(table):
 		_push_message("探索イベントが発生しましたが、採取テーブルが空です。")
 		return
 
@@ -154,7 +154,7 @@ func _grant_exploration_event_reward() -> void:
 		_push_message("探索イベントが発生しましたが、インベントリが見つかりません。")
 		return
 
-	var item_path: String = table.get_random_item_path(_rng)
+	var item_path: String = _get_random_gathering_item_path(table)
 	if item_path.is_empty() or not ResourceLoader.exists(item_path):
 		_push_message("探索イベントが発生しましたが、食材データが見つかりません。")
 		return
@@ -164,7 +164,7 @@ func _grant_exploration_event_reward() -> void:
 		_push_message("探索イベントが発生しましたが、食材データを読み込めませんでした。")
 		return
 
-	var amount: int = table.get_random_amount(_rng)
+	var amount: int = _get_random_gathering_amount(table)
 	var added: bool = false
 	if inventory.has_method("add_food_item"):
 		added = inventory.call("add_food_item", food_data, amount) == true
@@ -191,13 +191,57 @@ func _grant_exploration_event_reward() -> void:
 		_push_message("探索イベント: %s を見つけましたが、インベントリに空きがありません。" % food_data.display_name)
 
 
-func _get_gathering_table() -> ExplorationGatheringTable:
+func _get_gathering_table() -> Resource:
 	if _gathering_table != null:
 		return _gathering_table
 	if gathering_table_path.is_empty() or not ResourceLoader.exists(gathering_table_path):
 		return null
-	_gathering_table = load(gathering_table_path) as ExplorationGatheringTable
+	_gathering_table = load(gathering_table_path) as Resource
 	return _gathering_table
+
+
+func _is_gathering_table_empty(table: Resource) -> bool:
+	if table == null:
+		return true
+	if table.has_method("is_empty"):
+		return table.call("is_empty") == true
+	var item_paths_value: Variant = table.get("item_paths")
+	if item_paths_value is PackedStringArray:
+		return item_paths_value.is_empty()
+	if item_paths_value is Array:
+		return item_paths_value.is_empty()
+	return true
+
+
+func _get_random_gathering_item_path(table: Resource) -> String:
+	if table == null:
+		return ""
+	if table.has_method("get_random_item_path"):
+		return String(table.call("get_random_item_path", _rng))
+	var item_paths_value: Variant = table.get("item_paths")
+	if item_paths_value is PackedStringArray:
+		var packed_paths: PackedStringArray = item_paths_value
+		if packed_paths.is_empty():
+			return ""
+		return String(packed_paths[_rng.randi_range(0, packed_paths.size() - 1)])
+	if item_paths_value is Array:
+		var paths: Array = item_paths_value
+		if paths.is_empty():
+			return ""
+		return String(paths[_rng.randi_range(0, paths.size() - 1)])
+	return ""
+
+
+func _get_random_gathering_amount(table: Resource) -> int:
+	if table != null and table.has_method("get_random_amount"):
+		return int(table.call("get_random_amount", _rng))
+	if table == null:
+		return 1
+	var amount_min_value: Variant = table.get("amount_min")
+	var amount_max_value: Variant = table.get("amount_max")
+	var safe_min: int = maxi(int(amount_min_value), 1)
+	var safe_max: int = maxi(int(amount_max_value), safe_min)
+	return _rng.randi_range(safe_min, safe_max)
 
 
 func _configure_worker_time_scale_for_exploration() -> void:
