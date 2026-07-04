@@ -5,6 +5,7 @@ const MAP_TRAVEL_MODULE_SCENE_PATH := "res://Scenes/Main/Modules/MainSceneMapTra
 const MAP_ENTRANCE_MODULE_SCENE_PATH := "res://Scenes/Main/Modules/MainSceneMapEntranceModule.tscn"
 const TRAVEL_BUTTONS_ROOT_SCENE_PATH := "res://Scenes/Main/Modules/MainSceneTravelButtonsRoot.tscn"
 const LOCATION_BACKGROUND_SCRIPT_PATH := "res://Scripts/Maps/Location/LocationBackgroundNode.gd"
+const WORK_LOCATION_STAY_OVERLAY_SCRIPT_PATH := "res://Scripts/Scenes/Main/Modules/WorkLocationStayOverlay.gd"
 const DEFAULT_LOCATION_BACKGROUND_TEXTURE_PATH := "res://Assets/Maps/Location/Location_001.png"
 const ENTRANCE_TRAVEL_SFX_PATH := "res://Assets/Audio/SFX/Game/Sci-fi_door_opening.ogg"
 const RIGHT_TRAVEL_BUTTON_POSITION := Vector2(-332.0, 184.0)
@@ -27,16 +28,19 @@ const BILL_PANEL_SIZE := Vector2(420.0, 456.0)
 @onready var message_log: MessageLogPanel = $CanvasLayer/MessageLogPanel
 
 var _last_build_mode_enabled: bool = false
+var _work_location_stay_overlay: Node
 
 
 func _ready() -> void:
 	_push_debug_message("System", "MainScene _ready start")
 	_ensure_runtime_children()
+	_ensure_work_location_stay_overlay()
 	_ensure_map_grid_toggle_button()
 	_apply_reserved_bottom_hud_layout()
 	var startup_debug_text := _get_startup_debug_text()
 	debug_label.text = startup_debug_text
 	_connect_robin_selection()
+	_connect_robin_work_location_stay_overlay()
 	_push_startup_message(startup_debug_text)
 	_push_debug_result("System", "MainScene init", true, startup_debug_text)
 	_push_debug_result("System", "Display", true, _get_display_debug_text())
@@ -74,6 +78,49 @@ func _on_robin_selected(actor: RobinWanderActor) -> void:
 		return
 	ai_character_hud.toggle_actor(actor)
 	_push_debug_result("AI HUD", "toggle_actor", true, "target=%s" % actor_name)
+
+
+func _connect_robin_work_location_stay_overlay() -> void:
+	if robin == null:
+		return
+	_ensure_work_location_stay_overlay()
+	var started_callable := Callable(self, "_on_robin_work_started")
+	if not robin.work_started.is_connected(started_callable):
+		robin.work_started.connect(started_callable)
+	var completed_callable := Callable(self, "_on_robin_work_completed")
+	if not robin.work_completed.is_connected(completed_callable):
+		robin.work_completed.connect(completed_callable)
+
+
+func _on_robin_work_started(job_id: StringName) -> void:
+	var overlay := _ensure_work_location_stay_overlay()
+	if overlay == null:
+		return
+	if not overlay.has_method("show_work_stay"):
+		return
+	var worker_name := ""
+	if robin != null:
+		worker_name = robin.display_name
+	overlay.call("show_work_stay", job_id, _get_robin_work_display_name(), worker_name)
+
+
+func _on_robin_work_completed(_job_id: StringName) -> void:
+	var overlay := _ensure_work_location_stay_overlay()
+	if overlay == null:
+		return
+	if overlay.has_method("hide_work_stay"):
+		overlay.call("hide_work_stay")
+
+
+func _get_robin_work_display_name() -> String:
+	if robin == null:
+		return ""
+	var behavior := robin.get_node_or_null("AICharacterEntranceTravelBehaviorModule")
+	if behavior == null:
+		return ""
+	if not behavior.has_method("get_work_display_name"):
+		return ""
+	return str(behavior.call("get_work_display_name"))
 
 
 func _ensure_runtime_children() -> void:
@@ -124,6 +171,29 @@ func _ensure_location_background() -> Node2D:
 	background.set("texture_path", DEFAULT_LOCATION_BACKGROUND_TEXTURE_PATH)
 	add_child(background)
 	return background
+
+
+func _ensure_work_location_stay_overlay() -> Node:
+	if _work_location_stay_overlay != null and is_instance_valid(_work_location_stay_overlay):
+		return _work_location_stay_overlay
+
+	var existing_overlay := get_node_or_null("WorkLocationStayOverlay")
+	if existing_overlay != null:
+		_work_location_stay_overlay = existing_overlay
+		return _work_location_stay_overlay
+
+	var overlay_script := load(WORK_LOCATION_STAY_OVERLAY_SCRIPT_PATH) as Script
+	if overlay_script == null:
+		return null
+	var overlay := overlay_script.new() as Node
+	if overlay == null:
+		return null
+	overlay.name = "WorkLocationStayOverlay"
+	overlay.set("location_background_path", NodePath("../LocationBackground"))
+	overlay.set("worker_path", NodePath("../Robin"))
+	add_child(overlay)
+	_work_location_stay_overlay = overlay
+	return _work_location_stay_overlay
 
 
 func _ensure_travel_buttons_root() -> Control:

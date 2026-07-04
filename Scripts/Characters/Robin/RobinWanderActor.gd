@@ -99,6 +99,9 @@ func _physics_process(delta: float) -> void:
 				if wander_module.clamp_body_to_movement_area(true):
 					velocity = Vector2.ZERO
 				walk_animator.update_animation(velocity, facing_direction, delta)
+			else:
+				velocity = Vector2.ZERO
+				walk_animator.update_animation(velocity, facing_direction, delta)
 			_update_grid_alignment_after_motion()
 			return
 	if craft_behavior_module != null:

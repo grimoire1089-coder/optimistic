@@ -13,18 +13,21 @@ const MODE_WORK: StringName = &"work"
 @export var map_travel_module_path: NodePath = NodePath("../../MainSceneMapTravelModule")
 @export var furniture_placement_module_path: NodePath = NodePath("../../FurniturePlacementModule")
 @export var time_scale_controller_path: NodePath = NodePath("/root/TimeScaleController")
+@export var work_location_background_path: NodePath = NodePath("../../LocationBackground")
 @export var walk_speed: float = 80.0
 @export var arrive_distance: float = 14.0
 @export var grid_arrive_distance: float = 6.0
 @export var actor_grid_footprint: Vector2i = Vector2i(2, 4)
 @export var use_time_seconds: float = 0.45
 @export var work_fast_forward_scale: float = 8.0
+@export var work_location_body_position_ratio: Vector2 = Vector2(0.44, 0.58)
 
 var _body: CharacterBody2D
 var _room_map: RoomMapGridModule
 var _map_travel_module: Node
 var _furniture_placement_module: Node
 var _time_scale_controller: Node
+var _work_location_background: Node
 var _target_entrance: Node2D
 var _target_cell: Vector2i = INVALID_GRID_POSITION
 var _target_entrance_grid_position: Vector2i = INVALID_GRID_POSITION
@@ -236,13 +239,14 @@ func _start_offscreen_work() -> void:
 	_offscreen_working = true
 	_work_elapsed_minutes = 0.0
 	_path_cells.clear()
-	_set_body_hidden_for_work(true)
-	_move_body_to_offscreen_exit()
+	_set_body_visible_on_work_location_panel()
 	_set_work_fast_forward(true)
 	work_started.emit(_work_job_id)
 
 
 func _tick_offscreen_work(delta: float) -> void:
+	if _move_body_to_work_location_panel() and _body != null:
+		_body.visible = true
 	_work_elapsed_minutes = minf(_work_elapsed_minutes + _get_game_minutes_from_delta(delta), _work_duration_minutes)
 	if _work_elapsed_minutes < _work_duration_minutes:
 		return
@@ -579,6 +583,44 @@ func _set_body_hidden_for_work(hidden: bool) -> void:
 	_body.visible = _body_visible_before_work
 
 
+func _set_body_visible_on_work_location_panel() -> void:
+	if _body == null:
+		return
+	_body_visible_before_work = _body.visible
+	_body.visible = true
+	if _move_body_to_work_location_panel():
+		return
+	_body.visible = false
+	_move_body_to_offscreen_exit()
+
+
+func _move_body_to_work_location_panel() -> bool:
+	if _body == null:
+		return false
+	var panel_rect := _get_work_location_panel_rect()
+	if panel_rect.size.x <= 0.0 or panel_rect.size.y <= 0.0:
+		return false
+	_body.global_position = panel_rect.position + Vector2(
+		panel_rect.size.x * clampf(work_location_body_position_ratio.x, 0.0, 1.0),
+		panel_rect.size.y * clampf(work_location_body_position_ratio.y, 0.0, 1.0)
+	)
+	_facing_direction = Vector2.RIGHT
+	return true
+
+
+func _get_work_location_panel_rect() -> Rect2:
+	_resolve_refs()
+	if _work_location_background == null:
+		return Rect2()
+	if not _work_location_background.has_method("get_panel_global_rect"):
+		return Rect2()
+	var panel_rect_value: Variant = _work_location_background.call("get_panel_global_rect")
+	if panel_rect_value is Rect2:
+		var panel_rect: Rect2 = panel_rect_value
+		return panel_rect
+	return Rect2()
+
+
 func _move_body_to_offscreen_exit() -> void:
 	if _body == null or _room_map == null or _target_entrance == null:
 		return
@@ -676,3 +718,5 @@ func _resolve_refs() -> void:
 		_furniture_placement_module = get_node_or_null(furniture_placement_module_path)
 	if _time_scale_controller == null and not time_scale_controller_path.is_empty():
 		_time_scale_controller = get_node_or_null(time_scale_controller_path)
+	if _work_location_background == null and not work_location_background_path.is_empty():
+		_work_location_background = get_node_or_null(work_location_background_path)

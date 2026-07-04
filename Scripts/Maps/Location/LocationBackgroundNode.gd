@@ -59,6 +59,12 @@ func set_texture_path(next_texture_path: String) -> void:
 	queue_redraw()
 
 
+func get_panel_global_rect() -> Rect2:
+	if not visible or _draw_rect.size.x <= 0.0 or _draw_rect.size.y <= 0.0:
+		return Rect2()
+	return Rect2(global_position + _draw_rect.position, _draw_rect.size)
+
+
 func _draw() -> void:
 	if not visible or _draw_rect.size.x <= 0.0 or _draw_rect.size.y <= 0.0:
 		return
