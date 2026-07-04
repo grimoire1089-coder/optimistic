@@ -15,43 +15,64 @@ const FLOOR_SURFACE_SCRIPT_PATH := "res://Scripts/Maps/Floor/FloorSurfaceNode.gd
 @export var floor_root_z_index: int = -10
 @export var floor_z_index: int = 0
 @export var auto_sync_floor_to_map: bool = true
+@export var resolve_interval_seconds: float = 0.25
 
 var _room_map: RoomMapGridModule
 var _floor_root: Node2D
 var _floor_node: Node2D
+var _resolve_timer := 0.0
 
 
 func _ready() -> void:
 	if not is_in_group(&"floor_placement_module"):
 		add_to_group(&"floor_placement_module")
 	_resolve_refs()
-	set_process(auto_sync_floor_to_map)
+	if auto_sync_floor_to_map:
+		_sync_floor_node()
+	set_process(_room_map == null or _floor_root == null)
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
+	_resolve_timer -= maxf(delta, 0.0)
+	if _resolve_timer > 0.0:
+		return
+	_resolve_timer = maxf(resolve_interval_seconds, 0.05)
 	_resolve_refs()
-	_sync_floor_node()
+	if auto_sync_floor_to_map:
+		_sync_floor_node()
+	if _room_map != null and _floor_root != null:
+		set_process(false)
 
 
 func set_room_map_path(next_room_map_path: NodePath) -> void:
 	if room_map_path == next_room_map_path:
 		_resolve_refs()
+		if auto_sync_floor_to_map:
+			_sync_floor_node()
 		return
 	room_map_path = next_room_map_path
 	_room_map = null
 	_floor_root = null
 	_floor_node = null
 	_resolve_refs()
+	if auto_sync_floor_to_map:
+		_sync_floor_node()
+	set_process(_room_map == null or _floor_root == null)
 
 
 func set_floor_root_path(next_floor_root_path: NodePath) -> void:
 	if floor_root_path == next_floor_root_path:
 		_resolve_refs()
+		if auto_sync_floor_to_map:
+			_sync_floor_node()
 		return
 	floor_root_path = next_floor_root_path
 	_floor_root = null
 	_floor_node = null
 	_resolve_refs()
+	if auto_sync_floor_to_map:
+		_sync_floor_node()
+	set_process(_room_map == null or _floor_root == null)
 
 
 func configure_floor(next_floor_id: StringName, next_display_name: String, next_texture_path: String, next_floor_node_name: StringName = &"", next_floor_footprint: Vector2i = Vector2i.ZERO) -> void:
