@@ -58,7 +58,7 @@ func play_gathering_item_effect(icon_path: String, item_display_name: String, am
 	for child in effect_root.get_children():
 		if child == icon_sprite or child == glow:
 			continue
-		var particle_node := child as Node2D
+		var particle_node := child as Control
 		if particle_node == null:
 			continue
 		var random_offset := Vector2(
@@ -73,7 +73,7 @@ func play_gathering_item_effect(icon_path: String, item_display_name: String, am
 	fly_tween.tween_property(effect_root, "global_position", target_position, maxf(fly_duration, 0.01)).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN_OUT)
 	fly_tween.parallel().tween_property(effect_root, "scale", Vector2(0.36, 0.36), maxf(fly_duration, 0.01)).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
 	fly_tween.parallel().tween_property(effect_root, "modulate:a", 0.0, maxf(fly_duration, 0.01)).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
-	fly_tween.tween_callback(effect_root.queue_free)
+	fly_tween.tween_callback(Callable(effect_root, "queue_free"))
 
 
 func _make_glow_square() -> ColorRect:
