@@ -30,6 +30,7 @@
 [ext_resource type="PackedScene" path="res://Scenes/UI/Books/BookLibraryUI.tscn" id="27_book_library_ui"]
 [ext_resource type="PackedScene" path="res://Scenes/UI/Billing/BillPanel.tscn" id="28_bill_panel"]
 [ext_resource type="PackedScene" path="res://Scenes/UI/HUD/BillButton.tscn" id="29_bill_button"]
+[ext_resource type="Script" path="res://Scripts/UI/HUD/Modules/HudButtonActiveFrameController.gd" id="30_hud_active_frame"]
 
 [sub_resource type="Environment" id="Environment_ctt6t"]
 glow_enabled = true
@@ -132,3 +133,6 @@ anchors_preset = 8
 [node name="WorkCreditButton" parent="CanvasLayer" unique_id=917382376 instance=ExtResource("7_work_credit_button")]
 
 [node name="BillButton" parent="CanvasLayer" instance=ExtResource("29_bill_button")]
+
+[node name="HudButtonActiveFrameController" type="Node" parent="CanvasLayer"]
+script = ExtResource("30_hud_active_frame")
