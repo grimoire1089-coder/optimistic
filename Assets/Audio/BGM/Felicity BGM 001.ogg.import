@@ -1,0 +1,19 @@
+[remap]
+
+importer="oggvorbisstr"
+type="AudioStreamOggVorbis"
+uid="uid://bcmhj1ssto6nt"
+path="res://.godot/imported/Felicity BGM 001.ogg-e7fef560bd6ab5ab1b26cfc49c75676f.oggvorbisstr"
+
+[deps]
+
+source_file="res://Assets/Audio/BGM/Felicity BGM 001.ogg"
+dest_files=["res://.godot/imported/Felicity BGM 001.ogg-e7fef560bd6ab5ab1b26cfc49c75676f.oggvorbisstr"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

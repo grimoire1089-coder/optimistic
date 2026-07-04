@@ -8,6 +8,7 @@
 [ext_resource type="Texture2D" uid="uid://bg8advhkwtatt" path="res://Assets/UI/Parts/Felicity_Shop.png" id="6_f8oiv"]
 [ext_resource type="Resource" uid="uid://cpms561gltt7f" path="res://Data/Items/Food/Food_0013_WhiteRice.tres" id="6_white_rice"]
 [ext_resource type="Resource" uid="uid://dm0hqdwdx8tfo" path="res://Data/Items/Food/Drink_1002_OolongTea.tres" id="7_oolong_tea"]
+[ext_resource type="AudioStream" uid="uid://bcmhj1ssto6nt" path="res://Assets/Audio/BGM/Felicity BGM 001.ogg" id="8_d32om"]
 [ext_resource type="Resource" uid="uid://bbcfo6cl1qi0" path="res://Data/Items/Food/Food_0008_WaterBottle.tres" id="8_water_bottle"]
 
 [sub_resource type="Resource" id="ShopItemData_nikuman"]
@@ -51,5 +52,6 @@ display_name = "Felicity"
 description = "デカダンスの中心街に灯る安息のバー。グリムの料理、マスターの気配り、仲間たちの温もりが集まる帰る場所。"
 portrait = ExtResource("6_f8oiv")
 sticker = ExtResource("4_felicity_sticker")
+shop_bgm = ExtResource("8_d32om")
 tabs = Array[ExtResource("3_shop_tab")]([SubResource("ShopTabData_foods"), SubResource("ShopTabData_drinks")])
 items = Array[ExtResource("2_shop_item")]([SubResource("ShopItemData_nikuman"), SubResource("ShopItemData_white_rice"), SubResource("ShopItemData_oolong_tea"), SubResource("ShopItemData_water_bottle")])
