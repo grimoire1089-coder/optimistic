@@ -212,7 +212,7 @@ func _clear_duplicated_shop_list_detail() -> void:
 	if guide_label != null:
 		guide_text = guide_label.text.strip_edges()
 	var detail_text := detail_label.text.strip_edges()
-	if detail_text == "行きたいお店を選んでください。" or detail_text == guide_text:
+	if detail_text == "利用したいお店を選んでください。" or detail_text == guide_text:
 		detail_label.text = ""
 
 
