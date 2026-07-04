@@ -5,7 +5,9 @@ const INVENTORY_BUTTON_GROUP: StringName = &"inventory_button"
 
 @export var effect_canvas_layer: int = 128
 @export var icon_size: float = 48.0
-@export var foot_anchor_extra_offset: Vector2 = Vector2(-56.0, 86.0)
+@export var foot_anchor_extra_offset: Vector2 = Vector2(0.0, 86.0)
+@export var side_spawn_offsets: PackedFloat32Array = PackedFloat32Array([-56.0, 56.0])
+@export var restore_worker_facing_on_finish: bool = true
 @export var sprout_duration: float = 4.00
 @export var bounce_expand_duration: float = 0.34
 @export var bounce_settle_duration: float = 0.76
@@ -41,7 +43,9 @@ func _ready() -> void:
 
 func play_gathering_item_effect(icon_path: String, item_display_name: String, amount: int, source_global_position: Vector2) -> void:
 	layer = effect_canvas_layer
-	var start_position := source_global_position + foot_anchor_extra_offset
+	var side_spawn_offset := _get_random_side_spawn_offset()
+	var previous_facing_state := _face_worker_toward_effect(side_spawn_offset.x)
+	var start_position := source_global_position + foot_anchor_extra_offset + side_spawn_offset
 	var effect_root := Node2D.new()
 	effect_root.name = "GatheringItemPickupEffect"
 	effect_root.global_position = start_position
@@ -166,13 +170,86 @@ func play_gathering_item_effect(icon_path: String, item_display_name: String, am
 	fly_tween.parallel().tween_property(icon_glow_sprite, "rotation", TAU * item_fly_rotation_turns, maxf(fly_duration, 0.01)).set_trans(Tween.TRANS_LINEAR).set_ease(Tween.EASE_IN_OUT)
 	fly_tween.parallel().tween_property(icon_glow_sprite, "scale", icon_target_scale * 2.85, maxf(fly_duration * 0.68, 0.01)).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	fly_tween.parallel().tween_property(outer_glow, "scale", Vector2(2.16, 2.16), maxf(fly_duration * 0.68, 0.01)).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-	fly_tween.tween_callback(Callable(effect_root, "queue_free"))
+	fly_tween.tween_callback(Callable(self, "_finish_effect").bind(effect_root, previous_facing_state))
 
 	var root_fade_tween := create_tween()
 	root_fade_tween.tween_interval(fly_start_delay + fly_duration * 0.72)
 	root_fade_tween.tween_property(effect_root, "modulate:a", 0.0, maxf(fly_duration * 0.28, 0.01)).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
 
 	_play_particle_peel_effects(beam_ball_root, arc_start, target_position, fly_start_delay)
+
+
+func _get_random_side_spawn_offset() -> Vector2:
+	if side_spawn_offsets.is_empty():
+		return Vector2.ZERO
+	var index := _rng.randi_range(0, side_spawn_offsets.size() - 1)
+	return Vector2(float(side_spawn_offsets[index]), 0.0)
+
+
+func _face_worker_toward_effect(side_x: float) -> Dictionary:
+	var state := {
+		"has_previous": false,
+		"previous": Vector2.ZERO,
+	}
+	var behavior := _get_worker_entrance_behavior()
+	if behavior == null:
+		return state
+	if not _has_property(behavior, &"work_location_body_facing_direction"):
+		return state
+	state["has_previous"] = true
+	state["previous"] = behavior.get("work_location_body_facing_direction") as Vector2
+	var next_direction := Vector2.RIGHT
+	if side_x < 0.0:
+		next_direction = Vector2.LEFT
+	behavior.set("work_location_body_facing_direction", next_direction)
+	return state
+
+
+func _finish_effect(effect_root: Node2D, previous_facing_state: Dictionary) -> void:
+	_restore_worker_facing(previous_facing_state)
+	if effect_root != null and is_instance_valid(effect_root):
+		effect_root.queue_free()
+
+
+func _restore_worker_facing(previous_facing_state: Dictionary) -> void:
+	if not restore_worker_facing_on_finish:
+		return
+	if not bool(previous_facing_state.get("has_previous", false)):
+		return
+	var behavior := _get_worker_entrance_behavior()
+	if behavior == null:
+		return
+	if not _has_property(behavior, &"work_location_body_facing_direction"):
+		return
+	behavior.set("work_location_body_facing_direction", previous_facing_state.get("previous", Vector2.RIGHT) as Vector2)
+
+
+func _get_worker_entrance_behavior() -> Node:
+	var worker := _get_worker_node()
+	if worker == null:
+		return null
+	return worker.get_node_or_null("AICharacterEntranceTravelBehaviorModule")
+
+
+func _get_worker_node() -> Node:
+	var scene_root := get_tree().current_scene
+	if scene_root == null:
+		return null
+	var worker := scene_root.get_node_or_null("Robin")
+	if worker != null:
+		return worker
+	return scene_root.find_child("Robin", true, false)
+
+
+func _has_property(object: Object, property_name: StringName) -> bool:
+	if object == null:
+		return false
+	for property_info in object.get_property_list():
+		if not property_info.has("name"):
+			continue
+		if StringName(String(property_info.get("name", ""))) == property_name:
+			return true
+	return false
 
 
 func _play_particle_peel_effects(beam_ball_root: Node2D, arc_start: Vector2, target_position: Vector2, fly_start_delay: float) -> void:
