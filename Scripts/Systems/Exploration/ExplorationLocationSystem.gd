@@ -8,12 +8,14 @@ const DEFAULT_LOCATION_TEXTURE_PATH := "res://Assets/Maps/Location/Location_005.
 const DEFAULT_BGM_PATH := "res://Assets/Audio/BGM/Forest_001.ogg"
 const DEFAULT_LOCATION_BACKGROUND_TEXTURE_PATH := "res://Assets/Maps/Location/Location_001.png"
 const DEFAULT_GATHERING_TABLE_PATH := "res://Data/Exploration/GatheringTables/CapsuleFarmMushroomDistrictGatheringTable.tres"
+const GATHERING_EFFECT_MODULE_SCRIPT_PATH := "res://Scripts/Systems/Exploration/ExplorationGatheringEffectModule.gd"
 const SKILL_GATHERING: StringName = &"gathering"
 
 @export var worker_path: NodePath = NodePath("../Robin")
 @export var skills_module_path: NodePath = NodePath("../Robin/AICharacterSkillsModule")
 @export var location_background_path: NodePath = NodePath("../LocationBackground")
 @export var stay_overlay_path: NodePath = NodePath("../WorkLocationStayOverlay")
+@export var gathering_effect_module_path: NodePath = NodePath("../ExplorationGatheringEffectModule")
 @export var location_id: StringName = DEFAULT_LOCATION_ID
 @export var exploration_job_id: StringName = DEFAULT_JOB_ID
 @export var display_name: String = DEFAULT_DISPLAY_NAME
@@ -25,8 +27,10 @@ const SKILL_GATHERING: StringName = &"gathering"
 @export var gathering_experience_per_event: int = 5
 @export var gathering_amount_bonus_level_step: int = 10
 @export var gathering_amount_bonus_max: int = 10
+@export var gathering_effect_source_offset: Vector2 = Vector2(0.0, -46.0)
 @export var enable_time_acceleration: bool = false
 @export var exploration_time_scale: float = 1.0
+@export var exploration_body_position_ratio: Vector2 = Vector2(0.50, 0.34)
 @export var gathering_table_path: String = DEFAULT_GATHERING_TABLE_PATH
 @export var location_texture_path: String = DEFAULT_LOCATION_TEXTURE_PATH
 @export var restore_location_texture_path: String = DEFAULT_LOCATION_BACKGROUND_TEXTURE_PATH
@@ -36,6 +40,7 @@ var _worker: Node
 var _skills_module: Node
 var _location_background: Node
 var _stay_overlay: Node
+var _gathering_effect_module: Node
 var _gathering_table: Resource
 var _active: bool = false
 var _active_duration_minutes: int = 0
@@ -47,12 +52,15 @@ var _has_previous_bgm: bool = false
 var _active_bgm: AudioStream
 var _previous_work_fast_forward_scale: float = 8.0
 var _has_previous_work_fast_forward_scale: bool = false
+var _previous_work_location_body_position_ratio: Vector2 = Vector2(0.44, 0.58)
+var _has_previous_work_location_body_position_ratio: bool = false
 
 
 func _ready() -> void:
 	_rng.randomize()
 	_resolve_refs()
 	_connect_worker_signals()
+	_ensure_gathering_effect_module()
 	set_process(true)
 
 
@@ -76,13 +84,13 @@ func request_exploration(requested_location_id: StringName, requested_duration_m
 	if worker == null or not worker.has_method("request_work_at_entrance"):
 		return false
 	var safe_duration_minutes: int = get_safe_duration_minutes(requested_duration_minutes)
-	_configure_worker_time_scale_for_exploration()
+	_configure_worker_presentation_for_exploration()
 	var request_result: Variant = worker.call("request_work_at_entrance", exploration_job_id, display_name, safe_duration_minutes)
 	if request_result == true:
 		_active_duration_minutes = safe_duration_minutes
 		_push_message("%sへ%d分の探索に向かいます。" % [display_name, safe_duration_minutes])
 		return true
-	_restore_worker_time_scale_after_exploration()
+	_restore_worker_presentation_after_exploration()
 	return false
 
 
@@ -145,7 +153,7 @@ func _on_worker_work_completed(job_id: StringName) -> void:
 	_hide_exploration_overlay()
 	_restore_location_card()
 	_restore_previous_bgm_if_needed()
-	_restore_worker_time_scale_after_exploration()
+	_restore_worker_presentation_after_exploration()
 	_push_message("探索から帰ってきました: %s" % display_name)
 
 
@@ -195,6 +203,7 @@ func _grant_exploration_event_reward() -> void:
 		) == true
 
 	if added:
+		_play_gathering_effect(food_data, amount)
 		_add_gathering_experience()
 		var bonus_text: String = ""
 		if bonus_amount > 0:
@@ -301,27 +310,63 @@ func _add_gathering_experience() -> void:
 	skills_module.call("add_skill_experience", SKILL_GATHERING, gathering_experience_per_event)
 
 
-func _configure_worker_time_scale_for_exploration() -> void:
+func _play_gathering_effect(food_data: FoodItemData, amount: int) -> void:
+	if food_data == null:
+		return
+	var effect_module: Node = _ensure_gathering_effect_module()
+	if effect_module == null or not effect_module.has_method("play_gathering_item_effect"):
+		return
+	effect_module.call(
+		"play_gathering_item_effect",
+		food_data.get_icon_path(),
+		food_data.display_name,
+		amount,
+		_get_gathering_effect_source_position()
+	)
+
+
+func _get_gathering_effect_source_position() -> Vector2:
+	var worker := _get_worker() as Node2D
+	if worker != null and is_instance_valid(worker):
+		return worker.global_position + gathering_effect_source_offset
+	var background := _get_location_background()
+	if background != null and background.has_method("get_panel_global_rect"):
+		var panel_rect_value: Variant = background.call("get_panel_global_rect")
+		if panel_rect_value is Rect2:
+			var panel_rect: Rect2 = panel_rect_value
+			return panel_rect.get_center()
+	return Vector2.ZERO
+
+
+func _configure_worker_presentation_for_exploration() -> void:
 	var behavior: Node = _get_worker_entrance_behavior()
 	if behavior == null:
 		return
-	if not _has_property(behavior, &"work_fast_forward_scale"):
-		return
-	if not _has_previous_work_fast_forward_scale:
-		_previous_work_fast_forward_scale = float(behavior.get("work_fast_forward_scale"))
-		_has_previous_work_fast_forward_scale = true
-	var next_scale: float = exploration_time_scale if enable_time_acceleration else 1.0
-	behavior.set("work_fast_forward_scale", maxf(next_scale, 1.0))
+	if _has_property(behavior, &"work_fast_forward_scale"):
+		if not _has_previous_work_fast_forward_scale:
+			_previous_work_fast_forward_scale = float(behavior.get("work_fast_forward_scale"))
+			_has_previous_work_fast_forward_scale = true
+		var next_scale: float = exploration_time_scale if enable_time_acceleration else 1.0
+		behavior.set("work_fast_forward_scale", maxf(next_scale, 1.0))
+	if _has_property(behavior, &"work_location_body_position_ratio"):
+		if not _has_previous_work_location_body_position_ratio:
+			_previous_work_location_body_position_ratio = behavior.get("work_location_body_position_ratio") as Vector2
+			_has_previous_work_location_body_position_ratio = true
+		behavior.set("work_location_body_position_ratio", exploration_body_position_ratio)
 
 
-func _restore_worker_time_scale_after_exploration() -> void:
-	if not _has_previous_work_fast_forward_scale:
-		return
+func _restore_worker_presentation_after_exploration() -> void:
 	var behavior: Node = _get_worker_entrance_behavior()
-	if behavior != null and _has_property(behavior, &"work_fast_forward_scale"):
-		behavior.set("work_fast_forward_scale", _previous_work_fast_forward_scale)
-	_has_previous_work_fast_forward_scale = false
-	_previous_work_fast_forward_scale = 8.0
+	if _has_previous_work_fast_forward_scale:
+		if behavior != null and _has_property(behavior, &"work_fast_forward_scale"):
+			behavior.set("work_fast_forward_scale", _previous_work_fast_forward_scale)
+		_has_previous_work_fast_forward_scale = false
+		_previous_work_fast_forward_scale = 8.0
+	if _has_previous_work_location_body_position_ratio:
+		if behavior != null and _has_property(behavior, &"work_location_body_position_ratio"):
+			behavior.set("work_location_body_position_ratio", _previous_work_location_body_position_ratio)
+		_has_previous_work_location_body_position_ratio = false
+		_previous_work_location_body_position_ratio = Vector2(0.44, 0.58)
 
 
 func _apply_exploration_location_card() -> void:
@@ -459,6 +504,33 @@ func _get_skills_module() -> Node:
 	return _skills_module
 
 
+func _ensure_gathering_effect_module() -> Node:
+	if _gathering_effect_module != null and is_instance_valid(_gathering_effect_module):
+		return _gathering_effect_module
+	_resolve_refs()
+	if _gathering_effect_module != null and is_instance_valid(_gathering_effect_module):
+		return _gathering_effect_module
+	var scene_root := get_tree().current_scene
+	if scene_root != null:
+		var existing_module := scene_root.get_node_or_null("ExplorationGatheringEffectModule")
+		if existing_module != null:
+			_gathering_effect_module = existing_module
+			return _gathering_effect_module
+	var effect_script := load(GATHERING_EFFECT_MODULE_SCRIPT_PATH) as Script
+	if effect_script == null:
+		return null
+	var effect_module := effect_script.new() as Node
+	if effect_module == null:
+		return null
+	effect_module.name = "ExplorationGatheringEffectModule"
+	if scene_root != null:
+		scene_root.add_child(effect_module)
+	else:
+		add_child(effect_module)
+	_gathering_effect_module = effect_module
+	return _gathering_effect_module
+
+
 func _get_worker_display_name() -> String:
 	var worker: Node = _get_worker()
 	if worker == null:
@@ -512,6 +584,8 @@ func _resolve_refs() -> void:
 		_location_background = get_node_or_null(location_background_path)
 	if _stay_overlay == null and not stay_overlay_path.is_empty():
 		_stay_overlay = get_node_or_null(stay_overlay_path)
+	if _gathering_effect_module == null and not gathering_effect_module_path.is_empty():
+		_gathering_effect_module = get_node_or_null(gathering_effect_module_path)
 
 
 func _to_string_name(value: Variant) -> StringName:
