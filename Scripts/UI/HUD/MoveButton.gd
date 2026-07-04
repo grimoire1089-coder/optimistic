@@ -4,6 +4,8 @@ class_name MoveButton
 const DEFAULT_CLICK_SFX_PATH := "res://Assets/Audio/SFX/UI/UI_Click_001.ogg"
 
 @export var label_text: String = "移動"
+@export var move_menu_path: NodePath = NodePath("../MoveMenu")
+@export var fallback_group_name: StringName = &"move_menu"
 @export var click_sfx: AudioStream
 @export var click_sfx_volume_db: float = 0.0
 
@@ -17,6 +19,26 @@ func _ready() -> void:
 
 func _on_pressed() -> void:
 	_play_click_sfx()
+	var move_menu := _find_move_menu()
+	if move_menu == null:
+		push_warning("Move menu not found: %s" % move_menu_path)
+		return
+	if move_menu.has_method("toggle_menu"):
+		move_menu.call("toggle_menu")
+		return
+	if move_menu.has_method("open_menu"):
+		move_menu.call("open_menu")
+		return
+	if move_menu is CanvasItem:
+		var canvas_item := move_menu as CanvasItem
+		canvas_item.visible = not canvas_item.visible
+
+
+func _find_move_menu() -> Node:
+	var move_menu := get_node_or_null(move_menu_path)
+	if move_menu != null:
+		return move_menu
+	return get_tree().get_first_node_in_group(fallback_group_name)
 
 
 func _play_click_sfx() -> void:
