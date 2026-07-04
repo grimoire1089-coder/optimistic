@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="FoodItemData" format=3]
+
+[ext_resource type="Script" uid="uid://cgyi4b7bbmqn" path="res://Scripts/Items/Food/FoodItemData.gd" id="1_food_data"]
+[ext_resource type="Texture2D" path="res://Assets/Items/Icons/Mushroom/Maitake mushroom.png" id="2_mushroom_icon"]
+
+[resource]
+script = ExtResource("1_food_data")
+item_id = &"ingredient_mushroom_0007_maitake_mushroom"
+display_name = "マイタケ"
+description = "花びらのように広がる食用きのこ。香りがよく、焼き物や炒め物に合う。"
+icon = ExtResource("2_mushroom_icon")
+category_id = &"ingredients"
+sell_price = 4
