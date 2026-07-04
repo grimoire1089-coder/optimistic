@@ -26,6 +26,7 @@ WeatherSystem="*res://Scripts/Systems/Weather/WeatherSystem.gd"
 CreditWallet="*res://Scripts/Systems/Currency/CreditWallet.gd"
 BasicIncome="*res://Scripts/Systems/Currency/BasicIncomeSystem.gd"
 BookLibrary="*res://Scripts/Systems/Books/BookLibrary.gd"
+BillSystem="*res://Scripts/Systems/Billing/BillSystem.gd"
 
 [display]
 

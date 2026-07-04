@@ -196,6 +196,7 @@ func _complete_crafting() -> void:
 		_reset_action()
 		return
 	_add_skill_experience_for_completed_craft()
+	_record_bill_usage_for_completed_craft(_recipe, _quantity, output_amount)
 	_push_message("%s x%dを作りました。" % [_get_recipe_display_name(_recipe), output_amount])
 	craft_completed.emit(_recipe, _quantity)
 	_reset_action()
@@ -240,6 +241,33 @@ func _get_craft_duration_seconds() -> float:
 	if _clock != null:
 		real_seconds_per_game_minute = maxf(_clock.real_seconds_per_game_minute, 0.01)
 	return float(minutes) * real_seconds_per_game_minute
+
+
+func _record_bill_usage_for_completed_craft(recipe: CraftRecipeData, quantity: int, output_amount: int) -> void:
+	if recipe == null:
+		return
+	if recipe.category_id == COOKING_CATEGORY_ID:
+		_record_bill_electricity_usage(maxi(recipe.craft_game_minutes, 1) * maxi(quantity, 1), "cooking")
+	if recipe.recipe_id == &"drink_0001_water_bottle":
+		_record_bill_water_usage(maxi(output_amount, 1), "craft_water")
+
+
+func _record_bill_water_usage(units: int, reason: String) -> void:
+	var bill_system := get_node_or_null("/root/BillSystem")
+	if bill_system == null:
+		bill_system = get_tree().get_first_node_in_group(&"bill_system")
+	if bill_system == null or not bill_system.has_method("record_water_usage"):
+		return
+	bill_system.call("record_water_usage", units, reason)
+
+
+func _record_bill_electricity_usage(units: int, reason: String) -> void:
+	var bill_system := get_node_or_null("/root/BillSystem")
+	if bill_system == null:
+		bill_system = get_tree().get_first_node_in_group(&"bill_system")
+	if bill_system == null or not bill_system.has_method("record_electricity_usage"):
+		return
+	bill_system.call("record_electricity_usage", units, reason)
 
 
 func _find_required_furniture(required_ids: PackedStringArray) -> Node2D:

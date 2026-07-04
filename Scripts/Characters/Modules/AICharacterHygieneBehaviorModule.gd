@@ -195,6 +195,8 @@ func _complete_showering() -> void:
 	_is_showering = false
 	if _needs_module != null:
 		_needs_module.add_need_value(hygiene_need_id, hygiene_recovery_value)
+	_record_bill_water_usage(3, "shower")
+	_record_bill_electricity_usage(1, "shower")
 	_finish_hygiene_action()
 
 
@@ -204,6 +206,24 @@ func _finish_hygiene_action() -> void:
 	_cooldown_timer = maxf(shower_cooldown_seconds, 0.0)
 	_action_progress_ratio = 0.0
 	_is_active = false
+
+
+func _record_bill_water_usage(units: int, reason: String) -> void:
+	var bill_system := get_node_or_null("/root/BillSystem")
+	if bill_system == null:
+		bill_system = get_tree().get_first_node_in_group(&"bill_system")
+	if bill_system == null or not bill_system.has_method("record_water_usage"):
+		return
+	bill_system.call("record_water_usage", units, reason)
+
+
+func _record_bill_electricity_usage(units: int, reason: String) -> void:
+	var bill_system := get_node_or_null("/root/BillSystem")
+	if bill_system == null:
+		bill_system = get_tree().get_first_node_in_group(&"bill_system")
+	if bill_system == null or not bill_system.has_method("record_electricity_usage"):
+		return
+	bill_system.call("record_electricity_usage", units, reason)
 
 
 func _reset_hygiene_action() -> void:

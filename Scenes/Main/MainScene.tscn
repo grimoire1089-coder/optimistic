@@ -28,6 +28,8 @@
 [ext_resource type="Script" uid="uid://dn8k76f4b7b67" path="res://Scripts/UI/Debug/AIDebugPanel.gd" id="25_ai_debug_panel"]
 [ext_resource type="PackedScene" path="res://Scenes/UI/HUD/BookButton.tscn" id="26_book_button"]
 [ext_resource type="PackedScene" path="res://Scenes/UI/Books/BookLibraryUI.tscn" id="27_book_library_ui"]
+[ext_resource type="PackedScene" path="res://Scenes/UI/Billing/BillPanel.tscn" id="28_bill_panel"]
+[ext_resource type="PackedScene" path="res://Scenes/UI/HUD/BillButton.tscn" id="29_bill_button"]
 
 [sub_resource type="Environment" id="Environment_ctt6t"]
 glow_enabled = true
@@ -109,6 +111,8 @@ anchors_preset = 8
 
 [node name="BookLibraryUI" parent="CanvasLayer" instance=ExtResource("27_book_library_ui")]
 
+[node name="BillPanel" parent="CanvasLayer" instance=ExtResource("28_bill_panel")]
+
 [node name="GameOptionsOverlay" parent="CanvasLayer" unique_id=411112730 instance=ExtResource("24_game_options_overlay")]
 
 [node name="RobinHudButton" parent="CanvasLayer" unique_id=109920417 instance=ExtResource("19_robin_hud_button")]
@@ -126,3 +130,5 @@ anchors_preset = 8
 [node name="BuildModeButton" parent="CanvasLayer" unique_id=767525503 instance=ExtResource("13_build_mode_button")]
 
 [node name="WorkCreditButton" parent="CanvasLayer" unique_id=917382376 instance=ExtResource("7_work_credit_button")]
+
+[node name="BillButton" parent="CanvasLayer" instance=ExtResource("29_bill_button")]

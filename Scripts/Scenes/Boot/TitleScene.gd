@@ -62,6 +62,10 @@ func _on_start_button_pressed() -> void:
 	if basic_income != null and basic_income.has_method("reset_for_new_game"):
 		basic_income.call("reset_for_new_game")
 
+	var bill_system := get_node_or_null("/root/BillSystem")
+	if bill_system != null and bill_system.has_method("reset_for_new_game"):
+		bill_system.call("reset_for_new_game")
+
 	SceneRouter.go_to_main()
 
 

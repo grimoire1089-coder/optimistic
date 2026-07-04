@@ -1,0 +1,98 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://Scripts/UI/Billing/BillPanel.gd" id="1_bill_panel"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bill_panel"]
+bg_color = Color(0.015, 0.025, 0.035, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.12, 0.82, 1, 0.95)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+shadow_color = Color(0.08, 0.62, 0.95, 0.24)
+shadow_size = 10
+
+[node name="BillPanel" type="PanelContainer"]
+custom_minimum_size = Vector2(420, 456)
+layout_mode = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -444.0
+offset_top = -548.0
+offset_right = -24.0
+offset_bottom = -92.0
+grow_horizontal = 0
+grow_vertical = 0
+theme_override_styles/panel = SubResource("StyleBoxFlat_bill_panel")
+script = ExtResource("1_bill_panel")
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 10
+
+[node name="Rows" type="VBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Header" type="HBoxContainer" parent="MarginContainer/Rows"]
+layout_mode = 2
+
+[node name="TitleLabel" type="Label" parent="MarginContainer/Rows/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.88, 0.98, 1, 1)
+theme_override_font_sizes/font_size = 18
+text = "請求"
+
+[node name="CloseButton" type="Button" parent="MarginContainer/Rows/Header"]
+custom_minimum_size = Vector2(32, 28)
+layout_mode = 2
+text = "X"
+
+[node name="SummaryLabel" type="Label" parent="MarginContainer/Rows"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.88, 0.98, 1, 1)
+theme_override_font_sizes/font_size = 14
+text = "未払い: CR 0"
+
+[node name="UsageLabel" type="Label" parent="MarginContainer/Rows"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.62, 0.86, 0.94, 1)
+theme_override_font_sizes/font_size = 12
+text = "今季使用量  水道 0 / 電気 0"
+
+[node name="BillScroll" type="ScrollContainer" parent="MarginContainer/Rows"]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="BillList" type="VBoxContainer" parent="MarginContainer/Rows/BillScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="EmptyLabel" type="Label" parent="MarginContainer/Rows/BillScroll/BillList"]
+custom_minimum_size = Vector2(0, 280)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_colors/font_color = Color(0.88, 0.98, 1, 1)
+text = "届いている請求書はありません。"
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 3
+
+[node name="PayAllButton" type="Button" parent="MarginContainer/Rows"]
+custom_minimum_size = Vector2(0, 38)
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "未払いをまとめて支払う"

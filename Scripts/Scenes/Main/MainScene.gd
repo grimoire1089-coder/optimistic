@@ -18,6 +18,7 @@ const AI_CHARACTER_HUD_BOTTOM_RIGHT_MARGIN := Vector2(24.0, 92.0)
 const INVENTORY_UI_SIZE := Vector2(436.0, 420.0)
 const WORK_MENU_SIZE := Vector2(356.0, 196.0)
 const BOOK_LIBRARY_UI_SIZE := Vector2(420.0, 456.0)
+const BILL_PANEL_SIZE := Vector2(420.0, 456.0)
 
 @onready var debug_label: Label = $CanvasLayer/DebugLabel
 @onready var robin: RobinWanderActor = $Robin
@@ -285,10 +286,12 @@ func _apply_reserved_bottom_hud_layout() -> void:
 	_place_top_right_control(canvas_layer.get_node_or_null("WorkCreditButton") as Control, Vector2(-296.0, 256.0), HUD_BUTTON_SIZE)
 	_place_top_right_control(canvas_layer.get_node_or_null("CraftButton") as Control, Vector2(-224.0, 256.0), HUD_BUTTON_SIZE)
 	_place_top_right_control(canvas_layer.get_node_or_null("SettingsButton") as Control, Vector2(-152.0, 256.0), HUD_BUTTON_SIZE)
+	_place_top_right_control(canvas_layer.get_node_or_null("BillButton") as Control, Vector2(-80.0, 256.0), HUD_BUTTON_SIZE)
 	_place_bottom_right_control(canvas_layer.get_node_or_null("AICharacterHud") as Control, AI_CHARACTER_HUD_BOTTOM_RIGHT_MARGIN, AI_CHARACTER_HUD_SIZE)
 	_place_bottom_right_control(canvas_layer.get_node_or_null("InventoryUI") as Control, AI_CHARACTER_HUD_BOTTOM_RIGHT_MARGIN, INVENTORY_UI_SIZE)
 	_place_bottom_right_control(canvas_layer.get_node_or_null("WorkMenu") as Control, AI_CHARACTER_HUD_BOTTOM_RIGHT_MARGIN, WORK_MENU_SIZE)
 	_place_bottom_right_control(canvas_layer.get_node_or_null("BookLibraryUI") as Control, AI_CHARACTER_HUD_BOTTOM_RIGHT_MARGIN, BOOK_LIBRARY_UI_SIZE)
+	_place_bottom_right_control(canvas_layer.get_node_or_null("BillPanel") as Control, AI_CHARACTER_HUD_BOTTOM_RIGHT_MARGIN, BILL_PANEL_SIZE)
 	_place_top_right_control(canvas_layer.get_node_or_null("CraftMenu") as Control, Vector2(-328.0, 252.0), Vector2(304.0, 172.0))
 	_configure_map_grid_toggle_button(canvas_layer.get_node_or_null(MAP_GRID_TOGGLE_BUTTON_NAME) as Button)
 
@@ -343,6 +346,7 @@ func _close_non_build_modal_ui() -> void:
 	_close_canvas_child("CraftMenu", &"close_menu")
 	_close_canvas_child("InventoryUI", &"close")
 	_close_canvas_child("BookLibraryUI", &"close")
+	_close_canvas_child("BillPanel", &"close")
 	_close_canvas_child("WorkMenu", &"close_menu")
 
 
@@ -367,6 +371,7 @@ func _set_non_build_buttons_disabled(is_disabled: bool) -> void:
 	_set_canvas_button_disabled("CraftButton", is_disabled)
 	_set_canvas_button_disabled("ShopButton", is_disabled)
 	_set_canvas_button_disabled("BookButton", is_disabled)
+	_set_canvas_button_disabled("BillButton", is_disabled)
 	_set_canvas_button_disabled("InventoryButton", is_disabled)
 	_set_canvas_button_disabled("WorkCreditButton", is_disabled)
 	_set_canvas_button_disabled("ToInfrastructureRoomButton", is_disabled)

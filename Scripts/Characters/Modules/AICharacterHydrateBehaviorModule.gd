@@ -231,6 +231,7 @@ func _create_water_bottle_for_drinking() -> FoodItemData:
 		return null
 	if not _inventory_module.add_food_item(food_data, 1):
 		return null
+	_record_bill_water_usage(1, "hydrate_refill")
 	return food_data
 
 
@@ -339,6 +340,15 @@ func _apply_water_bottle_need_effect(food_data: FoodItemData) -> void:
 		return
 	for need_id in food_data.need_effect.values.keys():
 		_needs_module.add_need_value(need_id, float(food_data.need_effect.values[need_id]))
+
+
+func _record_bill_water_usage(units: int, reason: String) -> void:
+	var bill_system := get_node_or_null("/root/BillSystem")
+	if bill_system == null:
+		bill_system = get_tree().get_first_node_in_group(&"bill_system")
+	if bill_system == null or not bill_system.has_method("record_water_usage"):
+		return
+	bill_system.call("record_water_usage", units, reason)
 
 
 func _finish_hydrate_action() -> void:
