@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="FoodItemData" format=3]
+
+[ext_resource type="Script" uid="uid://cgyi4b7bbmqn" path="res://Scripts/Items/Food/FoodItemData.gd" id="1_food_data"]
+[ext_resource type="Texture2D" path="res://Assets/Items/Icons/Mushroom/Chanterelle.png" id="2_mushroom_icon"]
+
+[resource]
+script = ExtResource("1_food_data")
+item_id = &"ingredient_mushroom_0019_chanterelle"
+display_name = "アンズタケ"
+description = "黄色い傘を持つ香りのよい食用きのこ。バター炒めやソース料理に合う。"
+icon = ExtResource("2_mushroom_icon")
+category_id = &"ingredients"
+sell_price = 7
