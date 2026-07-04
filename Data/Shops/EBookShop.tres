@@ -3,10 +3,11 @@
 [ext_resource type="Script" uid="uid://dik32ehksmive" path="res://Scripts/Shops/ShopData.gd" id="1_shop_data"]
 [ext_resource type="Script" uid="uid://8a0d3nyywiao" path="res://Scripts/Shops/ShopItemData.gd" id="2_shop_item"]
 [ext_resource type="Script" path="res://Scripts/Shops/ShopTabData.gd" id="3_shop_tab"]
-[ext_resource type="Texture2D" uid="uid://dsnumiauoviid" path="res://Assets/Items/Icons/Tool/Lapis_001.png" id="4_lapis_icon"]
+[ext_resource type="Texture2D" path="res://Assets/Items/Icons/Tool/Chip_Books.png" id="4_book_chip"]
 [ext_resource type="Resource" path="res://Data/Books/Book_0001_LapisPrimer.tres" id="5_lapis_primer"]
 [ext_resource type="Resource" path="res://Data/Books/Book_0002_DecadanceLivingGuide.tres" id="6_living_guide"]
 [ext_resource type="Resource" path="res://Data/Books/Book_0101_CookingVol1.tres" id="7_cooking_vol1"]
+[ext_resource type="Resource" path="res://Data/Books/Book_0201_CapsuleFarmMushroomGuide.tres" id="8_capsule_farm_mushroom_guide"]
 
 [sub_resource type="Resource" id="ShopItemData_lapis_primer"]
 script = ExtResource("2_shop_item")
@@ -26,6 +27,12 @@ item_data = ExtResource("7_cooking_vol1")
 shop_tab_id = &"books"
 price_override = 320
 
+[sub_resource type="Resource" id="ShopItemData_capsule_farm_mushroom_guide"]
+script = ExtResource("2_shop_item")
+item_data = ExtResource("8_capsule_farm_mushroom_guide")
+shop_tab_id = &"books"
+price_override = 260
+
 [sub_resource type="Resource" id="ShopTabData_books"]
 script = ExtResource("3_shop_tab")
 tab_id = &"books"
@@ -37,6 +44,6 @@ shop_id = &"lapis_ebook_store"
 display_name = "ラピス
 電子書籍店"
 description = "ラピスで読める電子書籍を扱うショップ。購入した本は書籍UIから閲覧できます。"
-sticker = ExtResource("4_lapis_icon")
+sticker = ExtResource("4_book_chip")
 tabs = Array[ExtResource("3_shop_tab")]([SubResource("ShopTabData_books")])
-items = Array[ExtResource("2_shop_item")]([SubResource("ShopItemData_lapis_primer"), SubResource("ShopItemData_living_guide"), SubResource("ShopItemData_cooking_vol1")])
+items = Array[ExtResource("2_shop_item")]([SubResource("ShopItemData_lapis_primer"), SubResource("ShopItemData_living_guide"), SubResource("ShopItemData_cooking_vol1"), SubResource("ShopItemData_capsule_farm_mushroom_guide")])
