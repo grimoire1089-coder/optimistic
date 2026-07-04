@@ -12,6 +12,7 @@ const FPS_LABEL_MARGIN := Vector2(96.0, 30.0)
 @export var actor_path: NodePath = NodePath("../../Robin")
 @export var needs_module_path: NodePath = NodePath("../../Robin/AICharacterNeedsBundle/CharacterNeedsModule")
 @export var refresh_interval_seconds: float = 0.2
+@export var closed_refresh_interval_seconds: float = 1.0
 
 var _actor: RobinWanderActor
 var _needs_module: CharacterNeedsModule
@@ -48,17 +49,23 @@ func _ready() -> void:
 	_build_fps_display()
 	_build_panel()
 	call_deferred("_bring_debug_ui_to_front")
-	_refresh_panel()
+	_refresh_fps_label()
 	set_process(true)
 
 
 func _process(delta: float) -> void:
-	_resolve_refs()
+	var interval := closed_refresh_interval_seconds
+	if _is_panel_open():
+		interval = refresh_interval_seconds
 	_refresh_timer -= maxf(delta, 0.0)
 	if _refresh_timer > 0.0:
 		return
-	_refresh_timer = maxf(refresh_interval_seconds, 0.05)
-	_refresh_panel()
+	_refresh_timer = maxf(interval, 0.05)
+	if _is_panel_open():
+		_resolve_refs()
+		_refresh_panel()
+	else:
+		_refresh_fps_label()
 
 
 func _build_modal_guard() -> void:
@@ -294,7 +301,15 @@ func _set_panel_open(is_open: bool) -> void:
 		_toggle_button.set_pressed_no_signal(is_open)
 		_toggle_button.text = "DBG-" if is_open else "DBG"
 	_bring_debug_ui_to_front()
-	_refresh_panel()
+	if is_open:
+		_resolve_refs()
+		_refresh_panel()
+	else:
+		_refresh_fps_label()
+
+
+func _is_panel_open() -> bool:
+	return _panel != null and _panel.visible
 
 
 func _bring_debug_ui_to_front() -> void:
@@ -352,6 +367,8 @@ func _on_snap_grid_pressed() -> void:
 
 func _refresh_panel() -> void:
 	_refresh_fps_label()
+	if not _is_panel_open():
+		return
 
 	if _status_label != null:
 		_status_label.text = _make_status_text()
