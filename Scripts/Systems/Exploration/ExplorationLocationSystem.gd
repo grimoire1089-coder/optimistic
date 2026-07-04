@@ -6,6 +6,7 @@ const DEFAULT_JOB_ID: StringName = &"explore_capsule_farm_mushroom_district"
 const DEFAULT_DISPLAY_NAME := "カプセルファーム きのこ採取地区"
 const DEFAULT_LOCATION_TEXTURE_PATH := "res://Assets/Maps/Location/Location_005.png"
 const DEFAULT_BGM_PATH := "res://Assets/Audio/BGM/Forest_001.ogg"
+const DEFAULT_BGM_2_PATH := "res://Assets/Audio/BGM/Forest_002.ogg"
 const DEFAULT_LOCATION_BACKGROUND_TEXTURE_PATH := "res://Assets/Maps/Location/Location_001.png"
 const DEFAULT_GATHERING_TABLE_PATH := "res://Data/Exploration/GatheringTables/CapsuleFarmMushroomDistrictGatheringTable.tres"
 const GATHERING_EFFECT_MODULE_SCRIPT_PATH := "res://Scripts/Systems/Exploration/ExplorationGatheringEffectModule.gd"
@@ -34,7 +35,7 @@ const SKILL_GATHERING: StringName = &"gathering"
 @export var gathering_table_path: String = DEFAULT_GATHERING_TABLE_PATH
 @export var location_texture_path: String = DEFAULT_LOCATION_TEXTURE_PATH
 @export var restore_location_texture_path: String = DEFAULT_LOCATION_BACKGROUND_TEXTURE_PATH
-@export var bgm_paths: PackedStringArray = PackedStringArray([DEFAULT_BGM_PATH])
+@export var bgm_paths: PackedStringArray = PackedStringArray([DEFAULT_BGM_PATH, DEFAULT_BGM_2_PATH])
 
 var _worker: Node
 var _skills_module: Node
