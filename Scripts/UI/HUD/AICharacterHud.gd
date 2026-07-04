@@ -90,7 +90,11 @@ func _process(delta: float) -> void:
 func _apply_front_layer_priority() -> void:
 	z_as_relative = false
 	z_index = FRONT_Z_INDEX
-	move_to_front()
+	call_deferred("_move_to_front_safely")
+
+func _move_to_front_safely() -> void:
+	if is_inside_tree():
+		move_to_front()
 
 func _setup_tabs() -> void:
 	if tab_container == null:
