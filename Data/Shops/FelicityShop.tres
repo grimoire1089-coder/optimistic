@@ -10,12 +10,19 @@
 [ext_resource type="Resource" uid="uid://dm0hqdwdx8tfo" path="res://Data/Items/Food/Drink_1002_OolongTea.tres" id="7_oolong_tea"]
 [ext_resource type="AudioStream" uid="uid://bcmhj1ssto6nt" path="res://Assets/Audio/BGM/Felicity BGM 001.ogg" id="8_d32om"]
 [ext_resource type="Resource" uid="uid://bbcfo6cl1qi0" path="res://Data/Items/Food/Food_0008_WaterBottle.tres" id="8_water_bottle"]
+[ext_resource type="Resource" path="res://Data/Items/Food/Food_0016_FelicityClassicBurger.tres" id="9_classic_burger"]
 
 [sub_resource type="Resource" id="ShopItemData_nikuman"]
 script = ExtResource("2_shop_item")
 item_data = ExtResource("5_nikuman")
 shop_tab_id = &"foods"
 price_override = 120
+
+[sub_resource type="Resource" id="ShopItemData_classic_burger"]
+script = ExtResource("2_shop_item")
+item_data = ExtResource("9_classic_burger")
+shop_tab_id = &"foods"
+price_override = 220
 
 [sub_resource type="Resource" id="ShopItemData_white_rice"]
 script = ExtResource("2_shop_item")
@@ -54,4 +61,4 @@ portrait = ExtResource("6_f8oiv")
 sticker = ExtResource("4_felicity_sticker")
 shop_bgm = ExtResource("8_d32om")
 tabs = Array[ExtResource("3_shop_tab")]([SubResource("ShopTabData_foods"), SubResource("ShopTabData_drinks")])
-items = Array[ExtResource("2_shop_item")]([SubResource("ShopItemData_nikuman"), SubResource("ShopItemData_white_rice"), SubResource("ShopItemData_oolong_tea"), SubResource("ShopItemData_water_bottle")])
+items = Array[ExtResource("2_shop_item")]([SubResource("ShopItemData_nikuman"), SubResource("ShopItemData_classic_burger"), SubResource("ShopItemData_white_rice"), SubResource("ShopItemData_oolong_tea"), SubResource("ShopItemData_water_bottle")])
