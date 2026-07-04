@@ -26,6 +26,7 @@ const BUTTON_TO_UI := {
 	"WorkCreditButton": "WorkMenu",
 	"CraftButton": "CraftMenu",
 	"SettingsButton": "GameOptionsOverlay",
+	"BillButton": "BillPanel",
 }
 
 const TOGGLE_STATE_BUTTONS := [
