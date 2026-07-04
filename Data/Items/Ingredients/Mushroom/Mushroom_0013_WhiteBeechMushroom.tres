@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="FoodItemData" format=3]
+
+[ext_resource type="Script" uid="uid://cgyi4b7bbmqn" path="res://Scripts/Items/Food/FoodItemData.gd" id="1_food_data"]
+[ext_resource type="Texture2D" path="res://Assets/Items/Icons/Mushroom/White beech mushroom.png" id="2_mushroom_icon"]
+
+[resource]
+script = ExtResource("1_food_data")
+item_id = &"ingredient_mushroom_0013_white_beech_mushroom"
+display_name = "ブナピー"
+description = "白く小房で育つ食用きのこ。やさしい味で、炒め物やスープに使いやすい。"
+icon = ExtResource("2_mushroom_icon")
+category_id = &"ingredients"
+sell_price = 3
