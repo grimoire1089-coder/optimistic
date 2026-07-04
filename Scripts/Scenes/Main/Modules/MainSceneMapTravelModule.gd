@@ -234,7 +234,7 @@ func _sync_runtime_build_nodes() -> void:
 	var preview := get_node_or_null(build_preview_path)
 	if preview != null:
 		if preview.has_method("set_room_map_path"):
-			overlay.call("set_room_map_path", active_map_path)
+			preview.call("set_room_map_path", active_map_path)
 		else:
 			preview.set("room_map_path", active_map_path)
 			preview.set("_room_map", null)
