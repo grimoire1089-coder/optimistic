@@ -20,6 +20,7 @@ const DEFAULT_LOCATION_TEXTURE_PATH := "res://Assets/Maps/Location/Location_001.
 @export var fallback_corner_radius: int = 18
 
 var _room_map: RoomMapGridModule
+var _connected_room_map: RoomMapGridModule
 var _texture: Texture2D
 var _loaded_texture_path: String = ""
 var _draw_rect := Rect2()
@@ -29,25 +30,34 @@ func _ready() -> void:
 	z_as_relative = false
 	_load_texture_if_needed()
 	_resolve_refs()
-	_sync_layout()
-	queue_redraw()
+	_connect_room_map_signal()
+	if _sync_layout():
+		queue_redraw()
+	set_process(_room_map == null)
 
 
 func _process(_delta: float) -> void:
 	_resolve_refs()
-	_sync_layout()
-	queue_redraw()
+	_connect_room_map_signal()
+	if _sync_layout():
+		queue_redraw()
+	if _room_map != null:
+		set_process(false)
 
 
 func set_room_map_path(next_room_map_path: NodePath) -> void:
 	if room_map_path == next_room_map_path:
 		_resolve_refs()
+		_connect_room_map_signal()
 		return
+	_disconnect_room_map_signal()
 	room_map_path = next_room_map_path
 	_room_map = null
 	_resolve_refs()
-	_sync_layout()
-	queue_redraw()
+	_connect_room_map_signal()
+	if _sync_layout():
+		queue_redraw()
+	set_process(_room_map == null)
 
 
 func set_texture_path(next_texture_path: String) -> void:
@@ -57,7 +67,10 @@ func set_texture_path(next_texture_path: String) -> void:
 	_texture = null
 	_loaded_texture_path = ""
 	_load_texture_if_needed()
-	queue_redraw()
+	if _sync_layout():
+		queue_redraw()
+	else:
+		queue_redraw()
 
 
 func get_panel_global_rect() -> Rect2:
@@ -87,19 +100,23 @@ func _draw() -> void:
 	_draw_fallback_background()
 
 
-func _sync_layout() -> void:
+func _sync_layout() -> bool:
+	var previous_visible := visible
+	var previous_position := global_position
+	var previous_draw_rect := _draw_rect
+
 	visible = show_background and _room_map != null and _room_map.visible
 	if not visible:
 		_draw_rect = Rect2()
-		return
+		return _is_layout_changed(previous_visible, previous_position, previous_draw_rect)
 	if not _room_map.has_method("get_grid_rect"):
 		_draw_rect = Rect2()
-		return
+		return _is_layout_changed(previous_visible, previous_position, previous_draw_rect)
 
 	var grid_rect: Rect2 = _room_map.get_grid_rect()
 	if grid_rect.size.x <= 0.0 or grid_rect.size.y <= 0.0:
 		_draw_rect = Rect2()
-		return
+		return _is_layout_changed(previous_visible, previous_position, previous_draw_rect)
 
 	var target_size := _get_target_panel_size(grid_rect)
 	var target_width := target_size.x
@@ -114,6 +131,16 @@ func _sync_layout() -> void:
 
 	global_position = Vector2(grid_rect.position.x + grid_rect.size.x * 0.5, target_top + target_height * 0.5)
 	_draw_rect = Rect2(Vector2(-target_width * 0.5, -target_height * 0.5), Vector2(target_width, target_height))
+	return _is_layout_changed(previous_visible, previous_position, previous_draw_rect)
+
+
+func _is_layout_changed(previous_visible: bool, previous_position: Vector2, previous_draw_rect: Rect2) -> bool:
+	return previous_visible != visible or not previous_position.is_equal_approx(global_position) or not previous_draw_rect.is_equal_approx(_draw_rect)
+
+
+func _on_room_map_rect_changed(_visual_rect: Rect2, _grid_rect: Rect2, _grid_size: Vector2i) -> void:
+	if _sync_layout():
+		queue_redraw()
 
 
 func _get_target_panel_size(grid_rect: Rect2) -> Vector2:
@@ -166,3 +193,22 @@ func _resolve_refs() -> void:
 	if room_map_path.is_empty():
 		return
 	_room_map = get_node_or_null(room_map_path) as RoomMapGridModule
+
+
+func _connect_room_map_signal() -> void:
+	if _room_map == null or _connected_room_map == _room_map:
+		return
+	_disconnect_room_map_signal()
+	var callable := Callable(self, "_on_room_map_rect_changed")
+	if not _room_map.map_rect_changed.is_connected(callable):
+		_room_map.map_rect_changed.connect(callable)
+	_connected_room_map = _room_map
+
+
+func _disconnect_room_map_signal() -> void:
+	if _connected_room_map == null:
+		return
+	var callable := Callable(self, "_on_room_map_rect_changed")
+	if _connected_room_map.map_rect_changed.is_connected(callable):
+		_connected_room_map.map_rect_changed.disconnect(callable)
+	_connected_room_map = null
