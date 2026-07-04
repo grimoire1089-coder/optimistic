@@ -24,7 +24,9 @@ const INVALID_DEBUG_GRID_POSITION := Vector2i(-999999, -999999)
 @export var frame_outer_glow_width: float = 24.0
 @export var frame_middle_glow_width: float = 12.0
 @export var frame_core_line_width: float = 4.0
-@export var show_ai_movement_debug_highlight: bool = true
+@export var show_ai_movement_debug_highlight: bool = false
+@export var map_state_poll_interval_seconds: float = 0.25
+@export var movement_debug_redraw_interval_seconds: float = 0.15
 @export var ai_movement_path_fill_color: Color = Color(0.0, 1.0, 1.0, 0.18)
 @export var ai_movement_path_border_color: Color = Color(0.0, 2.0, 2.0, 0.55)
 @export var ai_movement_next_fill_color: Color = Color(1.0, 0.95, 0.1, 0.25)
@@ -37,6 +39,8 @@ const INVALID_DEBUG_GRID_POSITION := Vector2i(-999999, -999999)
 var _last_visual_rect := Rect2()
 var _last_grid_rect := Rect2()
 var _last_grid_size := Vector2i.ZERO
+var _map_state_poll_timer := 0.0
+var _movement_debug_redraw_timer := 0.0
 
 
 func _ready() -> void:
@@ -45,9 +49,20 @@ func _ready() -> void:
 	queue_redraw()
 
 
-func _process(_delta: float) -> void:
-	_sync_map_state(false)
-	queue_redraw()
+func _process(delta: float) -> void:
+	_map_state_poll_timer -= maxf(delta, 0.0)
+	if _map_state_poll_timer <= 0.0:
+		_map_state_poll_timer = maxf(map_state_poll_interval_seconds, 0.05)
+		if _sync_map_state(false):
+			queue_redraw()
+
+	if show_ai_movement_debug_highlight:
+		_movement_debug_redraw_timer -= maxf(delta, 0.0)
+		if _movement_debug_redraw_timer <= 0.0:
+			_movement_debug_redraw_timer = maxf(movement_debug_redraw_interval_seconds, 0.05)
+			queue_redraw()
+	else:
+		_movement_debug_redraw_timer = 0.0
 
 
 func is_buildable() -> bool:
@@ -418,7 +433,7 @@ func _draw_outside_rect_stroke(base_rect: Rect2, color: Color, width: float) -> 
 	draw_rect(base_rect.grow(stroke_width * 0.5), color, false, stroke_width)
 
 
-func _sync_map_state(force_emit: bool) -> void:
+func _sync_map_state(force_emit: bool) -> bool:
 	var visual_rect := get_visual_map_rect()
 	var grid_rect := get_grid_rect()
 	var grid_size := get_grid_size()
@@ -428,6 +443,8 @@ func _sync_map_state(force_emit: bool) -> void:
 		_last_grid_rect = grid_rect
 		_last_grid_size = grid_size
 		map_rect_changed.emit(visual_rect, grid_rect, grid_size)
+		return true
+	return false
 
 
 func _get_safe_cell_size() -> Vector2:
