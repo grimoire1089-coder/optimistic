@@ -18,6 +18,21 @@ const PRESSED_BORDER_WIDTH := 2
 const DISABLED_BORDER_WIDTH := 1
 const ACTIVE_BORDER_WIDTH := 4
 
+const HUD_BUTTON_SIZE := Vector2(80.0, 80.0)
+const HUD_BUTTON_GAP := 16.0
+const HUD_RIGHT_MARGIN := 24.0
+const FIRST_ROW_TOP := 232.0
+const FIRST_ROW_BUILD_LEFT := -(HUD_RIGHT_MARGIN + HUD_BUTTON_SIZE.x)
+const FIRST_ROW_INVENTORY_LEFT := FIRST_ROW_BUILD_LEFT - HUD_BUTTON_SIZE.x - HUD_BUTTON_GAP
+const FIRST_ROW_BOOK_LEFT := FIRST_ROW_INVENTORY_LEFT - HUD_BUTTON_SIZE.x - HUD_BUTTON_GAP
+const FIRST_ROW_SHOP_LEFT := FIRST_ROW_BOOK_LEFT - HUD_BUTTON_SIZE.x - HUD_BUTTON_GAP
+const FIRST_ROW_ROBIN_LEFT := FIRST_ROW_SHOP_LEFT - HUD_BUTTON_SIZE.x - HUD_BUTTON_GAP
+const SECOND_ROW_TOP := FIRST_ROW_TOP + HUD_BUTTON_SIZE.y + HUD_BUTTON_GAP
+const SECOND_ROW_BILL_LEFT := -(HUD_RIGHT_MARGIN + HUD_BUTTON_SIZE.x)
+const SECOND_ROW_SETTINGS_LEFT := SECOND_ROW_BILL_LEFT - HUD_BUTTON_SIZE.x - HUD_BUTTON_GAP
+const SECOND_ROW_CRAFT_LEFT := SECOND_ROW_SETTINGS_LEFT - HUD_BUTTON_SIZE.x - HUD_BUTTON_GAP
+const SECOND_ROW_WORK_LEFT := SECOND_ROW_CRAFT_LEFT - HUD_BUTTON_SIZE.x - HUD_BUTTON_GAP
+
 const BUTTON_TO_UI := {
 	"RobinHudButton": "AICharacterHud",
 	"ShopButton": "ShopMenu",
@@ -33,15 +48,51 @@ const TOGGLE_STATE_BUTTONS := [
 	"BuildModeButton",
 ]
 
+const BUTTON_LAYOUTS := {
+	"RobinHudButton": Vector2(FIRST_ROW_ROBIN_LEFT, FIRST_ROW_TOP),
+	"ShopButton": Vector2(FIRST_ROW_SHOP_LEFT, FIRST_ROW_TOP),
+	"BookButton": Vector2(FIRST_ROW_BOOK_LEFT, FIRST_ROW_TOP),
+	"InventoryButton": Vector2(FIRST_ROW_INVENTORY_LEFT, FIRST_ROW_TOP),
+	"BuildModeButton": Vector2(FIRST_ROW_BUILD_LEFT, FIRST_ROW_TOP),
+	"WorkCreditButton": Vector2(SECOND_ROW_WORK_LEFT, SECOND_ROW_TOP),
+	"CraftButton": Vector2(SECOND_ROW_CRAFT_LEFT, SECOND_ROW_TOP),
+	"SettingsButton": Vector2(SECOND_ROW_SETTINGS_LEFT, SECOND_ROW_TOP),
+	"BillButton": Vector2(SECOND_ROW_BILL_LEFT, SECOND_ROW_TOP),
+}
+
 
 func _ready() -> void:
 	call_deferred("_connect_and_sync")
 
 
 func _connect_and_sync() -> void:
+	_apply_button_group_layout()
 	_connect_open_ui_signals()
 	_connect_toggle_state_button_signals()
 	_sync_all_button_frames()
+
+
+func _apply_button_group_layout() -> void:
+	var parent_node := get_parent()
+	if parent_node == null:
+		return
+	for button_name in BUTTON_LAYOUTS.keys():
+		var button := parent_node.get_node_or_null(String(button_name)) as Control
+		if button == null:
+			continue
+		_place_top_right_control(button, BUTTON_LAYOUTS[button_name], HUD_BUTTON_SIZE)
+
+
+func _place_top_right_control(control: Control, top_right_offset: Vector2, control_size: Vector2) -> void:
+	control.custom_minimum_size = control_size
+	control.anchor_left = 1.0
+	control.anchor_top = 0.0
+	control.anchor_right = 1.0
+	control.anchor_bottom = 0.0
+	control.offset_left = top_right_offset.x
+	control.offset_top = top_right_offset.y
+	control.offset_right = top_right_offset.x + control_size.x
+	control.offset_bottom = top_right_offset.y + control_size.y
 
 
 func _connect_open_ui_signals() -> void:
