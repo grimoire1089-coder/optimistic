@@ -17,12 +17,17 @@ const INVENTORY_BUTTON_GROUP: StringName = &"inventory_button"
 @export var particle_count: int = 28
 @export var particle_orbit_radius: float = 42.0
 @export var particle_orbit_jitter: float = 18.0
+@export var particle_peel_distance: float = 110.0
+@export var particle_fall_distance: float = 72.0
+@export var particle_peel_spread: float = 48.0
+@export var particle_peel_delay_ratio: float = 0.42
 @export var fallback_target_position: Vector2 = Vector2(1516.0, 212.0)
 @export var glow_color: Color = Color(0.20, 1.0, 0.95, 0.88)
 @export var overbright_glow_color: Color = Color(0.35, 2.2, 2.6, 0.55)
 @export var particle_color: Color = Color(0.42, 1.0, 0.90, 0.92)
 @export var arc_trail_count: int = 8
 @export var beam_orb_turns: float = 3.25
+@export var item_fly_rotation_turns: float = 1.25
 
 var _rng := RandomNumberGenerator.new()
 
@@ -140,8 +145,9 @@ func play_gathering_item_effect(icon_path: String, item_display_name: String, am
 
 	var arc_start := sprout_position
 	var arc_control := _get_arc_control_point(arc_start, target_position)
+	var fly_start_delay := maxf(sprout_duration + hold_duration + bounce_expand_duration + bounce_settle_duration, 0.01)
 	var fly_tween := create_tween()
-	fly_tween.tween_interval(maxf(sprout_duration + hold_duration + bounce_expand_duration + bounce_settle_duration, 0.01))
+	fly_tween.tween_interval(fly_start_delay)
 	fly_tween.tween_method(
 		Callable(self, "_apply_arc_position").bind(effect_root, arc_start, arc_control, target_position),
 		0.0,
@@ -149,10 +155,49 @@ func play_gathering_item_effect(icon_path: String, item_display_name: String, am
 		maxf(fly_duration, 0.01)
 	).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	fly_tween.parallel().tween_property(effect_root, "scale", Vector2(0.28, 0.28), maxf(fly_duration, 0.01)).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	fly_tween.parallel().tween_property(effect_root, "modulate:a", 0.0, maxf(fly_duration, 0.01)).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
+	fly_tween.parallel().tween_property(icon_sprite, "rotation", TAU * item_fly_rotation_turns, maxf(fly_duration, 0.01)).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	fly_tween.parallel().tween_property(icon_glow_sprite, "rotation", TAU * item_fly_rotation_turns, maxf(fly_duration, 0.01)).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	fly_tween.parallel().tween_property(icon_glow_sprite, "scale", icon_target_scale * 2.8, maxf(fly_duration * 0.65, 0.01)).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	fly_tween.parallel().tween_property(outer_glow, "scale", Vector2(2.05, 2.05), maxf(fly_duration * 0.65, 0.01)).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	fly_tween.tween_callback(Callable(effect_root, "queue_free"))
+
+	var root_fade_tween := create_tween()
+	root_fade_tween.tween_interval(fly_start_delay + fly_duration * 0.58)
+	root_fade_tween.tween_property(effect_root, "modulate:a", 0.0, maxf(fly_duration * 0.42, 0.01)).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
+
+	_play_particle_peel_effects(beam_ball_root, arc_start, target_position, fly_start_delay)
+
+
+func _play_particle_peel_effects(beam_ball_root: Node2D, arc_start: Vector2, target_position: Vector2, fly_start_delay: float) -> void:
+	if beam_ball_root == null:
+		return
+	var travel_direction := target_position - arc_start
+	if travel_direction.length_squared() <= 0.001:
+		travel_direction = Vector2.RIGHT
+	travel_direction = travel_direction.normalized()
+	var peel_direction := -travel_direction
+	for child in beam_ball_root.get_children():
+		var particle_node := child as Control
+		if particle_node == null:
+			continue
+		if not String(particle_node.name).begins_with("BeamParticle_"):
+			continue
+		var base_position := particle_node.position
+		if particle_node.has_meta(&"target_position"):
+			base_position = particle_node.get_meta(&"target_position") as Vector2
+		var peel_offset := peel_direction * _rng.randf_range(particle_peel_distance * 0.45, particle_peel_distance)
+		peel_offset += Vector2(
+			_rng.randf_range(-particle_peel_spread, particle_peel_spread),
+			_rng.randf_range(particle_fall_distance * 0.35, particle_fall_distance)
+		)
+		var delay := fly_start_delay + _rng.randf_range(0.0, maxf(fly_duration * particle_peel_delay_ratio, 0.01))
+		var duration := _rng.randf_range(maxf(fly_duration * 0.42, 0.01), maxf(fly_duration * 0.82, 0.02))
+		var peel_tween := create_tween()
+		peel_tween.tween_interval(delay)
+		peel_tween.tween_property(particle_node, "position", base_position + peel_offset, duration).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+		peel_tween.parallel().tween_property(particle_node, "rotation", particle_node.rotation + _rng.randf_range(-3.2, 3.2), duration).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+		peel_tween.parallel().tween_property(particle_node, "scale", Vector2(0.28, 0.28), duration).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
+		peel_tween.parallel().tween_property(particle_node, "modulate:a", 0.0, duration).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
 
 
 func _make_glow_square(node_name: String, size: float, color: Color, start_scale: float, start_alpha: float, rotation_offset: float) -> ColorRect:
