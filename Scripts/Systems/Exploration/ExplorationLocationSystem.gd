@@ -16,38 +16,8 @@ const EVENT_REWARDS: Array[Dictionary] = [
 		"amount_min": 1,
 		"amount_max": 3,
 		"icon_path": "res://Assets/Items/Icons/Mushroom/Brown mushroom.png",
-		"description": "カプセルファームの湿潤ドームで採れた褐色の食用きのこ。",
+		"description": "カプセルファームの湿潤ドームで採れた食用きのこ。",
 		"sell_price": 18,
-	},
-	{
-		"category_id": &"ingredients",
-		"item_id": &"white_mushroom",
-		"display_name": "ホワイトマッシュルーム",
-		"amount_min": 1,
-		"amount_max": 3,
-		"icon_path": "res://Assets/Items/Icons/Mushroom/White mushroom.png",
-		"description": "淡い魔導光を受けて育った白い食用きのこ。",
-		"sell_price": 20,
-	},
-	{
-		"category_id": &"ingredients",
-		"item_id": &"shimeji_mushroom",
-		"display_name": "シメジ",
-		"amount_min": 1,
-		"amount_max": 2,
-		"icon_path": "res://Assets/Items/Icons/Mushroom/Shimeji mushroom.png",
-		"description": "小房で採れる扱いやすい食用きのこ。",
-		"sell_price": 24,
-	},
-	{
-		"category_id": &"ingredients",
-		"item_id": &"enoki_mushroom",
-		"display_name": "エノキ",
-		"amount_min": 1,
-		"amount_max": 2,
-		"icon_path": "res://Assets/Items/Icons/Mushroom/Enoki mushroom.png",
-		"description": "細く伸びた白い食用きのこ。スープや鍋料理に向いている。",
-		"sell_price": 22,
 	},
 ]
 
@@ -66,12 +36,12 @@ const EVENT_REWARDS: Array[Dictionary] = [
 var _worker: Node
 var _location_background: Node
 var _stay_overlay: Node
-var _active := false
-var _event_elapsed_minutes := 0.0
+var _active: bool = false
+var _event_elapsed_minutes: float = 0.0
 var _rng := RandomNumberGenerator.new()
 var _previous_bgm: AudioStream
-var _previous_bgm_position := 0.0
-var _has_previous_bgm := false
+var _previous_bgm_position: float = 0.0
+var _has_previous_bgm: bool = false
 var _active_bgm: AudioStream
 
 
@@ -85,11 +55,11 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	if not _active:
 		return
-	var game_minutes := _get_game_minutes_from_delta(delta)
+	var game_minutes: float = _get_game_minutes_from_delta(delta)
 	if game_minutes <= 0.0:
 		return
 	_event_elapsed_minutes += game_minutes
-	var safe_interval := maxf(float(event_interval_minutes), 1.0)
+	var safe_interval: float = maxf(float(event_interval_minutes), 1.0)
 	while _event_elapsed_minutes >= safe_interval:
 		_event_elapsed_minutes -= safe_interval
 		_grant_exploration_event_reward()
@@ -98,7 +68,7 @@ func _process(delta: float) -> void:
 func request_exploration(requested_location_id: StringName) -> bool:
 	if requested_location_id != location_id:
 		return false
-	var worker := _get_worker()
+	var worker: Node = _get_worker()
 	if worker == null or not worker.has_method("request_work_at_entrance"):
 		return false
 	if worker.call("request_work_at_entrance", exploration_job_id, display_name, duration_minutes) == true:
@@ -148,26 +118,26 @@ func _on_worker_work_completed(job_id: StringName) -> void:
 func _grant_exploration_event_reward() -> void:
 	if EVENT_REWARDS.is_empty():
 		return
-	var inventory := _get_worker_inventory_module()
+	var inventory: Node = _get_worker_inventory_module()
 	if inventory == null or not inventory.has_method("add_item"):
 		_push_message("探索イベントが発生しましたが、インベントリが見つかりません。")
 		return
 
-	var reward := EVENT_REWARDS[_rng.randi_range(0, EVENT_REWARDS.size() - 1)]
-	var amount_min := maxi(int(reward.get("amount_min", 1)), 1)
-	var amount_max := maxi(int(reward.get("amount_max", amount_min)), amount_min)
-	var amount := _rng.randi_range(amount_min, amount_max)
-	var category_id := _to_string_name(reward.get("category_id", &"ingredients"))
-	var item_id := _to_string_name(reward.get("item_id", &""))
-	var item_name := String(reward.get("display_name", String(item_id)))
-	var icon_path := String(reward.get("icon_path", ""))
-	var description := String(reward.get("description", ""))
-	var sell_price := int(reward.get("sell_price", 0))
+	var reward: Dictionary = EVENT_REWARDS[_rng.randi_range(0, EVENT_REWARDS.size() - 1)]
+	var amount_min: int = maxi(int(reward.get("amount_min", 1)), 1)
+	var amount_max: int = maxi(int(reward.get("amount_max", amount_min)), amount_min)
+	var amount: int = _rng.randi_range(amount_min, amount_max)
+	var category_id: StringName = _to_string_name(reward.get("category_id", &"ingredients"))
+	var item_id: StringName = _to_string_name(reward.get("item_id", &""))
+	var item_name: String = String(reward.get("display_name", String(item_id)))
+	var icon_path: String = String(reward.get("icon_path", ""))
+	var description: String = String(reward.get("description", ""))
+	var sell_price: int = int(reward.get("sell_price", 0))
 
 	if item_id == &"":
 		return
 
-	var added := inventory.call(
+	var add_result: Variant = inventory.call(
 		"add_item",
 		category_id,
 		item_id,
@@ -178,7 +148,8 @@ func _grant_exploration_event_reward() -> void:
 		description,
 		0,
 		sell_price
-	) == true
+	)
+	var added: bool = add_result == true
 
 	if added:
 		_push_message("探索イベント: %s x%d を見つけました。" % [item_name, amount])
@@ -187,7 +158,7 @@ func _grant_exploration_event_reward() -> void:
 
 
 func _apply_exploration_location_card() -> void:
-	var background := _get_location_background()
+	var background: Node = _get_location_background()
 	if background == null:
 		return
 	if background.has_method("set_texture_path"):
@@ -197,7 +168,7 @@ func _apply_exploration_location_card() -> void:
 
 
 func _restore_location_card() -> void:
-	var background := _get_location_background()
+	var background: Node = _get_location_background()
 	if background == null:
 		return
 	if background.has_method("set_texture_path"):
@@ -207,10 +178,10 @@ func _restore_location_card() -> void:
 
 
 func _show_exploration_overlay() -> void:
-	var overlay := _get_stay_overlay()
+	var overlay: Node = _get_stay_overlay()
 	if overlay == null:
 		return
-	var worker_name := _get_worker_display_name()
+	var worker_name: String = _get_worker_display_name()
 	if overlay.has_method("show_exploration_stay"):
 		overlay.call("show_exploration_stay", exploration_job_id, display_name, worker_name)
 	elif overlay.has_method("show_work_stay"):
@@ -218,7 +189,7 @@ func _show_exploration_overlay() -> void:
 
 
 func _hide_exploration_overlay() -> void:
-	var overlay := _get_stay_overlay()
+	var overlay: Node = _get_stay_overlay()
 	if overlay == null:
 		return
 	if overlay.has_method("hide_work_stay"):
@@ -226,10 +197,10 @@ func _hide_exploration_overlay() -> void:
 
 
 func _play_exploration_bgm() -> void:
-	var stream := _get_random_bgm_stream()
+	var stream: AudioStream = _get_random_bgm_stream()
 	if stream == null:
 		return
-	var audio_player := get_node_or_null("/root/AudioPlayer")
+	var audio_player: Node = get_node_or_null("/root/AudioPlayer")
 	if audio_player == null or not audio_player.has_method("play_bgm"):
 		return
 	if not _has_previous_bgm:
@@ -251,7 +222,7 @@ func _restore_previous_bgm_if_needed() -> void:
 	if not _has_previous_bgm:
 		_active_bgm = null
 		return
-	var audio_player := get_node_or_null("/root/AudioPlayer")
+	var audio_player: Node = get_node_or_null("/root/AudioPlayer")
 	if audio_player != null:
 		if _previous_bgm != null and audio_player.has_method("play_bgm"):
 			audio_player.call("play_bgm", _previous_bgm, _previous_bgm_position, true)
@@ -266,9 +237,9 @@ func _restore_previous_bgm_if_needed() -> void:
 func _get_random_bgm_stream() -> AudioStream:
 	if bgm_paths.is_empty():
 		return null
-	var attempts := bgm_paths.size()
+	var attempts: int = bgm_paths.size()
 	for _i in attempts:
-		var bgm_path := String(bgm_paths[_rng.randi_range(0, bgm_paths.size() - 1)])
+		var bgm_path: String = String(bgm_paths[_rng.randi_range(0, bgm_paths.size() - 1)])
 		if bgm_path.is_empty() or not ResourceLoader.exists(bgm_path):
 			continue
 		return load(bgm_path) as AudioStream
@@ -285,16 +256,16 @@ func _ensure_stream_loop(stream: AudioStream) -> void:
 
 
 func _get_game_minutes_from_delta(delta: float) -> float:
-	var game_clock := get_node_or_null("/root/GameClock")
+	var game_clock: Node = get_node_or_null("/root/GameClock")
 	if game_clock != null and game_clock.has_method("get"):
-		var seconds_per_minute := float(game_clock.get("real_seconds_per_game_minute"))
+		var seconds_per_minute: float = float(game_clock.get("real_seconds_per_game_minute"))
 		if seconds_per_minute > 0.0:
 			return delta / seconds_per_minute
 	return delta
 
 
 func _get_worker_inventory_module() -> Node:
-	var worker := _get_worker()
+	var worker: Node = _get_worker()
 	if worker == null:
 		return null
 	if worker.has_method("get_inventory_module"):
@@ -303,11 +274,11 @@ func _get_worker_inventory_module() -> Node:
 
 
 func _get_worker_display_name() -> String:
-	var worker := _get_worker()
+	var worker: Node = _get_worker()
 	if worker == null:
 		return "ロビン"
 	var value: Variant = worker.get("display_name")
-	var name := String(value)
+	var name: String = String(value)
 	if name.is_empty():
 		return "ロビン"
 	return name
