@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="BookData" format=3]
+
+[ext_resource type="Script" path="res://Scripts/Books/BookData.gd" id="1_book_data"]
+[ext_resource type="Texture2D" path="res://Assets/Items/Icons/Tool/Chip_Books.png" id="2_book_chip"]
+
+[resource]
+script = ExtResource("1_book_data")
+book_id = &"book_0201_capsule_farm_mushroom_guide"
+display_name = "カプセルファーム きのこ採取地区ガイド"
+description = "カプセルファームのきのこ採取地区を案内する電子書籍。購入すると移動場所が解禁されます。"
+author_name = "カプセルファーム案内局"
+body_text = "カプセルファームの奥、湿潤ドーム群のひとつに、きのこ採取地区があります。\n\n循環水路の淡い光、感情培養ポッドの温度、魔導ガラスの結露が重なり、食用きのこが安定して育つよう調整された区画です。\n\n採取時は根元を傷つけず、成熟した個体だけを選びましょう。採りすぎないこと、迷ったらラピスの識別補助を使うこと。ここは都市の胃袋を支える、小さくて静かな森です。"
+icon = ExtResource("2_book_chip")
+genre_id = &"guide"
+genre_display_name = "ガイド"
+buy_price = 260
+unlock_travel_map_id = &"capsule_farm_mushroom_district"
+unlock_travel_display_name = "カプセルファーム きのこ採取地区"
+unlock_travel_description = "感情培養ポッドと循環水路の近くに広がる、食用きのこを採取できる湿潤ドーム区画。"
