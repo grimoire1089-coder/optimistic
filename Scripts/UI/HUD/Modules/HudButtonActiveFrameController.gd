@@ -34,12 +34,47 @@ const TOGGLE_STATE_BUTTONS := [
 ]
 
 
-func _process(_delta: float) -> void:
-	_sync_open_ui_buttons()
-	_sync_toggle_state_buttons()
+func _ready() -> void:
+	call_deferred("_connect_and_sync")
 
 
-func _sync_open_ui_buttons() -> void:
+func _connect_and_sync() -> void:
+	_connect_open_ui_signals()
+	_connect_toggle_state_button_signals()
+	_sync_all_button_frames()
+
+
+func _connect_open_ui_signals() -> void:
+	var parent_node := get_parent()
+	if parent_node == null:
+		return
+	for button_name in BUTTON_TO_UI.keys():
+		var ui_node := parent_node.get_node_or_null(String(BUTTON_TO_UI[button_name]))
+		if not (ui_node is CanvasItem):
+			continue
+		var canvas_item := ui_node as CanvasItem
+		var callable := Callable(self, "_on_ui_visibility_changed").bind(String(button_name), canvas_item)
+		if not canvas_item.visibility_changed.is_connected(callable):
+			canvas_item.visibility_changed.connect(callable)
+
+
+func _connect_toggle_state_button_signals() -> void:
+	var parent_node := get_parent()
+	if parent_node == null:
+		return
+	for button_name in TOGGLE_STATE_BUTTONS:
+		var button := parent_node.get_node_or_null(String(button_name)) as Button
+		if button == null:
+			continue
+		var callable := Callable(self, "_on_toggle_button_changed").bind(button)
+		if not button.toggled.is_connected(callable):
+			button.toggled.connect(callable)
+		var pressed_callable := Callable(self, "_on_toggle_button_pressed").bind(button)
+		if not button.pressed.is_connected(pressed_callable):
+			button.pressed.connect(pressed_callable)
+
+
+func _sync_all_button_frames() -> void:
 	var parent_node := get_parent()
 	if parent_node == null:
 		return
@@ -47,15 +82,29 @@ func _sync_open_ui_buttons() -> void:
 		var button := parent_node.get_node_or_null(String(button_name)) as Button
 		var ui_node := parent_node.get_node_or_null(String(BUTTON_TO_UI[button_name]))
 		_apply_button_frame(button, _is_canvas_item_visible(ui_node))
-
-
-func _sync_toggle_state_buttons() -> void:
-	var parent_node := get_parent()
-	if parent_node == null:
-		return
 	for button_name in TOGGLE_STATE_BUTTONS:
 		var button := parent_node.get_node_or_null(String(button_name)) as Button
 		_apply_button_frame(button, button != null and button.button_pressed)
+
+
+func _on_ui_visibility_changed(button_name: String, canvas_item: CanvasItem) -> void:
+	var parent_node := get_parent()
+	if parent_node == null:
+		return
+	var button := parent_node.get_node_or_null(button_name) as Button
+	_apply_button_frame(button, canvas_item.visible)
+
+
+func _on_toggle_button_changed(_enabled: bool, button: Button) -> void:
+	_apply_button_frame(button, button != null and button.button_pressed)
+
+
+func _on_toggle_button_pressed(button: Button) -> void:
+	call_deferred("_sync_toggle_button_frame", button)
+
+
+func _sync_toggle_button_frame(button: Button) -> void:
+	_apply_button_frame(button, button != null and button.button_pressed)
 
 
 func _is_canvas_item_visible(node: Node) -> bool:
