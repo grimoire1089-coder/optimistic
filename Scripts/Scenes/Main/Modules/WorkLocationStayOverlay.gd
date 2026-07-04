@@ -4,6 +4,8 @@ class_name WorkLocationStayOverlay
 const DEFAULT_WORKER_STANDING_TEXTURE_PATH := "res://Assets/Characters/Robin/Walk/robin_8dir_standing.png"
 const DEFAULT_PARTNER_PORTRAIT_TEXTURE_PATH := "res://Assets/Characters/Gantetsu/Portraits/Gantetsu_Game_001.png"
 const DEFAULT_PARTNER_STANDING_TEXTURE_PATH := "res://Assets/Characters/Gantetsu/Walk/Gantetsu_8dir_standing.png"
+const ACTIVITY_KIND_WORK: StringName = &"work"
+const ACTIVITY_KIND_EXPLORATION: StringName = &"exploration"
 
 @export var location_background_path: NodePath = NodePath("../LocationBackground")
 @export var worker_path: NodePath = NodePath("../Robin")
@@ -37,6 +39,7 @@ var _partner_portrait_sprite: Sprite2D
 var _status_label: Label
 var _partner_name_label: Label
 var _active := false
+var _activity_kind: StringName = ACTIVITY_KIND_WORK
 var _job_id: StringName = &""
 var _job_display_name := ""
 var _worker_display_name := ""
@@ -52,6 +55,25 @@ func _ready() -> void:
 
 
 func show_work_stay(job_id: StringName, job_display_name: String = "", worker_display_name: String = "") -> void:
+	_show_location_stay(ACTIVITY_KIND_WORK, job_id, job_display_name, worker_display_name)
+
+
+func show_exploration_stay(location_id: StringName, location_display_name: String = "", worker_display_name: String = "") -> void:
+	_show_location_stay(ACTIVITY_KIND_EXPLORATION, location_id, location_display_name, worker_display_name)
+
+
+func hide_work_stay() -> void:
+	_active = false
+	visible = false
+	_activity_kind = ACTIVITY_KIND_WORK
+	_job_id = &""
+	_job_display_name = ""
+	_worker_display_name = ""
+	queue_redraw()
+
+
+func _show_location_stay(activity_kind: StringName, job_id: StringName, job_display_name: String = "", worker_display_name: String = "") -> void:
+	_activity_kind = activity_kind
 	_job_id = job_id
 	_job_display_name = job_display_name
 	_worker_display_name = worker_display_name
@@ -64,20 +86,11 @@ func show_work_stay(job_id: StringName, job_display_name: String = "", worker_di
 	queue_redraw()
 
 
-func hide_work_stay() -> void:
-	_active = false
-	visible = false
-	_job_id = &""
-	_job_display_name = ""
-	_worker_display_name = ""
-	queue_redraw()
-
-
 func _process(_delta: float) -> void:
 	if not _active:
 		return
 	_resolve_refs()
-	if not _is_worker_working():
+	if not _is_worker_activity_active():
 		hide_work_stay()
 		return
 	_sync_worker_sprite_texture()
@@ -165,34 +178,39 @@ func _sync_layout() -> void:
 	_scale_sprite_to_height(_partner_portrait_sprite, portrait_target_height)
 
 	_status_label.global_position = panel_rect.position + Vector2(22.0, 14.0)
-	_status_label.size = Vector2(panel_rect.size.x * 0.62, 32.0)
+	_status_label.size = Vector2(panel_rect.size.x * 0.72, 32.0)
 	_partner_name_label.global_position = _partner_portrait_sprite.global_position + Vector2(-70.0, portrait_target_height * 0.42)
 	_partner_name_label.size = Vector2(140.0, 24.0)
 
 
 func _set_content_visible(content_visible: bool) -> void:
+	var show_partner := _activity_kind == ACTIVITY_KIND_WORK
 	_worker_sprite.visible = content_visible and show_worker_duplicate
-	_partner_sprite.visible = content_visible
-	_partner_portrait_sprite.visible = content_visible
+	_partner_sprite.visible = content_visible and show_partner
+	_partner_portrait_sprite.visible = content_visible and show_partner
 	_status_label.visible = content_visible
-	_partner_name_label.visible = content_visible
+	_partner_name_label.visible = content_visible and show_partner
 
 
 func _update_status_text() -> void:
-	var job_name := _job_display_name
-	if job_name.is_empty():
-		job_name = str(_job_id)
-	if job_name.is_empty():
-		job_name = "アルバイト"
+	var activity_name := _job_display_name
+	if activity_name.is_empty():
+		activity_name = str(_job_id)
+	if activity_name.is_empty():
+		activity_name = "アルバイト"
 	var worker_name := _worker_display_name
 	if worker_name.is_empty():
 		worker_name = "ロビン"
-	_status_label.text = "%s / %s -> %sさん" % [job_name, worker_name, partner_display_name]
+	if _activity_kind == ACTIVITY_KIND_EXPLORATION:
+		_status_label.text = "%s / %s 探索中" % [activity_name, worker_name]
+		_partner_name_label.text = ""
+		return
+	_status_label.text = "%s / %s -> %sさん" % [activity_name, worker_name, partner_display_name]
 	_partner_name_label.text = partner_display_name
 
 
 func _draw_status_card(local_rect: Rect2) -> void:
-	var card_width := minf(local_rect.size.x * 0.48, 360.0)
+	var card_width := minf(local_rect.size.x * 0.56, 420.0)
 	var card_rect := Rect2(local_rect.position + Vector2(14.0, 8.0), Vector2(card_width, 44.0))
 	var style := StyleBoxFlat.new()
 	style.bg_color = status_card_color
@@ -287,7 +305,7 @@ func _get_work_progress_ratio() -> float:
 	return clampf(float(behavior.call("get_work_progress_ratio")), 0.0, 1.0)
 
 
-func _is_worker_working() -> bool:
+func _is_worker_activity_active() -> bool:
 	_resolve_refs()
 	if _worker == null:
 		return _active
