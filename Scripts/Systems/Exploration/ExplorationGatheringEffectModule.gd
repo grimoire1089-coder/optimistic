@@ -1,44 +1,46 @@
-extends Node2D
+extends CanvasLayer
 class_name ExplorationGatheringEffectModule
 
 const INVENTORY_BUTTON_GROUP: StringName = &"inventory_button"
 
+@export var effect_canvas_layer: int = 128
 @export var icon_size: float = 48.0
 @export var foot_anchor_extra_offset: Vector2 = Vector2(-8.0, 54.0)
-@export var sprout_duration: float = 1.80
-@export var bounce_expand_duration: float = 0.18
-@export var bounce_settle_duration: float = 0.30
-@export var particle_gather_duration: float = 0.90
-@export var hold_duration: float = 0.85
-@export var fly_duration: float = 2.55
+@export var sprout_duration: float = 2.80
+@export var bounce_expand_duration: float = 0.26
+@export var bounce_settle_duration: float = 0.52
+@export var particle_gather_duration: float = 1.10
+@export var hold_duration: float = 0.95
+@export var fly_duration: float = 3.35
 @export var sprout_rise_distance: float = 18.0
-@export var arc_height: float = 300.0
-@export var arc_side_offset: float = 220.0
+@export var arc_height: float = 360.0
+@export var arc_side_offset: float = 280.0
 @export var particle_count: int = 28
 @export var particle_orbit_radius: float = 42.0
 @export var particle_orbit_jitter: float = 18.0
-@export var particle_peel_distance: float = 110.0
-@export var particle_fall_distance: float = 72.0
-@export var particle_peel_spread: float = 48.0
-@export var particle_peel_delay_ratio: float = 0.42
+@export var particle_peel_distance: float = 132.0
+@export var particle_fall_distance: float = 84.0
+@export var particle_peel_spread: float = 56.0
+@export var particle_peel_delay_ratio: float = 0.64
 @export var fallback_target_position: Vector2 = Vector2(1516.0, 212.0)
 @export var glow_color: Color = Color(0.20, 1.0, 0.95, 0.88)
 @export var overbright_glow_color: Color = Color(0.35, 2.2, 2.6, 0.55)
 @export var particle_color: Color = Color(0.42, 1.0, 0.90, 0.92)
 @export var arc_trail_count: int = 8
-@export var beam_orb_turns: float = 3.25
+@export var beam_orb_turns: float = 4.25
+@export var big_particle_rotation_turns: float = 2.75
 @export var item_fly_rotation_turns: float = 1.25
 
 var _rng := RandomNumberGenerator.new()
 
 
 func _ready() -> void:
-	z_as_relative = false
-	z_index = 120
+	layer = effect_canvas_layer
 	_rng.randomize()
 
 
 func play_gathering_item_effect(icon_path: String, item_display_name: String, amount: int, source_global_position: Vector2) -> void:
+	layer = effect_canvas_layer
 	var start_position := source_global_position + foot_anchor_extra_offset
 	var effect_root := Node2D.new()
 	effect_root.name = "GatheringItemPickupEffect"
@@ -86,7 +88,7 @@ func play_gathering_item_effect(icon_path: String, item_display_name: String, am
 	icon_sprite.z_index = 5
 	icon_sprite.position = beam_ball_root.position
 	effect_root.add_child(icon_sprite)
-	icon_sprite.scale = Vector2(icon_target_scale.x * 0.08, icon_target_scale.y * 0.02)
+	icon_sprite.scale = Vector2(icon_target_scale.x * 0.04, icon_target_scale.y * 0.01)
 	icon_sprite.modulate.a = 0.0
 
 	for trail_index in range(maxi(arc_trail_count, 0)):
@@ -99,25 +101,40 @@ func play_gathering_item_effect(icon_path: String, item_display_name: String, am
 
 	var target_position := _get_inventory_button_center()
 	var sprout_position := start_position + Vector2(0.0, -maxf(sprout_rise_distance, 0.0))
+	var bounce_start_delay := maxf(sprout_duration, 0.01)
+	var particle_start_delay := maxf(sprout_duration + bounce_expand_duration + bounce_settle_duration * 0.38, 0.01)
+	var fly_start_delay := maxf(sprout_duration + bounce_expand_duration + bounce_settle_duration + hold_duration, 0.01)
 
 	var sprout_tween := create_tween()
 	sprout_tween.set_parallel(true)
-	sprout_tween.tween_property(effect_root, "global_position", sprout_position, maxf(sprout_duration, 0.01)).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-	sprout_tween.tween_property(icon_sprite, "scale", icon_target_scale, maxf(sprout_duration, 0.01)).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	sprout_tween.tween_property(icon_sprite, "modulate:a", 1.0, maxf(sprout_duration * 0.52, 0.01)).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-	sprout_tween.tween_property(icon_glow_sprite, "scale", icon_target_scale * 1.45, maxf(sprout_duration, 0.01)).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	sprout_tween.tween_property(icon_glow_sprite, "modulate:a", 0.62, maxf(sprout_duration * 0.74, 0.01)).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-	sprout_tween.tween_property(core_glow, "modulate:a", 0.76, maxf(sprout_duration * 0.74, 0.01)).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-	sprout_tween.tween_property(core_glow, "scale", Vector2(1.24, 1.24), maxf(sprout_duration, 0.01)).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-	sprout_tween.tween_property(outer_glow, "modulate:a", 0.48, maxf(sprout_duration * 0.88, 0.01)).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-	sprout_tween.tween_property(outer_glow, "scale", Vector2(1.42, 1.42), maxf(sprout_duration, 0.01)).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-	sprout_tween.tween_property(beam_core, "modulate:a", 0.72, maxf(sprout_duration * 0.70, 0.01)).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-	sprout_tween.tween_property(beam_core, "scale", Vector2(1.0, 1.0), maxf(sprout_duration, 0.01)).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	sprout_tween.tween_property(beam_ring, "modulate:a", 0.42, maxf(sprout_duration * 0.85, 0.01)).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-	sprout_tween.tween_property(beam_ring, "scale", Vector2(1.05, 1.05), maxf(sprout_duration, 0.01)).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	sprout_tween.tween_property(effect_root, "global_position", sprout_position, maxf(sprout_duration, 0.01)).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	sprout_tween.tween_property(icon_sprite, "scale", icon_target_scale, maxf(sprout_duration, 0.01)).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	sprout_tween.tween_property(icon_sprite, "modulate:a", 1.0, maxf(sprout_duration * 0.62, 0.01)).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	sprout_tween.tween_property(icon_glow_sprite, "scale", icon_target_scale * 1.22, maxf(sprout_duration, 0.01)).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	sprout_tween.tween_property(icon_glow_sprite, "modulate:a", 0.32, maxf(sprout_duration * 0.78, 0.01)).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	sprout_tween.tween_property(core_glow, "modulate:a", 0.38, maxf(sprout_duration * 0.80, 0.01)).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	sprout_tween.tween_property(core_glow, "scale", Vector2(0.82, 0.82), maxf(sprout_duration, 0.01)).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	sprout_tween.tween_property(outer_glow, "modulate:a", 0.20, maxf(sprout_duration * 0.92, 0.01)).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	sprout_tween.tween_property(outer_glow, "scale", Vector2(0.96, 0.96), maxf(sprout_duration, 0.01)).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+
+	var bounce_tween := create_tween()
+	bounce_tween.tween_interval(bounce_start_delay)
+	bounce_tween.tween_property(icon_sprite, "scale", icon_target_scale * 1.34, maxf(bounce_expand_duration, 0.01)).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	bounce_tween.parallel().tween_property(icon_glow_sprite, "scale", icon_target_scale * 1.92, maxf(bounce_expand_duration, 0.01)).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	bounce_tween.parallel().tween_property(core_glow, "scale", Vector2(1.58, 1.58), maxf(bounce_expand_duration, 0.01)).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	bounce_tween.parallel().tween_property(outer_glow, "scale", Vector2(1.72, 1.72), maxf(bounce_expand_duration, 0.01)).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	bounce_tween.tween_property(icon_sprite, "scale", icon_target_scale, maxf(bounce_settle_duration, 0.01)).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+	bounce_tween.parallel().tween_property(icon_glow_sprite, "scale", icon_target_scale * 1.48, maxf(bounce_settle_duration, 0.01)).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+	bounce_tween.parallel().tween_property(core_glow, "scale", Vector2(1.22, 1.22), maxf(bounce_settle_duration, 0.01)).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+	bounce_tween.parallel().tween_property(outer_glow, "scale", Vector2(1.38, 1.38), maxf(bounce_settle_duration, 0.01)).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
 
 	var particle_tween := create_tween()
-	particle_tween.tween_interval(maxf(sprout_duration * 0.62, 0.01))
+	particle_tween.tween_interval(particle_start_delay)
+	particle_tween.tween_property(beam_core, "modulate:a", 0.74, maxf(particle_gather_duration * 0.45, 0.01)).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	particle_tween.parallel().tween_property(beam_core, "scale", Vector2(1.05, 1.05), maxf(particle_gather_duration, 0.01)).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	particle_tween.parallel().tween_property(beam_ring, "modulate:a", 0.52, maxf(particle_gather_duration * 0.65, 0.01)).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	particle_tween.parallel().tween_property(beam_ring, "scale", Vector2(1.12, 1.12), maxf(particle_gather_duration, 0.01)).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	particle_tween.parallel().tween_property(icon_glow_sprite, "modulate:a", 0.70, maxf(particle_gather_duration, 0.01)).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	for child in beam_ball_root.get_children():
 		var particle_node := child as Control
 		if particle_node == null:
@@ -127,43 +144,40 @@ func play_gathering_item_effect(icon_path: String, item_display_name: String, am
 		var target_particle_position := particle_node.get_meta(&"target_position") as Vector2
 		var alpha := float(particle_node.get_meta(&"target_alpha", 0.82))
 		particle_tween.parallel().tween_property(particle_node, "position", target_particle_position, maxf(particle_gather_duration, 0.01)).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-		particle_tween.parallel().tween_property(particle_node, "rotation", _rng.randf_range(-2.6, 2.6), maxf(particle_gather_duration, 0.01)).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+		particle_tween.parallel().tween_property(particle_node, "rotation", _rng.randf_range(-3.1, 3.1), maxf(particle_gather_duration, 0.01)).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 		particle_tween.parallel().tween_property(particle_node, "modulate:a", alpha, maxf(particle_gather_duration, 0.01)).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 
 	var orbit_tween := create_tween()
-	orbit_tween.tween_interval(maxf(sprout_duration * 0.55, 0.01))
-	orbit_tween.tween_property(beam_ball_root, "rotation", TAU * maxf(beam_orb_turns, 0.0), maxf(sprout_duration + hold_duration + fly_duration, 0.01)).set_trans(Tween.TRANS_LINEAR).set_ease(Tween.EASE_IN_OUT)
+	orbit_tween.tween_interval(particle_start_delay)
+	orbit_tween.tween_property(beam_ball_root, "rotation", TAU * maxf(beam_orb_turns, 0.0), maxf(particle_gather_duration + hold_duration + fly_duration, 0.01)).set_trans(Tween.TRANS_LINEAR).set_ease(Tween.EASE_IN_OUT)
 
-	var bounce_tween := create_tween()
-	bounce_tween.tween_interval(maxf(sprout_duration, 0.01))
-	bounce_tween.tween_property(icon_sprite, "scale", icon_target_scale * 1.28, maxf(bounce_expand_duration, 0.01)).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	bounce_tween.parallel().tween_property(icon_glow_sprite, "scale", icon_target_scale * 1.86, maxf(bounce_expand_duration, 0.01)).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	bounce_tween.parallel().tween_property(core_glow, "scale", Vector2(1.55, 1.55), maxf(bounce_expand_duration, 0.01)).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	bounce_tween.tween_property(icon_sprite, "scale", icon_target_scale, maxf(bounce_settle_duration, 0.01)).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
-	bounce_tween.parallel().tween_property(icon_glow_sprite, "scale", icon_target_scale * 1.45, maxf(bounce_settle_duration, 0.01)).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
-	bounce_tween.parallel().tween_property(core_glow, "scale", Vector2(1.24, 1.24), maxf(bounce_settle_duration, 0.01)).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+	var big_particle_rotation_tween := create_tween()
+	big_particle_rotation_tween.tween_interval(particle_start_delay)
+	big_particle_rotation_tween.tween_property(beam_core, "rotation", TAU * maxf(big_particle_rotation_turns, 0.0), maxf(particle_gather_duration + hold_duration + fly_duration, 0.01)).set_trans(Tween.TRANS_LINEAR).set_ease(Tween.EASE_IN_OUT)
+	big_particle_rotation_tween.parallel().tween_property(beam_ring, "rotation", -TAU * maxf(big_particle_rotation_turns * 0.72, 0.0), maxf(particle_gather_duration + hold_duration + fly_duration, 0.01)).set_trans(Tween.TRANS_LINEAR).set_ease(Tween.EASE_IN_OUT)
+	big_particle_rotation_tween.parallel().tween_property(core_glow, "rotation", core_glow.rotation + TAU * maxf(big_particle_rotation_turns * 0.44, 0.0), maxf(particle_gather_duration + hold_duration + fly_duration, 0.01)).set_trans(Tween.TRANS_LINEAR).set_ease(Tween.EASE_IN_OUT)
+	big_particle_rotation_tween.parallel().tween_property(outer_glow, "rotation", outer_glow.rotation - TAU * maxf(big_particle_rotation_turns * 0.32, 0.0), maxf(particle_gather_duration + hold_duration + fly_duration, 0.01)).set_trans(Tween.TRANS_LINEAR).set_ease(Tween.EASE_IN_OUT)
 
 	var arc_start := sprout_position
 	var arc_control := _get_arc_control_point(arc_start, target_position)
-	var fly_start_delay := maxf(sprout_duration + hold_duration + bounce_expand_duration + bounce_settle_duration, 0.01)
 	var fly_tween := create_tween()
 	fly_tween.tween_interval(fly_start_delay)
 	fly_tween.tween_method(
-		Callable(self, "_apply_arc_position").bind(effect_root, arc_start, arc_control, target_position),
+		Callable(self, "_apply_arc_position_smooth").bind(effect_root, arc_start, arc_control, target_position),
 		0.0,
 		1.0,
 		maxf(fly_duration, 0.01)
-	).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	).set_trans(Tween.TRANS_LINEAR).set_ease(Tween.EASE_IN_OUT)
 	fly_tween.parallel().tween_property(effect_root, "scale", Vector2(0.28, 0.28), maxf(fly_duration, 0.01)).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	fly_tween.parallel().tween_property(icon_sprite, "rotation", TAU * item_fly_rotation_turns, maxf(fly_duration, 0.01)).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	fly_tween.parallel().tween_property(icon_glow_sprite, "rotation", TAU * item_fly_rotation_turns, maxf(fly_duration, 0.01)).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	fly_tween.parallel().tween_property(icon_glow_sprite, "scale", icon_target_scale * 2.8, maxf(fly_duration * 0.65, 0.01)).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-	fly_tween.parallel().tween_property(outer_glow, "scale", Vector2(2.05, 2.05), maxf(fly_duration * 0.65, 0.01)).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	fly_tween.parallel().tween_property(icon_sprite, "rotation", TAU * item_fly_rotation_turns, maxf(fly_duration, 0.01)).set_trans(Tween.TRANS_LINEAR).set_ease(Tween.EASE_IN_OUT)
+	fly_tween.parallel().tween_property(icon_glow_sprite, "rotation", TAU * item_fly_rotation_turns, maxf(fly_duration, 0.01)).set_trans(Tween.TRANS_LINEAR).set_ease(Tween.EASE_IN_OUT)
+	fly_tween.parallel().tween_property(icon_glow_sprite, "scale", icon_target_scale * 2.85, maxf(fly_duration * 0.68, 0.01)).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	fly_tween.parallel().tween_property(outer_glow, "scale", Vector2(2.16, 2.16), maxf(fly_duration * 0.68, 0.01)).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	fly_tween.tween_callback(Callable(effect_root, "queue_free"))
 
 	var root_fade_tween := create_tween()
-	root_fade_tween.tween_interval(fly_start_delay + fly_duration * 0.58)
-	root_fade_tween.tween_property(effect_root, "modulate:a", 0.0, maxf(fly_duration * 0.42, 0.01)).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
+	root_fade_tween.tween_interval(fly_start_delay + fly_duration * 0.68)
+	root_fade_tween.tween_property(effect_root, "modulate:a", 0.0, maxf(fly_duration * 0.32, 0.01)).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
 
 	_play_particle_peel_effects(beam_ball_root, arc_start, target_position, fly_start_delay)
 
@@ -191,12 +205,12 @@ func _play_particle_peel_effects(beam_ball_root: Node2D, arc_start: Vector2, tar
 			_rng.randf_range(particle_fall_distance * 0.35, particle_fall_distance)
 		)
 		var delay := fly_start_delay + _rng.randf_range(0.0, maxf(fly_duration * particle_peel_delay_ratio, 0.01))
-		var duration := _rng.randf_range(maxf(fly_duration * 0.42, 0.01), maxf(fly_duration * 0.82, 0.02))
+		var duration := _rng.randf_range(maxf(fly_duration * 0.42, 0.01), maxf(fly_duration * 0.86, 0.02))
 		var peel_tween := create_tween()
 		peel_tween.tween_interval(delay)
 		peel_tween.tween_property(particle_node, "position", base_position + peel_offset, duration).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-		peel_tween.parallel().tween_property(particle_node, "rotation", particle_node.rotation + _rng.randf_range(-3.2, 3.2), duration).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-		peel_tween.parallel().tween_property(particle_node, "scale", Vector2(0.28, 0.28), duration).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
+		peel_tween.parallel().tween_property(particle_node, "rotation", particle_node.rotation + _rng.randf_range(-3.8, 3.8), duration).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+		peel_tween.parallel().tween_property(particle_node, "scale", Vector2(0.22, 0.22), duration).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
 		peel_tween.parallel().tween_property(particle_node, "modulate:a", 0.0, duration).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
 
 
@@ -273,13 +287,17 @@ func _make_arc_trail_square(index: int) -> ColorRect:
 	return trail
 
 
-func _apply_arc_position(t: float, effect_root: Node2D, start_position: Vector2, control_position: Vector2, end_position: Vector2) -> void:
+func _apply_arc_position_smooth(t: float, effect_root: Node2D, start_position: Vector2, control_position: Vector2, end_position: Vector2) -> void:
 	if effect_root == null or not is_instance_valid(effect_root):
 		return
-	var eased_t := clampf(t, 0.0, 1.0)
+	var eased_t := _smoothstep(clampf(t, 0.0, 1.0))
 	var a := start_position.lerp(control_position, eased_t)
 	var b := control_position.lerp(end_position, eased_t)
 	effect_root.global_position = a.lerp(b, eased_t)
+
+
+func _smoothstep(t: float) -> float:
+	return t * t * (3.0 - 2.0 * t)
 
 
 func _get_arc_control_point(start_position: Vector2, end_position: Vector2) -> Vector2:
