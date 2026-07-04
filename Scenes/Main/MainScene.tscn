@@ -31,6 +31,7 @@
 [ext_resource type="PackedScene" path="res://Scenes/UI/Billing/BillPanel.tscn" id="28_bill_panel"]
 [ext_resource type="PackedScene" path="res://Scenes/UI/HUD/BillButton.tscn" id="29_bill_button"]
 [ext_resource type="Script" path="res://Scripts/UI/HUD/Modules/HudButtonActiveFrameController.gd" id="30_hud_active_frame"]
+[ext_resource type="PackedScene" path="res://Scenes/UI/HUD/MoveButton.tscn" id="31_move_button"]
 
 [sub_resource type="Environment" id="Environment_ctt6t"]
 glow_enabled = true
@@ -129,6 +130,8 @@ anchors_preset = 8
 [node name="InventoryButton" parent="CanvasLayer" unique_id=15107441 instance=ExtResource("9_inventory_button")]
 
 [node name="BuildModeButton" parent="CanvasLayer" unique_id=767525503 instance=ExtResource("13_build_mode_button")]
+
+[node name="MoveButton" parent="CanvasLayer" instance=ExtResource("31_move_button")]
 
 [node name="WorkCreditButton" parent="CanvasLayer" unique_id=917382376 instance=ExtResource("7_work_credit_button")]
 
