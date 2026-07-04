@@ -17,6 +17,10 @@ class_name BookData
 @export var completion_bonus_skill_id: StringName = &""
 @export_range(1, 100, 1) var completion_bonus_until_level: int = 1
 @export_range(0.0, 10.0, 0.01) var completion_bonus_multiplier: float = 0.0
+@export_group("Travel Unlock")
+@export var unlock_travel_map_id: StringName = &""
+@export var unlock_travel_display_name: String = ""
+@export_multiline var unlock_travel_description: String = ""
 
 
 func get_item_id() -> StringName:
@@ -41,3 +45,17 @@ func get_icon_path() -> String:
 
 func is_skill_book() -> bool:
 	return skill_id != &"" and page_count > 0 and skill_experience_per_page > 0
+
+
+func has_travel_unlock() -> bool:
+	return unlock_travel_map_id != &""
+
+
+func get_unlock_travel_map_id() -> StringName:
+	return unlock_travel_map_id
+
+
+func get_unlock_travel_display_name() -> String:
+	if unlock_travel_display_name.is_empty():
+		return String(unlock_travel_map_id)
+	return unlock_travel_display_name
