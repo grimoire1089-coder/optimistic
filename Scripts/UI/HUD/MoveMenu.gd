@@ -97,7 +97,11 @@ func _get_target_display_name(target_map_id: StringName) -> String:
 func _get_active_map_id() -> StringName:
 	var travel_module := _get_map_travel_module()
 	if travel_module != null and travel_module.has_method("get_active_map_id"):
-		return travel_module.call("get_active_map_id") as StringName
+		var active_map_id_value: Variant = travel_module.call("get_active_map_id")
+		if active_map_id_value is StringName:
+			return active_map_id_value
+		if active_map_id_value is String:
+			return StringName(active_map_id_value)
 	return MAP_ID_ROBIN_ROOM
 
 
@@ -127,12 +131,11 @@ func _find_entrance_for_target(active_map: RoomMapGridModule, target_map_id: Str
 func _is_entrance_for_target(furniture: Node2D, target_map_id: StringName) -> bool:
 	if furniture is EntranceFurniture:
 		return (furniture as EntranceFurniture).target_map_id == target_map_id
-	if furniture.has_method("get"):
-		var target_value: Variant = furniture.get("target_map_id")
-		if target_value is StringName:
-			return target_value == target_map_id
-		if target_value is String:
-			return StringName(target_value) == target_map_id
+	var target_value: Variant = furniture.get("target_map_id")
+	if target_value is StringName:
+		return target_value == target_map_id
+	if target_value is String:
+		return StringName(target_value) == target_map_id
 	return false
 
 
