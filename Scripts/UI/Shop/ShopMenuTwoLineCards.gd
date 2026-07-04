@@ -94,7 +94,7 @@ func _show_shop_detail(shop_index: int) -> void:
 
 func _create_item_card(entry: ShopItemData, credits: int) -> Control:
 	var card_panel := PanelContainer.new()
-	card_panel.custom_minimum_size = Vector2(124, 184)
+	card_panel.custom_minimum_size = Vector2(0, 132)
 	card_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	card_panel.mouse_filter = Control.MOUSE_FILTER_STOP
 	card_panel.tooltip_text = entry.get_description()
@@ -102,49 +102,87 @@ func _create_item_card(entry: ShopItemData, credits: int) -> Control:
 	card_panel.mouse_entered.connect(Callable(self, "_show_item_popup").bind(entry, card_panel))
 	card_panel.mouse_exited.connect(_hide_item_popup)
 
-	var card := VBoxContainer.new()
+	var card := HBoxContainer.new()
 	card.set_anchors_preset(Control.PRESET_FULL_RECT)
-	card.offset_left = 8.0
-	card.offset_top = 12.0
-	card.offset_right = -8.0
-	card.offset_bottom = -8.0
+	card.offset_left = 10.0
+	card.offset_top = 10.0
+	card.offset_right = -10.0
+	card.offset_bottom = -10.0
 	card.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	card.add_theme_constant_override("separation", 6)
+	card.add_theme_constant_override("separation", 12)
 	card_panel.add_child(card)
 
 	var icon_rect := TextureRect.new()
-	icon_rect.custom_minimum_size = Vector2(64, 64)
-	icon_rect.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	icon_rect.custom_minimum_size = Vector2(112, 112)
+	icon_rect.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	icon_rect.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	icon_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	icon_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	icon_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	icon_rect.texture = _load_entry_icon(entry)
 	card.add_child(icon_rect)
 
-	var name_marquee := MarqueeLabel.new()
-	name_marquee.custom_minimum_size = Vector2(0, 34)
-	name_marquee.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	name_marquee.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	name_marquee.font_size = 13
-	name_marquee.set_display_text(entry.get_display_name())
-	card.add_child(name_marquee)
+	var info_column := VBoxContainer.new()
+	info_column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	info_column.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	info_column.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	info_column.add_theme_constant_override("separation", 4)
+	card.add_child(info_column)
+
+	var name_label := Label.new()
+	name_label.custom_minimum_size = Vector2(0, 42)
+	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	name_label.text = entry.get_display_name()
+	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	name_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	name_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	name_label.clip_text = false
+	name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	name_label.add_theme_font_size_override("font_size", 15)
+	info_column.add_child(name_label)
+
+	var description_label_card := Label.new()
+	description_label_card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	description_label_card.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	description_label_card.text = entry.get_description()
+	description_label_card.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	description_label_card.vertical_alignment = VERTICAL_ALIGNMENT_TOP
+	description_label_card.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	description_label_card.clip_text = true
+	description_label_card.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	description_label_card.add_theme_font_size_override("font_size", 11)
+	info_column.add_child(description_label_card)
 
 	var is_book := entry.is_book_product()
 	var is_owned_book := is_book and _is_book_owned(entry)
 	var purchase_amount := _get_purchase_amount(entry)
 	var total_price := entry.get_unit_price() * purchase_amount
 
+	var action_column := VBoxContainer.new()
+	action_column.custom_minimum_size = Vector2(116, 0)
+	action_column.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	action_column.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	action_column.add_theme_constant_override("separation", 8)
+	card.add_child(action_column)
+
 	var price_label := Label.new()
 	price_label.text = "%d C" % total_price
+	price_label.custom_minimum_size = Vector2(0, 32)
 	price_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	price_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	price_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	price_label.add_theme_font_size_override("font_size", 14)
-	card.add_child(price_label)
+	action_column.add_child(price_label)
 	if is_owned_book:
 		price_label.text = "購入済み"
 
+	var spacer := Control.new()
+	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	action_column.add_child(spacer)
+
 	var buy_button := Button.new()
-	buy_button.custom_minimum_size = Vector2(0, 30)
+	buy_button.custom_minimum_size = Vector2(0, 34)
 	buy_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	buy_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	buy_button.focus_mode = Control.FOCUS_NONE
@@ -162,7 +200,7 @@ func _create_item_card(entry: ShopItemData, credits: int) -> Control:
 	buy_button.pressed.connect(Callable(self, "_on_buy_pressed").bind(entry))
 	buy_button.mouse_entered.connect(Callable(self, "_show_item_popup").bind(entry, card_panel))
 	buy_button.mouse_exited.connect(_hide_item_popup)
-	card.add_child(buy_button)
+	action_column.add_child(buy_button)
 
 	return card_panel
 
