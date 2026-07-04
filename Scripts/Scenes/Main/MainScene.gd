@@ -6,8 +6,10 @@ const MAP_ENTRANCE_MODULE_SCENE_PATH := "res://Scenes/Main/Modules/MainSceneMapE
 const TRAVEL_BUTTONS_ROOT_SCENE_PATH := "res://Scenes/Main/Modules/MainSceneTravelButtonsRoot.tscn"
 const LOCATION_BACKGROUND_SCRIPT_PATH := "res://Scripts/Maps/Location/LocationBackgroundNode.gd"
 const WORK_LOCATION_STAY_OVERLAY_SCRIPT_PATH := "res://Scripts/Scenes/Main/Modules/WorkLocationStayOverlay.gd"
+const EXPLORATION_LOCATION_SYSTEM_SCRIPT_PATH := "res://Scripts/Systems/Exploration/ExplorationLocationSystem.gd"
 const DEFAULT_LOCATION_BACKGROUND_TEXTURE_PATH := "res://Assets/Maps/Location/Location_001.png"
 const ENTRANCE_TRAVEL_SFX_PATH := "res://Assets/Audio/SFX/Game/Sci-fi_door_opening.ogg"
+const EXPLORATION_JOB_PREFIX := "explore_"
 const RIGHT_TRAVEL_BUTTON_POSITION := Vector2(-332.0, 184.0)
 const RIGHT_TRAVEL_BUTTON_SIZE := Vector2(48.0, 48.0)
 const MAP_GRID_TOGGLE_BUTTON_NAME := "MapGridToggleButton"
@@ -29,12 +31,14 @@ const BILL_PANEL_SIZE := Vector2(420.0, 456.0)
 
 var _last_build_mode_enabled: bool = false
 var _work_location_stay_overlay: Node
+var _exploration_location_system: Node
 
 
 func _ready() -> void:
 	_push_debug_message("System", "MainScene _ready start")
 	_ensure_runtime_children()
 	_ensure_work_location_stay_overlay()
+	_ensure_exploration_location_system()
 	_ensure_map_grid_toggle_button()
 	_apply_reserved_bottom_hud_layout()
 	var startup_debug_text := _get_startup_debug_text()
@@ -93,6 +97,8 @@ func _connect_robin_work_location_stay_overlay() -> void:
 
 
 func _on_robin_work_started(job_id: StringName) -> void:
+	if _is_exploration_job_id(job_id):
+		return
 	var overlay := _ensure_work_location_stay_overlay()
 	if overlay == null:
 		return
@@ -104,7 +110,9 @@ func _on_robin_work_started(job_id: StringName) -> void:
 	overlay.call("show_work_stay", job_id, _get_robin_work_display_name(), worker_name)
 
 
-func _on_robin_work_completed(_job_id: StringName) -> void:
+func _on_robin_work_completed(job_id: StringName) -> void:
+	if _is_exploration_job_id(job_id):
+		return
 	var overlay := _ensure_work_location_stay_overlay()
 	if overlay == null:
 		return
@@ -121,6 +129,10 @@ func _get_robin_work_display_name() -> String:
 	if not behavior.has_method("get_work_display_name"):
 		return ""
 	return str(behavior.call("get_work_display_name"))
+
+
+func _is_exploration_job_id(job_id: StringName) -> bool:
+	return String(job_id).begins_with(EXPLORATION_JOB_PREFIX)
 
 
 func _ensure_runtime_children() -> void:
@@ -194,6 +206,30 @@ func _ensure_work_location_stay_overlay() -> Node:
 	add_child(overlay)
 	_work_location_stay_overlay = overlay
 	return _work_location_stay_overlay
+
+
+func _ensure_exploration_location_system() -> Node:
+	if _exploration_location_system != null and is_instance_valid(_exploration_location_system):
+		return _exploration_location_system
+
+	var existing_system := get_node_or_null("ExplorationLocationSystem")
+	if existing_system != null:
+		_exploration_location_system = existing_system
+		return _exploration_location_system
+
+	var system_script := load(EXPLORATION_LOCATION_SYSTEM_SCRIPT_PATH) as Script
+	if system_script == null:
+		return null
+	var system := system_script.new() as Node
+	if system == null:
+		return null
+	system.name = "ExplorationLocationSystem"
+	system.set("worker_path", NodePath("../Robin"))
+	system.set("location_background_path", NodePath("../LocationBackground"))
+	system.set("stay_overlay_path", NodePath("../WorkLocationStayOverlay"))
+	add_child(system)
+	_exploration_location_system = system
+	return _exploration_location_system
 
 
 func _ensure_travel_buttons_root() -> Control:
