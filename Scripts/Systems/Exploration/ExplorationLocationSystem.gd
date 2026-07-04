@@ -415,4 +415,7 @@ func _push_message(message: String) -> void:
 	var message_log := get_tree().get_first_node_in_group(&"message_log") as MessageLogPanel
 	if message_log == null:
 		return
+	if message_log.has_method("add_exploration_message"):
+		message_log.add_exploration_message(message)
+		return
 	message_log.add_message(message)
