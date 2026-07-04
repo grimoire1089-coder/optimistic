@@ -1,6 +1,8 @@
 extends Control
 class_name SimpleProfilerHud
 
+@export var show_only_in_debug_build: bool = true
+@export var start_visible_in_debug_build: bool = true
 @export var update_interval_seconds: float = 0.5
 @export var panel_size: Vector2 = Vector2(560.0, 520.0)
 @export var panel_offset: Vector2 = Vector2(16.0, 16.0)
@@ -29,6 +31,13 @@ var _ui_diagnostic_state: Dictionary = {}
 
 
 func _ready() -> void:
+	if show_only_in_debug_build and not OS.is_debug_build():
+		visible = false
+		set_process(false)
+		set_process_unhandled_input(false)
+		return
+
+	visible = start_visible_in_debug_build
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	z_index = 1000
 	set_process(true)
