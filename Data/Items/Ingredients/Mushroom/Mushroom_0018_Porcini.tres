@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="FoodItemData" format=3]
+
+[ext_resource type="Script" uid="uid://cgyi4b7bbmqn" path="res://Scripts/Items/Food/FoodItemData.gd" id="1_food_data"]
+[ext_resource type="Texture2D" path="res://Assets/Items/Icons/Mushroom/Porcini.png" id="2_mushroom_icon"]
+
+[resource]
+script = ExtResource("1_food_data")
+item_id = &"ingredient_mushroom_0018_porcini"
+display_name = "ポルチーニ"
+description = "濃厚な香りと旨味を持つ食用きのこ。煮込みやリゾット系の料理に向いている。"
+icon = ExtResource("2_mushroom_icon")
+category_id = &"ingredients"
+sell_price = 8
