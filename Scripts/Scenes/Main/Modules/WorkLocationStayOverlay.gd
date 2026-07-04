@@ -170,12 +170,12 @@ func _sync_layout() -> void:
 	_partner_name_label.size = Vector2(140.0, 24.0)
 
 
-func _set_content_visible(is_visible: bool) -> void:
-	_worker_sprite.visible = is_visible and show_worker_duplicate
-	_partner_sprite.visible = is_visible
-	_partner_portrait_sprite.visible = is_visible
-	_status_label.visible = is_visible
-	_partner_name_label.visible = is_visible
+func _set_content_visible(content_visible: bool) -> void:
+	_worker_sprite.visible = content_visible and show_worker_duplicate
+	_partner_sprite.visible = content_visible
+	_partner_portrait_sprite.visible = content_visible
+	_status_label.visible = content_visible
+	_partner_name_label.visible = content_visible
 
 
 func _update_status_text() -> void:
