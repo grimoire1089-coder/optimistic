@@ -29,6 +29,7 @@ var _moving_footprint := Vector2i(1, 1)
 var _moving_id: StringName = &""
 var _moving_rotation := 0
 var _moving_modulate := Color.WHITE
+var _was_active := false
 
 
 func _ready() -> void:
@@ -39,6 +40,15 @@ func _ready() -> void:
 
 func _process(_delta: float) -> void:
 	_resolve_refs()
+	var is_active := _active()
+	if not is_active:
+		if _was_active:
+			_hide_preview()
+			_cancel_move()
+			queue_redraw()
+		_was_active = false
+		return
+	_was_active = true
 	_update_state()
 	queue_redraw()
 
