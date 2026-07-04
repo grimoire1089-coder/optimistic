@@ -33,6 +33,7 @@
 [ext_resource type="Script" uid="uid://cc1ned3ctnwlq" path="res://Scripts/UI/HUD/Modules/HudButtonActiveFrameController.gd" id="30_hud_active_frame"]
 [ext_resource type="PackedScene" path="res://Scenes/UI/HUD/MoveButton.tscn" id="31_move_button"]
 [ext_resource type="PackedScene" path="res://Scenes/UI/HUD/MoveMenu.tscn" id="32_move_menu"]
+[ext_resource type="Script" path="res://Scripts/UI/Debug/SimpleProfilerHud.gd" id="33_profiler_hud"]
 
 [sub_resource type="Environment" id="Environment_ctt6t"]
 glow_enabled = true
@@ -94,6 +95,9 @@ text = "Robin Room / Grid 15 x 15"
 layout_mode = 3
 anchors_preset = 0
 script = ExtResource("25_ai_debug_panel")
+
+[node name="SimpleProfilerHud" type="Control" parent="CanvasLayer"]
+script = ExtResource("33_profiler_hud")
 
 [node name="MessageLogPanel" parent="CanvasLayer" unique_id=2086590989 instance=ExtResource("17_message_log")]
 
