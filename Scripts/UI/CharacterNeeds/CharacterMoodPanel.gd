@@ -130,13 +130,12 @@ func _add_entry_row(entry: CharacterMoodEntryInstance) -> void:
 	header.add_theme_constant_override("separation", 6)
 	row.add_child(header)
 
-	var button := CheckButton.new()
-	button.text = entry.get_display_name()
-	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
-	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	button.toggled.connect(Callable(detail_label, "set_visible"))
-	header.add_child(button)
+	var name_label := Label.new()
+	name_label.text = entry.get_display_name()
+	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	name_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	name_label.add_theme_font_size_override("font_size", 14)
+	header.add_child(name_label)
 
 	var point_label := Label.new()
 	point_label.text = _get_signed_point_text(entry.get_point())
@@ -151,12 +150,20 @@ func _add_entry_row(entry: CharacterMoodEntryInstance) -> void:
 	if not remaining_text.is_empty():
 		var remaining_label := Label.new()
 		remaining_label.text = remaining_text
-		remaining_label.custom_minimum_size = Vector2(78, 0)
+		remaining_label.custom_minimum_size = Vector2(92, 0)
 		remaining_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 		remaining_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		remaining_label.add_theme_font_size_override("font_size", 12)
 		remaining_label.add_theme_color_override("font_color", REMAINING_TIME_COLOR)
 		header.add_child(remaining_label)
+
+	var detail_toggle := CheckButton.new()
+	detail_toggle.text = ""
+	detail_toggle.custom_minimum_size = Vector2(34, 0)
+	detail_toggle.tooltip_text = "説明文を表示"
+	detail_toggle.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	detail_toggle.toggled.connect(Callable(detail_label, "set_visible"))
+	header.add_child(detail_toggle)
 
 	row.add_child(detail_label)
 
