@@ -37,6 +37,9 @@ func _connect_skills_module() -> void:
 	var exp_callable := Callable(self, "_on_skill_experience_changed")
 	if not _skills_module.skill_experience_changed.is_connected(exp_callable):
 		_skills_module.skill_experience_changed.connect(exp_callable)
+	var points_callable := Callable(self, "_on_skill_points_changed")
+	if not _skills_module.skill_points_changed.is_connected(points_callable):
+		_skills_module.skill_points_changed.connect(points_callable)
 
 
 func _disconnect_skills_module() -> void:
@@ -48,6 +51,9 @@ func _disconnect_skills_module() -> void:
 	var exp_callable := Callable(self, "_on_skill_experience_changed")
 	if _skills_module.skill_experience_changed.is_connected(exp_callable):
 		_skills_module.skill_experience_changed.disconnect(exp_callable)
+	var points_callable := Callable(self, "_on_skill_points_changed")
+	if _skills_module.skill_points_changed.is_connected(points_callable):
+		_skills_module.skill_points_changed.disconnect(points_callable)
 
 
 func _rebuild() -> void:
@@ -72,6 +78,8 @@ func _create_skill_row(row_data: Dictionary) -> void:
 	var max_level := int(row_data.get("max_level", 0))
 	var experience := int(row_data.get("experience", 0))
 	var next_exp := int(row_data.get("next_level_experience", 0))
+	var skill_points := int(row_data.get("skill_points", 0))
+	var spent_skill_points := int(row_data.get("spent_skill_points", 0))
 	var bonus_multiplier := float(row_data.get("experience_bonus_multiplier", 0.0))
 	var bonus_until_level := int(row_data.get("experience_bonus_until_level", 0))
 
@@ -109,6 +117,14 @@ func _create_skill_row(row_data: Dictionary) -> void:
 	_apply_bar_color(level_bar, level_bar_color)
 	row.add_child(level_bar)
 
+	var point_label := Label.new()
+	point_label.text = "SP %d" % skill_points
+	if spent_skill_points > 0:
+		point_label.text += " / 使用済み %d" % spent_skill_points
+	point_label.add_theme_color_override("font_color", Color(1.0, 0.86, 0.45, 0.95))
+	point_label.add_theme_font_size_override("font_size", 12)
+	row.add_child(point_label)
+
 	var exp_label := Label.new()
 	exp_label.text = "EXP 完了" if next_exp <= 0 else "EXP %d / %d" % [experience, next_exp]
 	if bonus_multiplier > 0.0 and bonus_until_level > 0:
@@ -142,4 +158,8 @@ func _on_skill_changed(_skill_id: StringName, _old_level: int, _new_level: int) 
 
 
 func _on_skill_experience_changed(_skill_id: StringName, _new_experience: int) -> void:
+	refresh()
+
+
+func _on_skill_points_changed(_skill_id: StringName, _available_points: int, _spent_points: int) -> void:
 	refresh()
