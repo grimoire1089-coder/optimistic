@@ -21,13 +21,13 @@ shadow_color = Color(0.08, 0.62, 0.95, 0.28)
 shadow_size = 10
 
 [node name="AICharacterHud" type="PanelContainer"]
-custom_minimum_size = Vector2(356, 336)
+custom_minimum_size = Vector2(420, 336)
 anchors_preset = 3
 anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -380.0
+offset_left = -444.0
 offset_top = -428.0
 offset_right = -24.0
 offset_bottom = -92.0
@@ -80,7 +80,7 @@ layout_mode = 2
 
 [node name="CharacterNeedsPanel" parent="MarginContainer/Rows/Tabs/NeedsTab" instance=ExtResource("2_needs_panel")]
 layout_mode = 2
-bar_width = 170.0
+bar_width = 230.0
 
 [node name="MoodTab" type="MarginContainer" parent="MarginContainer/Rows/Tabs"]
 visible = false
