@@ -5,9 +5,15 @@ signal food_unlocked(item_id: StringName)
 
 const SAVE_KEY := "unlocked_food_item_ids"
 const UNLOCK_NOTICE_MODULE_SCRIPT_PATH := "res://Scripts/Systems/Encyclopedia/Modules/FoodEncyclopediaUnlockNoticeModule.gd"
+const SPLIT_BALANCER_SCRIPT_PATH := "res://Scripts/UI/Encyclopedia/Modules/EncyclopediaSplitBalancer.gd"
 
 var _unlocked_food_item_ids: Dictionary = {}
 var _unlock_notice_module: Node
+var _split_balancer_module: Node
+
+
+func _ready() -> void:
+	_get_split_balancer_module()
 
 
 func unlock_item_id(item_id: StringName, display_name: String = "") -> bool:
@@ -94,3 +100,20 @@ func _get_unlock_notice_module() -> Node:
 	add_child(module)
 	_unlock_notice_module = module
 	return _unlock_notice_module
+
+
+func _get_split_balancer_module() -> Node:
+	if _split_balancer_module != null and is_instance_valid(_split_balancer_module):
+		return _split_balancer_module
+	if not ResourceLoader.exists(SPLIT_BALANCER_SCRIPT_PATH):
+		return null
+	var script := load(SPLIT_BALANCER_SCRIPT_PATH) as Script
+	if script == null:
+		return null
+	var module := script.new() as Node
+	if module == null:
+		return null
+	module.name = "EncyclopediaSplitBalancer"
+	add_child(module)
+	_split_balancer_module = module
+	return _split_balancer_module
