@@ -27,6 +27,7 @@ const BUTTON_TO_UI := {
 	"WorkCreditButton": "WorkMenu",
 	"CraftButton": "CraftMenu",
 	"SettingsButton": "GameOptionsOverlay",
+	"EncyclopediaButton": "EncyclopediaOverlay",
 	"BillButton": "BillPanel",
 }
 
