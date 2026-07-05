@@ -17,11 +17,11 @@ enum LogChannel { NORMAL, CHARACTER, EXPLORATION, DEBUG }
 ## 旧設定との互換用。デバッグログはコード側で常に無音にする。
 @export var play_notice_sfx_for_debug: bool = false
 @export_range(0.0, 10.0, 0.1) var queued_message_delay_seconds: float = 2.0
-@export var card_height: float = 72.0
+@export var card_height: float = 86.0
 @export var card_horizontal_inset: float = 4.0
-@export_range(8, 64, 1) var card_estimated_chars_per_line: int = 22
-@export var card_estimated_line_height: float = 21.0
-@export var card_estimated_vertical_padding: float = 30.0
+@export_range(8, 64, 1) var card_estimated_chars_per_line: int = 15
+@export var card_estimated_line_height: float = 23.0
+@export var card_estimated_vertical_padding: float = 42.0
 @export var card_enter_offset_y: float = 18.0
 @export var card_enter_duration: float = 0.22
 @export var card_background_color: Color = Color(0.035, 0.04, 0.06, 0.96)
