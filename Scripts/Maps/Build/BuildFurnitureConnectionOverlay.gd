@@ -7,9 +7,9 @@ class_name BuildFurnitureConnectionOverlay
 @export var show_only_in_build_mode: bool = true
 @export var refresh_interval_seconds: float = 0.2
 @export var minimum_overlap_cells: int = 2
-@export var line_color: Color = Color(0.25, 1.0, 0.95, 0.86)
-@export var line_glow_color: Color = Color(0.25, 1.0, 0.95, 0.20)
-@export var endpoint_color: Color = Color(0.85, 1.0, 1.0, 0.95)
+@export var line_color: Color = Color(0.2, 1.0, 0.35, 0.90)
+@export var line_glow_color: Color = Color(0.2, 1.0, 0.35, 0.24)
+@export var endpoint_color: Color = Color(0.78, 1.0, 0.72, 0.96)
 @export var line_width: float = 2.0
 @export var glow_width: float = 8.0
 @export var endpoint_radius: float = 4.0
