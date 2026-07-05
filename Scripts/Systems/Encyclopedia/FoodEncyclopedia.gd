@@ -4,11 +4,13 @@ signal encyclopedia_changed
 signal food_unlocked(item_id: StringName)
 
 const SAVE_KEY := "unlocked_food_item_ids"
+const UNLOCK_NOTICE_MODULE_SCRIPT_PATH := "res://Scripts/Systems/Encyclopedia/Modules/FoodEncyclopediaUnlockNoticeModule.gd"
 
 var _unlocked_food_item_ids: Dictionary = {}
+var _unlock_notice_module: Node
 
 
-func unlock_item_id(item_id: StringName) -> bool:
+func unlock_item_id(item_id: StringName, display_name: String = "") -> bool:
 	if item_id == &"":
 		return false
 	if _unlocked_food_item_ids.has(item_id):
@@ -16,13 +18,14 @@ func unlock_item_id(item_id: StringName) -> bool:
 	_unlocked_food_item_ids[item_id] = true
 	food_unlocked.emit(item_id)
 	encyclopedia_changed.emit()
+	_notify_unlock_notice(item_id, display_name)
 	return true
 
 
 func unlock_food_item(food_data: FoodItemData) -> bool:
 	if food_data == null:
 		return false
-	return unlock_item_id(food_data.item_id)
+	return unlock_item_id(food_data.item_id, food_data.display_name)
 
 
 func is_item_unlocked(item_id: StringName) -> bool:
@@ -67,3 +70,27 @@ func apply_save_data(data: Dictionary) -> void:
 			if item_id != &"":
 				_unlocked_food_item_ids[item_id] = true
 	encyclopedia_changed.emit()
+
+
+func _notify_unlock_notice(item_id: StringName, display_name: String) -> void:
+	var module := _get_unlock_notice_module()
+	if module == null or not module.has_method("push_food_unlock_notice"):
+		return
+	module.call("push_food_unlock_notice", item_id, display_name)
+
+
+func _get_unlock_notice_module() -> Node:
+	if _unlock_notice_module != null and is_instance_valid(_unlock_notice_module):
+		return _unlock_notice_module
+	if not ResourceLoader.exists(UNLOCK_NOTICE_MODULE_SCRIPT_PATH):
+		return null
+	var script := load(UNLOCK_NOTICE_MODULE_SCRIPT_PATH) as Script
+	if script == null:
+		return null
+	var module := script.new() as Node
+	if module == null:
+		return null
+	module.name = "FoodEncyclopediaUnlockNoticeModule"
+	add_child(module)
+	_unlock_notice_module = module
+	return _unlock_notice_module
