@@ -241,9 +241,9 @@ func _toggle_main_child_visibility(node_name: String, flag_property: StringName)
 	var target := main_scene.get_node_or_null(NodePath(node_name)) as CanvasItem
 	if target == null:
 		return
-	var hidden := not bool(get(flag_property))
-	set(flag_property, hidden)
-	target.visible = not hidden
+	var should_hide_target := not bool(get(flag_property))
+	set(flag_property, should_hide_target)
+	target.visible = not should_hide_target
 	_refresh()
 
 
