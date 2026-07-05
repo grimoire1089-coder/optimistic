@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="CharacterMoodEntryData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Systems/Mood/CharacterMoodEntryData.gd" id="1_entry"]
+
+[resource]
+script = ExtResource("1_entry")
+entry_id = &"hunger_low"
+display_name = "空腹"
+detail_text = "栄養残量が低下しています。補給すると心情が安定します。"
+body = "栄養残量が低下しています。補給すると心情が安定します。"
+point = -8
