@@ -39,12 +39,7 @@ func _make_travel_unlock_message(book: BookData) -> String:
 	if location_name.is_empty():
 		return ""
 
-	var message := "移動場所が解禁されました: %s" % location_name
-	var description := book.unlock_travel_description.strip_edges()
-	if not description.is_empty():
-		message += "\n%s" % description
-	message += "\n移動メニューの探索から選べます。"
-	return message
+	return "移動場所が解禁されました: %s\n移動メニューの探索から選べます。" % location_name
 
 
 func _ensure_styler(message_log: Node) -> TravelUnlockLogStyler:
