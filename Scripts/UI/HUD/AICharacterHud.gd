@@ -3,7 +3,7 @@ class_name AICharacterHud
 
 const FRONT_Z_INDEX := 200
 const HUD_WIDTH := 480.0
-const HUD_HEIGHT := 336.0
+const HUD_HEIGHT := 456.0
 const HUD_RIGHT_MARGIN := 24.0
 const HUD_BOTTOM_MARGIN := 92.0
 const NEED_BAR_WIDTH := 290.0
