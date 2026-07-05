@@ -7,6 +7,7 @@ extends Node
 @export var shuffle_tracks: bool = false
 @export_range(0, 999, 1) var start_index: int = 0
 @export var restart_if_same: bool = false
+@export var loop_tracks: bool = true
 @export var stop_ambience_on_exit: bool = true
 @export_range(0.0, 10.0, 0.05) var fade_out_seconds: float = 0.5
 @export_range(0.0, 10.0, 0.05) var fade_in_seconds: float = 0.5
@@ -93,6 +94,7 @@ func _apply_playlist_settings() -> void:
 	shuffle_tracks = playlist.shuffle_tracks
 	start_index = playlist.start_index
 	restart_if_same = playlist.restart_if_same
+	loop_tracks = playlist.loop_tracks
 	fade_out_seconds = playlist.fade_out_seconds
 	fade_in_seconds = playlist.fade_in_seconds
 	clear_track_cache()
@@ -168,6 +170,8 @@ func _load_track(index: int) -> AudioStream:
 	var stream: AudioStream = load(path) as AudioStream
 	if stream == null:
 		push_warning("AmbiencePlaylistPlayerModule: 環境音を読み込めません: %s" % path)
+	else:
+		_apply_stream_loop_setting(stream)
 
 	_track_cache[index] = stream
 	return stream
@@ -178,6 +182,15 @@ func _play_ambience_stream(stream: AudioStream) -> void:
 		AudioPlayer.play_ambience_fade(stream, 0.0, restart_if_same, fade_out_seconds, fade_in_seconds)
 		return
 	AudioPlayer.play_ambience(stream, 0.0, restart_if_same)
+
+
+func _apply_stream_loop_setting(stream: AudioStream) -> void:
+	if stream == null:
+		return
+	for property in stream.get_property_list():
+		if property is Dictionary and StringName(property.get("name", &"")) == &"loop":
+			stream.set("loop", loop_tracks)
+			return
 
 
 func _get_current_stream() -> AudioStream:
