@@ -2,6 +2,9 @@ extends Node
 class_name AICharacterHydrateBehaviorModule
 
 const INVALID_GRID_POSITION := Vector2i(-999999, -999999)
+const BUILD_LOCK_META := &"build_locked_by_sleep"
+const BUILD_LOCK_REASON_META := &"build_lock_reason"
+const DINING_LOCK_REASON := "DiningDrink"
 
 @export var needs_module_path: NodePath = NodePath("../AICharacterNeedsBundle/CharacterNeedsModule")
 @export var need_planner_path: NodePath = NodePath("../AICharacterNeedsBundle/NeedDrivenAIPlanner")
@@ -26,6 +29,9 @@ const INVALID_GRID_POSITION := Vector2i(-999999, -999999)
 @export var drink_sfx_path: String = "res://Assets/Audio/SFX/Game/drink.ogg"
 @export var drink_sfx_delay_seconds: float = 0.75
 @export var drink_sfx_volume_db: float = 0.0
+@export var prefer_connected_dining_seat: bool = true
+@export var dining_minimum_overlap_cells: int = 2
+@export var snap_to_connected_dining_seat_when_drinking: bool = true
 
 var _body: CharacterBody2D
 var _needs_module: CharacterNeedsModule
@@ -35,6 +41,7 @@ var _furniture_root: Node
 var _furniture_placement_module: Node
 var _room_map: RoomMapGridModule
 var _target_kitchen: Node2D
+var _target_dining_seat: Node2D
 var _water_bottle_item: FoodItemData
 var _drink_sfx: AudioStream
 var _is_active := false
@@ -45,12 +52,17 @@ var _drink_timer := 0.0
 var _drink_start_progress := 0.0
 var _drink_sfx_played := false
 var _drink_food_data: FoodItemData
+var _pending_drink_food_data: FoodItemData
 var _action_progress_ratio := 0.0
 var _move_start_distance := 0.0
 var _last_target_kitchen: Node2D
 var _target_cell: Vector2i = INVALID_GRID_POSITION
 var _target_kitchen_grid_position: Vector2i = INVALID_GRID_POSITION
 var _target_kitchen_grid_footprint: Vector2i = Vector2i.ZERO
+var _target_dining_seat_cell: Vector2i = INVALID_GRID_POSITION
+var _target_dining_seat_grid_position: Vector2i = INVALID_GRID_POSITION
+var _target_dining_seat_grid_footprint: Vector2i = Vector2i.ZERO
+var _dining_seat_used_for_current_drink := false
 var _path_cells: Array[Vector2i] = []
 
 
@@ -118,7 +130,14 @@ func get_debug_actor_footprint() -> Vector2i:
 
 func get_debug_movement_summary() -> String:
 	if _is_drinking:
-		return "drinking=true path=0 footprint=%s" % [str(get_debug_actor_footprint())]
+		return "drinking=true seated=%s path=0 footprint=%s" % [str(_dining_seat_used_for_current_drink), str(get_debug_actor_footprint())]
+	if _pending_drink_food_data != null:
+		return "dining_seat_target=%s next_cell=%s path=%d footprint=%s" % [
+			str(get_debug_target_cell()),
+			str(get_debug_next_cell()),
+			_path_cells.size(),
+			str(get_debug_actor_footprint()),
+		]
 	return "target_cell=%s next_cell=%s path=%d footprint=%s" % [
 		str(get_debug_target_cell()),
 		str(get_debug_next_cell()),
@@ -141,6 +160,10 @@ func get_velocity(delta: float) -> Vector2:
 		_facing_direction = Vector2.DOWN
 		_update_drinking(delta)
 		return Vector2.ZERO
+
+	if _pending_drink_food_data != null:
+		_is_active = true
+		return _get_pending_dining_drink_velocity()
 
 	if _cooldown_timer > 0.0:
 		_reset_hydrate_action()
@@ -210,6 +233,8 @@ func _begin_existing_water_bottle_drink() -> bool:
 		return false
 	if not _has_water_bottle(food_data):
 		return false
+	if _begin_connected_dining_drink(food_data):
+		return true
 	_clear_hydrate_target()
 	_begin_drinking(food_data, 0.0)
 	return true
@@ -218,6 +243,8 @@ func _begin_existing_water_bottle_drink() -> bool:
 func _begin_created_water_bottle_drink() -> void:
 	var created_food_data := _create_water_bottle_for_drinking()
 	if created_food_data != null:
+		if _begin_connected_dining_drink(created_food_data):
+			return
 		_begin_drinking(created_food_data, 0.0)
 	else:
 		_finish_hydrate_action()
@@ -235,8 +262,65 @@ func _create_water_bottle_for_drinking() -> FoodItemData:
 	return food_data
 
 
+func _begin_connected_dining_drink(food_data: FoodItemData) -> bool:
+	if food_data == null:
+		return false
+	if not prefer_connected_dining_seat:
+		return false
+	if not _ensure_dining_seat_target():
+		return false
+	_pending_drink_food_data = food_data
+	_target_cell = _target_dining_seat_cell
+	_path_cells.clear()
+	_move_start_distance = 0.0
+	return true
+
+
+func _get_pending_dining_drink_velocity() -> Vector2:
+	if _pending_drink_food_data == null:
+		return Vector2.ZERO
+	if not _has_valid_dining_seat_target():
+		var fallback_food := _pending_drink_food_data
+		_pending_drink_food_data = null
+		_clear_dining_seat_target()
+		_begin_drinking(fallback_food, 0.0)
+		return Vector2.ZERO
+
+	var target_cell := _target_dining_seat_cell
+	_target_cell = target_cell
+	var target_position := _get_dining_seat_use_position(target_cell)
+	var to_target := target_position - _body.global_position
+	var target_distance := to_target.length()
+	if target_distance <= arrival_distance:
+		var food_data := _pending_drink_food_data
+		_pending_drink_food_data = null
+		_dining_seat_used_for_current_drink = true
+		_begin_drinking(food_data, 0.0)
+		return Vector2.ZERO
+
+	var path_velocity := _get_grid_path_velocity_to_target(target_cell, target_distance)
+	if path_velocity != Vector2.ZERO:
+		return path_velocity
+
+	to_target = target_position - _body.global_position
+	if to_target.length() <= maxf(arrival_distance, grid_arrival_distance):
+		var food_data := _pending_drink_food_data
+		_pending_drink_food_data = null
+		_dining_seat_used_for_current_drink = true
+		_begin_drinking(food_data, 0.0)
+		return Vector2.ZERO
+
+	var fallback_food := _pending_drink_food_data
+	_pending_drink_food_data = null
+	_clear_dining_seat_target()
+	_begin_drinking(fallback_food, 0.0)
+	return Vector2.ZERO
+
+
 func _begin_drinking(food_data: FoodItemData, start_progress: float) -> void:
 	_snap_body_to_drink_grid_center()
+	_snap_body_to_dining_seat_if_needed()
+	_lock_dining_seat_if_needed()
 	_drink_food_data = food_data
 	_is_drinking = true
 	_is_active = true
@@ -264,6 +348,25 @@ func _snap_body_to_drink_grid_center() -> bool:
 	_body.global_position = snap_position
 	_path_cells.clear()
 	return changed
+
+
+func _snap_body_to_dining_seat_if_needed() -> void:
+	if not snap_to_connected_dining_seat_when_drinking:
+		return
+	if not _dining_seat_used_for_current_drink:
+		return
+	if _body == null or _target_dining_seat == null or not is_instance_valid(_target_dining_seat):
+		return
+	_body.global_position = _get_dining_seat_sit_position()
+
+
+func _lock_dining_seat_if_needed() -> void:
+	if not _dining_seat_used_for_current_drink:
+		return
+	if _target_dining_seat == null or not is_instance_valid(_target_dining_seat):
+		return
+	_target_dining_seat.set_meta(BUILD_LOCK_META, true)
+	_target_dining_seat.set_meta(BUILD_LOCK_REASON_META, DINING_LOCK_REASON)
 
 
 func _update_drinking(delta: float) -> void:
@@ -353,6 +456,7 @@ func _record_bill_water_usage(units: int, reason: String) -> void:
 
 func _finish_hydrate_action() -> void:
 	_clear_hydrate_target()
+	_clear_dining_seat_target()
 	_move_start_distance = 0.0
 	_cooldown_timer = maxf(refill_cooldown_seconds, 0.0)
 	_action_progress_ratio = 0.0
@@ -361,6 +465,7 @@ func _finish_hydrate_action() -> void:
 
 func _reset_hydrate_action() -> void:
 	_clear_hydrate_target()
+	_clear_dining_seat_target()
 	_move_start_distance = 0.0
 	_action_progress_ratio = 0.0
 
@@ -444,6 +549,104 @@ func _clear_hydrate_target() -> void:
 	_target_kitchen_grid_position = INVALID_GRID_POSITION
 	_target_kitchen_grid_footprint = Vector2i.ZERO
 	_path_cells.clear()
+
+
+func _ensure_dining_seat_target() -> bool:
+	if _has_valid_dining_seat_target():
+		return true
+	var info := _find_best_connected_dining_seat()
+	if info.is_empty():
+		_clear_dining_seat_target()
+		return false
+	_set_dining_seat_target(info)
+	return _has_valid_dining_seat_target()
+
+
+func _has_valid_dining_seat_target() -> bool:
+	if _target_dining_seat == null:
+		return false
+	if not is_instance_valid(_target_dining_seat):
+		return false
+	if _furniture_root != null and _target_dining_seat.get_parent() != _furniture_root:
+		return false
+	if _has_target_dining_seat_layout_changed(_target_dining_seat):
+		return false
+	if not _is_valid_grid_position(_target_dining_seat_cell):
+		return false
+	if _is_target_cell_walkable(_target_dining_seat_cell, _get_actor_grid_footprint()):
+		return true
+	if not _is_target_cell_inside(_target_dining_seat_cell, _get_actor_grid_footprint()):
+		return false
+	return true
+
+
+func _set_dining_seat_target(info: Dictionary) -> void:
+	var chair := info.get("chair", null) as Node2D
+	if chair == null:
+		_clear_dining_seat_target()
+		return
+	_target_dining_seat = chair
+	_target_dining_seat_cell = info.get("use_cell", INVALID_GRID_POSITION) as Vector2i
+	_target_dining_seat_grid_position = info.get("chair_cell", INVALID_GRID_POSITION) as Vector2i
+	_target_dining_seat_grid_footprint = info.get("chair_footprint", Vector2i(1, 1)) as Vector2i
+	_target_cell = _target_dining_seat_cell
+	_path_cells.clear()
+
+
+func _clear_dining_seat_target() -> void:
+	_clear_dining_seat_lock()
+	_target_dining_seat = null
+	_target_dining_seat_cell = INVALID_GRID_POSITION
+	_target_dining_seat_grid_position = INVALID_GRID_POSITION
+	_target_dining_seat_grid_footprint = Vector2i.ZERO
+	_pending_drink_food_data = null
+	_dining_seat_used_for_current_drink = false
+
+
+func _clear_dining_seat_lock() -> void:
+	if _target_dining_seat == null:
+		return
+	if is_instance_valid(_target_dining_seat):
+		var reason := String(_target_dining_seat.get_meta(BUILD_LOCK_REASON_META, "")) if _target_dining_seat.has_meta(BUILD_LOCK_REASON_META) else ""
+		if reason == DINING_LOCK_REASON:
+			if _target_dining_seat.has_meta(BUILD_LOCK_META):
+				_target_dining_seat.remove_meta(BUILD_LOCK_META)
+			if _target_dining_seat.has_meta(BUILD_LOCK_REASON_META):
+				_target_dining_seat.remove_meta(BUILD_LOCK_REASON_META)
+
+
+func _has_target_dining_seat_layout_changed(seat: Node2D) -> bool:
+	return (
+		_get_furniture_grid_position(seat) != _target_dining_seat_grid_position
+		or _get_furniture_footprint(seat) != _target_dining_seat_grid_footprint
+	)
+
+
+func _find_best_connected_dining_seat() -> Dictionary:
+	if _furniture_root == null or _room_map == null or _body == null:
+		return {}
+	return AICharacterDiningSeatHelper.find_best_connected_chair(
+		_furniture_root,
+		_room_map,
+		_body.global_position,
+		_get_actor_grid_footprint(),
+		Callable(self, "_is_target_cell_walkable"),
+		dining_minimum_overlap_cells,
+		false
+	)
+
+
+func _get_dining_seat_use_position(use_cell: Vector2i) -> Vector2:
+	if _is_valid_grid_position(use_cell) and _room_map != null:
+		return _room_map.grid_to_world_area_center(use_cell, _get_actor_grid_footprint())
+	if _target_dining_seat != null:
+		return _target_dining_seat.global_position
+	return _body.global_position if _body != null else Vector2.ZERO
+
+
+func _get_dining_seat_sit_position() -> Vector2:
+	var fallback := _get_dining_seat_use_position(_target_dining_seat_cell)
+	return AICharacterDiningSeatHelper.get_chair_sit_position(_target_dining_seat, fallback)
 
 
 func _has_target_kitchen_layout_changed(kitchen: Node2D) -> bool:
