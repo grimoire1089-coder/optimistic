@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="AmbiencePlaylistData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Systems/Audio/AmbiencePlaylistData.gd" id="1_playlist_script"]
+
+[resource]
+script = ExtResource("1_playlist_script")
+playlist_id = &"rain"
+display_name = "雨の日"
+tracks = PackedStringArray("res://Assets/Audio/Ambience/Rain.ogg")
+shuffle_tracks = false
+start_index = 0
+restart_if_same = false
+fade_out_seconds = 0.5
+fade_in_seconds = 0.8
