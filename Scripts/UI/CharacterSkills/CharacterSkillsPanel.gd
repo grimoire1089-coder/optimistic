@@ -4,10 +4,14 @@ class_name CharacterSkillsPanel
 @export var level_bar_width: float = 132.0
 @export var level_bar_color: Color = Color(0.20, 0.72, 1.0, 1.0)
 @export var experience_bar_color: Color = Color(0.70, 0.35, 1.0, 1.0)
+@export var skill_detail_popup_size: Vector2i = Vector2i(460, 420)
 
 @onready var _rows: VBoxContainer = $MarginContainer/Rows
 
 var _skills_module: AICharacterSkillsModule
+var _skill_detail_popup: PopupPanel
+var _skill_detail_rows: VBoxContainer
+var _open_skill_id: StringName = &""
 
 
 func _ready() -> void:
@@ -68,6 +72,8 @@ func _rebuild() -> void:
 		return
 	for row_data in _skills_module.get_skill_rows():
 		_create_skill_row(row_data)
+	if _is_skill_detail_popup_open():
+		_populate_skill_detail_popup(_open_skill_id)
 
 
 func _clear_rows() -> void:
@@ -92,7 +98,7 @@ func _create_skill_row(row_data: Dictionary) -> void:
 	var row := VBoxContainer.new()
 	row.name = String(skill_id)
 	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_theme_constant_override("separation", 6)
+	row.add_theme_constant_override("separation", 4)
 	_rows.add_child(row)
 
 	var header := HBoxContainer.new()
@@ -112,6 +118,12 @@ func _create_skill_row(row_data: Dictionary) -> void:
 	level_label.custom_minimum_size = Vector2(88.0, 0.0)
 	level_label.add_theme_font_size_override("font_size", 13)
 	header.add_child(level_label)
+
+	var detail_button := Button.new()
+	detail_button.text = "詳細"
+	detail_button.custom_minimum_size = Vector2(54.0, 26.0)
+	detail_button.pressed.connect(_on_skill_detail_button_pressed.bind(skill_id))
+	header.add_child(detail_button)
 
 	var level_bar := ProgressBar.new()
 	level_bar.show_percentage = false
@@ -149,7 +161,82 @@ func _create_skill_row(row_data: Dictionary) -> void:
 	_apply_bar_color(exp_bar, experience_bar_color)
 	row.add_child(exp_bar)
 
-	_create_skill_upgrade_list(row, skill_id)
+
+func _on_skill_detail_button_pressed(skill_id: StringName) -> void:
+	_open_skill_id = skill_id
+	var popup := _ensure_skill_detail_popup()
+	if popup == null:
+		return
+	_populate_skill_detail_popup(skill_id)
+	popup.popup_centered(skill_detail_popup_size)
+
+
+func _ensure_skill_detail_popup() -> PopupPanel:
+	if _skill_detail_popup != null and is_instance_valid(_skill_detail_popup):
+		return _skill_detail_popup
+	_skill_detail_popup = PopupPanel.new()
+	_skill_detail_popup.name = "SkillDetailPopup"
+	_skill_detail_popup.exclusive = true
+	add_child(_skill_detail_popup)
+	_apply_popup_style(_skill_detail_popup)
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 12)
+	margin.add_theme_constant_override("margin_top", 10)
+	margin.add_theme_constant_override("margin_right", 12)
+	margin.add_theme_constant_override("margin_bottom", 12)
+	_skill_detail_popup.add_child(margin)
+
+	_skill_detail_rows = VBoxContainer.new()
+	_skill_detail_rows.name = "Rows"
+	_skill_detail_rows.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_skill_detail_rows.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_skill_detail_rows.add_theme_constant_override("separation", 8)
+	margin.add_child(_skill_detail_rows)
+	return _skill_detail_popup
+
+
+func _populate_skill_detail_popup(skill_id: StringName) -> void:
+	if _skills_module == null:
+		return
+	var popup := _ensure_skill_detail_popup()
+	if popup == null or _skill_detail_rows == null:
+		return
+	_clear_skill_detail_popup_rows()
+
+	var header := HBoxContainer.new()
+	header.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_skill_detail_rows.add_child(header)
+
+	var title_label := Label.new()
+	title_label.text = "%sの取得スキル" % _skills_module.get_skill_display_name(skill_id)
+	title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	title_label.add_theme_font_size_override("font_size", 16)
+	header.add_child(title_label)
+
+	var close_button := Button.new()
+	close_button.text = "閉じる"
+	close_button.custom_minimum_size = Vector2(72.0, 30.0)
+	close_button.pressed.connect(_on_skill_detail_close_pressed)
+	header.add_child(close_button)
+
+	var point_label := Label.new()
+	point_label.text = "使用可能SP %d / 使用済み %d" % [
+		_skills_module.get_skill_points(skill_id),
+		_skills_module.get_spent_skill_points(skill_id),
+	]
+	point_label.add_theme_color_override("font_color", Color(1.0, 0.86, 0.45, 0.95))
+	point_label.add_theme_font_size_override("font_size", 12)
+	_skill_detail_rows.add_child(point_label)
+
+	_create_skill_upgrade_list(_skill_detail_rows, skill_id)
+
+
+func _clear_skill_detail_popup_rows() -> void:
+	if _skill_detail_rows == null:
+		return
+	for child in _skill_detail_rows.get_children():
+		child.queue_free()
 
 
 func _create_skill_upgrade_list(parent: VBoxContainer, skill_id: StringName) -> void:
@@ -159,13 +246,12 @@ func _create_skill_upgrade_list(parent: VBoxContainer, skill_id: StringName) -> 
 		return
 	var upgrade_rows: Array = _skills_module.call("get_skill_upgrade_rows", skill_id)
 	if upgrade_rows.is_empty():
+		var empty_label := Label.new()
+		empty_label.text = "このスキルで取得できる項目はまだありません。"
+		empty_label.add_theme_color_override("font_color", Color(0.72, 0.82, 0.92, 0.92))
+		empty_label.add_theme_font_size_override("font_size", 12)
+		parent.add_child(empty_label)
 		return
-
-	var title_label := Label.new()
-	title_label.text = "取得スキル"
-	title_label.add_theme_color_override("font_color", Color(0.78, 0.92, 1.0, 0.95))
-	title_label.add_theme_font_size_override("font_size", 12)
-	parent.add_child(title_label)
 
 	for upgrade_data in upgrade_rows:
 		if upgrade_data is Dictionary:
@@ -248,11 +334,34 @@ func _apply_card_style(card: PanelContainer) -> void:
 	card.add_theme_stylebox_override("panel", panel_style)
 
 
+func _apply_popup_style(popup: PopupPanel) -> void:
+	if popup == null:
+		return
+	var panel_style := StyleBoxFlat.new()
+	panel_style.bg_color = Color(0.025, 0.035, 0.048, 0.98)
+	panel_style.border_color = Color(0.15, 0.78, 1.0, 0.86)
+	panel_style.border_width_left = 1
+	panel_style.border_width_top = 1
+	panel_style.border_width_right = 1
+	panel_style.border_width_bottom = 1
+	panel_style.set_corner_radius_all(8)
+	popup.add_theme_stylebox_override("panel", panel_style)
+
+
+func _is_skill_detail_popup_open() -> bool:
+	return _skill_detail_popup != null and is_instance_valid(_skill_detail_popup) and _skill_detail_popup.visible and _open_skill_id != &""
+
+
 func _on_acquire_skill_upgrade_pressed(upgrade_id: StringName) -> void:
 	if _skills_module == null or not _skills_module.has_method("acquire_skill_upgrade"):
 		return
 	_skills_module.call("acquire_skill_upgrade", upgrade_id)
 	refresh()
+
+
+func _on_skill_detail_close_pressed() -> void:
+	if _skill_detail_popup != null and is_instance_valid(_skill_detail_popup):
+		_skill_detail_popup.hide()
 
 
 func _on_skill_changed(_skill_id: StringName, _old_level: int, _new_level: int) -> void:
