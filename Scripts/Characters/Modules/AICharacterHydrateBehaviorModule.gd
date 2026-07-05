@@ -285,10 +285,10 @@ func _get_pending_dining_drink_velocity() -> Vector2:
 	if _pending_drink_food_data == null:
 		return Vector2.ZERO
 	if not _has_valid_dining_seat_target():
-		var fallback_food := _pending_drink_food_data
+		var invalid_seat_food := _pending_drink_food_data
 		_pending_drink_food_data = null
 		_clear_dining_seat_target()
-		_begin_drinking(fallback_food, 0.0)
+		_begin_drinking(invalid_seat_food, 0.0)
 		return Vector2.ZERO
 
 	var target_cell := _target_dining_seat_cell
