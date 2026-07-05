@@ -5,6 +5,8 @@ const BUILD_LOCK_META := &"build_locked_by_sleep"
 
 @export var room_map_path: NodePath
 @export var furniture_root_path: NodePath
+@export var apply_depth_sort_z_index: bool = true
+@export var depth_sort_z_offset: int = 0
 
 var _room_map: RoomMapGridModule
 var _connected_room_map: RoomMapGridModule
@@ -65,6 +67,7 @@ func sync_occupied_cells_from_furniture_root() -> void:
 		if furniture.has_meta("grid_footprint"):
 			footprint = furniture.get_meta("grid_footprint", footprint)
 		_register_furniture_cells(furniture, grid_position, footprint)
+		_apply_furniture_depth_sort(furniture, grid_position, footprint)
 	_mark_layout_changed()
 
 
@@ -282,6 +285,8 @@ func sync_all_furniture_to_room_grid() -> void:
 		if furniture.global_position.distance_squared_to(target_position) > 0.001:
 			furniture.global_position = target_position
 			changed = true
+		if _apply_furniture_depth_sort(furniture, grid_position, footprint):
+			changed = true
 
 	if changed:
 		_mark_layout_changed()
@@ -311,6 +316,7 @@ func _register_furniture(
 	furniture.set_meta("grid_footprint", footprint)
 	if furniture_id != &"":
 		furniture.set_meta("furniture_id", furniture_id)
+	_apply_furniture_depth_sort(furniture, grid_position, footprint)
 
 	_register_furniture_cells(furniture, grid_position, footprint)
 	_mark_layout_changed()
@@ -323,6 +329,25 @@ func _register_furniture_cells(
 ) -> void:
 	for cell in _get_cells_in_footprint(grid_position, footprint):
 		_occupied_cells[_grid_key(cell)] = furniture
+
+
+func _apply_furniture_depth_sort(furniture: Node2D, grid_position: Vector2i, footprint: Vector2i) -> bool:
+	if not apply_depth_sort_z_index:
+		return false
+	if furniture == null or _room_map == null:
+		return false
+	if not _room_map.is_grid_area_inside(grid_position, footprint):
+		return false
+	var rect := _room_map.get_grid_area_rect(grid_position, footprint)
+	var next_z_index := int(round(rect.end.y)) + depth_sort_z_offset
+	if furniture.z_as_relative != true:
+		furniture.z_as_relative = true
+		furniture.z_index = next_z_index
+		return true
+	if furniture.z_index == next_z_index:
+		return false
+	furniture.z_index = next_z_index
+	return true
 
 
 func _unregister_furniture(furniture: Node2D) -> void:
