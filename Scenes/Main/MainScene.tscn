@@ -42,6 +42,8 @@
 [ext_resource type="Script" path="res://Scripts/Scenes/Main/Modules/MainSceneWeatherAmbienceModule.gd" id="39_weather_ambience_module"]
 [ext_resource type="Resource" path="res://Data/Audio/AmbiencePlaylists/MainSceneWeatherAmbienceRegistry.tres" id="40_main_scene_weather_ambience_registry"]
 [ext_resource type="PackedScene" path="res://Scenes/UI/HUD/PlaceholderHudButton.tscn" id="41_placeholder_hud_button"]
+[ext_resource type="PackedScene" path="res://Scenes/UI/Encyclopedia/EncyclopediaOverlay.tscn" id="42_encyclopedia_overlay"]
+[ext_resource type="PackedScene" path="res://Scenes/UI/HUD/EncyclopediaButton.tscn" id="43_encyclopedia_button"]
 
 [sub_resource type="Environment" id="Environment_ctt6t"]
 glow_enabled = true
@@ -156,6 +158,8 @@ anchors_preset = 3
 
 [node name="GameOptionsOverlay" parent="CanvasLayer" unique_id=411112730 instance=ExtResource("24_game_options_overlay")]
 
+[node name="EncyclopediaOverlay" parent="CanvasLayer" instance=ExtResource("42_encyclopedia_overlay")]
+
 [node name="RobinHudButton" parent="CanvasLayer" unique_id=109920417 instance=ExtResource("19_robin_hud_button")]
 
 [node name="CraftButton" parent="CanvasLayer" unique_id=706682530 instance=ExtResource("20_craft_button")]
@@ -185,8 +189,7 @@ text = "仮02"
 [node name="PlaceholderHudButton03" parent="CanvasLayer" instance=ExtResource("41_placeholder_hud_button")]
 text = "仮03"
 
-[node name="PlaceholderHudButton04" parent="CanvasLayer" instance=ExtResource("41_placeholder_hud_button")]
-text = "仮04"
+[node name="EncyclopediaButton" parent="CanvasLayer" instance=ExtResource("43_encyclopedia_button")]
 
 [node name="PlaceholderHudButton05" parent="CanvasLayer" instance=ExtResource("41_placeholder_hud_button")]
 text = "仮05"
