@@ -15,7 +15,6 @@ const SKILL_GATHERING_MAX_LEVEL := 100
 
 const SKILL_UPGRADE_GATHERING_AMOUNT_PLUS: StringName = &"gathering_amount_plus"
 const SKILL_UPGRADE_GATHERING_AMOUNT_PLUS_DISPLAY_NAME := "採取量＋1"
-const SKILL_UPGRADE_GATHERING_AMOUNT_PLUS_DESCRIPTION := "1レベルごとに、探索での採取数が10％の確率で＋1されます。"
 const SKILL_UPGRADE_GATHERING_AMOUNT_PLUS_MAX_LEVEL := 10
 const SKILL_UPGRADE_GATHERING_AMOUNT_PLUS_COST := 1
 
@@ -244,7 +243,9 @@ func get_skill_upgrade_display_name(upgrade_id: StringName) -> String:
 func get_skill_upgrade_description(upgrade_id: StringName) -> String:
 	match upgrade_id:
 		SKILL_UPGRADE_GATHERING_AMOUNT_PLUS:
-			return SKILL_UPGRADE_GATHERING_AMOUNT_PLUS_DESCRIPTION
+			var chance_percent := roundi(get_gathering_amount_plus_chance() * 100.0)
+			var bonus_amount := get_gathering_amount_plus_bonus_amount()
+			return "探索での採取数が%d％の確率で＋%dされます。" % [chance_percent, bonus_amount]
 		_:
 			return ""
 
@@ -308,6 +309,17 @@ func get_gathering_amount_plus_level() -> int:
 
 func get_gathering_amount_plus_chance() -> float:
 	return clampf(float(get_gathering_amount_plus_level()) * 0.10, 0.0, 1.0)
+
+
+func get_gathering_amount_plus_bonus_amount() -> int:
+	return get_gathering_amount_plus_bonus_amount_for_level(get_gathering_amount_plus_level())
+
+
+func get_gathering_amount_plus_bonus_amount_for_level(level: int) -> int:
+	var safe_level := clampi(level, 0, SKILL_UPGRADE_GATHERING_AMOUNT_PLUS_MAX_LEVEL)
+	if safe_level <= 0:
+		return 0
+	return maxi(ceili(float(safe_level) / 2.0), 1)
 
 
 func apply_skill_experience_bonus(skill_id: StringName, until_level: int, bonus_multiplier: float, source_id: StringName) -> bool:
