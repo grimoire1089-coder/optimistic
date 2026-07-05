@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://Scripts/UI/HUD/SettingsButton.gd" id="1_settings_button"]
+[ext_resource type="Texture2D" uid="uid://dtdgpgm1iqt8l" path="res://Assets/UI/Icons/Setting.png" id="2_settings_icon"]
 
 [node name="SettingsButton" type="Button"]
 custom_minimum_size = Vector2(56, 56)
@@ -15,6 +16,8 @@ offset_bottom = 312.0
 grow_horizontal = 0
 grow_vertical = 0
 mouse_default_cursor_shape = 2
-text = "設定"
+icon = ExtResource("2_settings_icon")
+expand_icon = true
 script = ExtResource("1_settings_button")
+label_text = ""
 options_overlay_path = NodePath("../GameOptionsOverlay")
