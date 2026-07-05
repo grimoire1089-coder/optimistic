@@ -51,13 +51,13 @@ func refresh() -> void:
 
 func _get_active_entry_for_ratio(ratio: float) -> CharacterMoodEntryData:
 	var active_entry: CharacterMoodEntryData = null
-	var active_threshold := -1.0
+	var active_threshold := INF
 	for item in _loaded_entries:
 		var threshold := float(item.get("threshold_ratio", 0.0))
 		var entry_data := item.get("entry_data", null) as CharacterMoodEntryData
 		if entry_data == null:
 			continue
-		if ratio <= threshold and threshold > active_threshold:
+		if ratio <= threshold and threshold < active_threshold:
 			active_threshold = threshold
 			active_entry = entry_data
 	return active_entry
