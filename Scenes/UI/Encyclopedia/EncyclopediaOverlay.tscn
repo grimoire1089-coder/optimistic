@@ -1,0 +1,202 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/UI/Encyclopedia/EncyclopediaOverlay.gd" id="1_encyclopedia_overlay"]
+
+[node name="EncyclopediaOverlay" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+script = ExtResource("1_encyclopedia_overlay")
+
+[node name="DimBackground" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+color = Color(0.0, 0.0, 0.0, 0.68)
+
+[node name="ScreenMargin" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 1
+theme_override_constants/margin_left = 42
+theme_override_constants/margin_top = 34
+theme_override_constants/margin_right = 42
+theme_override_constants/margin_bottom = 34
+
+[node name="MainPanel" type="PanelContainer" parent="ScreenMargin"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+mouse_filter = 1
+
+[node name="MainMargin" type="MarginContainer" parent="ScreenMargin/MainPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 26
+theme_override_constants/margin_top = 22
+theme_override_constants/margin_right = 26
+theme_override_constants/margin_bottom = 24
+
+[node name="RootRows" type="VBoxContainer" parent="ScreenMargin/MainPanel/MainMargin"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 14
+
+[node name="Header" type="HBoxContainer" parent="ScreenMargin/MainPanel/MainMargin/RootRows"]
+layout_mode = 2
+theme_override_constants/separation = 18
+
+[node name="TitleBlock" type="VBoxContainer" parent="ScreenMargin/MainPanel/MainMargin/RootRows/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 4
+
+[node name="TitleLabel" type="Label" parent="ScreenMargin/MainPanel/MainMargin/RootRows/Header/TitleBlock"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.88, 0.98, 1, 1)
+theme_override_font_sizes/font_size = 34
+text = "デカダンス生活図鑑"
+
+[node name="HintLabel" type="Label" parent="ScreenMargin/MainPanel/MainMargin/RootRows/Header/TitleBlock"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.62, 0.88, 0.92, 0.88)
+theme_override_font_sizes/font_size = 15
+text = "食品・料理・飲料の記録から始める、世界観確認用の全画面テンプレート。"
+
+[node name="CloseButton" type="Button" parent="ScreenMargin/MainPanel/MainMargin/RootRows/Header"]
+custom_minimum_size = Vector2(120, 46)
+layout_mode = 2
+mouse_default_cursor_shape = 2
+text = "閉じる"
+
+[node name="HeaderLine" type="ColorRect" parent="ScreenMargin/MainPanel/MainMargin/RootRows"]
+custom_minimum_size = Vector2(0, 2)
+layout_mode = 2
+color = Color(0.0, 0.95, 1.0, 0.55)
+
+[node name="CategoryTabs" type="TabContainer" parent="ScreenMargin/MainPanel/MainMargin/RootRows"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="FoodPage" type="HSplitContainer" parent="ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+split_offset = 500
+
+[node name="FoodListPanel" type="PanelContainer" parent="ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage"]
+custom_minimum_size = Vector2(500, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="FoodListMargin" type="MarginContainer" parent="ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage/FoodListPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 18
+theme_override_constants/margin_top = 18
+theme_override_constants/margin_right = 18
+theme_override_constants/margin_bottom = 18
+
+[node name="FoodListRows" type="VBoxContainer" parent="ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage/FoodListPanel/FoodListMargin"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 10
+
+[node name="FoodTabTitle" type="Label" parent="ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage/FoodListPanel/FoodListMargin/FoodListRows"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.92, 1, 0.92, 1)
+theme_override_font_sizes/font_size = 24
+text = "食品タブ"
+
+[node name="FoodTabHint" type="Label" parent="ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage/FoodListPanel/FoodListMargin/FoodListRows"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.72, 0.86, 0.82, 0.82)
+theme_override_font_sizes/font_size = 14
+text = "ここから料理・食材・飲料の図鑑ページを増やしていく。"
+
+[node name="FoodItemList" type="ItemList" parent="ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage/FoodListPanel/FoodListMargin/FoodListRows"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+fixed_icon_size = Vector2i(72, 72)
+icon_mode = 0
+
+[node name="FoodDetailPanel" type="PanelContainer" parent="ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="FoodDetailMargin" type="MarginContainer" parent="ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage/FoodDetailPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 24
+
+[node name="FoodDetailRows" type="VBoxContainer" parent="ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage/FoodDetailPanel/FoodDetailMargin"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 14
+
+[node name="DetailIcon" type="TextureRect" parent="ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage/FoodDetailPanel/FoodDetailMargin/FoodDetailRows"]
+custom_minimum_size = Vector2(176, 176)
+layout_mode = 2
+size_flags_horizontal = 4
+stretch_mode = 5
+
+[node name="DetailNameLabel" type="Label" parent="ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage/FoodDetailPanel/FoodDetailMargin/FoodDetailRows"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.96, 0.80, 1)
+theme_override_font_sizes/font_size = 30
+text = "食品テンプレート"
+horizontal_alignment = 1
+
+[node name="DetailDescriptionLabel" type="RichTextLabel" parent="ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage/FoodDetailPanel/FoodDetailMargin/FoodDetailRows"]
+custom_minimum_size = Vector2(0, 180)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+bbcode_enabled = false
+text = "食品タブ用の図鑑テンプレートです。ここに食品・料理・飲料の世界観説明を追加していきます。"
+scroll_active = true
+
+[node name="DetailMetaLabel" type="Label" parent="ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage/FoodDetailPanel/FoodDetailMargin/FoodDetailRows"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.74, 0.92, 1, 0.88)
+theme_override_font_sizes/font_size = 16
+text = "カテゴリ：食品 / 登録数：0"
+horizontal_alignment = 1
+
+[node name="FlavorBox" type="PanelContainer" parent="ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage/FoodDetailPanel/FoodDetailMargin/FoodDetailRows"]
+custom_minimum_size = Vector2(0, 110)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="FlavorMargin" type="MarginContainer" parent="ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage/FoodDetailPanel/FoodDetailMargin/FoodDetailRows/FlavorBox"]
+layout_mode = 2
+theme_override_constants/margin_left = 18
+theme_override_constants/margin_top = 14
+theme_override_constants/margin_right = 18
+theme_override_constants/margin_bottom = 14
+
+[node name="FlavorText" type="Label" parent="ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage/FoodDetailPanel/FoodDetailMargin/FoodDetailRows/FlavorBox/FlavorMargin"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.90, 0.78, 1, 0.90)
+theme_override_font_sizes/font_size = 15
+text = "Felicityの温もり、街区ごとの食文化、住民たちの好物や思い出をここに重ねていく。"
+autowrap_mode = 3
