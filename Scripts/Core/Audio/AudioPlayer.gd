@@ -1,5 +1,7 @@
 extends Node
 
+signal bgm_finished(stream: AudioStream)
+
 const SFX_POOL_SIZE := 8
 
 var _bgm_player: AudioStreamPlayer
@@ -137,6 +139,7 @@ func _create_bgm_player() -> void:
 	_bgm_player = AudioStreamPlayer.new()
 	_bgm_player.name = "BGMPlayer"
 	_bgm_player.bus = String(AudioSettings.BUS_BGM)
+	_bgm_player.finished.connect(_on_bgm_player_finished)
 	add_child(_bgm_player)
 
 
@@ -171,3 +174,9 @@ func _get_available_sfx_player() -> AudioStreamPlayer:
 			return player
 
 	return _sfx_players[0]
+
+
+func _on_bgm_player_finished() -> void:
+	if _current_bgm == null:
+		return
+	bgm_finished.emit(_current_bgm)
