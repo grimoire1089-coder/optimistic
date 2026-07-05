@@ -6,15 +6,15 @@ class_name NeedMultiThresholdMoodBridge
 @export var watched_need_id: StringName = CharacterNeedIds.HUNGER
 @export var threshold_entries: Array[Dictionary] = [
 	{
-		"threshold_ratio": 0.30,
+		"threshold_ratio": 0.50,
 		"entry_path": "res://Data/Mood/Entries/hunger_low.tres",
 	},
 	{
-		"threshold_ratio": 0.15,
+		"threshold_ratio": 0.30,
 		"entry_path": "res://Data/Mood/Entries/hunger_malnutrition.tres",
 	},
 	{
-		"threshold_ratio": 0.05,
+		"threshold_ratio": 0.10,
 		"entry_path": "res://Data/Mood/Entries/hunger_shutdown_risk.tres",
 	},
 ]
