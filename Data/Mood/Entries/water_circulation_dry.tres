@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="CharacterMoodEntryData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Systems/Mood/CharacterMoodEntryData.gd" id="1_entry"]
+
+[resource]
+script = ExtResource("1_entry")
+entry_id = &"water_circulation_dry"
+display_name = "循環液枯渇寸前"
+detail_text = "水分が危険域です。すぐに補給が必要です。"
+body = "水分が危険域です。すぐに補給が必要です。"
+point = -25
