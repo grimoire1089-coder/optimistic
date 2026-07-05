@@ -16,6 +16,10 @@ const FLOOR_002_ID: StringName = &"floor_002"
 const FLOOR_002_DISPLAY_NAME := "金属フロアパネル"
 const FLOOR_002_TEXTURE_PATH := "res://Assets/Maps/Furniture/Floor/Floor_002.png"
 const FLOOR_002_NODE_NAME: StringName = &"Floor_002"
+const FLOOR_003_ID: StringName = &"floor_003"
+const FLOOR_003_DISPLAY_NAME := "フロアパネル 003"
+const FLOOR_003_TEXTURE_PATH := "res://Assets/Maps/Furniture/Floor/Floor_003.png"
+const FLOOR_003_NODE_NAME: StringName = &"Floor_003"
 const FLOOR_FOOTPRINT := Vector2i(15, 15)
 
 @export var build_mode_controller_path: NodePath = NodePath("../../BuildModeController")
@@ -43,6 +47,7 @@ const FLOOR_FOOTPRINT := Vector2i(15, 15)
 @onready var table_button: Button = $MarginContainer/Rows/ItemList/TableButton
 @onready var floor_place_button: Button = $MarginContainer/Rows/ItemList/FloorPlaceButton
 @onready var floor_002_place_button: Button = $MarginContainer/Rows/ItemList/Floor002PlaceButton
+@onready var floor_003_place_button: Button = $MarginContainer/Rows/ItemList/Floor003PlaceButton
 @onready var floor_store_button: Button = $MarginContainer/Rows/ItemList/FloorStoreButton
 @onready var detail_label: Label = $MarginContainer/Rows/DetailLabel
 
@@ -121,6 +126,8 @@ func _connect_buttons() -> void:
 		floor_place_button.pressed.connect(_on_floor_place_pressed)
 	if floor_002_place_button != null:
 		floor_002_place_button.pressed.connect(_on_floor_002_place_pressed)
+	if floor_003_place_button != null:
+		floor_003_place_button.pressed.connect(_on_floor_003_place_pressed)
 	if floor_store_button != null:
 		floor_store_button.pressed.connect(_on_floor_store_pressed)
 
@@ -218,6 +225,10 @@ func _on_floor_place_pressed() -> void:
 
 func _on_floor_002_place_pressed() -> void:
 	_place_floor(FLOOR_002_ID, FLOOR_002_DISPLAY_NAME, FLOOR_002_TEXTURE_PATH, FLOOR_002_NODE_NAME, "Floor_002")
+
+
+func _on_floor_003_place_pressed() -> void:
+	_place_floor(FLOOR_003_ID, FLOOR_003_DISPLAY_NAME, FLOOR_003_TEXTURE_PATH, FLOOR_003_NODE_NAME, "Floor_003")
 
 
 func _place_floor(floor_id: StringName, floor_display_name: String, floor_texture_path: String, floor_node_name: StringName, floor_label: String) -> void:
@@ -320,6 +331,7 @@ func _sync_item_category_visibility() -> void:
 	_set_button_visible(table_button, _current_category_id == CATEGORY_DECOR)
 	_set_button_visible(floor_place_button, _current_category_id == CATEGORY_FLOOR)
 	_set_button_visible(floor_002_place_button, _current_category_id == CATEGORY_FLOOR)
+	_set_button_visible(floor_003_place_button, _current_category_id == CATEGORY_FLOOR)
 	_set_button_visible(floor_store_button, _current_category_id == CATEGORY_FLOOR)
 
 
@@ -340,6 +352,8 @@ func _sync_floor_buttons() -> void:
 		floor_place_button.disabled = not has_floor_module or has_floor
 	if floor_002_place_button != null:
 		floor_002_place_button.disabled = not has_floor_module or has_floor
+	if floor_003_place_button != null:
+		floor_003_place_button.disabled = not has_floor_module or has_floor
 	if floor_store_button != null:
 		floor_store_button.disabled = not has_floor_module or not has_floor
 
