@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="CharacterMoodEntryData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Systems/Mood/CharacterMoodEntryData.gd" id="1_entry"]
+
+[resource]
+script = ExtResource("1_entry")
+entry_id = &"water_dehydrated"
+display_name = "脱水気味"
+detail_text = "水分不足が進んでいます。動きと心情に重さが出ています。"
+body = "水分不足が進んでいます。動きと心情に重さが出ています。"
+point = -15
