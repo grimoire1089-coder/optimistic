@@ -38,7 +38,7 @@ func _make_food_unlock_message(item_id: StringName, display_name: String) -> Str
 		safe_name = String(item_id)
 	if safe_name.is_empty():
 		return ""
-	return "食品図鑑の情報が解禁されました: %s\n図鑑の食品タブから確認できます。" % safe_name
+	return "食品図鑑に登録: %s\n食品タブで確認できます。" % safe_name
 
 
 func _queue_normal_message_without_default_sfx(message_log: Node, message: String) -> bool:
