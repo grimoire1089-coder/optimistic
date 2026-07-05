@@ -2,6 +2,8 @@ extends Control
 class_name EncyclopediaOverlay
 
 const DEFAULT_ENCYCLOPEDIA_BGM_PATH := "res://Assets/Audio/BGM/Picture book.ogg"
+const DEFAULT_UNKNOWN_ICON_PATH := "res://Assets/UI/Icons/Question.png"
+const UNKNOWN_DISPLAY_NAME := "？？？"
 const DEFAULT_FOOD_ITEM_PATHS := [
 	"res://Data/Items/Food/Food_0001_Nikuman.tres",
 	"res://Data/Items/Food/Food_0016_FelicityClassicBurger.tres",
@@ -22,6 +24,8 @@ const FOOD_ICON_SIZE := Vector2(64.0, 64.0)
 @export var detail_description_label_path: NodePath = NodePath("ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage/FoodDetailPanel/FoodDetailMargin/DetailScroll/FoodDetailRows/DetailDescriptionLabel")
 @export var detail_meta_label_path: NodePath = NodePath("ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage/FoodDetailPanel/FoodDetailMargin/DetailScroll/FoodDetailRows/DetailMetaLabel")
 @export var food_item_paths: PackedStringArray = PackedStringArray(DEFAULT_FOOD_ITEM_PATHS)
+@export var unknown_icon: Texture2D
+@export var unknown_icon_path: String = DEFAULT_UNKNOWN_ICON_PATH
 @export var encyclopedia_bgm: AudioStream
 @export var encyclopedia_bgm_path: String = DEFAULT_ENCYCLOPEDIA_BGM_PATH
 @export var restore_previous_bgm: bool = true
@@ -56,7 +60,9 @@ func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	visible = false
 	_resolve_refs()
+	_load_unknown_icon_if_needed()
 	_load_default_encyclopedia_bgm_if_needed()
+	_connect_food_encyclopedia_signal()
 	_apply_visual_theme()
 	_setup_tabs()
 	_connect_close_button()
@@ -77,6 +83,8 @@ func open_encyclopedia() -> void:
 		return
 
 	_resolve_refs()
+	_load_unknown_icon_if_needed()
+	_connect_food_encyclopedia_signal()
 	_save_pause_state()
 	visible = true
 	move_to_front()
@@ -142,6 +150,19 @@ func _connect_close_button() -> void:
 		_close_button.pressed.connect(close_encyclopedia)
 
 
+func _connect_food_encyclopedia_signal() -> void:
+	var encyclopedia := get_node_or_null("/root/FoodEncyclopedia")
+	if encyclopedia == null:
+		return
+	var callable := Callable(self, "_on_food_encyclopedia_changed")
+	if encyclopedia.has_signal("encyclopedia_changed") and not encyclopedia.is_connected("encyclopedia_changed", callable):
+		encyclopedia.connect("encyclopedia_changed", callable)
+
+
+func _on_food_encyclopedia_changed() -> void:
+	_populate_food_entries()
+
+
 func _populate_food_entries() -> void:
 	if _food_item_rows == null:
 		return
@@ -159,13 +180,13 @@ func _populate_food_entries() -> void:
 		_food_row_buttons.append(row)
 
 	if _food_entries.size() > 0:
-		_select_food_entry(0)
+		var next_index := clampi(_selected_food_index, 0, _food_entries.size() - 1)
+		_select_food_entry(next_index)
 	else:
 		_show_empty_detail()
 
 
 func _clear_food_rows() -> void:
-	_selected_food_index = -1
 	_food_row_buttons.clear()
 	if _food_item_rows == null:
 		return
@@ -180,7 +201,7 @@ func _make_food_row(entry: Dictionary, index: int) -> Button:
 	row.focus_mode = Control.FOCUS_ALL
 	row.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	row.text = ""
-	row.tooltip_text = String(entry.get("description", ""))
+	row.tooltip_text = _get_entry_tooltip(entry)
 	row.pressed.connect(Callable(self, "_on_food_row_pressed").bind(index))
 	_apply_food_row_style(row, false)
 
@@ -217,7 +238,7 @@ func _make_food_row(entry: Dictionary, index: int) -> Button:
 
 	var icon := TextureRect.new()
 	icon.custom_minimum_size = FOOD_ICON_SIZE
-	icon.texture = entry.get("icon") as Texture2D
+	icon.texture = _get_entry_icon(entry)
 	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -239,7 +260,7 @@ func _make_food_row(entry: Dictionary, index: int) -> Button:
 	name_frame.add_child(name_margin)
 
 	var name_label := Label.new()
-	name_label.text = String(entry.get("display_name", "未登録食品"))
+	name_label.text = _get_entry_display_name(entry)
 	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	name_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	name_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -299,6 +320,7 @@ func _make_food_entry(item_path: String) -> Dictionary:
 
 	return {
 		"path": item_path,
+		"item_id": resource.get("item_id"),
 		"display_name": display_name,
 		"description": String(resource.get("description")),
 		"icon": resource.get("icon") as Texture2D,
@@ -309,6 +331,9 @@ func _make_food_entry(item_path: String) -> Dictionary:
 
 
 func _show_food_entry(entry: Dictionary) -> void:
+	if not _is_entry_unlocked(entry):
+		_show_locked_food_entry()
+		return
 	if _detail_icon != null:
 		_detail_icon.texture = entry.get("icon") as Texture2D
 	if _detail_name_label != null:
@@ -319,15 +344,61 @@ func _show_food_entry(entry: Dictionary) -> void:
 		_detail_meta_label.text = _make_meta_text(entry)
 
 
+func _show_locked_food_entry() -> void:
+	if _detail_icon != null:
+		_detail_icon.texture = unknown_icon
+	if _detail_name_label != null:
+		_detail_name_label.text = UNKNOWN_DISPLAY_NAME
+	if _detail_description_label != null:
+		_detail_description_label.text = "まだ図鑑に登録されていません。インベントリに一度入手すると解放されます。"
+	if _detail_meta_label != null:
+		_detail_meta_label.text = "未解放"
+
+
 func _show_empty_detail() -> void:
 	if _detail_icon != null:
-		_detail_icon.texture = null
+		_detail_icon.texture = unknown_icon
 	if _detail_name_label != null:
 		_detail_name_label.text = "食品テンプレート"
 	if _detail_description_label != null:
 		_detail_description_label.text = "食品タブ用の図鑑テンプレートです。ここに食品・料理・飲料の世界観説明を追加していきます。"
 	if _detail_meta_label != null:
 		_detail_meta_label.text = "カテゴリ：食品 / 登録数：0"
+
+
+func _get_entry_display_name(entry: Dictionary) -> String:
+	if not _is_entry_unlocked(entry):
+		return UNKNOWN_DISPLAY_NAME
+	return String(entry.get("display_name", "未登録食品"))
+
+
+func _get_entry_icon(entry: Dictionary) -> Texture2D:
+	if not _is_entry_unlocked(entry):
+		return unknown_icon
+	return entry.get("icon") as Texture2D
+
+
+func _get_entry_tooltip(entry: Dictionary) -> String:
+	if not _is_entry_unlocked(entry):
+		return "未解放"
+	return String(entry.get("description", ""))
+
+
+func _is_entry_unlocked(entry: Dictionary) -> bool:
+	var item_id := _get_entry_item_id(entry)
+	if item_id == &"":
+		return false
+	var encyclopedia := get_node_or_null("/root/FoodEncyclopedia")
+	if encyclopedia == null or not encyclopedia.has_method("is_item_unlocked"):
+		return false
+	return encyclopedia.call("is_item_unlocked", item_id) == true
+
+
+func _get_entry_item_id(entry: Dictionary) -> StringName:
+	var raw_id: Variant = entry.get("item_id", &"")
+	if raw_id is StringName:
+		return raw_id
+	return StringName(String(raw_id))
 
 
 func _make_meta_text(entry: Dictionary) -> String:
@@ -349,6 +420,15 @@ func _get_category_display_name(category_id: String) -> String:
 			return "レシピ"
 		_:
 			return category_id
+
+
+func _load_unknown_icon_if_needed() -> void:
+	if unknown_icon != null:
+		return
+	if unknown_icon_path.is_empty():
+		return
+	if ResourceLoader.exists(unknown_icon_path):
+		unknown_icon = load(unknown_icon_path) as Texture2D
 
 
 func _load_default_encyclopedia_bgm_if_needed() -> void:
