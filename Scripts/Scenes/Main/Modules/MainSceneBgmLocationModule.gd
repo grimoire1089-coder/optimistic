@@ -10,8 +10,8 @@ class_name MainSceneBgmLocationModule
 var _bgm_player: BgmPlaylistPlayerModule
 var _map_travel_module: Node
 var _last_location_id: StringName = &""
-var _resolve_timer := 0.0
-var _connected_to_travel_module := false
+var _resolve_timer: float = 0.0
+var _connected_to_travel_module: bool = false
 
 
 func _ready() -> void:
@@ -36,7 +36,7 @@ func _process(delta: float) -> void:
 
 
 func sync_current_location() -> void:
-	var location_id := _get_current_location_id()
+	var location_id: StringName = _get_current_location_id()
 	_apply_location_playlist(location_id)
 
 
@@ -65,15 +65,15 @@ func _sync_initial_location() -> void:
 		return
 	if _last_location_id != &"":
 		return
-	var location_id := _get_current_location_id()
+	var location_id: StringName = _get_current_location_id()
 	_apply_location_playlist(location_id)
 
 
 func _get_current_location_id() -> StringName:
 	if _map_travel_module != null and _map_travel_module.has_method("get_active_map_id"):
-		var active_id := _map_travel_module.call("get_active_map_id")
-		if String(active_id) != "":
-			return StringName(active_id)
+		var active_id_text: String = String(_map_travel_module.call("get_active_map_id"))
+		if active_id_text != "":
+			return StringName(active_id_text)
 	return default_location_id
 
 
@@ -88,7 +88,7 @@ func _apply_location_playlist(location_id: StringName) -> void:
 		return
 	if location_id == _last_location_id:
 		return
-	var playlist := registry.get_playlist_for_location(location_id)
+	var playlist: BgmPlaylistData = registry.get_playlist_for_location(location_id)
 	if playlist == null:
 		return
 	_last_location_id = location_id
