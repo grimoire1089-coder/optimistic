@@ -4,6 +4,7 @@
 [ext_resource type="Texture2D" path="res://Assets/Maps/Furniture/Utility/Stool_001.png" id="2_stool_texture"]
 
 [node name="StoolFurniture" type="Node2D"]
+z_index = -1
 script = ExtResource("1_stool_script")
 display_name = "Stool"
 furniture_id = &"stool"
