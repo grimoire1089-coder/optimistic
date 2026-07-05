@@ -100,6 +100,7 @@ func add_item(
 			item["need_effect_path"] = need_effect_path
 			item["can_discard"] = can_discard
 			item["can_transfer"] = can_transfer
+			_notify_food_encyclopedia_if_needed(category_id, item_id)
 			inventory_changed.emit()
 			return true
 
@@ -122,6 +123,7 @@ func add_item(
 		"can_discard": can_discard,
 		"can_transfer": can_transfer,
 	})
+	_notify_food_encyclopedia_if_needed(category_id, item_id)
 	inventory_changed.emit()
 	return true
 
@@ -221,6 +223,21 @@ func _add_initial_items_once() -> void:
 			push_warning("Initial inventory item is not FoodItemData: %s" % path)
 			continue
 		add_food_item(item_data, 1)
+
+
+func _notify_food_encyclopedia_if_needed(category_id: StringName, item_id: StringName) -> void:
+	if item_id == &"":
+		return
+	if not _is_food_encyclopedia_category(category_id):
+		return
+	var encyclopedia := get_node_or_null("/root/FoodEncyclopedia")
+	if encyclopedia == null or not encyclopedia.has_method("unlock_item_id"):
+		return
+	encyclopedia.call("unlock_item_id", item_id)
+
+
+func _is_food_encyclopedia_category(category_id: StringName) -> bool:
+	return category_id == CATEGORY_FOODS or category_id == CATEGORY_DRINKS or category_id == CATEGORY_INGREDIENTS
 
 
 func _find_item_entry(category_id: StringName, item_id: StringName) -> Dictionary:
