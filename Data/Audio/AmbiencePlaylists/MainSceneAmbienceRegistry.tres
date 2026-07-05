@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="AmbiencePlaylistRegistry" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Systems/Audio/AmbiencePlaylistRegistry.gd" id="1_registry_script"]
+[ext_resource type="Resource" path="res://Data/Audio/AmbiencePlaylists/NoAmbiencePlaylist.tres" id="2_no_ambience_playlist"]
+
+[resource]
+script = ExtResource("1_registry_script")
+default_playlist = ExtResource("2_no_ambience_playlist")
+location_ids = PackedStringArray("robin_room", "infrastructure_room")
+playlists = Array[Resource]([ExtResource("2_no_ambience_playlist"), ExtResource("2_no_ambience_playlist")])
