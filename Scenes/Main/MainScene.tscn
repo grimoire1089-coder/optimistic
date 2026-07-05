@@ -34,6 +34,7 @@
 [ext_resource type="PackedScene" path="res://Scenes/UI/HUD/MoveButton.tscn" id="31_move_button"]
 [ext_resource type="PackedScene" path="res://Scenes/UI/HUD/MoveMenu.tscn" id="32_move_menu"]
 [ext_resource type="Script" path="res://Scripts/UI/Debug/SimpleProfilerHud.gd" id="33_profiler_hud"]
+[ext_resource type="Resource" path="res://Data/Audio/BgmPlaylists/RobinRoomBgmPlaylist.tres" id="34_robin_room_playlist"]
 
 [sub_resource type="Environment" id="Environment_ctt6t"]
 glow_enabled = true
@@ -47,7 +48,7 @@ script = ExtResource("3_canvas_glow")
 
 [node name="RobinRoomBgmListModule" type="Node" parent="." unique_id=638603961]
 script = ExtResource("16_robin_room_bgm")
-bgm_paths = PackedStringArray("res://Assets/Audio/BGM/Room BGM 001.ogg", "res://Assets/Audio/BGM/Room BGM 002.ogg", "res://Assets/Audio/BGM/Room BGM 003.ogg", "res://Assets/Audio/BGM/Room BGM 004.ogg", "res://Assets/Audio/BGM/Room BGM 005.ogg", "res://Assets/Audio/BGM/Room BGM 006.ogg", "res://Assets/Audio/BGM/Room BGM 007.ogg", "res://Assets/Audio/BGM/Room BGM 008.ogg")
+playlist = ExtResource("34_robin_room_playlist")
 
 [node name="MainSceneSleepFastForwardModule" parent="." unique_id=352965313 instance=ExtResource("22_sleep_fast_forward")]
 
