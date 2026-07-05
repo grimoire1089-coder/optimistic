@@ -40,6 +40,9 @@ func _connect_skills_module() -> void:
 	var points_callable := Callable(self, "_on_skill_points_changed")
 	if not _skills_module.skill_points_changed.is_connected(points_callable):
 		_skills_module.skill_points_changed.connect(points_callable)
+	var upgrade_callable := Callable(self, "_on_skill_upgrade_changed")
+	if not _skills_module.skill_upgrade_changed.is_connected(upgrade_callable):
+		_skills_module.skill_upgrade_changed.connect(upgrade_callable)
 
 
 func _disconnect_skills_module() -> void:
@@ -54,6 +57,9 @@ func _disconnect_skills_module() -> void:
 	var points_callable := Callable(self, "_on_skill_points_changed")
 	if _skills_module.skill_points_changed.is_connected(points_callable):
 		_skills_module.skill_points_changed.disconnect(points_callable)
+	var upgrade_callable := Callable(self, "_on_skill_upgrade_changed")
+	if _skills_module.skill_upgrade_changed.is_connected(upgrade_callable):
+		_skills_module.skill_upgrade_changed.disconnect(upgrade_callable)
 
 
 func _rebuild() -> void:
@@ -86,7 +92,7 @@ func _create_skill_row(row_data: Dictionary) -> void:
 	var row := VBoxContainer.new()
 	row.name = String(skill_id)
 	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_theme_constant_override("separation", 4)
+	row.add_theme_constant_override("separation", 6)
 	_rows.add_child(row)
 
 	var header := HBoxContainer.new()
@@ -143,6 +149,81 @@ func _create_skill_row(row_data: Dictionary) -> void:
 	_apply_bar_color(exp_bar, experience_bar_color)
 	row.add_child(exp_bar)
 
+	_create_skill_upgrade_list(row, skill_id)
+
+
+func _create_skill_upgrade_list(parent: VBoxContainer, skill_id: StringName) -> void:
+	if parent == null or _skills_module == null:
+		return
+	if not _skills_module.has_method("get_skill_upgrade_rows"):
+		return
+	var upgrade_rows: Array = _skills_module.call("get_skill_upgrade_rows", skill_id)
+	if upgrade_rows.is_empty():
+		return
+
+	var title_label := Label.new()
+	title_label.text = "取得スキル"
+	title_label.add_theme_color_override("font_color", Color(0.78, 0.92, 1.0, 0.95))
+	title_label.add_theme_font_size_override("font_size", 12)
+	parent.add_child(title_label)
+
+	for upgrade_data in upgrade_rows:
+		if upgrade_data is Dictionary:
+			_create_skill_upgrade_card(parent, upgrade_data)
+
+
+func _create_skill_upgrade_card(parent: VBoxContainer, upgrade_data: Dictionary) -> void:
+	var upgrade_id := StringName(upgrade_data.get("id", &""))
+	var display_name := str(upgrade_data.get("display_name", String(upgrade_id)))
+	var description := str(upgrade_data.get("description", ""))
+	var level := int(upgrade_data.get("level", 0))
+	var max_level := int(upgrade_data.get("max_level", 0))
+	var cost := int(upgrade_data.get("cost", 0))
+	var can_acquire := bool(upgrade_data.get("can_acquire", false))
+	var is_max_level := bool(upgrade_data.get("is_max_level", false))
+
+	var card := PanelContainer.new()
+	card.name = "%sCard" % String(upgrade_id)
+	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_apply_card_style(card)
+	parent.add_child(card)
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 8)
+	margin.add_theme_constant_override("margin_top", 6)
+	margin.add_theme_constant_override("margin_right", 8)
+	margin.add_theme_constant_override("margin_bottom", 6)
+	card.add_child(margin)
+
+	var box := VBoxContainer.new()
+	box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	box.add_theme_constant_override("separation", 4)
+	margin.add_child(box)
+
+	var header := HBoxContainer.new()
+	header.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	box.add_child(header)
+
+	var name_label := Label.new()
+	name_label.text = "%s  Lv %d / %d" % [display_name, level, max_level]
+	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	name_label.add_theme_font_size_override("font_size", 12)
+	header.add_child(name_label)
+
+	var acquire_button := Button.new()
+	acquire_button.custom_minimum_size = Vector2(72.0, 28.0)
+	acquire_button.text = "MAX" if is_max_level else "取得 %dSP" % cost
+	acquire_button.disabled = not can_acquire
+	acquire_button.pressed.connect(_on_acquire_skill_upgrade_pressed.bind(upgrade_id))
+	header.add_child(acquire_button)
+
+	var desc_label := Label.new()
+	desc_label.text = description
+	desc_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	desc_label.add_theme_color_override("font_color", Color(0.72, 0.82, 0.92, 0.92))
+	desc_label.add_theme_font_size_override("font_size", 11)
+	box.add_child(desc_label)
+
 
 func _apply_bar_color(bar: ProgressBar, color: Color) -> void:
 	if bar == null:
@@ -151,6 +232,27 @@ func _apply_bar_color(bar: ProgressBar, color: Color) -> void:
 	fill_style.bg_color = color
 	fill_style.set_corner_radius_all(4)
 	bar.add_theme_stylebox_override("fill", fill_style)
+
+
+func _apply_card_style(card: PanelContainer) -> void:
+	if card == null:
+		return
+	var panel_style := StyleBoxFlat.new()
+	panel_style.bg_color = Color(0.06, 0.075, 0.095, 0.92)
+	panel_style.border_color = Color(0.20, 0.55, 0.78, 0.55)
+	panel_style.border_width_left = 1
+	panel_style.border_width_top = 1
+	panel_style.border_width_right = 1
+	panel_style.border_width_bottom = 1
+	panel_style.set_corner_radius_all(6)
+	card.add_theme_stylebox_override("panel", panel_style)
+
+
+func _on_acquire_skill_upgrade_pressed(upgrade_id: StringName) -> void:
+	if _skills_module == null or not _skills_module.has_method("acquire_skill_upgrade"):
+		return
+	_skills_module.call("acquire_skill_upgrade", upgrade_id)
+	refresh()
 
 
 func _on_skill_changed(_skill_id: StringName, _old_level: int, _new_level: int) -> void:
@@ -162,4 +264,8 @@ func _on_skill_experience_changed(_skill_id: StringName, _new_experience: int) -
 
 
 func _on_skill_points_changed(_skill_id: StringName, _available_points: int, _spent_points: int) -> void:
+	refresh()
+
+
+func _on_skill_upgrade_changed(_upgrade_id: StringName, _skill_id: StringName, _old_level: int, _new_level: int) -> void:
 	refresh()
