@@ -6,7 +6,7 @@ signal entries_changed()
 
 @export var min_value: int = 0
 @export var max_value: int = 100
-@export var base_value: int = 0
+@export var base_value: int = 50
 @export var entries: Array[CharacterMoodEntryInstance] = []
 
 func get_mood_value() -> int:
