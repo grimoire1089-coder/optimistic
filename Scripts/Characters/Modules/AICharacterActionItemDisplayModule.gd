@@ -76,9 +76,10 @@ func _update_display() -> void:
 
 
 func _update_item_rect_position(source: Node) -> void:
-	var dining_center := _get_dining_item_global_center(source)
+	var dining_center: Variant = _get_dining_item_global_center(source)
 	if dining_center is Vector2:
-		_item_rect.global_position = (dining_center as Vector2) - item_display_size * 0.5
+		var dining_center_position: Vector2 = dining_center
+		_item_rect.global_position = dining_center_position - item_display_size * 0.5
 		return
 	_item_rect.position = item_center_offset - item_display_size * 0.5
 
@@ -110,7 +111,7 @@ func _get_dining_item_global_center(source: Node) -> Variant:
 	var minimum_overlap_cells := 2
 	var source_minimum_overlap: Variant = source.get("dining_minimum_overlap_cells")
 	if source_minimum_overlap is int:
-		minimum_overlap_cells = source_minimum_overlap
+		minimum_overlap_cells = int(source_minimum_overlap)
 	var table := AICharacterDiningSeatHelper.find_connected_table_for_chair(chair, tables, minimum_overlap_cells)
 	if table == null:
 		return null
