@@ -1,7 +1,7 @@
 extends Control
 class_name AIDebugPanel
 
-const PANEL_SIZE := Vector2(356.0, 392.0)
+const PANEL_SIZE := Vector2(356.0, 336.0)
 const PANEL_MARGIN := Vector2(24.0, 92.0)
 const TOGGLE_SIZE := Vector2(64.0, 44.0)
 const TOGGLE_MARGIN := Vector2(24.0, 24.0)
@@ -157,10 +157,19 @@ func _build_panel() -> void:
 	margin.add_theme_constant_override("margin_bottom", 10)
 	_panel.add_child(margin)
 
+	var scroll := ScrollContainer.new()
+	scroll.name = "ScrollContainer"
+	scroll.horizontal_scroll_mode = 0
+	scroll.vertical_scroll_mode = 1
+	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	margin.add_child(scroll)
+
 	var rows := VBoxContainer.new()
 	rows.name = "Rows"
+	rows.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	rows.add_theme_constant_override("separation", 7)
-	margin.add_child(rows)
+	scroll.add_child(rows)
 
 	var title_row := HBoxContainer.new()
 	title_row.name = "TitleRow"
