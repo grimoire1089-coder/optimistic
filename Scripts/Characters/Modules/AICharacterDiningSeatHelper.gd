@@ -125,7 +125,9 @@ static func get_chair_sit_position(chair: Node2D, fallback_position: Vector2) ->
 	if chair == null:
 		return fallback_position
 	if chair.has_method("get_sit_target_global_position"):
-		return chair.call("get_sit_target_global_position") as Vector2
+		var sit_position: Variant = chair.call("get_sit_target_global_position")
+		if sit_position is Vector2:
+			return sit_position
 	return chair.global_position
 
 
@@ -151,12 +153,21 @@ static func get_furniture_id(furniture: Node2D) -> StringName:
 	if furniture == null:
 		return &""
 	if furniture.has_meta("furniture_id"):
-		return furniture.get_meta("furniture_id", &"") as StringName
+		var meta_id: Variant = furniture.get_meta("furniture_id", &"")
+		if meta_id is StringName:
+			return meta_id
+		if meta_id is String:
+			return StringName(meta_id)
 	for property_info in furniture.get_property_list():
 		if not property_info.has("name"):
 			continue
-		if StringName(property_info["name"]) == &"furniture_id":
-			return furniture.get("furniture_id") as StringName
+		if StringName(property_info["name"]) != &"furniture_id":
+			continue
+		var property_id: Variant = furniture.get("furniture_id")
+		if property_id is StringName:
+			return property_id
+		if property_id is String:
+			return StringName(property_id)
 	return &""
 
 
@@ -167,7 +178,8 @@ static func get_furniture_grid_position(furniture: Node2D) -> Vector2i:
 		return INVALID_GRID_POSITION
 	var grid_position: Variant = furniture.get_meta("grid_position", INVALID_GRID_POSITION)
 	if grid_position is Vector2i:
-		return grid_position as Vector2i
+		var typed_grid_position: Vector2i = grid_position
+		return typed_grid_position
 	return INVALID_GRID_POSITION
 
 
@@ -177,9 +189,13 @@ static func get_furniture_footprint(furniture: Node2D) -> Vector2i:
 	if furniture.has_meta("grid_footprint"):
 		var meta_footprint: Variant = furniture.get_meta("grid_footprint", Vector2i(1, 1))
 		if meta_footprint is Vector2i:
-			return get_safe_footprint(meta_footprint as Vector2i)
+			var typed_meta_footprint: Vector2i = meta_footprint
+			return get_safe_footprint(typed_meta_footprint)
 	if furniture.has_method("get_grid_footprint"):
-		return get_safe_footprint(furniture.call("get_grid_footprint") as Vector2i)
+		var method_footprint: Variant = furniture.call("get_grid_footprint")
+		if method_footprint is Vector2i:
+			var typed_method_footprint: Vector2i = method_footprint
+			return get_safe_footprint(typed_method_footprint)
 	return Vector2i(1, 1)
 
 
