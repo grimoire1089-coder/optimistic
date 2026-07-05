@@ -3,6 +3,7 @@ class_name AICharacterSkillsModule
 
 signal skill_changed(skill_id: StringName, old_level: int, new_level: int)
 signal skill_experience_changed(skill_id: StringName, new_experience: int)
+signal skill_points_changed(skill_id: StringName, available_points: int, spent_points: int)
 
 const SKILL_COOKING: StringName = &"cooking"
 const SKILL_COOKING_DISPLAY_NAME := "料理"
@@ -13,11 +14,13 @@ const SKILL_GATHERING_MAX_LEVEL := 100
 
 @export_range(1, SKILL_COOKING_MAX_LEVEL, 1) var cooking_level: int = 1
 @export_range(0, 999999, 1) var cooking_experience: int = 0
+@export_range(0, SKILL_COOKING_MAX_LEVEL, 1) var cooking_spent_skill_points: int = 0
 @export_range(0, SKILL_COOKING_MAX_LEVEL, 1) var cooking_experience_bonus_until_level: int = 0
 @export_range(0.0, 10.0, 0.01) var cooking_experience_bonus_multiplier: float = 0.0
 @export var cooking_experience_bonus_source_id: StringName = &""
 @export_range(1, SKILL_GATHERING_MAX_LEVEL, 1) var gathering_level: int = 1
 @export_range(0, 999999, 1) var gathering_experience: int = 0
+@export_range(0, SKILL_GATHERING_MAX_LEVEL, 1) var gathering_spent_skill_points: int = 0
 @export_range(0, SKILL_GATHERING_MAX_LEVEL, 1) var gathering_experience_bonus_until_level: int = 0
 @export_range(0.0, 10.0, 0.01) var gathering_experience_bonus_multiplier: float = 0.0
 @export var gathering_experience_bonus_source_id: StringName = &""
@@ -67,6 +70,70 @@ func get_skill_experience(skill_id: StringName) -> int:
 			return 0
 
 
+func get_spent_skill_points(skill_id: StringName) -> int:
+	match skill_id:
+		SKILL_COOKING:
+			return clampi(cooking_spent_skill_points, 0, get_skill_level(SKILL_COOKING))
+		SKILL_GATHERING:
+			return clampi(gathering_spent_skill_points, 0, get_skill_level(SKILL_GATHERING))
+		_:
+			return 0
+
+
+func get_skill_points(skill_id: StringName) -> int:
+	return maxi(get_skill_level(skill_id) - get_spent_skill_points(skill_id), 0)
+
+
+func can_spend_skill_points(skill_id: StringName, amount: int = 1) -> bool:
+	if amount <= 0:
+		return false
+	return get_skill_points(skill_id) >= amount
+
+
+func spend_skill_point(skill_id: StringName) -> bool:
+	return spend_skill_points(skill_id, 1)
+
+
+func spend_skill_points(skill_id: StringName, amount: int = 1) -> bool:
+	if not can_spend_skill_points(skill_id, amount):
+		return false
+	match skill_id:
+		SKILL_COOKING:
+			cooking_spent_skill_points = clampi(
+				get_spent_skill_points(skill_id) + amount,
+				0,
+				get_skill_level(skill_id)
+			)
+		SKILL_GATHERING:
+			gathering_spent_skill_points = clampi(
+				get_spent_skill_points(skill_id) + amount,
+				0,
+				get_skill_level(skill_id)
+			)
+		_:
+			return false
+	_emit_skill_points_changed(skill_id)
+	return true
+
+
+func refund_skill_points(skill_id: StringName, amount: int = 1) -> bool:
+	if amount <= 0:
+		return false
+	var spent_points := get_spent_skill_points(skill_id)
+	if spent_points <= 0:
+		return false
+	var refund_amount := mini(amount, spent_points)
+	match skill_id:
+		SKILL_COOKING:
+			cooking_spent_skill_points = spent_points - refund_amount
+		SKILL_GATHERING:
+			gathering_spent_skill_points = spent_points - refund_amount
+		_:
+			return false
+	_emit_skill_points_changed(skill_id)
+	return true
+
+
 func get_required_experience_for_next_level(skill_id: StringName) -> int:
 	var level := get_skill_level(skill_id)
 	var max_level := get_skill_max_level(skill_id)
@@ -91,13 +158,17 @@ func set_skill_level(skill_id: StringName, level: int) -> void:
 		SKILL_COOKING:
 			var old_cooking_level := cooking_level
 			cooking_level = clampi(level, 1, SKILL_COOKING_MAX_LEVEL)
+			cooking_spent_skill_points = get_spent_skill_points(skill_id)
 			if old_cooking_level != cooking_level:
 				skill_changed.emit(skill_id, old_cooking_level, cooking_level)
+				_emit_skill_points_changed(skill_id)
 		SKILL_GATHERING:
 			var old_gathering_level := gathering_level
 			gathering_level = clampi(level, 1, SKILL_GATHERING_MAX_LEVEL)
+			gathering_spent_skill_points = get_spent_skill_points(skill_id)
 			if old_gathering_level != gathering_level:
 				skill_changed.emit(skill_id, old_gathering_level, gathering_level)
+				_emit_skill_points_changed(skill_id)
 
 
 func get_skill_rows() -> Array[Dictionary]:
@@ -110,6 +181,8 @@ func get_skill_rows() -> Array[Dictionary]:
 			"max_level": get_skill_max_level(skill_id),
 			"experience": get_skill_experience(skill_id),
 			"next_level_experience": get_required_experience_for_next_level(skill_id),
+			"skill_points": get_skill_points(skill_id),
+			"spent_skill_points": get_spent_skill_points(skill_id),
 			"experience_bonus_multiplier": get_skill_experience_bonus_multiplier(skill_id),
 			"experience_bonus_until_level": get_skill_experience_bonus_until_level(skill_id),
 		})
@@ -177,6 +250,7 @@ func _add_cooking_experience(amount: int) -> void:
 
 	if old_level != cooking_level:
 		skill_changed.emit(SKILL_COOKING, old_level, cooking_level)
+		_emit_skill_points_changed(SKILL_COOKING)
 	skill_experience_changed.emit(SKILL_COOKING, cooking_experience)
 
 
@@ -202,6 +276,7 @@ func _add_gathering_experience(amount: int) -> void:
 
 	if old_level != gathering_level:
 		skill_changed.emit(SKILL_GATHERING, old_level, gathering_level)
+		_emit_skill_points_changed(SKILL_GATHERING)
 	skill_experience_changed.emit(SKILL_GATHERING, gathering_experience)
 
 
@@ -251,3 +326,7 @@ func _apply_experience_bonus(skill_id: StringName, amount: int) -> int:
 		return amount
 	var bonus := ceili(float(amount) * multiplier)
 	return amount + maxi(bonus, 1)
+
+
+func _emit_skill_points_changed(skill_id: StringName) -> void:
+	skill_points_changed.emit(skill_id, get_skill_points(skill_id), get_spent_skill_points(skill_id))
