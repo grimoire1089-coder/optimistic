@@ -153,27 +153,33 @@ theme_override_constants/margin_top = 14
 theme_override_constants/margin_right = 14
 theme_override_constants/margin_bottom = 14
 
-[node name="FoodDetailRows" type="VBoxContainer" parent="ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage/FoodDetailPanel/FoodDetailMargin"]
+[node name="DetailScroll" type="ScrollContainer" parent="ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage/FoodDetailPanel/FoodDetailMargin"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="FoodDetailRows" type="VBoxContainer" parent="ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage/FoodDetailPanel/FoodDetailMargin/DetailScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 0
 theme_override_constants/separation = 6
 
-[node name="DetailIcon" type="TextureRect" parent="ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage/FoodDetailPanel/FoodDetailMargin/FoodDetailRows"]
-custom_minimum_size = Vector2(168, 168)
+[node name="DetailIcon" type="TextureRect" parent="ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage/FoodDetailPanel/FoodDetailMargin/DetailScroll/FoodDetailRows"]
+custom_minimum_size = Vector2(384, 384)
 layout_mode = 2
 size_flags_horizontal = 4
 expand_mode = 1
 stretch_mode = 5
 
-[node name="DetailNameLabel" type="Label" parent="ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage/FoodDetailPanel/FoodDetailMargin/FoodDetailRows"]
+[node name="DetailNameLabel" type="Label" parent="ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage/FoodDetailPanel/FoodDetailMargin/DetailScroll/FoodDetailRows"]
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.96, 0.80, 1)
 theme_override_font_sizes/font_size = 26
 text = "食品テンプレート"
 horizontal_alignment = 1
 
-[node name="DetailDescriptionLabel" type="RichTextLabel" parent="ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage/FoodDetailPanel/FoodDetailMargin/FoodDetailRows"]
+[node name="DetailDescriptionLabel" type="RichTextLabel" parent="ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage/FoodDetailPanel/FoodDetailMargin/DetailScroll/FoodDetailRows"]
 custom_minimum_size = Vector2(0, 96)
 layout_mode = 2
 size_flags_horizontal = 3
@@ -182,26 +188,26 @@ bbcode_enabled = false
 text = "食品タブ用の図鑑テンプレートです。ここに食品・料理・飲料の世界観説明を追加していきます。"
 scroll_active = true
 
-[node name="DetailMetaLabel" type="Label" parent="ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage/FoodDetailPanel/FoodDetailMargin/FoodDetailRows"]
+[node name="DetailMetaLabel" type="Label" parent="ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage/FoodDetailPanel/FoodDetailMargin/DetailScroll/FoodDetailRows"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.74, 0.92, 1, 0.88)
 theme_override_font_sizes/font_size = 14
 text = "カテゴリ：食品 / 登録数：0"
 horizontal_alignment = 1
 
-[node name="FlavorBox" type="PanelContainer" parent="ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage/FoodDetailPanel/FoodDetailMargin/FoodDetailRows"]
+[node name="FlavorBox" type="PanelContainer" parent="ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage/FoodDetailPanel/FoodDetailMargin/DetailScroll/FoodDetailRows"]
 custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="FlavorMargin" type="MarginContainer" parent="ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage/FoodDetailPanel/FoodDetailMargin/FoodDetailRows/FlavorBox"]
+[node name="FlavorMargin" type="MarginContainer" parent="ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage/FoodDetailPanel/FoodDetailMargin/DetailScroll/FoodDetailRows/FlavorBox"]
 layout_mode = 2
 theme_override_constants/margin_left = 14
 theme_override_constants/margin_top = 8
 theme_override_constants/margin_right = 14
 theme_override_constants/margin_bottom = 8
 
-[node name="FlavorText" type="Label" parent="ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage/FoodDetailPanel/FoodDetailMargin/FoodDetailRows/FlavorBox/FlavorMargin"]
+[node name="FlavorText" type="Label" parent="ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage/FoodDetailPanel/FoodDetailMargin/DetailScroll/FoodDetailRows/FlavorBox/FlavorMargin"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.90, 0.78, 1, 0.90)
 theme_override_font_sizes/font_size = 13
