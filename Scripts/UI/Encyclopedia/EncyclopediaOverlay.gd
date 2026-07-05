@@ -9,9 +9,13 @@ const DEFAULT_FOOD_ITEM_PATHS := [
 	"res://Data/Items/Food/Food_0008_WaterBottle.tres",
 ]
 
+const FOOD_ROW_HEIGHT := 76.0
+const FOOD_ICON_FRAME_SIZE := Vector2(72.0, 72.0)
+const FOOD_ICON_SIZE := Vector2(64.0, 64.0)
+
 @export var category_tabs_path: NodePath = NodePath("ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs")
 @export var close_button_path: NodePath = NodePath("ScreenMargin/MainPanel/MainMargin/RootRows/Header/CloseButton")
-@export var food_item_list_path: NodePath = NodePath("ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage/FoodListPanel/FoodListMargin/FoodListRows/FoodItemList")
+@export var food_item_rows_path: NodePath = NodePath("ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage/FoodListPanel/FoodListMargin/FoodListRows/FoodItemScroll/FoodItemRows")
 @export var detail_icon_path: NodePath = NodePath("ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage/FoodDetailPanel/FoodDetailMargin/FoodDetailRows/DetailIcon")
 @export var detail_name_label_path: NodePath = NodePath("ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage/FoodDetailPanel/FoodDetailMargin/FoodDetailRows/DetailNameLabel")
 @export var detail_description_label_path: NodePath = NodePath("ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage/FoodDetailPanel/FoodDetailMargin/FoodDetailRows/DetailDescriptionLabel")
@@ -22,13 +26,15 @@ const DEFAULT_FOOD_ITEM_PATHS := [
 
 var _category_tabs: TabContainer
 var _close_button: Button
-var _food_item_list: ItemList
+var _food_item_rows: VBoxContainer
 var _detail_icon: TextureRect
 var _detail_name_label: Label
 var _detail_description_label: RichTextLabel
 var _detail_meta_label: Label
 var _game_clock: Node
 var _food_entries: Array[Dictionary] = []
+var _food_row_buttons: Array[Button] = []
+var _selected_food_index: int = -1
 var _was_tree_paused: bool = false
 var _has_saved_tree_pause: bool = false
 var _was_clock_paused: bool = false
@@ -45,7 +51,6 @@ func _ready() -> void:
 	_apply_visual_theme()
 	_setup_tabs()
 	_connect_close_button()
-	_connect_food_list()
 	_populate_food_entries()
 	set_process_unhandled_input(true)
 
@@ -69,8 +74,9 @@ func open_encyclopedia() -> void:
 	_pause_game()
 	_populate_food_entries()
 
-	if _food_item_list != null and _food_item_list.get_item_count() > 0:
-		_food_item_list.grab_focus()
+	var selected_row := _get_selected_food_row()
+	if selected_row != null:
+		selected_row.grab_focus()
 
 
 func close_encyclopedia() -> void:
@@ -98,8 +104,8 @@ func _resolve_refs() -> void:
 		_category_tabs = get_node_or_null(category_tabs_path) as TabContainer
 	if _close_button == null and not close_button_path.is_empty():
 		_close_button = get_node_or_null(close_button_path) as Button
-	if _food_item_list == null and not food_item_list_path.is_empty():
-		_food_item_list = get_node_or_null(food_item_list_path) as ItemList
+	if _food_item_rows == null and not food_item_rows_path.is_empty():
+		_food_item_rows = get_node_or_null(food_item_rows_path) as VBoxContainer
 	if _detail_icon == null and not detail_icon_path.is_empty():
 		_detail_icon = get_node_or_null(detail_icon_path) as TextureRect
 	if _detail_name_label == null and not detail_name_label_path.is_empty():
@@ -124,36 +130,132 @@ func _connect_close_button() -> void:
 		_close_button.pressed.connect(close_encyclopedia)
 
 
-func _connect_food_list() -> void:
-	if _food_item_list == null:
-		return
-	if not _food_item_list.item_selected.is_connected(_on_food_item_selected):
-		_food_item_list.item_selected.connect(_on_food_item_selected)
-
-
 func _populate_food_entries() -> void:
-	if _food_item_list == null:
+	if _food_item_rows == null:
 		return
 
 	_food_entries.clear()
-	_food_item_list.clear()
+	_clear_food_rows()
 
 	for item_path in food_item_paths:
 		var entry := _make_food_entry(String(item_path))
 		if entry.is_empty():
 			continue
-		var icon := entry.get("icon") as Texture2D
-		_food_item_list.add_item(String(entry.get("display_name", "未登録食品")), icon, true)
-		var index := _food_item_list.get_item_count() - 1
-		_food_item_list.set_item_tooltip(index, String(entry.get("description", "")))
-		_food_item_list.set_item_metadata(index, entry)
 		_food_entries.append(entry)
+		var row := _make_food_row(entry, _food_entries.size() - 1)
+		_food_item_rows.add_child(row)
+		_food_row_buttons.append(row)
 
-	if _food_item_list.get_item_count() > 0:
-		_food_item_list.select(0)
-		_show_food_entry(_food_entries[0])
+	if _food_entries.size() > 0:
+		_select_food_entry(0)
 	else:
 		_show_empty_detail()
+
+
+func _clear_food_rows() -> void:
+	_selected_food_index = -1
+	_food_row_buttons.clear()
+	if _food_item_rows == null:
+		return
+	for child in _food_item_rows.get_children():
+		child.queue_free()
+
+
+func _make_food_row(entry: Dictionary, index: int) -> Button:
+	var row := Button.new()
+	row.custom_minimum_size = Vector2(0.0, FOOD_ROW_HEIGHT)
+	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.focus_mode = Control.FOCUS_ALL
+	row.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	row.text = ""
+	row.tooltip_text = String(entry.get("description", ""))
+	row.pressed.connect(Callable(self, "_on_food_row_pressed").bind(index))
+	_apply_food_row_style(row, false)
+
+	var margin := MarginContainer.new()
+	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	margin.add_theme_constant_override("margin_left", 6)
+	margin.add_theme_constant_override("margin_top", 2)
+	margin.add_theme_constant_override("margin_right", 8)
+	margin.add_theme_constant_override("margin_bottom", 2)
+	row.add_child(margin)
+
+	var hbox := HBoxContainer.new()
+	hbox.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	hbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	hbox.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	hbox.alignment = BoxContainer.ALIGNMENT_BEGIN
+	hbox.add_theme_constant_override("separation", 12)
+	margin.add_child(hbox)
+
+	var icon_frame := PanelContainer.new()
+	icon_frame.custom_minimum_size = FOOD_ICON_FRAME_SIZE
+	icon_frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	icon_frame.add_theme_stylebox_override("panel", _make_style(Color(0.020, 0.026, 0.032, 0.98), Color(0.0, 1.2, 1.2, 0.95), 4, 10, 4.0))
+	hbox.add_child(icon_frame)
+
+	var icon_margin := MarginContainer.new()
+	icon_margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	icon_margin.add_theme_constant_override("margin_left", 4)
+	icon_margin.add_theme_constant_override("margin_top", 4)
+	icon_margin.add_theme_constant_override("margin_right", 4)
+	icon_margin.add_theme_constant_override("margin_bottom", 4)
+	icon_frame.add_child(icon_margin)
+
+	var icon := TextureRect.new()
+	icon.custom_minimum_size = FOOD_ICON_SIZE
+	icon.texture = entry.get("icon") as Texture2D
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	icon_margin.add_child(icon)
+
+	var name_label := Label.new()
+	name_label.text = String(entry.get("display_name", "未登録食品"))
+	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	name_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	name_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	name_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	name_label.clip_text = true
+	name_label.add_theme_color_override("font_color", Color(0.92, 0.98, 1.0, 1.0))
+	name_label.add_theme_font_size_override("font_size", 16)
+	hbox.add_child(name_label)
+
+	return row
+
+
+func _on_food_row_pressed(index: int) -> void:
+	_select_food_entry(index)
+
+
+func _select_food_entry(index: int) -> void:
+	if index < 0 or index >= _food_entries.size():
+		return
+	_selected_food_index = index
+	for row_index in range(_food_row_buttons.size()):
+		_apply_food_row_style(_food_row_buttons[row_index], row_index == _selected_food_index)
+	_show_food_entry(_food_entries[index])
+
+
+func _get_selected_food_row() -> Button:
+	if _selected_food_index < 0 or _selected_food_index >= _food_row_buttons.size():
+		return null
+	return _food_row_buttons[_selected_food_index]
+
+
+func _apply_food_row_style(row: Button, is_selected: bool) -> void:
+	if row == null:
+		return
+	if is_selected:
+		row.add_theme_stylebox_override("normal", _make_style(Color(0.20, 0.20, 0.23, 0.96), Color(0.0, 1.45, 1.45, 0.95), 2, 9, 4.0))
+		row.add_theme_stylebox_override("hover", _make_style(Color(0.23, 0.23, 0.27, 0.98), Color(0.0, 1.80, 1.80, 1.0), 2, 9, 4.0))
+		row.add_theme_stylebox_override("pressed", _make_style(Color(0.08, 0.25, 0.28, 1.0), Color(0.25, 2.0, 2.0, 1.0), 2, 9, 4.0))
+		row.add_theme_stylebox_override("focus", _make_style(Color(0.20, 0.20, 0.23, 0.96), Color(0.0, 1.80, 1.80, 1.0), 2, 9, 4.0))
+		return
+	row.add_theme_stylebox_override("normal", _make_style(Color(0.075, 0.080, 0.092, 0.88), Color(0.18, 0.28, 0.30, 0.62), 1, 9, 4.0))
+	row.add_theme_stylebox_override("hover", _make_style(Color(0.12, 0.13, 0.15, 0.96), Color(0.0, 1.25, 1.25, 0.82), 2, 9, 4.0))
+	row.add_theme_stylebox_override("pressed", _make_style(Color(0.08, 0.20, 0.22, 1.0), Color(0.25, 1.6, 1.6, 0.95), 2, 9, 4.0))
+	row.add_theme_stylebox_override("focus", _make_style(Color(0.12, 0.13, 0.15, 0.96), Color(0.0, 1.25, 1.25, 0.82), 2, 9, 4.0))
 
 
 func _make_food_entry(item_path: String) -> Dictionary:
@@ -176,12 +278,6 @@ func _make_food_entry(item_path: String) -> Dictionary:
 		"buy_price": int(resource.get("buy_price")),
 		"sell_price": int(resource.get("sell_price")),
 	}
-
-
-func _on_food_item_selected(index: int) -> void:
-	if index < 0 or index >= _food_entries.size():
-		return
-	_show_food_entry(_food_entries[index])
 
 
 func _show_food_entry(entry: Dictionary) -> void:
@@ -277,10 +373,6 @@ func _apply_visual_theme() -> void:
 		_close_button.add_theme_stylebox_override("normal", _make_style(Color(0.13, 0.10, 0.15, 0.95), Color(0.75, 0.35, 0.85, 0.75), 1, 10, 8.0))
 		_close_button.add_theme_stylebox_override("hover", _make_style(Color(0.18, 0.12, 0.20, 0.98), Color(1.0, 0.55, 1.0, 0.92), 2, 10, 8.0))
 		_close_button.add_theme_stylebox_override("pressed", _make_style(Color(0.08, 0.20, 0.23, 1.0), Color(0.25, 2.0, 2.0, 1.0), 2, 10, 8.0))
-
-	if _food_item_list != null:
-		_food_item_list.add_theme_color_override("font_color", Color(0.88, 0.98, 1.0, 1.0))
-		_food_item_list.add_theme_color_override("font_selected_color", Color(1.0, 1.0, 1.0, 1.0))
 
 
 func _make_style(bg_color: Color, border_color: Color, border_width: int, corner_radius: int, margin: float = 3.0) -> StyleBoxFlat:
