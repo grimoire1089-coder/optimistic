@@ -4,6 +4,7 @@ class_name AICharacterSkillsModule
 signal skill_changed(skill_id: StringName, old_level: int, new_level: int)
 signal skill_experience_changed(skill_id: StringName, new_experience: int)
 signal skill_points_changed(skill_id: StringName, available_points: int, spent_points: int)
+signal skill_upgrade_changed(upgrade_id: StringName, skill_id: StringName, old_level: int, new_level: int)
 
 const SKILL_COOKING: StringName = &"cooking"
 const SKILL_COOKING_DISPLAY_NAME := "料理"
@@ -11,6 +12,12 @@ const SKILL_COOKING_MAX_LEVEL := 100
 const SKILL_GATHERING: StringName = &"gathering"
 const SKILL_GATHERING_DISPLAY_NAME := "採取"
 const SKILL_GATHERING_MAX_LEVEL := 100
+
+const SKILL_UPGRADE_GATHERING_AMOUNT_PLUS: StringName = &"gathering_amount_plus"
+const SKILL_UPGRADE_GATHERING_AMOUNT_PLUS_DISPLAY_NAME := "採取量＋1"
+const SKILL_UPGRADE_GATHERING_AMOUNT_PLUS_DESCRIPTION := "1レベルごとに、探索での採取数が10％の確率で＋1されます。"
+const SKILL_UPGRADE_GATHERING_AMOUNT_PLUS_MAX_LEVEL := 10
+const SKILL_UPGRADE_GATHERING_AMOUNT_PLUS_COST := 1
 
 @export_range(1, SKILL_COOKING_MAX_LEVEL, 1) var cooking_level: int = 1
 @export_range(0, 999999, 1) var cooking_experience: int = 0
@@ -24,6 +31,7 @@ const SKILL_GATHERING_MAX_LEVEL := 100
 @export_range(0, SKILL_GATHERING_MAX_LEVEL, 1) var gathering_experience_bonus_until_level: int = 0
 @export_range(0.0, 10.0, 0.01) var gathering_experience_bonus_multiplier: float = 0.0
 @export var gathering_experience_bonus_source_id: StringName = &""
+@export_range(0, SKILL_UPGRADE_GATHERING_AMOUNT_PLUS_MAX_LEVEL, 1) var gathering_amount_plus_level: int = 0
 
 
 func get_skill_ids() -> Array[StringName]:
@@ -187,6 +195,119 @@ func get_skill_rows() -> Array[Dictionary]:
 			"experience_bonus_until_level": get_skill_experience_bonus_until_level(skill_id),
 		})
 	return rows
+
+
+func get_skill_upgrade_ids(skill_id: StringName) -> Array[StringName]:
+	match skill_id:
+		SKILL_GATHERING:
+			return [SKILL_UPGRADE_GATHERING_AMOUNT_PLUS]
+		_:
+			return []
+
+
+func get_skill_upgrade_rows(skill_id: StringName) -> Array[Dictionary]:
+	var rows: Array[Dictionary] = []
+	for upgrade_id in get_skill_upgrade_ids(skill_id):
+		var level := get_skill_upgrade_level(upgrade_id)
+		var max_level := get_skill_upgrade_max_level(upgrade_id)
+		var cost := get_skill_upgrade_cost(upgrade_id)
+		rows.append({
+			"id": upgrade_id,
+			"skill_id": get_skill_upgrade_owner_skill_id(upgrade_id),
+			"display_name": get_skill_upgrade_display_name(upgrade_id),
+			"description": get_skill_upgrade_description(upgrade_id),
+			"level": level,
+			"max_level": max_level,
+			"cost": cost,
+			"can_acquire": can_acquire_skill_upgrade(upgrade_id),
+			"is_max_level": level >= max_level,
+		})
+	return rows
+
+
+func get_skill_upgrade_owner_skill_id(upgrade_id: StringName) -> StringName:
+	match upgrade_id:
+		SKILL_UPGRADE_GATHERING_AMOUNT_PLUS:
+			return SKILL_GATHERING
+		_:
+			return &""
+
+
+func get_skill_upgrade_display_name(upgrade_id: StringName) -> String:
+	match upgrade_id:
+		SKILL_UPGRADE_GATHERING_AMOUNT_PLUS:
+			return SKILL_UPGRADE_GATHERING_AMOUNT_PLUS_DISPLAY_NAME
+		_:
+			return String(upgrade_id)
+
+
+func get_skill_upgrade_description(upgrade_id: StringName) -> String:
+	match upgrade_id:
+		SKILL_UPGRADE_GATHERING_AMOUNT_PLUS:
+			return SKILL_UPGRADE_GATHERING_AMOUNT_PLUS_DESCRIPTION
+		_:
+			return ""
+
+
+func get_skill_upgrade_level(upgrade_id: StringName) -> int:
+	match upgrade_id:
+		SKILL_UPGRADE_GATHERING_AMOUNT_PLUS:
+			return clampi(gathering_amount_plus_level, 0, SKILL_UPGRADE_GATHERING_AMOUNT_PLUS_MAX_LEVEL)
+		_:
+			return 0
+
+
+func get_skill_upgrade_max_level(upgrade_id: StringName) -> int:
+	match upgrade_id:
+		SKILL_UPGRADE_GATHERING_AMOUNT_PLUS:
+			return SKILL_UPGRADE_GATHERING_AMOUNT_PLUS_MAX_LEVEL
+		_:
+			return 0
+
+
+func get_skill_upgrade_cost(upgrade_id: StringName) -> int:
+	match upgrade_id:
+		SKILL_UPGRADE_GATHERING_AMOUNT_PLUS:
+			return SKILL_UPGRADE_GATHERING_AMOUNT_PLUS_COST
+		_:
+			return 0
+
+
+func can_acquire_skill_upgrade(upgrade_id: StringName) -> bool:
+	var owner_skill_id := get_skill_upgrade_owner_skill_id(upgrade_id)
+	if owner_skill_id == &"":
+		return false
+	var cost := get_skill_upgrade_cost(upgrade_id)
+	if cost <= 0:
+		return false
+	if get_skill_upgrade_level(upgrade_id) >= get_skill_upgrade_max_level(upgrade_id):
+		return false
+	return can_spend_skill_points(owner_skill_id, cost)
+
+
+func acquire_skill_upgrade(upgrade_id: StringName) -> bool:
+	if not can_acquire_skill_upgrade(upgrade_id):
+		return false
+	var owner_skill_id := get_skill_upgrade_owner_skill_id(upgrade_id)
+	var cost := get_skill_upgrade_cost(upgrade_id)
+	if not spend_skill_points(owner_skill_id, cost):
+		return false
+	match upgrade_id:
+		SKILL_UPGRADE_GATHERING_AMOUNT_PLUS:
+			var old_level := get_skill_upgrade_level(upgrade_id)
+			gathering_amount_plus_level = clampi(old_level + 1, 0, SKILL_UPGRADE_GATHERING_AMOUNT_PLUS_MAX_LEVEL)
+			skill_upgrade_changed.emit(upgrade_id, owner_skill_id, old_level, gathering_amount_plus_level)
+			return true
+		_:
+			return false
+
+
+func get_gathering_amount_plus_level() -> int:
+	return get_skill_upgrade_level(SKILL_UPGRADE_GATHERING_AMOUNT_PLUS)
+
+
+func get_gathering_amount_plus_chance() -> float:
+	return clampf(float(get_gathering_amount_plus_level()) * 0.10, 0.0, 1.0)
 
 
 func apply_skill_experience_bonus(skill_id: StringName, until_level: int, bonus_multiplier: float, source_id: StringName) -> bool:
