@@ -30,10 +30,10 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 1
-theme_override_constants/margin_left = 42
-theme_override_constants/margin_top = 34
-theme_override_constants/margin_right = 42
-theme_override_constants/margin_bottom = 34
+theme_override_constants/margin_left = 30
+theme_override_constants/margin_top = 26
+theme_override_constants/margin_right = 30
+theme_override_constants/margin_bottom = 26
 
 [node name="MainPanel" type="PanelContainer" parent="ScreenMargin"]
 layout_mode = 2
@@ -43,16 +43,16 @@ mouse_filter = 1
 
 [node name="MainMargin" type="MarginContainer" parent="ScreenMargin/MainPanel"]
 layout_mode = 2
-theme_override_constants/margin_left = 26
-theme_override_constants/margin_top = 22
-theme_override_constants/margin_right = 26
-theme_override_constants/margin_bottom = 24
+theme_override_constants/margin_left = 22
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 22
+theme_override_constants/margin_bottom = 22
 
 [node name="RootRows" type="VBoxContainer" parent="ScreenMargin/MainPanel/MainMargin"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-theme_override_constants/separation = 14
+theme_override_constants/separation = 12
 
 [node name="Header" type="HBoxContainer" parent="ScreenMargin/MainPanel/MainMargin/RootRows"]
 layout_mode = 2
@@ -95,20 +95,20 @@ size_flags_vertical = 3
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-split_offset = 500
+split_offset = 360
 
 [node name="FoodListPanel" type="PanelContainer" parent="ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage"]
-custom_minimum_size = Vector2(500, 0)
+custom_minimum_size = Vector2(360, 0)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
 [node name="FoodListMargin" type="MarginContainer" parent="ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage/FoodListPanel"]
 layout_mode = 2
-theme_override_constants/margin_left = 18
-theme_override_constants/margin_top = 18
-theme_override_constants/margin_right = 18
-theme_override_constants/margin_bottom = 18
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 16
 
 [node name="FoodListRows" type="VBoxContainer" parent="ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage/FoodListPanel/FoodListMargin"]
 layout_mode = 2
@@ -128,11 +128,13 @@ theme_override_colors/font_color = Color(0.72, 0.86, 0.82, 0.82)
 theme_override_font_sizes/font_size = 14
 text = "ここから料理・食材・飲料の図鑑ページを増やしていく。"
 
+autowrap_mode = 3
+
 [node name="FoodItemList" type="ItemList" parent="ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage/FoodListPanel/FoodListMargin/FoodListRows"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-fixed_icon_size = Vector2i(72, 72)
+fixed_icon_size = Vector2i(64, 64)
 icon_mode = 0
 
 [node name="FoodDetailPanel" type="PanelContainer" parent="ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage"]
@@ -142,21 +144,22 @@ size_flags_vertical = 3
 
 [node name="FoodDetailMargin" type="MarginContainer" parent="ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage/FoodDetailPanel"]
 layout_mode = 2
-theme_override_constants/margin_left = 24
-theme_override_constants/margin_top = 24
-theme_override_constants/margin_right = 24
-theme_override_constants/margin_bottom = 24
+theme_override_constants/margin_left = 22
+theme_override_constants/margin_top = 22
+theme_override_constants/margin_right = 22
+theme_override_constants/margin_bottom = 22
 
 [node name="FoodDetailRows" type="VBoxContainer" parent="ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage/FoodDetailPanel/FoodDetailMargin"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-theme_override_constants/separation = 14
+theme_override_constants/separation = 12
 
 [node name="DetailIcon" type="TextureRect" parent="ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage/FoodDetailPanel/FoodDetailMargin/FoodDetailRows"]
-custom_minimum_size = Vector2(176, 176)
+custom_minimum_size = Vector2(240, 240)
 layout_mode = 2
 size_flags_horizontal = 4
+expand_mode = 1
 stretch_mode = 5
 
 [node name="DetailNameLabel" type="Label" parent="ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage/FoodDetailPanel/FoodDetailMargin/FoodDetailRows"]
@@ -167,7 +170,7 @@ text = "食品テンプレート"
 horizontal_alignment = 1
 
 [node name="DetailDescriptionLabel" type="RichTextLabel" parent="ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage/FoodDetailPanel/FoodDetailMargin/FoodDetailRows"]
-custom_minimum_size = Vector2(0, 180)
+custom_minimum_size = Vector2(0, 150)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -183,7 +186,7 @@ text = "カテゴリ：食品 / 登録数：0"
 horizontal_alignment = 1
 
 [node name="FlavorBox" type="PanelContainer" parent="ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage/FoodDetailPanel/FoodDetailMargin/FoodDetailRows"]
-custom_minimum_size = Vector2(0, 110)
+custom_minimum_size = Vector2(0, 100)
 layout_mode = 2
 size_flags_horizontal = 3
 
