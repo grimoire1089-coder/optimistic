@@ -24,6 +24,7 @@ const FLOOR_FOOTPRINT := Vector2i(15, 15)
 @export var kitchen_module_scene: PackedScene
 @export var shower_scene: PackedScene
 @export var stool_scene: PackedScene
+@export var table_scene: PackedScene
 
 @onready var close_button: Button = $MarginContainer/Rows/Header/CloseButton
 @onready var place_mode_button: Button = $MarginContainer/Rows/ModeButtons/PlaceModeButton
@@ -39,6 +40,7 @@ const FLOOR_FOOTPRINT := Vector2i(15, 15)
 @onready var kitchen_module_button: Button = $MarginContainer/Rows/ItemList/KitchenModuleButton
 @onready var shower_button: Button = $MarginContainer/Rows/ItemList/ShowerButton
 @onready var stool_button: Button = $MarginContainer/Rows/ItemList/StoolButton
+@onready var table_button: Button = $MarginContainer/Rows/ItemList/TableButton
 @onready var floor_place_button: Button = $MarginContainer/Rows/ItemList/FloorPlaceButton
 @onready var floor_002_place_button: Button = $MarginContainer/Rows/ItemList/Floor002PlaceButton
 @onready var floor_store_button: Button = $MarginContainer/Rows/ItemList/FloorStoreButton
@@ -113,6 +115,8 @@ func _connect_buttons() -> void:
 		shower_button.pressed.connect(_on_shower_pressed)
 	if stool_button != null:
 		stool_button.pressed.connect(_on_stool_pressed)
+	if table_button != null:
+		table_button.pressed.connect(_on_table_pressed)
 	if floor_place_button != null:
 		floor_place_button.pressed.connect(_on_floor_place_pressed)
 	if floor_002_place_button != null:
@@ -197,6 +201,15 @@ func _on_stool_pressed() -> void:
 	_build_mode_controller.set_tool_mode(BuildModeController.TOOL_MODE_PLACE)
 	_build_mode_controller.select_furniture_scene(stool_scene, &"stool", Vector2i(2, 2), true, 0)
 	_update_detail_text("選択中: スツール / 2 x 2 / Rで回転")
+
+
+func _on_table_pressed() -> void:
+	_resolve_controller()
+	if _build_mode_controller == null or table_scene == null:
+		return
+	_build_mode_controller.set_tool_mode(BuildModeController.TOOL_MODE_PLACE)
+	_build_mode_controller.select_furniture_scene(table_scene, &"table", Vector2i(4, 2), true, 0)
+	_update_detail_text("選択中: テーブル / 横4 x 縦2 / Rで回転")
 
 
 func _on_floor_place_pressed() -> void:
@@ -304,6 +317,7 @@ func _sync_item_category_visibility() -> void:
 	_set_button_visible(kitchen_module_button, _current_category_id == CATEGORY_KITCHEN)
 	_set_button_visible(shower_button, _current_category_id == CATEGORY_HYGIENE)
 	_set_button_visible(stool_button, _current_category_id == CATEGORY_DECOR)
+	_set_button_visible(table_button, _current_category_id == CATEGORY_DECOR)
 	_set_button_visible(floor_place_button, _current_category_id == CATEGORY_FLOOR)
 	_set_button_visible(floor_002_place_button, _current_category_id == CATEGORY_FLOOR)
 	_set_button_visible(floor_store_button, _current_category_id == CATEGORY_FLOOR)
