@@ -11,6 +11,8 @@ class_name ShopMenu
 const MAP_CENTER_PANEL_SIZE := Vector2(760.0, 760.0)
 const SHOP_CARD_BORDER_WIDTH := 1
 const SHOP_CARD_HOVER_BORDER_WIDTH := 4
+const PURCHASE_BUTTON_BORDER_WIDTH := 1
+const PURCHASE_BUTTON_HOVER_BORDER_WIDTH := 3
 
 @onready var title_label: Label = $MarginContainer/Rows/Header/TitleLabel
 @onready var back_button: Button = $MarginContainer/Rows/Header/BackButton
@@ -495,14 +497,26 @@ func _create_item_card(entry: ShopItemData, credits: int) -> Control:
 	var is_book := entry.is_book_product()
 	var is_owned_book := is_book and _is_book_owned(entry)
 
+	var purchase_area := VBoxContainer.new()
+	purchase_area.custom_minimum_size = Vector2(0.0, 42.0)
+	purchase_area.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	purchase_area.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	purchase_area.alignment = BoxContainer.ALIGNMENT_CENTER
+	purchase_area.add_theme_constant_override("separation", 4)
+	card.add_child(purchase_area)
+
 	var price_label := Label.new()
+	price_label.custom_minimum_size = Vector2(0.0, 18.0)
+	price_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	price_label.text = "%d C" % entry.get_unit_price()
 	price_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	price_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	price_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	price_label.add_theme_font_size_override("font_size", 14)
-	card.add_child(price_label)
+	purchase_area.add_child(price_label)
 	if is_owned_book:
-		price_label.text = "購入済み"
+		price_label.text = ""
+		price_label.visible = false
 
 	var base_amount: int = 1 if is_book else maxi(entry.amount, 1)
 	var buy_button := Button.new()
@@ -518,13 +532,14 @@ func _create_item_card(entry: ShopItemData, credits: int) -> Control:
 		buy_button.tooltip_text = "購入後、書籍UIから閲覧できます。"
 		buy_button.disabled = not entry.is_available or is_owned_book or entry.get_unit_price() > credits
 	buy_button.add_theme_stylebox_override("normal", _create_purchase_button_style())
-	buy_button.add_theme_stylebox_override("hover", _create_purchase_button_style())
-	buy_button.add_theme_stylebox_override("pressed", _create_purchase_button_style())
-	buy_button.add_theme_stylebox_override("focus", _create_purchase_button_style())
+	buy_button.add_theme_stylebox_override("hover", _create_purchase_button_style(PURCHASE_BUTTON_HOVER_BORDER_WIDTH, true))
+	buy_button.add_theme_stylebox_override("pressed", _create_purchase_button_style(PURCHASE_BUTTON_HOVER_BORDER_WIDTH, true))
+	buy_button.add_theme_stylebox_override("focus", _create_purchase_button_style(PURCHASE_BUTTON_HOVER_BORDER_WIDTH, true))
+	buy_button.add_theme_stylebox_override("disabled", _create_purchase_button_style(PURCHASE_BUTTON_BORDER_WIDTH, false, true))
 	buy_button.pressed.connect(Callable(self, "_on_buy_pressed").bind(entry))
 	buy_button.mouse_entered.connect(Callable(self, "_show_item_popup").bind(entry, card_panel))
 	buy_button.mouse_exited.connect(_hide_item_popup)
-	card.add_child(buy_button)
+	purchase_area.add_child(buy_button)
 
 	return card_panel
 
@@ -544,14 +559,22 @@ func _create_item_card_style() -> StyleBoxFlat:
 	return style
 
 
-func _create_purchase_button_style() -> StyleBoxFlat:
+func _create_purchase_button_style(border_width: int = PURCHASE_BUTTON_BORDER_WIDTH, highlighted: bool = false, disabled: bool = false) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.01, 0.012, 0.02, 1.0)
-	style.border_color = Color(0.12, 0.28, 0.34, 1.0)
-	style.border_width_left = 1
-	style.border_width_top = 1
-	style.border_width_right = 1
-	style.border_width_bottom = 1
+	if disabled:
+		style.bg_color = Color(0.015, 0.015, 0.022, 0.86)
+		style.border_color = Color(0.08, 0.12, 0.15, 0.70)
+	elif highlighted:
+		style.bg_color = Color(0.018, 0.026, 0.038, 1.0)
+		style.border_color = Color(0.28, 1.05, 1.25, 1.0)
+	else:
+		style.bg_color = Color(0.01, 0.012, 0.02, 1.0)
+		style.border_color = Color(0.12, 0.28, 0.34, 1.0)
+	var safe_border_width := maxi(border_width, PURCHASE_BUTTON_BORDER_WIDTH)
+	style.border_width_left = safe_border_width
+	style.border_width_top = safe_border_width
+	style.border_width_right = safe_border_width
+	style.border_width_bottom = safe_border_width
 	style.corner_radius_top_left = 4
 	style.corner_radius_top_right = 4
 	style.corner_radius_bottom_left = 4
