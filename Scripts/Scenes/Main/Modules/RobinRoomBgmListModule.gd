@@ -1,6 +1,7 @@
 class_name RobinRoomBgmListModule
 extends Node
 
+@export var playlist: BgmPlaylistData
 @export var bgm_paths: PackedStringArray = PackedStringArray()
 @export var autoplay: bool = true
 @export var advance_when_finished: bool = true
@@ -17,6 +18,7 @@ var _valid_track_count := -1
 
 
 func _ready() -> void:
+	_apply_playlist_settings()
 	_rng.randomize()
 	set_process(false)
 	_connect_audio_player_finished()
@@ -35,6 +37,18 @@ func _exit_tree() -> void:
 		return
 
 	AudioPlayer.stop_bgm()
+
+
+func set_playlist(next_playlist: BgmPlaylistData, play_immediately: bool = true) -> void:
+	if playlist == next_playlist:
+		return
+	playlist = next_playlist
+	_apply_playlist_settings()
+	clear_track_cache()
+	_current_index = -1
+	_started = false
+	if play_immediately and autoplay:
+		play_start_track()
 
 
 func play_start_track() -> void:
@@ -78,14 +92,31 @@ func get_current_index() -> int:
 
 
 func get_current_path() -> String:
-	if _current_index < 0 or _current_index >= bgm_paths.size():
+	var paths := _get_active_bgm_paths()
+	if _current_index < 0 or _current_index >= paths.size():
 		return ""
-	return bgm_paths[_current_index]
+	return paths[_current_index]
 
 
 func clear_track_cache() -> void:
 	_track_cache.clear()
 	_valid_track_count = -1
+
+
+func _apply_playlist_settings() -> void:
+	if playlist == null:
+		return
+	shuffle_tracks = playlist.shuffle_tracks
+	start_index = playlist.start_index
+	restart_if_same = playlist.restart_if_same
+	advance_when_finished = playlist.advance_when_finished
+	clear_track_cache()
+
+
+func _get_active_bgm_paths() -> PackedStringArray:
+	if playlist != null and not playlist.tracks.is_empty():
+		return playlist.tracks
+	return bgm_paths
 
 
 func _connect_audio_player_finished() -> void:
@@ -113,14 +144,15 @@ func _on_audio_player_bgm_finished(finished_stream: AudioStream) -> void:
 
 
 func _play_first_valid_from(index: int, step: int) -> bool:
-	if bgm_paths.is_empty():
+	var paths := _get_active_bgm_paths()
+	if paths.is_empty():
 		return false
 
 	var checked_count := 0
 	var next_index := _normalize_index(index)
 	var direction := 1 if step >= 0 else -1
 
-	while checked_count < bgm_paths.size():
+	while checked_count < paths.size():
 		if _play_index(next_index):
 			return true
 
@@ -138,9 +170,10 @@ func _play_random_track() -> bool:
 	if valid_count == 1:
 		return _play_first_valid_from(_current_index, 1)
 
+	var paths := _get_active_bgm_paths()
 	var attempts := 0
 	while attempts < 20:
-		var index := _rng.randi_range(0, bgm_paths.size() - 1)
+		var index := _rng.randi_range(0, paths.size() - 1)
 		if index != _current_index and _play_index(index):
 			return true
 		attempts += 1
@@ -160,12 +193,13 @@ func _play_index(index: int) -> bool:
 
 
 func _load_track(index: int) -> AudioStream:
-	if index < 0 or index >= bgm_paths.size():
+	var paths := _get_active_bgm_paths()
+	if index < 0 or index >= paths.size():
 		return null
 	if _track_cache.has(index):
 		return _track_cache[index] as AudioStream
 
-	var path := String(bgm_paths[index]).strip_edges()
+	var path := String(paths[index]).strip_edges()
 	if path.is_empty():
 		_track_cache[index] = null
 		return null
@@ -187,8 +221,9 @@ func _get_current_stream() -> AudioStream:
 func _get_valid_track_count() -> int:
 	if _valid_track_count >= 0:
 		return _valid_track_count
+	var paths := _get_active_bgm_paths()
 	var count := 0
-	for i in bgm_paths.size():
+	for i in paths.size():
 		if _load_track(i) != null:
 			count += 1
 	_valid_track_count = count
@@ -196,6 +231,7 @@ func _get_valid_track_count() -> int:
 
 
 func _normalize_index(index: int) -> int:
-	if bgm_paths.is_empty():
+	var paths := _get_active_bgm_paths()
+	if paths.is_empty():
 		return -1
-	return posmod(index, bgm_paths.size())
+	return posmod(index, paths.size())
