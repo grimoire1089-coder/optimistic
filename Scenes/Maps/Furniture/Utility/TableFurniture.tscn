@@ -1,0 +1,19 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Maps/Furniture/Utility/TableFurniture.gd" id="1_table_script"]
+[ext_resource type="Texture2D" path="res://Assets/Maps/Furniture/Utility/Table_001.png" id="2_table_texture"]
+
+[node name="TableFurniture" type="Node2D"]
+script = ExtResource("1_table_script")
+display_name = "テーブル"
+furniture_id = &"table"
+grid_footprint = Vector2i(4, 2)
+cell_size = Vector2(35.2, 35.2)
+sprite_path = NodePath("Sprite2D")
+use_sprite_when_available = true
+preserve_sprite_aspect = true
+sprite_fill_ratio = 1.0
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture = ExtResource("2_table_texture")
+centered = true
