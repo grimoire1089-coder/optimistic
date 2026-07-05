@@ -176,6 +176,7 @@ func _create_item_card(entry: ShopItemData, credits: int) -> Control:
 	var action_column := VBoxContainer.new()
 	action_column.custom_minimum_size = Vector2(116, 0)
 	action_column.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	action_column.alignment = BoxContainer.ALIGNMENT_CENTER
 	action_column.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	action_column.add_theme_constant_override("separation", 8)
 	card.add_child(action_column)
@@ -189,12 +190,8 @@ func _create_item_card(entry: ShopItemData, credits: int) -> Control:
 	price_label.add_theme_font_size_override("font_size", 14)
 	action_column.add_child(price_label)
 	if is_owned_book:
-		price_label.text = "購入済み"
-
-	var spacer := Control.new()
-	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	action_column.add_child(spacer)
+		price_label.text = ""
+		price_label.visible = false
 
 	var buy_button := Button.new()
 	buy_button.custom_minimum_size = Vector2(0, 34)
@@ -208,9 +205,10 @@ func _create_item_card(entry: ShopItemData, credits: int) -> Control:
 		buy_button.text = "購入済み" if is_owned_book else "購入"
 		buy_button.disabled = not entry.is_available or is_owned_book or total_price > credits
 	buy_button.add_theme_stylebox_override("normal", _create_purchase_button_style())
-	buy_button.add_theme_stylebox_override("hover", _create_purchase_button_style())
-	buy_button.add_theme_stylebox_override("pressed", _create_purchase_button_style())
-	buy_button.add_theme_stylebox_override("focus", _create_purchase_button_style())
+	buy_button.add_theme_stylebox_override("hover", _create_purchase_button_style(PURCHASE_BUTTON_HOVER_BORDER_WIDTH, true))
+	buy_button.add_theme_stylebox_override("pressed", _create_purchase_button_style(PURCHASE_BUTTON_HOVER_BORDER_WIDTH, true))
+	buy_button.add_theme_stylebox_override("focus", _create_purchase_button_style(PURCHASE_BUTTON_HOVER_BORDER_WIDTH, true))
+	buy_button.add_theme_stylebox_override("disabled", _create_purchase_button_style(PURCHASE_BUTTON_BORDER_WIDTH, false, true))
 	buy_button.pressed.connect(Callable(self, "_on_buy_pressed").bind(entry))
 	action_column.add_child(buy_button)
 
