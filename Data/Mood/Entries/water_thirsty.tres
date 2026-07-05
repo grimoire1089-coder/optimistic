@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="CharacterMoodEntryData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Systems/Mood/CharacterMoodEntryData.gd" id="1_entry"]
+
+[resource]
+script = ExtResource("1_entry")
+entry_id = &"water_thirsty"
+display_name = "喉が渇いた"
+detail_text = "水分が減っています。飲み物で心情が落ち着きます。"
+body = "水分が減っています。飲み物で心情が落ち着きます。"
+point = -8
