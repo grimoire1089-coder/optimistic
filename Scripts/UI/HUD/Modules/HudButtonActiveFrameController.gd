@@ -33,6 +33,12 @@ const SECOND_ROW_SETTINGS_LEFT := SECOND_ROW_BILL_LEFT - HUD_BUTTON_SIZE.x - HUD
 const SECOND_ROW_CRAFT_LEFT := SECOND_ROW_SETTINGS_LEFT - HUD_BUTTON_SIZE.x - HUD_BUTTON_GAP
 const SECOND_ROW_WORK_LEFT := SECOND_ROW_CRAFT_LEFT - HUD_BUTTON_SIZE.x - HUD_BUTTON_GAP
 const SECOND_ROW_MOVE_LEFT := SECOND_ROW_WORK_LEFT - HUD_BUTTON_SIZE.x - HUD_BUTTON_GAP
+const THIRD_ROW_TOP := SECOND_ROW_TOP + HUD_BUTTON_SIZE.y + HUD_BUTTON_GAP
+const THIRD_ROW_PLACEHOLDER_05_LEFT := -(HUD_RIGHT_MARGIN + HUD_BUTTON_SIZE.x)
+const THIRD_ROW_PLACEHOLDER_04_LEFT := THIRD_ROW_PLACEHOLDER_05_LEFT - HUD_BUTTON_SIZE.x - HUD_BUTTON_GAP
+const THIRD_ROW_PLACEHOLDER_03_LEFT := THIRD_ROW_PLACEHOLDER_04_LEFT - HUD_BUTTON_SIZE.x - HUD_BUTTON_GAP
+const THIRD_ROW_PLACEHOLDER_02_LEFT := THIRD_ROW_PLACEHOLDER_03_LEFT - HUD_BUTTON_SIZE.x - HUD_BUTTON_GAP
+const THIRD_ROW_PLACEHOLDER_01_LEFT := THIRD_ROW_PLACEHOLDER_02_LEFT - HUD_BUTTON_SIZE.x - HUD_BUTTON_GAP
 
 const BUTTON_TO_UI := {
 	"RobinHudButton": "AICharacterHud",
@@ -50,6 +56,14 @@ const TOGGLE_STATE_BUTTONS := [
 	"BuildModeButton",
 ]
 
+const PASSIVE_FRAME_BUTTONS := [
+	"PlaceholderHudButton01",
+	"PlaceholderHudButton02",
+	"PlaceholderHudButton03",
+	"PlaceholderHudButton04",
+	"PlaceholderHudButton05",
+]
+
 const BUTTON_LAYOUTS := {
 	"RobinHudButton": Vector2(FIRST_ROW_ROBIN_LEFT, FIRST_ROW_TOP),
 	"ShopButton": Vector2(FIRST_ROW_SHOP_LEFT, FIRST_ROW_TOP),
@@ -61,6 +75,11 @@ const BUTTON_LAYOUTS := {
 	"CraftButton": Vector2(SECOND_ROW_CRAFT_LEFT, SECOND_ROW_TOP),
 	"SettingsButton": Vector2(SECOND_ROW_SETTINGS_LEFT, SECOND_ROW_TOP),
 	"BillButton": Vector2(SECOND_ROW_BILL_LEFT, SECOND_ROW_TOP),
+	"PlaceholderHudButton01": Vector2(THIRD_ROW_PLACEHOLDER_01_LEFT, THIRD_ROW_TOP),
+	"PlaceholderHudButton02": Vector2(THIRD_ROW_PLACEHOLDER_02_LEFT, THIRD_ROW_TOP),
+	"PlaceholderHudButton03": Vector2(THIRD_ROW_PLACEHOLDER_03_LEFT, THIRD_ROW_TOP),
+	"PlaceholderHudButton04": Vector2(THIRD_ROW_PLACEHOLDER_04_LEFT, THIRD_ROW_TOP),
+	"PlaceholderHudButton05": Vector2(THIRD_ROW_PLACEHOLDER_05_LEFT, THIRD_ROW_TOP),
 }
 
 
@@ -139,6 +158,9 @@ func _sync_all_button_frames() -> void:
 	for button_name in TOGGLE_STATE_BUTTONS:
 		var button := parent_node.get_node_or_null(String(button_name)) as Button
 		_apply_button_frame(button, button != null and button.button_pressed)
+	for button_name in PASSIVE_FRAME_BUTTONS:
+		var button := parent_node.get_node_or_null(String(button_name)) as Button
+		_apply_button_frame(button, false)
 
 
 func _on_ui_visibility_changed(button_name: String, canvas_item: CanvasItem) -> void:
