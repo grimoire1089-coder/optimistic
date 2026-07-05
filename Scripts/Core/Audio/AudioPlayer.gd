@@ -12,10 +12,15 @@ var _sfx_players: Array[AudioStreamPlayer] = []
 var _current_bgm: AudioStream = null
 var _current_ambience: AudioStream = null
 var _bgm_fade_tween: Tween
+var _ambience_fade_tween: Tween
 var _bgm_default_volume_db: float = 0.0
+var _ambience_default_volume_db: float = 0.0
 var _pending_bgm: AudioStream = null
 var _pending_bgm_position: float = 0.0
 var _pending_bgm_fade_in_seconds: float = 0.0
+var _pending_ambience: AudioStream = null
+var _pending_ambience_position: float = 0.0
+var _pending_ambience_fade_in_seconds: float = 0.0
 
 
 func _ready() -> void:
@@ -101,14 +106,45 @@ func play_ambience(stream: AudioStream, from_position: float = 0.0, restart_if_s
 	if not restart_if_same and _current_ambience == stream and _ambience_player.playing:
 		return
 
+	_kill_ambience_fade()
+	_clear_pending_ambience()
 	_current_ambience = stream
 	_ambience_player.stop()
+	_ambience_player.volume_db = _ambience_default_volume_db
 	_ambience_player.stream = stream
 	_ambience_player.play(from_position)
 
 
+func play_ambience_fade(stream: AudioStream, from_position: float = 0.0, restart_if_same: bool = false, fade_out_seconds: float = 0.5, fade_in_seconds: float = 0.5) -> void:
+	if stream == null:
+		return
+
+	if not restart_if_same and _current_ambience == stream and _ambience_player.playing:
+		return
+
+	var safe_fade_out_seconds: float = maxf(fade_out_seconds, 0.0)
+	var safe_fade_in_seconds: float = maxf(fade_in_seconds, 0.0)
+
+	_kill_ambience_fade()
+	_clear_pending_ambience()
+
+	if _current_ambience == null or not _ambience_player.playing or safe_fade_out_seconds <= 0.0:
+		_start_ambience_with_fade_in(stream, from_position, safe_fade_in_seconds)
+		return
+
+	_pending_ambience = stream
+	_pending_ambience_position = from_position
+	_pending_ambience_fade_in_seconds = safe_fade_in_seconds
+	_ambience_fade_tween = create_tween()
+	_ambience_fade_tween.tween_property(_ambience_player, "volume_db", BGM_SILENCE_DB, safe_fade_out_seconds)
+	_ambience_fade_tween.tween_callback(Callable(self, "_play_pending_ambience_after_fade_out"))
+
+
 func stop_ambience() -> void:
+	_kill_ambience_fade()
+	_clear_pending_ambience()
 	_ambience_player.stop()
+	_ambience_player.volume_db = _ambience_default_volume_db
 	_current_ambience = null
 
 
@@ -118,6 +154,18 @@ func pause_ambience() -> void:
 
 func resume_ambience() -> void:
 	_ambience_player.stream_paused = false
+
+
+func get_current_ambience() -> AudioStream:
+	return _current_ambience
+
+
+func get_ambience_playback_position() -> float:
+	if _ambience_player == null:
+		return 0.0
+	if not _ambience_player.playing:
+		return 0.0
+	return _ambience_player.get_playback_position()
 
 
 func play_voice(stream: AudioStream, from_position: float = 0.0) -> void:
@@ -185,6 +233,7 @@ func _create_ambience_player() -> void:
 	_ambience_player = AudioStreamPlayer.new()
 	_ambience_player.name = "AmbiencePlayer"
 	_ambience_player.bus = String(AudioSettings.BUS_AMBIENCE)
+	_ambience_default_volume_db = _ambience_player.volume_db
 	add_child(_ambience_player)
 
 
@@ -253,6 +302,47 @@ func _clear_pending_bgm() -> void:
 	_pending_bgm = null
 	_pending_bgm_position = 0.0
 	_pending_bgm_fade_in_seconds = 0.0
+
+
+func _start_ambience_with_fade_in(stream: AudioStream, from_position: float, fade_in_seconds: float) -> void:
+	if stream == null:
+		return
+
+	_current_ambience = stream
+	_ambience_player.stop()
+	_ambience_player.stream = stream
+	if fade_in_seconds > 0.0:
+		_ambience_player.volume_db = BGM_SILENCE_DB
+	else:
+		_ambience_player.volume_db = _ambience_default_volume_db
+	_ambience_player.play(from_position)
+
+	if fade_in_seconds <= 0.0:
+		return
+
+	_ambience_fade_tween = create_tween()
+	_ambience_fade_tween.tween_property(_ambience_player, "volume_db", _ambience_default_volume_db, fade_in_seconds)
+
+
+func _play_pending_ambience_after_fade_out() -> void:
+	var next_ambience: AudioStream = _pending_ambience
+	var next_position: float = _pending_ambience_position
+	var next_fade_in_seconds: float = _pending_ambience_fade_in_seconds
+	_clear_pending_ambience()
+	_ambience_fade_tween = null
+	_start_ambience_with_fade_in(next_ambience, next_position, next_fade_in_seconds)
+
+
+func _kill_ambience_fade() -> void:
+	if _ambience_fade_tween != null:
+		_ambience_fade_tween.kill()
+		_ambience_fade_tween = null
+
+
+func _clear_pending_ambience() -> void:
+	_pending_ambience = null
+	_pending_ambience_position = 0.0
+	_pending_ambience_fade_in_seconds = 0.0
 
 
 func _on_bgm_player_finished() -> void:
