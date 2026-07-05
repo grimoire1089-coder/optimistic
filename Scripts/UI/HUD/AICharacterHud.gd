@@ -2,6 +2,11 @@ extends PanelContainer
 class_name AICharacterHud
 
 const FRONT_Z_INDEX := 200
+const HUD_WIDTH := 480.0
+const HUD_HEIGHT := 336.0
+const HUD_RIGHT_MARGIN := 24.0
+const HUD_BOTTOM_MARGIN := 92.0
+const NEED_BAR_WIDTH := 290.0
 
 @onready var title_label: Label = $MarginContainer/Rows/Header/TitleLabel
 @onready var action_label: Label = $MarginContainer/Rows/ActionLabel
@@ -19,6 +24,7 @@ var _last_logged_action_id: StringName = &""
 
 func _ready() -> void:
 	visible = false
+	_apply_wide_layout()
 	_apply_front_layer_priority()
 	close_button.pressed.connect(hide_hud)
 	_setup_tabs()
@@ -34,6 +40,7 @@ func show_actor(actor: RobinWanderActor) -> void:
 	_push_debug_message("AI HUD", "show_actor 開始")
 	_actor = actor
 	visible = true
+	_apply_wide_layout()
 	_apply_front_layer_priority()
 	_last_logged_need_id = &""
 	_last_logged_action_id = &""
@@ -86,6 +93,17 @@ func _process(delta: float) -> void:
 		return
 	_refresh_timer = 0.25
 	_update_action_label()
+
+func _apply_wide_layout() -> void:
+	custom_minimum_size = Vector2(HUD_WIDTH, HUD_HEIGHT)
+	set_anchors_preset(Control.PRESET_BOTTOM_RIGHT, false)
+	offset_left = -HUD_RIGHT_MARGIN - HUD_WIDTH
+	offset_top = -HUD_BOTTOM_MARGIN - HUD_HEIGHT
+	offset_right = -HUD_RIGHT_MARGIN
+	offset_bottom = -HUD_BOTTOM_MARGIN
+	if needs_panel != null:
+		needs_panel.bar_width = NEED_BAR_WIDTH
+		needs_panel.refresh()
 
 func _apply_front_layer_priority() -> void:
 	z_as_relative = false
