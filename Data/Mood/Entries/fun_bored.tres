@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="CharacterMoodEntryData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Systems/Mood/CharacterMoodEntryData.gd" id="1_entry"]
+
+[resource]
+script = ExtResource("1_entry")
+entry_id = &"fun_bored"
+display_name = "退屈"
+detail_text = "娯楽刺激が不足しています。少し楽しいことが必要です。"
+body = "娯楽刺激が不足しています。少し楽しいことが必要です。"
+point = -8
