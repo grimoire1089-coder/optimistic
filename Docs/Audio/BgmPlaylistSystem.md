@@ -55,5 +55,5 @@ Data/Audio/BgmPlaylists/InfrastructureBgmPlaylist.tres
 
 ## 注意
 
-古い `RobinRoomBgmListModule.gd` は互換用ラッパーとして残している。
-新規シーンでは使わず、必ず `BgmPlaylistPlayerModule.gd` を使う。
+旧 `RobinRoomBgmListModule.gd` は削除済み。
+新規・既存シーンとも `BgmPlaylistPlayerModule.gd` を使う。
