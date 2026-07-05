@@ -74,12 +74,14 @@ func _rebuild() -> void:
 		_create_skill_row(row_data)
 	if _is_skill_detail_popup_open():
 		_populate_skill_detail_popup(_open_skill_id)
+		_clamp_skill_detail_popup_size()
 
 
 func _clear_rows() -> void:
 	if _rows == null:
 		return
 	for child in _rows.get_children():
+		_rows.remove_child(child)
 		child.queue_free()
 
 
@@ -169,6 +171,7 @@ func _on_skill_detail_button_pressed(skill_id: StringName) -> void:
 		return
 	_populate_skill_detail_popup(skill_id)
 	popup.popup_centered(skill_detail_popup_size)
+	call_deferred("_clamp_skill_detail_popup_size")
 
 
 func _ensure_skill_detail_popup() -> PopupPanel:
@@ -190,7 +193,7 @@ func _ensure_skill_detail_popup() -> PopupPanel:
 	_skill_detail_rows = VBoxContainer.new()
 	_skill_detail_rows.name = "Rows"
 	_skill_detail_rows.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_skill_detail_rows.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_skill_detail_rows.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	_skill_detail_rows.add_theme_constant_override("separation", 8)
 	margin.add_child(_skill_detail_rows)
 	return _skill_detail_popup
@@ -230,12 +233,14 @@ func _populate_skill_detail_popup(skill_id: StringName) -> void:
 	_skill_detail_rows.add_child(point_label)
 
 	_create_skill_upgrade_list(_skill_detail_rows, skill_id)
+	_clamp_skill_detail_popup_size()
 
 
 func _clear_skill_detail_popup_rows() -> void:
 	if _skill_detail_rows == null:
 		return
 	for child in _skill_detail_rows.get_children():
+		_skill_detail_rows.remove_child(child)
 		child.queue_free()
 
 
@@ -346,6 +351,15 @@ func _apply_popup_style(popup: PopupPanel) -> void:
 	panel_style.border_width_bottom = 1
 	panel_style.set_corner_radius_all(8)
 	popup.add_theme_stylebox_override("panel", panel_style)
+
+
+func _clamp_skill_detail_popup_size() -> void:
+	if _skill_detail_popup == null or not is_instance_valid(_skill_detail_popup):
+		return
+	if not _skill_detail_popup.visible:
+		return
+	var fixed_size := Vector2(skill_detail_popup_size)
+	_skill_detail_popup.size = fixed_size
 
 
 func _is_skill_detail_popup_open() -> bool:
