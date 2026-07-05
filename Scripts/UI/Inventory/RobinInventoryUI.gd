@@ -113,7 +113,8 @@ func _refresh() -> void:
 	var category_id := category.get("id", &"") as StringName
 	var category_name := String(category.get("display_name", ""))
 	var items := _inventory_module.get_items(category_id)
-	var slot_count := _inventory_module.get_slots_per_category()
+	var slot_limit := _inventory_module.get_slot_limit(category_id)
+	var slot_count := _get_visible_slot_count(slot_limit, items.size())
 
 	for index in range(slot_count):
 		var slot_button := _create_slot_button()
@@ -123,7 +124,7 @@ func _refresh() -> void:
 			slot_button.text = ""
 		grid.add_child(slot_button)
 
-	detail_label.text = "%s  %d/%d" % [category_name, items.size(), slot_count]
+	detail_label.text = _build_detail_text(category_name, items.size(), slot_limit)
 
 
 func _create_slot_button() -> Button:
@@ -183,6 +184,18 @@ func _make_amount_badge_style() -> StyleBoxFlat:
 	style.set_corner_radius_all(6)
 	style.set_content_margin_all(1.0)
 	return style
+
+
+func _get_visible_slot_count(slot_limit: int, item_count: int) -> int:
+	if slot_limit == RobinInventoryModule.UNLIMITED_SLOT_LIMIT:
+		return max(item_count, _inventory_module.get_slots_per_category())
+	return slot_limit
+
+
+func _build_detail_text(category_name: String, item_count: int, slot_limit: int) -> String:
+	if slot_limit == RobinInventoryModule.UNLIMITED_SLOT_LIMIT:
+		return "%s  %d/無制限" % [category_name, item_count]
+	return "%s  %d/%d" % [category_name, item_count, slot_limit]
 
 
 func _clear_grid() -> void:
