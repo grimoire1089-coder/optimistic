@@ -127,7 +127,8 @@ static func get_chair_sit_position(chair: Node2D, fallback_position: Vector2) ->
 	if chair.has_method("get_sit_target_global_position"):
 		var sit_position: Variant = chair.call("get_sit_target_global_position")
 		if sit_position is Vector2:
-			return sit_position
+			var typed_sit_position: Vector2 = sit_position
+			return typed_sit_position
 	return chair.global_position
 
 
@@ -155,7 +156,8 @@ static func get_furniture_id(furniture: Node2D) -> StringName:
 	if furniture.has_meta("furniture_id"):
 		var meta_id: Variant = furniture.get_meta("furniture_id", &"")
 		if meta_id is StringName:
-			return meta_id
+			var typed_meta_id: StringName = meta_id
+			return typed_meta_id
 		if meta_id is String:
 			return StringName(meta_id)
 	for property_info in furniture.get_property_list():
@@ -165,7 +167,8 @@ static func get_furniture_id(furniture: Node2D) -> StringName:
 			continue
 		var property_id: Variant = furniture.get("furniture_id")
 		if property_id is StringName:
-			return property_id
+			var typed_property_id: StringName = property_id
+			return typed_property_id
 		if property_id is String:
 			return StringName(property_id)
 	return &""
