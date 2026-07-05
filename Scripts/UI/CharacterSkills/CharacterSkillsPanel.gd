@@ -9,7 +9,7 @@ class_name CharacterSkillsPanel
 @onready var _rows: VBoxContainer = $MarginContainer/Rows
 
 var _skills_module: AICharacterSkillsModule
-var _skill_detail_popup: PopupPanel
+var _skill_detail_popup: PanelContainer
 var _skill_detail_rows: VBoxContainer
 var _open_skill_id: StringName = &""
 
@@ -166,24 +166,31 @@ func _create_skill_row(row_data: Dictionary) -> void:
 
 func _on_skill_detail_button_pressed(skill_id: StringName) -> void:
 	_open_skill_id = skill_id
-	var popup := _ensure_skill_detail_popup()
-	if popup == null:
+	var detail_panel := _ensure_skill_detail_popup()
+	if detail_panel == null:
 		return
 	_populate_skill_detail_popup(skill_id)
-	popup.popup_centered(skill_detail_popup_size)
-	call_deferred("_clamp_skill_detail_popup_size")
+	detail_panel.visible = true
+	_clamp_skill_detail_popup_size()
 
 
-func _ensure_skill_detail_popup() -> PopupPanel:
+func _ensure_skill_detail_popup() -> PanelContainer:
 	if _skill_detail_popup != null and is_instance_valid(_skill_detail_popup):
 		return _skill_detail_popup
-	_skill_detail_popup = PopupPanel.new()
-	_skill_detail_popup.name = "SkillDetailPopup"
-	_skill_detail_popup.exclusive = true
+	_skill_detail_popup = PanelContainer.new()
+	_skill_detail_popup.name = "SkillDetailPanel"
+	_skill_detail_popup.top_level = true
+	_skill_detail_popup.visible = false
+	_skill_detail_popup.mouse_filter = Control.MOUSE_FILTER_STOP
+	_skill_detail_popup.z_index = 4096
+	_skill_detail_popup.custom_minimum_size = Vector2(skill_detail_popup_size)
 	add_child(_skill_detail_popup)
 	_apply_popup_style(_skill_detail_popup)
 
 	var margin := MarginContainer.new()
+	margin.name = "Margin"
+	margin.mouse_filter = Control.MOUSE_FILTER_PASS
+	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
 	margin.add_theme_constant_override("margin_left", 12)
 	margin.add_theme_constant_override("margin_top", 10)
 	margin.add_theme_constant_override("margin_right", 12)
@@ -202,8 +209,8 @@ func _ensure_skill_detail_popup() -> PopupPanel:
 func _populate_skill_detail_popup(skill_id: StringName) -> void:
 	if _skills_module == null:
 		return
-	var popup := _ensure_skill_detail_popup()
-	if popup == null or _skill_detail_rows == null:
+	var detail_panel := _ensure_skill_detail_popup()
+	if detail_panel == null or _skill_detail_rows == null:
 		return
 	_clear_skill_detail_popup_rows()
 
@@ -339,8 +346,8 @@ func _apply_card_style(card: PanelContainer) -> void:
 	card.add_theme_stylebox_override("panel", panel_style)
 
 
-func _apply_popup_style(popup: PopupPanel) -> void:
-	if popup == null:
+func _apply_popup_style(panel: PanelContainer) -> void:
+	if panel == null:
 		return
 	var panel_style := StyleBoxFlat.new()
 	panel_style.bg_color = Color(0.025, 0.035, 0.048, 0.98)
@@ -350,7 +357,7 @@ func _apply_popup_style(popup: PopupPanel) -> void:
 	panel_style.border_width_right = 1
 	panel_style.border_width_bottom = 1
 	panel_style.set_corner_radius_all(8)
-	popup.add_theme_stylebox_override("panel", panel_style)
+	panel.add_theme_stylebox_override("panel", panel_style)
 
 
 func _clamp_skill_detail_popup_size() -> void:
@@ -359,7 +366,14 @@ func _clamp_skill_detail_popup_size() -> void:
 	if not _skill_detail_popup.visible:
 		return
 	var fixed_size := Vector2(skill_detail_popup_size)
+	_skill_detail_popup.custom_minimum_size = fixed_size
 	_skill_detail_popup.size = fixed_size
+	_skill_detail_popup.global_position = _get_skill_detail_popup_center_position(fixed_size)
+
+
+func _get_skill_detail_popup_center_position(fixed_size: Vector2) -> Vector2:
+	var viewport_rect := get_viewport().get_visible_rect()
+	return viewport_rect.position + (viewport_rect.size - fixed_size) * 0.5
 
 
 func _is_skill_detail_popup_open() -> bool:
@@ -371,11 +385,12 @@ func _on_acquire_skill_upgrade_pressed(upgrade_id: StringName) -> void:
 		return
 	_skills_module.call("acquire_skill_upgrade", upgrade_id)
 	refresh()
+	call_deferred("_clamp_skill_detail_popup_size")
 
 
 func _on_skill_detail_close_pressed() -> void:
 	if _skill_detail_popup != null and is_instance_valid(_skill_detail_popup):
-		_skill_detail_popup.hide()
+		_skill_detail_popup.visible = false
 
 
 func _on_skill_changed(_skill_id: StringName, _old_level: int, _new_level: int) -> void:
