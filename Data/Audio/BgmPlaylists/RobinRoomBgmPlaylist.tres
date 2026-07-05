@@ -11,3 +11,5 @@ shuffle_tracks = false
 start_index = 0
 restart_if_same = true
 advance_when_finished = true
+fade_out_seconds = 0.5
+fade_in_seconds = 0.5
