@@ -166,6 +166,11 @@ custom_minimum_size = Vector2(316, 52)
 layout_mode = 2
 text = "金属フロアパネル\nFloor_002 / 15 x 15"
 
+[node name="Floor003PlaceButton" type="Button" parent="MarginContainer/Rows/ItemList"]
+custom_minimum_size = Vector2(316, 52)
+layout_mode = 2
+text = "フロアパネル 003\nFloor_003 / 15 x 15"
+
 [node name="FloorStoreButton" type="Button" parent="MarginContainer/Rows/ItemList"]
 custom_minimum_size = Vector2(316, 52)
 layout_mode = 2
