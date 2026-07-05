@@ -39,6 +39,12 @@ func get_entries() -> Array[CharacterMoodEntryInstance]:
 	_ensure_character_mood()
 	return character_mood.entries
 
+func get_current_absolute_minute() -> int:
+	var clock := _get_game_clock()
+	if clock == null:
+		return 0
+	return _get_absolute_minute(clock)
+
 func add_entry(data: CharacterMoodEntryData) -> void:
 	_ensure_character_mood()
 	character_mood.add_entry(data, _get_game_clock())
