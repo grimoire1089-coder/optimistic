@@ -72,7 +72,92 @@ func _update_display() -> void:
 
 	_item_rect.visible = _item_rect.texture != null
 	_item_rect.size = item_display_size
+	_update_item_rect_position(source)
+
+
+func _update_item_rect_position(source: Node) -> void:
+	var dining_center := _get_dining_item_global_center(source)
+	if dining_center is Vector2:
+		_item_rect.global_position = (dining_center as Vector2) - item_display_size * 0.5
+		return
 	_item_rect.position = item_center_offset - item_display_size * 0.5
+
+
+func _get_dining_item_global_center(source: Node) -> Variant:
+	if source == null or source != _hydrate_behavior:
+		return null
+	if not source.has_method("is_drinking"):
+		return null
+	if source.call("is_drinking") != true:
+		return null
+	if source.get("_dining_seat_used_for_current_drink") != true:
+		return null
+
+	var chair := source.get("_target_dining_seat") as Node2D
+	var room_map := source.get("_room_map") as RoomMapGridModule
+	var furniture_root := source.get("_furniture_root") as Node
+	if chair == null or room_map == null or furniture_root == null:
+		return null
+
+	var tables: Array[Node2D] = []
+	for child in furniture_root.get_children():
+		var furniture := child as Node2D
+		if furniture == null:
+			continue
+		if AICharacterDiningSeatHelper.is_table_furniture(furniture):
+			tables.append(furniture)
+
+	var minimum_overlap_cells := 2
+	var source_minimum_overlap: Variant = source.get("dining_minimum_overlap_cells")
+	if source_minimum_overlap is int:
+		minimum_overlap_cells = source_minimum_overlap
+	var table := AICharacterDiningSeatHelper.find_connected_table_for_chair(chair, tables, minimum_overlap_cells)
+	if table == null:
+		return null
+
+	return _get_table_side_overlap_center(room_map, chair, table)
+
+
+func _get_table_side_overlap_center(room_map: RoomMapGridModule, chair: Node2D, table: Node2D) -> Variant:
+	var chair_grid := AICharacterDiningSeatHelper.get_furniture_grid_position(chair)
+	var chair_footprint := AICharacterDiningSeatHelper.get_furniture_footprint(chair)
+	var table_grid := AICharacterDiningSeatHelper.get_furniture_grid_position(table)
+	var table_footprint := AICharacterDiningSeatHelper.get_furniture_footprint(table)
+	if not AICharacterDiningSeatHelper.is_valid_grid_position(chair_grid):
+		return null
+	if not AICharacterDiningSeatHelper.is_valid_grid_position(table_grid):
+		return null
+
+	var chair_left := chair_grid.x
+	var chair_right := chair_grid.x + chair_footprint.x
+	var chair_top := chair_grid.y
+	var chair_bottom := chair_grid.y + chair_footprint.y
+	var table_left := table_grid.x
+	var table_right := table_grid.x + table_footprint.x
+	var table_top := table_grid.y
+	var table_bottom := table_grid.y + table_footprint.y
+
+	if chair_right == table_left:
+		return _get_grid_area_center_from_edges(room_map, table_left, maxi(chair_top, table_top), table_left + 1, mini(chair_bottom, table_bottom))
+	if table_right == chair_left:
+		return _get_grid_area_center_from_edges(room_map, table_right - 1, maxi(chair_top, table_top), table_right, mini(chair_bottom, table_bottom))
+	if chair_bottom == table_top:
+		return _get_grid_area_center_from_edges(room_map, maxi(chair_left, table_left), table_top, mini(chair_right, table_right), table_top + 1)
+	if table_bottom == chair_top:
+		return _get_grid_area_center_from_edges(room_map, maxi(chair_left, table_left), table_bottom - 1, mini(chair_right, table_right), table_bottom)
+	return null
+
+
+func _get_grid_area_center_from_edges(room_map: RoomMapGridModule, left: int, top: int, right: int, bottom: int) -> Variant:
+	if room_map == null:
+		return null
+	if right <= left or bottom <= top:
+		return null
+	var grid_position := Vector2i(left, top)
+	var footprint := Vector2i(right - left, bottom - top)
+	if not room_map.is_grid_area_inside(grid_position, footprint):
+		return null
+	return room_map.grid_to_world_area_center(grid_position, footprint)
 
 
 func _snap_lapis_position_if_needed() -> void:
