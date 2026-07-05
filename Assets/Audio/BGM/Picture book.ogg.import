@@ -1,0 +1,19 @@
+[remap]
+
+importer="oggvorbisstr"
+type="AudioStreamOggVorbis"
+uid="uid://cjtyegctv4rci"
+path="res://.godot/imported/Picture book.ogg-b44a00e56e6a1bfba6f1d77cfffd8a22.oggvorbisstr"
+
+[deps]
+
+source_file="res://Assets/Audio/BGM/Picture book.ogg"
+dest_files=["res://.godot/imported/Picture book.ogg-b44a00e56e6a1bfba6f1d77cfffd8a22.oggvorbisstr"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4
