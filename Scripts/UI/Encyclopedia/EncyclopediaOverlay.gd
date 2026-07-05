@@ -69,7 +69,7 @@ func open_encyclopedia() -> void:
 	_pause_game()
 	_populate_food_entries()
 
-	if _food_item_list != null and _food_item_list.item_count > 0:
+	if _food_item_list != null and _food_item_list.get_item_count() > 0:
 		_food_item_list.grab_focus()
 
 
@@ -143,12 +143,13 @@ func _populate_food_entries() -> void:
 		if entry.is_empty():
 			continue
 		var icon := entry.get("icon") as Texture2D
-		var index := _food_item_list.add_item(String(entry.get("display_name", "未登録食品")), icon, true)
+		_food_item_list.add_item(String(entry.get("display_name", "未登録食品")), icon, true)
+		var index := _food_item_list.get_item_count() - 1
 		_food_item_list.set_item_tooltip(index, String(entry.get("description", "")))
 		_food_item_list.set_item_metadata(index, entry)
 		_food_entries.append(entry)
 
-	if _food_item_list.item_count > 0:
+	if _food_item_list.get_item_count() > 0:
 		_food_item_list.select(0)
 		_show_food_entry(_food_entries[0])
 	else:
@@ -267,6 +268,10 @@ func _apply_visual_theme() -> void:
 	var food_detail_panel := get_node_or_null("ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage/FoodDetailPanel") as PanelContainer
 	if food_detail_panel != null:
 		food_detail_panel.add_theme_stylebox_override("panel", _make_style(Color(0.075, 0.075, 0.095, 0.96), Color(1.0, 0.36, 0.95, 0.35), 1, 12, 12.0))
+
+	var flavor_box := get_node_or_null("ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage/FoodDetailPanel/FoodDetailMargin/FoodDetailRows/FlavorBox") as PanelContainer
+	if flavor_box != null:
+		flavor_box.add_theme_stylebox_override("panel", _make_style(Color(0.08, 0.055, 0.10, 0.86), Color(0.92, 0.42, 1.0, 0.30), 1, 10, 10.0))
 
 	if _close_button != null:
 		_close_button.add_theme_stylebox_override("normal", _make_style(Color(0.13, 0.10, 0.15, 0.95), Color(0.75, 0.35, 0.85, 0.75), 1, 10, 8.0))
