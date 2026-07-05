@@ -40,7 +40,6 @@ const PASSIVE_FRAME_BUTTONS := [
 	"PlaceholderHudButton01",
 	"PlaceholderHudButton02",
 	"PlaceholderHudButton03",
-	"PlaceholderHudButton04",
 	"PlaceholderHudButton05",
 ]
 
@@ -58,7 +57,7 @@ const BUTTON_LAYOUTS := {
 	"PlaceholderHudButton01": Vector2(THIRD_ROW_PLACEHOLDER_01_LEFT, THIRD_ROW_TOP),
 	"PlaceholderHudButton02": Vector2(THIRD_ROW_PLACEHOLDER_02_LEFT, THIRD_ROW_TOP),
 	"PlaceholderHudButton03": Vector2(THIRD_ROW_PLACEHOLDER_03_LEFT, THIRD_ROW_TOP),
-	"PlaceholderHudButton04": Vector2(THIRD_ROW_PLACEHOLDER_04_LEFT, THIRD_ROW_TOP),
+	"EncyclopediaButton": Vector2(THIRD_ROW_PLACEHOLDER_04_LEFT, THIRD_ROW_TOP),
 	"PlaceholderHudButton05": Vector2(SECOND_ROW_SETTINGS_LEFT, SECOND_ROW_TOP),
 }
 
