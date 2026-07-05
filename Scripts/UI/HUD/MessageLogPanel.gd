@@ -474,6 +474,13 @@ func _animate_message_card(holder: Control, card: PanelContainer, target_card_he
 	tween.tween_property(card, "offset_top", -target_card_height, card_enter_duration)
 	tween.tween_property(card, "offset_bottom", 0.0, card_enter_duration)
 	tween.tween_property(card, "modulate:a", 1.0, card_enter_duration)
+	if auto_scroll_to_latest:
+		tween.finished.connect(_on_message_card_animation_finished)
+
+
+func _on_message_card_animation_finished() -> void:
+	if auto_scroll_to_latest:
+		call_deferred("_scroll_to_latest")
 
 
 func _trim_old_messages(channel: int) -> void:
@@ -540,124 +547,141 @@ func _scroll_to_latest() -> void:
 	scroll_container.scroll_vertical = int(vertical_scroll_bar.max_value)
 
 
-func _play_notice_sfx() -> void:
-	if notice_sfx == null:
-		return
-	AudioPlayer.play_sfx(notice_sfx, 1.0, notice_sfx_volume_db)
+func _make_card_style(channel: int) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = _get_card_background_color(channel)
+	style.border_color = _get_card_border_color(channel)
+	style.set_border_width_all(1)
+	style.set_corner_radius_all(10)
+	style.set_content_margin_all(0.0)
+	return style
 
 
-func _load_default_notice_sfx_if_needed() -> void:
-	if notice_sfx != null:
-		return
-	if ResourceLoader.exists(DEFAULT_NOTICE_SFX_PATH):
-		notice_sfx = load(DEFAULT_NOTICE_SFX_PATH) as AudioStream
+func _get_card_background_color(channel: int) -> Color:
+	match channel:
+		LogChannel.CHARACTER:
+			return character_card_background_color
+		LogChannel.EXPLORATION:
+			return exploration_card_background_color
+		LogChannel.DEBUG:
+			return debug_card_background_color
+		_:
+			return card_background_color
+
+
+func _get_card_border_color(channel: int) -> Color:
+	match channel:
+		LogChannel.CHARACTER:
+			return character_card_border_color
+		LogChannel.EXPLORATION:
+			return exploration_card_border_color
+		LogChannel.DEBUG:
+			return debug_card_border_color
+		_:
+			return card_border_color
+
+
+func _get_card_text_color(channel: int) -> Color:
+	match channel:
+		LogChannel.CHARACTER:
+			return character_card_text_color
+		LogChannel.EXPLORATION:
+			return exploration_card_text_color
+		LogChannel.DEBUG:
+			return debug_card_text_color
+		_:
+			return card_text_color
+
+
+func _get_card_timestamp_text_color(channel: int) -> Color:
+	match channel:
+		LogChannel.CHARACTER:
+			return character_card_timestamp_text_color
+		LogChannel.EXPLORATION:
+			return exploration_card_timestamp_text_color
+		LogChannel.DEBUG:
+			return debug_card_timestamp_text_color
+		_:
+			return card_timestamp_text_color
+
+
+func _get_messages_for_channel(channel: int) -> Array[Dictionary]:
+	match channel:
+		LogChannel.CHARACTER:
+			return _character_messages
+		LogChannel.EXPLORATION:
+			return _exploration_messages
+		LogChannel.DEBUG:
+			return _debug_messages
+		_:
+			return _normal_messages
+
+
+func _get_queued_messages_for_channel(channel: int) -> Array[Dictionary]:
+	match channel:
+		LogChannel.CHARACTER:
+			return _queued_character_messages
+		LogChannel.EXPLORATION:
+			return _queued_exploration_messages
+		LogChannel.DEBUG:
+			return _queued_debug_messages
+		_:
+			return _queued_normal_messages
+
+
+func _is_processing_queue(channel: int) -> bool:
+	match channel:
+		LogChannel.CHARACTER:
+			return _is_processing_character_queue
+		LogChannel.EXPLORATION:
+			return _is_processing_exploration_queue
+		LogChannel.DEBUG:
+			return _is_processing_debug_queue
+		_:
+			return _is_processing_normal_queue
+
+
+func _set_processing_queue(channel: int, is_processing: bool) -> void:
+	match channel:
+		LogChannel.CHARACTER:
+			_is_processing_character_queue = is_processing
+		LogChannel.EXPLORATION:
+			_is_processing_exploration_queue = is_processing
+		LogChannel.DEBUG:
+			_is_processing_debug_queue = is_processing
+		_:
+			_is_processing_normal_queue = is_processing
+
+
+func _trim_message_array(messages: Array[Dictionary]) -> void:
+	while messages.size() > max_messages:
+		messages.pop_front()
+
+
+func _trim_all_old_messages() -> void:
+	_trim_message_array(_normal_messages)
+	_trim_message_array(_character_messages)
+	_trim_message_array(_exploration_messages)
+	_trim_message_array(_debug_messages)
 
 
 func _get_current_messages_count() -> int:
 	return _get_messages_for_channel(_current_channel).size()
 
 
-func _get_messages_for_channel(channel: int) -> Array[Dictionary]:
-	if channel == LogChannel.DEBUG:
-		return _debug_messages
-	if channel == LogChannel.CHARACTER:
-		return _character_messages
-	if channel == LogChannel.EXPLORATION:
-		return _exploration_messages
-	return _normal_messages
-
-
-func _get_queued_messages_for_channel(channel: int) -> Array[Dictionary]:
-	if channel == LogChannel.DEBUG:
-		return _queued_debug_messages
-	if channel == LogChannel.CHARACTER:
-		return _queued_character_messages
-	if channel == LogChannel.EXPLORATION:
-		return _queued_exploration_messages
-	return _queued_normal_messages
-
-
-func _is_processing_queue(channel: int) -> bool:
-	if channel == LogChannel.DEBUG:
-		return _is_processing_debug_queue
-	if channel == LogChannel.CHARACTER:
-		return _is_processing_character_queue
-	if channel == LogChannel.EXPLORATION:
-		return _is_processing_exploration_queue
-	return _is_processing_normal_queue
-
-
-func _set_processing_queue(channel: int, processing: bool) -> void:
-	if channel == LogChannel.DEBUG:
-		_is_processing_debug_queue = processing
-		return
-	if channel == LogChannel.CHARACTER:
-		_is_processing_character_queue = processing
-		return
-	if channel == LogChannel.EXPLORATION:
-		_is_processing_exploration_queue = processing
-		return
-	_is_processing_normal_queue = processing
-
-
-func _build_debug_log_export_text() -> String:
-	var lines: PackedStringArray = []
-	lines.append("Optimistic Debug Log")
-	lines.append("exported_at=%s" % _make_timestamp_text())
-	lines.append("message_count=%d" % _debug_messages.size())
-	if not _last_exported_debug_log_path.is_empty():
-		lines.append("previous_export=%s" % ProjectSettings.globalize_path(_last_exported_debug_log_path))
-	lines.append("---")
-	for index in range(_debug_messages.size()):
-		var entry: Dictionary = _debug_messages[index]
-		var issued_at_text := _get_message_entry_issued_at_text(entry)
-		if issued_at_text.is_empty():
-			lines.append("%03d: %s" % [index + 1, _get_message_entry_text(entry)])
-		else:
-			lines.append("%03d [%s] %s" % [index + 1, issued_at_text, _get_message_entry_text(entry)])
-	return "\n".join(lines) + "\n"
-
-
-func _make_debug_log_file_path() -> String:
-	return "%s/%s_%s.txt" % [DEBUG_LOG_EXPORT_DIRECTORY, DEBUG_LOG_EXPORT_PREFIX, _make_file_timestamp_text()]
-
-
-func _make_file_timestamp_text() -> String:
-	var stamp: Dictionary = Time.get_datetime_dict_from_system()
-	return "%04d%02d%02d_%02d%02d%02d" % [
-		int(stamp.get("year", 0)),
-		int(stamp.get("month", 0)),
-		int(stamp.get("day", 0)),
-		int(stamp.get("hour", 0)),
-		int(stamp.get("minute", 0)),
-		int(stamp.get("second", 0)),
-	]
-
-
-func _make_timestamp_text() -> String:
-	var stamp: Dictionary = Time.get_datetime_dict_from_system()
-	return "%04d-%02d-%02d %02d:%02d:%02d" % [
-		int(stamp.get("year", 0)),
-		int(stamp.get("month", 0)),
-		int(stamp.get("day", 0)),
-		int(stamp.get("hour", 0)),
-		int(stamp.get("minute", 0)),
-		int(stamp.get("second", 0)),
-	]
+func _to_packed_string_array(messages: Array[Dictionary]) -> PackedStringArray:
+	var result := PackedStringArray()
+	for message_entry in messages:
+		result.append(_get_message_entry_text(message_entry))
+	return result
 
 
 func _make_message_entry(message: String, issued_at_text: String = "") -> Dictionary:
-	var safe_issued_at_text := issued_at_text.strip_edges()
-	if safe_issued_at_text.is_empty():
-		safe_issued_at_text = _make_game_issued_at_text()
-	return {
+	var result := {
 		"message": message,
-		"issued_at_text": safe_issued_at_text,
+		"issued_at_text": issued_at_text,
 	}
-
-
-func _make_game_issued_at_text() -> String:
-	return "発行: %s" % MessageLogTimestampModule.make_game_timestamp_text(self)
+	return result
 
 
 func _get_message_entry_text(message_entry: Dictionary) -> String:
@@ -672,48 +696,69 @@ func _has_visible_timestamp(message_entry: Dictionary) -> bool:
 	return show_game_timestamp_on_cards and not _get_message_entry_issued_at_text(message_entry).is_empty()
 
 
-func _to_packed_string_array(messages: Array[Dictionary]) -> PackedStringArray:
-	var result := PackedStringArray()
+func _make_game_issued_at_text() -> String:
+	var game_clock := get_node_or_null("/root/GameClock")
+	if game_clock != null and game_clock.has_method("get_current_time_text"):
+		return "発行: %s" % str(game_clock.call("get_current_time_text"))
+	return ""
+
+
+func _play_notice_sfx() -> void:
+	_load_default_notice_sfx_if_needed()
+	if notice_sfx == null:
+		return
+	AudioPlayer.play_sfx(notice_sfx, 1.0, notice_sfx_volume_db)
+
+
+func _load_default_notice_sfx_if_needed() -> void:
+	if notice_sfx != null:
+		return
+	if ResourceLoader.exists(DEFAULT_NOTICE_SFX_PATH):
+		notice_sfx = load(DEFAULT_NOTICE_SFX_PATH) as AudioStream
+
+
+func _make_debug_log_file_path() -> String:
+	var datetime := Time.get_datetime_dict_from_system()
+	var timestamp := "%04d%02d%02d_%02d%02d%02d" % [
+		int(datetime["year"]),
+		int(datetime["month"]),
+		int(datetime["day"]),
+		int(datetime["hour"]),
+		int(datetime["minute"]),
+		int(datetime["second"]),
+	]
+	return "%s/%s_%s.txt" % [DEBUG_LOG_EXPORT_DIRECTORY, DEBUG_LOG_EXPORT_PREFIX, timestamp]
+
+
+func _build_debug_log_export_text() -> String:
+	var sections: Array[String] = []
+	sections.append("# Message Log Export")
+	sections.append("Generated at: %s" % Time.get_datetime_string_from_system())
+	sections.append("")
+	sections.append("## 通常")
+	sections.append_array(_get_export_lines(_normal_messages))
+	sections.append("")
+	sections.append("## キャラクター")
+	sections.append_array(_get_export_lines(_character_messages))
+	sections.append("")
+	sections.append("## 探索")
+	sections.append_array(_get_export_lines(_exploration_messages))
+	sections.append("")
+	sections.append("## デバッグ")
+	sections.append_array(_get_export_lines(_debug_messages))
+	return "\n".join(sections)
+
+
+func _get_export_lines(messages: Array[Dictionary]) -> PackedStringArray:
+	var lines := PackedStringArray()
+	if messages.is_empty():
+		lines.append("(empty)")
+		return lines
 	for message_entry in messages:
-		result.append(_get_message_entry_text(message_entry))
-	return result
-
-
-func _get_card_text_color(channel: int) -> Color:
-	if channel == LogChannel.DEBUG:
-		return debug_card_text_color
-	if channel == LogChannel.CHARACTER:
-		return character_card_text_color
-	if channel == LogChannel.EXPLORATION:
-		return exploration_card_text_color
-	return card_text_color
-
-
-func _get_card_timestamp_text_color(channel: int) -> Color:
-	if channel == LogChannel.DEBUG:
-		return debug_card_timestamp_text_color
-	if channel == LogChannel.CHARACTER:
-		return character_card_timestamp_text_color
-	if channel == LogChannel.EXPLORATION:
-		return exploration_card_timestamp_text_color
-	return card_timestamp_text_color
-
-
-func _make_card_style(channel: int) -> StyleBoxFlat:
-	var style := StyleBoxFlat.new()
-	if channel == LogChannel.DEBUG:
-		style.bg_color = debug_card_background_color
-		style.border_color = debug_card_border_color
-	elif channel == LogChannel.CHARACTER:
-		style.bg_color = character_card_background_color
-		style.border_color = character_card_border_color
-	elif channel == LogChannel.EXPLORATION:
-		style.bg_color = exploration_card_background_color
-		style.border_color = exploration_card_border_color
-	else:
-		style.bg_color = card_background_color
-		style.border_color = card_border_color
-	style.set_border_width_all(1)
-	style.set_corner_radius_all(10)
-	style.set_content_margin_all(0.0)
-	return style
+		var issued_at_text := _get_message_entry_issued_at_text(message_entry)
+		var message_text := _get_message_entry_text(message_entry)
+		if issued_at_text.is_empty():
+			lines.append("- %s" % message_text)
+		else:
+			lines.append("- %s / %s" % [issued_at_text, message_text])
+	return lines
