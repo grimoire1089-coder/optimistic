@@ -3,6 +3,7 @@ class_name BuildUiRuntime
 
 const PANEL_PATH := "res://Scenes/UI/Build/FurnitureBuildInventory.tscn"
 const PLACEMENT_PREVIEW_SCRIPT_PATH := "res://Scripts/Maps/Build/BuildFurniturePlacementPreview.gd"
+const CONNECTION_OVERLAY_SCRIPT_PATH := "res://Scripts/Maps/Build/BuildFurnitureConnectionOverlay.gd"
 const FLOOR_PLACEMENT_MODULE_SCRIPT_PATH := "res://Scripts/Maps/Floor/FloorPlacementModule.gd"
 const DEFAULT_FLOOR_TEXTURE_PATH := "res://Assets/Maps/Furniture/Floor/Floor_001.png"
 const PANEL_BOTTOM_RIGHT_MARGIN := Vector2(24.0, 92.0)
@@ -16,6 +17,7 @@ static func setup(button: Button, room_ok: bool) -> BuildModeController:
 
 	var controller := _get_or_create_controller(root, room_ok)
 	_ensure_grid_overlay(root)
+	_ensure_furniture_connection_overlay(root)
 	_ensure_placement_preview(root)
 	_ensure_floor_placement_module(root)
 	_ensure_furniture_inventory(button)
@@ -47,6 +49,27 @@ static func _ensure_grid_overlay(root: Node) -> void:
 	overlay.z_index = -20
 	overlay.room_map_path = NodePath("../RobinRoomMap")
 	overlay.build_mode_controller_path = NodePath("../BuildModeController")
+	root.add_child.call_deferred(overlay)
+
+
+static func _ensure_furniture_connection_overlay(root: Node) -> void:
+	if root.get_node_or_null("BuildFurnitureConnectionOverlay") != null:
+		return
+
+	var overlay_script := load(CONNECTION_OVERLAY_SCRIPT_PATH) as Script
+	if overlay_script == null:
+		return
+
+	var overlay := overlay_script.new() as Node2D
+	if overlay == null:
+		return
+
+	overlay.name = "BuildFurnitureConnectionOverlay"
+	overlay.z_index = 25
+	overlay.set("room_map_path", NodePath("../RobinRoomMap"))
+	overlay.set("furniture_placement_module_path", NodePath("../FurniturePlacementModule"))
+	overlay.set("build_mode_controller_path", NodePath("../BuildModeController"))
+	overlay.set("show_only_in_build_mode", true)
 	root.add_child.call_deferred(overlay)
 
 
@@ -102,7 +125,6 @@ static func _ensure_furniture_inventory(button: Button) -> void:
 	if existing_panel != null:
 		_place_panel_bottom_right(existing_panel)
 		return
-
 	var panel_scene := load(PANEL_PATH) as PackedScene
 	if panel_scene == null:
 		return
