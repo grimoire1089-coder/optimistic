@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="BgmPlaylistData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Systems/Audio/BgmPlaylistData.gd" id="1_playlist_script"]
+
+[resource]
+script = ExtResource("1_playlist_script")
+playlist_id = &"infrastructure_room"
+display_name = "インフラ室"
+tracks = PackedStringArray("res://Assets/Audio/BGM/Supermarket.ogg")
+shuffle_tracks = false
+start_index = 0
+restart_if_same = false
+advance_when_finished = true
