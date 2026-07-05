@@ -4,12 +4,20 @@
 
 [node name="CharacterNeedsPanel" type="PanelContainer"]
 script = ExtResource("1_3dghs")
+bar_height = 26.0
+row_min_height = 38.0
+row_separation = 10
+need_name_width = 74.0
+need_value_width = 40.0
+need_font_size = 15
 
 [node name="MarginContainer" type="MarginContainer" parent="."]
-theme_override_constants/margin_left = 12
-theme_override_constants/margin_top = 10
-theme_override_constants/margin_right = 12
-theme_override_constants/margin_bottom = 10
+theme_override_constants/margin_left = 14
+theme_override_constants/margin_top = 14
+theme_override_constants/margin_right = 14
+theme_override_constants/margin_bottom = 14
 
 [node name="Rows" type="VBoxContainer" parent="MarginContainer"]
-theme_override_constants/separation = 6
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 10
