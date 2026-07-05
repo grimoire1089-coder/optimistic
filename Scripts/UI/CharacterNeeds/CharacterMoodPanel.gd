@@ -5,6 +5,10 @@ const MOOD_MAX_VALUE := 100
 const BORDER_NOISE := 50
 const BORDER_FRAIL := 35
 const BORDER_BREAK := 20
+const POSITIVE_POINT_COLOR := Color(0.30, 1.00, 0.42, 1.0)
+const NEGATIVE_POINT_COLOR := Color(1.00, 0.28, 0.24, 1.0)
+const NEUTRAL_POINT_COLOR := Color(0.82, 0.95, 1.00, 1.0)
+const REMAINING_TIME_COLOR := Color(0.62, 0.88, 1.00, 1.0)
 
 @onready var _rows: VBoxContainer = $MarginContainer/Rows
 
@@ -121,14 +125,56 @@ func _add_entry_row(entry: CharacterMoodEntryInstance) -> void:
 	detail_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	detail_label.visible = false
 
+	var header := HBoxContainer.new()
+	header.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	header.add_theme_constant_override("separation", 6)
+	row.add_child(header)
+
 	var button := CheckButton.new()
-	button.text = "%s  %s" % [_get_signed_point_text(entry.get_point()), entry.get_display_name()]
+	button.text = entry.get_display_name()
 	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	button.toggled.connect(Callable(detail_label, "set_visible"))
-	row.add_child(button)
+	header.add_child(button)
+
+	var point_label := Label.new()
+	point_label.text = _get_signed_point_text(entry.get_point())
+	point_label.custom_minimum_size = Vector2(44, 0)
+	point_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	point_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	point_label.add_theme_font_size_override("font_size", 14)
+	point_label.add_theme_color_override("font_color", _get_point_color(entry.get_point()))
+	header.add_child(point_label)
+
+	var remaining_text := _get_remaining_time_text(entry)
+	if not remaining_text.is_empty():
+		var remaining_label := Label.new()
+		remaining_label.text = remaining_text
+		remaining_label.custom_minimum_size = Vector2(78, 0)
+		remaining_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		remaining_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		remaining_label.add_theme_font_size_override("font_size", 12)
+		remaining_label.add_theme_color_override("font_color", REMAINING_TIME_COLOR)
+		header.add_child(remaining_label)
+
 	row.add_child(detail_label)
+
+func _get_remaining_time_text(entry: CharacterMoodEntryInstance) -> String:
+	if entry == null or not entry.has_time_limit():
+		return ""
+	if _mood_module == null:
+		return ""
+	var remaining_minutes := entry.get_remaining_game_minutes(_mood_module.get_current_absolute_minute())
+	if remaining_minutes <= 0:
+		return "残り 0分"
+	var hours := remaining_minutes / 60
+	var minutes := remaining_minutes % 60
+	if hours > 0 and minutes > 0:
+		return "残り %d時間%d分" % [hours, minutes]
+	if hours > 0:
+		return "残り %d時間" % hours
+	return "残り %d分" % minutes
 
 func _get_decadence_mood_status(value: int) -> String:
 	if value < BORDER_BREAK:
@@ -143,6 +189,13 @@ func _get_signed_point_text(point: int) -> String:
 	if point > 0:
 		return "+%d" % point
 	return str(point)
+
+func _get_point_color(point: int) -> Color:
+	if point > 0:
+		return POSITIVE_POINT_COLOR
+	if point < 0:
+		return NEGATIVE_POINT_COLOR
+	return NEUTRAL_POINT_COLOR
 
 func _on_mood_changed(_old_value: int, _new_value: int) -> void:
 	_rebuild()
