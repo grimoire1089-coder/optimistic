@@ -1,6 +1,7 @@
 extends Control
 class_name EncyclopediaOverlay
 
+const DEFAULT_ENCYCLOPEDIA_BGM_PATH := "res://Assets/Audio/BGM/Picture book.ogg"
 const DEFAULT_FOOD_ITEM_PATHS := [
 	"res://Data/Items/Food/Food_0001_Nikuman.tres",
 	"res://Data/Items/Food/Food_0016_FelicityClassicBurger.tres",
@@ -21,6 +22,9 @@ const FOOD_ICON_SIZE := Vector2(64.0, 64.0)
 @export var detail_description_label_path: NodePath = NodePath("ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage/FoodDetailPanel/FoodDetailMargin/DetailScroll/FoodDetailRows/DetailDescriptionLabel")
 @export var detail_meta_label_path: NodePath = NodePath("ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage/FoodDetailPanel/FoodDetailMargin/DetailScroll/FoodDetailRows/DetailMetaLabel")
 @export var food_item_paths: PackedStringArray = PackedStringArray(DEFAULT_FOOD_ITEM_PATHS)
+@export var encyclopedia_bgm: AudioStream
+@export var encyclopedia_bgm_path: String = DEFAULT_ENCYCLOPEDIA_BGM_PATH
+@export var restore_previous_bgm: bool = true
 @export var pause_scene_tree: bool = true
 @export var pause_game_clock: bool = true
 
@@ -35,6 +39,10 @@ var _game_clock: Node
 var _food_entries: Array[Dictionary] = []
 var _food_row_buttons: Array[Button] = []
 var _selected_food_index: int = -1
+var _previous_bgm: AudioStream
+var _previous_bgm_position: float = 0.0
+var _has_previous_bgm: bool = false
+var _active_encyclopedia_bgm: AudioStream
 var _was_tree_paused: bool = false
 var _has_saved_tree_pause: bool = false
 var _was_clock_paused: bool = false
@@ -48,6 +56,7 @@ func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	visible = false
 	_resolve_refs()
+	_load_default_encyclopedia_bgm_if_needed()
 	_apply_visual_theme()
 	_setup_tabs()
 	_connect_close_button()
@@ -72,6 +81,7 @@ func open_encyclopedia() -> void:
 	visible = true
 	move_to_front()
 	_pause_game()
+	_play_encyclopedia_bgm()
 	_populate_food_entries()
 
 	var selected_row := _get_selected_food_row()
@@ -84,6 +94,7 @@ func close_encyclopedia() -> void:
 		return
 
 	visible = false
+	_restore_previous_bgm_if_needed()
 	_restore_pause_state()
 
 
@@ -96,6 +107,7 @@ func toggle_encyclopedia() -> void:
 
 func _exit_tree() -> void:
 	if visible:
+		_restore_previous_bgm_if_needed()
 		_restore_pause_state()
 
 
@@ -337,6 +349,69 @@ func _get_category_display_name(category_id: String) -> String:
 			return "レシピ"
 		_:
 			return category_id
+
+
+func _load_default_encyclopedia_bgm_if_needed() -> void:
+	if encyclopedia_bgm != null:
+		return
+	if encyclopedia_bgm_path.is_empty():
+		return
+	if ResourceLoader.exists(encyclopedia_bgm_path):
+		encyclopedia_bgm = load(encyclopedia_bgm_path) as AudioStream
+
+
+func _play_encyclopedia_bgm() -> void:
+	_load_default_encyclopedia_bgm_if_needed()
+	if encyclopedia_bgm == null:
+		return
+	if _active_encyclopedia_bgm == encyclopedia_bgm:
+		return
+
+	var audio_player := get_node_or_null("/root/AudioPlayer")
+	if audio_player == null or not audio_player.has_method("play_bgm"):
+		return
+
+	if restore_previous_bgm and not _has_previous_bgm:
+		if audio_player.has_method("get_current_bgm"):
+			_previous_bgm = audio_player.call("get_current_bgm") as AudioStream
+		else:
+			_previous_bgm = null
+		if audio_player.has_method("get_bgm_playback_position"):
+			_previous_bgm_position = float(audio_player.call("get_bgm_playback_position"))
+		else:
+			_previous_bgm_position = 0.0
+		_has_previous_bgm = true
+
+	_ensure_stream_loop(encyclopedia_bgm)
+	audio_player.call("play_bgm", encyclopedia_bgm, 0.0, false)
+	_active_encyclopedia_bgm = encyclopedia_bgm
+
+
+func _restore_previous_bgm_if_needed() -> void:
+	if not _has_previous_bgm:
+		_active_encyclopedia_bgm = null
+		return
+
+	var audio_player := get_node_or_null("/root/AudioPlayer")
+	if audio_player != null:
+		if _previous_bgm != null and audio_player.has_method("play_bgm"):
+			audio_player.call("play_bgm", _previous_bgm, _previous_bgm_position, true)
+		elif audio_player.has_method("stop_bgm"):
+			audio_player.call("stop_bgm")
+
+	_previous_bgm = null
+	_previous_bgm_position = 0.0
+	_has_previous_bgm = false
+	_active_encyclopedia_bgm = null
+
+
+func _ensure_stream_loop(stream: AudioStream) -> void:
+	if stream == null:
+		return
+	for property in stream.get_property_list():
+		if String(property.get("name", "")) == "loop":
+			stream.set("loop", true)
+			return
 
 
 func _save_pause_state() -> void:
