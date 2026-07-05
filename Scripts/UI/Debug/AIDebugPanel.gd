@@ -2,7 +2,7 @@ extends Control
 class_name AIDebugPanel
 
 const PANEL_SIZE := Vector2(356.0, 392.0)
-const PANEL_MARGIN := Vector2(24.0, 76.0)
+const PANEL_MARGIN := Vector2(24.0, 92.0)
 const TOGGLE_SIZE := Vector2(64.0, 44.0)
 const TOGGLE_MARGIN := Vector2(24.0, 24.0)
 const FPS_LABEL_SIZE := Vector2(86.0, 32.0)
@@ -11,17 +11,20 @@ const FPS_LABEL_MARGIN := Vector2(96.0, 30.0)
 @export var show_only_in_debug_build: bool = true
 @export var actor_path: NodePath = NodePath("../../Robin")
 @export var needs_module_path: NodePath = NodePath("../../Robin/AICharacterNeedsBundle/CharacterNeedsModule")
+@export var weather_system_path: NodePath = NodePath("/root/WeatherSystem")
 @export var refresh_interval_seconds: float = 0.2
 @export var closed_refresh_interval_seconds: float = 1.0
 
 var _actor: RobinWanderActor
 var _needs_module: CharacterNeedsModule
+var _weather_system: Node
 var _modal_guard: Control
 var _toggle_button: Button
 var _fps_panel: PanelContainer
 var _fps_label: Label
 var _panel: PanelContainer
 var _status_label: Label
+var _weather_label: Label
 var _needs_rows: Dictionary = {}
 var _refresh_timer := 0.0
 
@@ -188,6 +191,8 @@ func _build_panel() -> void:
 	_status_label.add_theme_font_size_override("font_size", 12)
 	rows.add_child(_status_label)
 
+	_build_weather_controls(rows)
+
 	var separator := HSeparator.new()
 	rows.add_child(separator)
 
@@ -223,6 +228,46 @@ func _build_panel() -> void:
 	snap_button.pressed.connect(_on_snap_grid_pressed)
 	_apply_button_style(snap_button, Color(0.02, 0.045, 0.055, 0.96), Color(0.2, 0.95, 1.0, 0.92), Color(0.78, 0.98, 1.0, 1.0))
 	rows.add_child(snap_button)
+
+
+func _build_weather_controls(parent: VBoxContainer) -> void:
+	var weather_separator := HSeparator.new()
+	parent.add_child(weather_separator)
+
+	_weather_label = Label.new()
+	_weather_label.name = "WeatherLabel"
+	_weather_label.text = _make_weather_text()
+	_weather_label.add_theme_color_override("font_color", Color(0.82, 0.95, 1.0, 1.0))
+	_weather_label.add_theme_font_size_override("font_size", 12)
+	parent.add_child(_weather_label)
+
+	var weather_buttons := HBoxContainer.new()
+	weather_buttons.name = "WeatherButtons"
+	weather_buttons.add_theme_constant_override("separation", 4)
+	parent.add_child(weather_buttons)
+
+	var sunny_button := _make_weather_button("晴れ", "天候を晴れにします")
+	sunny_button.pressed.connect(Callable(self, "_on_set_weather_pressed").bind(&"sunny"))
+	weather_buttons.add_child(sunny_button)
+
+	var rain_button := _make_weather_button("雨", "天候を雨にします。雨の環境音確認用。")
+	rain_button.pressed.connect(Callable(self, "_on_set_weather_pressed").bind(&"rain"))
+	weather_buttons.add_child(rain_button)
+
+	var roll_button := _make_weather_button("抽選", "今日の天候を抽選し直します")
+	roll_button.pressed.connect(_on_roll_weather_pressed)
+	weather_buttons.add_child(roll_button)
+
+
+func _make_weather_button(label_text: String, tooltip_text: String) -> Button:
+	var button := Button.new()
+	button.custom_minimum_size = Vector2(74.0, 28.0)
+	button.text = label_text
+	button.tooltip_text = tooltip_text
+	button.focus_mode = Control.FOCUS_NONE
+	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	_apply_button_style(button, Color(0.02, 0.035, 0.055, 0.96), Color(0.34, 0.78, 1.0, 0.88), Color(0.82, 0.95, 1.0, 1.0))
+	return button
 
 
 func _rebuild_need_rows(parent: VBoxContainer) -> void:
@@ -339,6 +384,29 @@ func _on_need_set_pressed(need_id: StringName, value: float) -> void:
 	_refresh_panel()
 
 
+func _on_set_weather_pressed(weather_id: StringName) -> void:
+	_resolve_refs()
+	if _weather_system == null or not _weather_system.has_method("set_weather"):
+		_push_debug("[AI Debug] WeatherSystem が見つかりません")
+		return
+	_weather_system.call("set_weather", weather_id)
+	_push_debug("[AI Debug] 天候を %s に変更" % _get_weather_display_name(weather_id))
+	_refresh_panel()
+
+
+func _on_roll_weather_pressed() -> void:
+	_resolve_refs()
+	if _weather_system == null or not _weather_system.has_method("update_daily_weather"):
+		_push_debug("[AI Debug] WeatherSystem が見つかりません")
+		return
+	var day: int = 1
+	if GameClock != null:
+		day = int(GameClock.day)
+	_weather_system.call("update_daily_weather", day)
+	_push_debug("[AI Debug] 天候を抽選更新")
+	_refresh_panel()
+
+
 func _on_reset_and_warp_pressed() -> void:
 	if _actor == null:
 		_push_debug("[AI Debug] 対象AIが見つかりません")
@@ -372,6 +440,8 @@ func _refresh_panel() -> void:
 
 	if _status_label != null:
 		_status_label.text = _make_status_text()
+	if _weather_label != null:
+		_weather_label.text = _make_weather_text()
 
 	if _needs_rows.is_empty():
 		return
@@ -403,6 +473,28 @@ func _make_status_text() -> String:
 	if _actor.has_method("get_debug_actor_grid_summary"):
 		grid_text = str(_actor.call("get_debug_actor_grid_summary"))
 	return "対象: %s / 行動: %s\n%s" % [_actor.display_name, action_text, grid_text]
+
+
+func _make_weather_text() -> String:
+	_resolve_refs()
+	if _weather_system == null:
+		return "天候: WeatherSystem 未接続"
+	var weather_id: StringName = &""
+	if _weather_system.has_method("get_weather_id"):
+		weather_id = StringName(String(_weather_system.call("get_weather_id")))
+	return "天候: %s" % _get_weather_display_name(weather_id)
+
+
+func _get_weather_display_name(weather_id: StringName) -> String:
+	if _weather_system != null and _weather_system.has_method("get_weather_display_name"):
+		return String(_weather_system.call("get_weather_display_name", weather_id))
+	match weather_id:
+		&"rain":
+			return "雨"
+		&"sunny":
+			return "晴れ"
+		_:
+			return String(weather_id)
 
 
 func _get_need_instances() -> Array[NeedInstance]:
@@ -484,3 +576,5 @@ func _resolve_refs() -> void:
 		_actor = get_node_or_null(actor_path) as RobinWanderActor
 	if (_needs_module == null or not is_instance_valid(_needs_module)) and not needs_module_path.is_empty():
 		_needs_module = get_node_or_null(needs_module_path) as CharacterNeedsModule
+	if (_weather_system == null or not is_instance_valid(_weather_system)) and not weather_system_path.is_empty():
+		_weather_system = get_node_or_null(weather_system_path)
