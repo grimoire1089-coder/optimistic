@@ -322,7 +322,12 @@ func _get_gathering_amount_plus_bonus() -> int:
 	if upgrade_level <= 0:
 		return 0
 	var chance: float = clampf(float(upgrade_level) * 0.10, 0.0, 1.0)
-	return 1 if _rng.randf() < chance else 0
+	if _rng.randf() >= chance:
+		return 0
+	var skills_module: Node = _get_skills_module()
+	if skills_module != null and skills_module.has_method("get_gathering_amount_plus_bonus_amount"):
+		return maxi(int(skills_module.call("get_gathering_amount_plus_bonus_amount")), 1)
+	return maxi(ceili(float(upgrade_level) / 2.0), 1)
 
 
 func _add_gathering_experience() -> void:
