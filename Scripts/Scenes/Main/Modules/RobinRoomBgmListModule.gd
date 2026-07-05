@@ -8,25 +8,25 @@ extends Node
 @export_range(0, 999, 1) var start_index: int = 0
 @export var restart_if_same: bool = true
 @export var stop_bgm_on_exit: bool = true
-@export var finish_check_interval_seconds: float = 1.0
 
 var _current_index: int = -1
 var _started: bool = false
 var _rng := RandomNumberGenerator.new()
 var _track_cache: Dictionary = {}
 var _valid_track_count := -1
-var _finish_check_timer := 0.0
 
 
 func _ready() -> void:
 	_rng.randomize()
-	set_process(advance_when_finished)
+	set_process(false)
+	_connect_audio_player_finished()
 
 	if autoplay:
 		play_start_track()
 
 
 func _exit_tree() -> void:
+	_disconnect_audio_player_finished()
 	if not stop_bgm_on_exit:
 		return
 	if not _started:
@@ -35,25 +35,6 @@ func _exit_tree() -> void:
 		return
 
 	AudioPlayer.stop_bgm()
-
-
-func _process(delta: float) -> void:
-	if not _started:
-		return
-	if not advance_when_finished:
-		return
-	_finish_check_timer -= maxf(delta, 0.0)
-	if _finish_check_timer > 0.0:
-		return
-	_finish_check_timer = maxf(finish_check_interval_seconds, 0.1)
-	if _get_valid_track_count() <= 0:
-		return
-	if AudioPlayer.get_current_bgm() != _get_current_stream():
-		return
-	if AudioPlayer.is_bgm_playing():
-		return
-
-	play_next_track()
 
 
 func play_start_track() -> void:
@@ -107,6 +88,30 @@ func clear_track_cache() -> void:
 	_valid_track_count = -1
 
 
+func _connect_audio_player_finished() -> void:
+	var finished_callable := Callable(self, "_on_audio_player_bgm_finished")
+	if not AudioPlayer.bgm_finished.is_connected(finished_callable):
+		AudioPlayer.bgm_finished.connect(finished_callable)
+
+
+func _disconnect_audio_player_finished() -> void:
+	var finished_callable := Callable(self, "_on_audio_player_bgm_finished")
+	if AudioPlayer.bgm_finished.is_connected(finished_callable):
+		AudioPlayer.bgm_finished.disconnect(finished_callable)
+
+
+func _on_audio_player_bgm_finished(finished_stream: AudioStream) -> void:
+	if not _started:
+		return
+	if not advance_when_finished:
+		return
+	if finished_stream == null:
+		return
+	if finished_stream != _get_current_stream():
+		return
+	play_next_track()
+
+
 func _play_first_valid_from(index: int, step: int) -> bool:
 	if bgm_paths.is_empty():
 		return false
@@ -150,7 +155,6 @@ func _play_index(index: int) -> bool:
 
 	_current_index = _normalize_index(index)
 	_started = true
-	_finish_check_timer = maxf(finish_check_interval_seconds, 0.1)
 	AudioPlayer.play_bgm(stream, 0.0, restart_if_same)
 	return true
 
