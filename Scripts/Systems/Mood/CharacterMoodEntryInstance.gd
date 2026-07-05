@@ -37,6 +37,14 @@ func get_point() -> int:
 		return 0
 	return data.point
 
+func has_time_limit() -> bool:
+	return end_absolute_minute >= 0
+
+func get_remaining_game_minutes(current_absolute_minute: int) -> int:
+	if not has_time_limit():
+		return -1
+	return maxi(end_absolute_minute - current_absolute_minute, 0)
+
 func should_end_on_season_changed(new_season_id: String, new_season_year: int) -> bool:
 	if data == null:
 		return true
