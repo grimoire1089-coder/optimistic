@@ -10,5 +10,6 @@ tracks = PackedStringArray("res://Assets/Audio/Ambience/Rain.ogg")
 shuffle_tracks = false
 start_index = 0
 restart_if_same = false
+loop_tracks = true
 fade_out_seconds = 0.5
 fade_in_seconds = 0.8
