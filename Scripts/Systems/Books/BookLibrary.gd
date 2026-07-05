@@ -5,6 +5,7 @@ signal library_changed
 const SAVE_KEY := "owned_book_ids"
 const READ_PAGES_SAVE_KEY := "book_read_pages"
 const COMPLETED_BOOK_IDS_SAVE_KEY := "completed_book_ids"
+const TRAVEL_UNLOCK_NOTICE_MODULE_SCRIPT_PATH := "res://Scripts/Systems/Books/Modules/BookTravelUnlockNoticeModule.gd"
 
 @export var book_resource_paths: PackedStringArray = PackedStringArray([
 	"res://Data/Books/Book_0001_LapisPrimer.tres",
@@ -18,6 +19,7 @@ var _known_book_ids_by_path: Dictionary = {}
 var _owned_book_ids: Dictionary = {}
 var _book_read_pages: Dictionary = {}
 var _completed_book_ids: Dictionary = {}
+var _travel_unlock_notice_module: Node
 
 
 func _ready() -> void:
@@ -47,6 +49,7 @@ func add_book(book: BookData) -> bool:
 		return false
 	_owned_book_ids[book_id] = true
 	library_changed.emit()
+	_notify_travel_unlock_if_needed(book)
 	return true
 
 
@@ -249,6 +252,32 @@ func _load_book_from_path(path: String) -> BookData:
 	var book := load(path) as BookData
 	register_book(book)
 	return book
+
+
+func _notify_travel_unlock_if_needed(book: BookData) -> void:
+	if book == null or not book.has_travel_unlock():
+		return
+	var module := _get_travel_unlock_notice_module()
+	if module == null or not module.has_method("push_travel_unlock_notice"):
+		return
+	module.call("push_travel_unlock_notice", book)
+
+
+func _get_travel_unlock_notice_module() -> Node:
+	if _travel_unlock_notice_module != null and is_instance_valid(_travel_unlock_notice_module):
+		return _travel_unlock_notice_module
+	if not ResourceLoader.exists(TRAVEL_UNLOCK_NOTICE_MODULE_SCRIPT_PATH):
+		return null
+	var script := load(TRAVEL_UNLOCK_NOTICE_MODULE_SCRIPT_PATH) as Script
+	if script == null:
+		return null
+	var module := script.new() as Node
+	if module == null:
+		return null
+	module.name = "BookTravelUnlockNoticeModule"
+	add_child(module)
+	_travel_unlock_notice_module = module
+	return _travel_unlock_notice_module
 
 
 func _get_book_id_from_variant(value: Variant) -> StringName:
