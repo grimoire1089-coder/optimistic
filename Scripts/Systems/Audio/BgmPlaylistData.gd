@@ -8,6 +8,8 @@ class_name BgmPlaylistData
 @export_range(0, 999, 1) var start_index: int = 0
 @export var restart_if_same: bool = true
 @export var advance_when_finished: bool = true
+@export_range(0.0, 10.0, 0.05) var fade_out_seconds: float = 0.5
+@export_range(0.0, 10.0, 0.05) var fade_in_seconds: float = 0.5
 
 
 func get_track_count() -> int:
