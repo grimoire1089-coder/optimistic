@@ -4,6 +4,7 @@
 [ext_resource type="Texture2D" path="res://Assets/Maps/Furniture/Utility/Table_001.png" id="2_table_texture"]
 
 [node name="TableFurniture" type="Node2D"]
+z_index = 1
 script = ExtResource("1_table_script")
 display_name = "テーブル"
 furniture_id = &"table"
