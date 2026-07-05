@@ -5,13 +5,13 @@
 [resource]
 script = ExtResource("1_hunger")
 need_id = &"hunger"
-display_name = "満腹度"
-description = "食事や軽食で回復する欲求。"
+display_name = "栄養"
+description = "食事や軽食で回復する栄養状態。"
 max_value = 100.0
 start_value = 100.0
-decay_per_game_minute = 0.06
+decay_per_game_minute = 0.00992
 low_threshold = 30.0
 critical_threshold = 10.0
-low_mood_id = &"need_hunger_low"
-critical_mood_id = &"need_hunger_critical"
+low_mood_id = &"hunger_low"
+critical_mood_id = &"hunger_shutdown_risk"
 recovery_action_id = &"eat"
