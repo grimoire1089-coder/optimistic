@@ -21,14 +21,14 @@ shadow_color = Color(0.08, 0.62, 0.95, 0.28)
 shadow_size = 10
 
 [node name="AICharacterHud" type="PanelContainer"]
-custom_minimum_size = Vector2(420, 336)
+custom_minimum_size = Vector2(480, 456)
 anchors_preset = 3
 anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -444.0
-offset_top = -428.0
+offset_left = -504.0
+offset_top = -548.0
 offset_right = -24.0
 offset_bottom = -92.0
 grow_horizontal = 0
@@ -70,7 +70,7 @@ theme_override_colors/font_color = Color(0.82, 0.95, 1, 1)
 theme_override_font_sizes/font_size = 13
 
 [node name="Tabs" type="TabContainer" parent="MarginContainer/Rows"]
-custom_minimum_size = Vector2(0, 214)
+custom_minimum_size = Vector2(0, 334)
 layout_mode = 2
 size_flags_vertical = 3
 current_tab = 0
@@ -80,7 +80,7 @@ layout_mode = 2
 
 [node name="CharacterNeedsPanel" parent="MarginContainer/Rows/Tabs/NeedsTab" instance=ExtResource("2_needs_panel")]
 layout_mode = 2
-bar_width = 230.0
+bar_width = 290.0
 
 [node name="MoodTab" type="MarginContainer" parent="MarginContainer/Rows/Tabs"]
 visible = false
