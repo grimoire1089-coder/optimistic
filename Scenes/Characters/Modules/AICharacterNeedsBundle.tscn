@@ -36,3 +36,67 @@ script = ExtResource("6_multi_need_mood_bridge")
 needs_module_path = NodePath("../CharacterNeedsModule")
 mood_module_path = NodePath("../CharacterMoodModule")
 watched_need_id = &"hunger"
+
+[node name="WaterMoodBridge" type="Node" parent="."]
+script = ExtResource("6_multi_need_mood_bridge")
+needs_module_path = NodePath("../CharacterNeedsModule")
+mood_module_path = NodePath("../CharacterMoodModule")
+watched_need_id = &"water"
+threshold_entries = Array[Dictionary]([{
+"threshold_ratio": 0.5,
+"entry_path": "res://Data/Mood/Entries/water_thirsty.tres"
+}, {
+"threshold_ratio": 0.3,
+"entry_path": "res://Data/Mood/Entries/water_dehydrated.tres"
+}, {
+"threshold_ratio": 0.1,
+"entry_path": "res://Data/Mood/Entries/water_circulation_dry.tres"
+}])
+
+[node name="HygieneMoodBridge" type="Node" parent="."]
+script = ExtResource("6_multi_need_mood_bridge")
+needs_module_path = NodePath("../CharacterNeedsModule")
+mood_module_path = NodePath("../CharacterMoodModule")
+watched_need_id = &"hygiene"
+threshold_entries = Array[Dictionary]([{
+"threshold_ratio": 0.5,
+"entry_path": "res://Data/Mood/Entries/hygiene_surface_dirty.tres"
+}, {
+"threshold_ratio": 0.3,
+"entry_path": "res://Data/Mood/Entries/hygiene_outer_contamination.tres"
+}, {
+"threshold_ratio": 0.1,
+"entry_path": "res://Data/Mood/Entries/hygiene_protocol_broken.tres"
+}])
+
+[node name="FunMoodBridge" type="Node" parent="."]
+script = ExtResource("6_multi_need_mood_bridge")
+needs_module_path = NodePath("../CharacterNeedsModule")
+mood_module_path = NodePath("../CharacterMoodModule")
+watched_need_id = &"fun"
+threshold_entries = Array[Dictionary]([{
+"threshold_ratio": 0.5,
+"entry_path": "res://Data/Mood/Entries/fun_bored.tres"
+}, {
+"threshold_ratio": 0.3,
+"entry_path": "res://Data/Mood/Entries/fun_emotion_worn.tres"
+}, {
+"threshold_ratio": 0.1,
+"entry_path": "res://Data/Mood/Entries/fun_pleasure_circuit_stall.tres"
+}])
+
+[node name="SocialMoodBridge" type="Node" parent="."]
+script = ExtResource("6_multi_need_mood_bridge")
+needs_module_path = NodePath("../CharacterNeedsModule")
+mood_module_path = NodePath("../CharacterMoodModule")
+watched_need_id = &"social"
+threshold_entries = Array[Dictionary]([{
+"threshold_ratio": 0.5,
+"entry_path": "res://Data/Mood/Entries/social_low_contact.tres"
+}, {
+"threshold_ratio": 0.3,
+"entry_path": "res://Data/Mood/Entries/social_lonely_noise.tres"
+}, {
+"threshold_ratio": 0.1,
+"entry_path": "res://Data/Mood/Entries/social_connection_lost.tres"
+}])
