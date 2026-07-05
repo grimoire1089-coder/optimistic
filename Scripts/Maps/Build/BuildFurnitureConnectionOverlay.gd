@@ -6,6 +6,7 @@ class_name BuildFurnitureConnectionOverlay
 @export var build_mode_controller_path: NodePath = NodePath("../BuildModeController")
 @export var show_only_in_build_mode: bool = true
 @export var refresh_interval_seconds: float = 0.2
+@export var minimum_overlap_cells: int = 2
 @export var line_color: Color = Color(0.25, 1.0, 0.95, 0.86)
 @export var line_glow_color: Color = Color(0.25, 1.0, 0.95, 0.20)
 @export var endpoint_color: Color = Color(0.85, 1.0, 1.0, 0.95)
@@ -62,8 +63,8 @@ func _draw() -> void:
 		var points := _get_connection_points(connection)
 		if points.is_empty():
 			continue
-		var start := points.get("start", Vector2.ZERO) as Vector2
-		var end := points.get("end", Vector2.ZERO) as Vector2
+		var start: Vector2 = points.get("start", Vector2.ZERO)
+		var end: Vector2 = points.get("end", Vector2.ZERO)
 		draw_line(start, end, line_glow_color, maxf(glow_width, line_width))
 		draw_line(start, end, line_color, line_width)
 		draw_circle(start, endpoint_radius, endpoint_color)
@@ -115,28 +116,10 @@ func _get_connection_points(connection: Dictionary) -> Dictionary:
 	var table_grid: Vector2i = connection.get("table_grid", Vector2i.ZERO)
 	var table_footprint: Vector2i = connection.get("table_footprint", Vector2i(1, 1))
 
-	var chair_rect := _room_map.get_grid_area_rect(chair_grid, chair_footprint)
-	var table_rect := _room_map.get_grid_area_rect(table_grid, table_footprint)
-	var cell_size := _room_map.get_cell_size()
-	var grid_origin := _room_map.get_grid_origin()
-
-	if chair_grid.x + chair_footprint.x == table_grid.x and _ranges_overlap(chair_grid.y, chair_grid.y + chair_footprint.y, table_grid.y, table_grid.y + table_footprint.y):
-		var y := _grid_overlap_center_world(chair_grid.y, chair_grid.y + chair_footprint.y, table_grid.y, table_grid.y + table_footprint.y, grid_origin.y, cell_size.y)
-		return {"start": Vector2(chair_rect.end.x, y), "end": Vector2(table_rect.position.x, y)}
-
-	if table_grid.x + table_footprint.x == chair_grid.x and _ranges_overlap(chair_grid.y, chair_grid.y + chair_footprint.y, table_grid.y, table_grid.y + table_footprint.y):
-		var y := _grid_overlap_center_world(chair_grid.y, chair_grid.y + chair_footprint.y, table_grid.y, table_grid.y + table_footprint.y, grid_origin.y, cell_size.y)
-		return {"start": Vector2(chair_rect.position.x, y), "end": Vector2(table_rect.end.x, y)}
-
-	if chair_grid.y + chair_footprint.y == table_grid.y and _ranges_overlap(chair_grid.x, chair_grid.x + chair_footprint.x, table_grid.x, table_grid.x + table_footprint.x):
-		var x := _grid_overlap_center_world(chair_grid.x, chair_grid.x + chair_footprint.x, table_grid.x, table_grid.x + table_footprint.x, grid_origin.x, cell_size.x)
-		return {"start": Vector2(x, chair_rect.end.y), "end": Vector2(x, table_rect.position.y)}
-
-	if table_grid.y + table_footprint.y == chair_grid.y and _ranges_overlap(chair_grid.x, chair_grid.x + chair_footprint.x, table_grid.x, table_grid.x + table_footprint.x):
-		var x := _grid_overlap_center_world(chair_grid.x, chair_grid.x + chair_footprint.x, table_grid.x, table_grid.x + table_footprint.x, grid_origin.x, cell_size.x)
-		return {"start": Vector2(x, chair_rect.position.y), "end": Vector2(x, table_rect.end.y)}
-
-	return {}
+	return {
+		"start": _room_map.grid_to_world_area_center(chair_grid, chair_footprint),
+		"end": _room_map.grid_to_world_area_center(table_grid, table_footprint),
+	}
 
 
 func _are_facing_each_other(chair_grid: Vector2i, chair_footprint: Vector2i, table_grid: Vector2i, table_footprint: Vector2i) -> bool:
@@ -152,20 +135,15 @@ func _are_facing_each_other(chair_grid: Vector2i, chair_footprint: Vector2i, tab
 	var table_bottom := table_grid.y + safe_table_footprint.y
 
 	if chair_right == table_left or table_right == chair_left:
-		return _ranges_overlap(chair_top, chair_bottom, table_top, table_bottom)
+		return _ranges_overlap_by_required_cells(chair_top, chair_bottom, table_top, table_bottom)
 	if chair_bottom == table_top or table_bottom == chair_top:
-		return _ranges_overlap(chair_left, chair_right, table_left, table_right)
+		return _ranges_overlap_by_required_cells(chair_left, chair_right, table_left, table_right)
 	return false
 
 
-func _ranges_overlap(a_start: int, a_end: int, b_start: int, b_end: int) -> bool:
-	return maxi(a_start, b_start) < mini(a_end, b_end)
-
-
-func _grid_overlap_center_world(a_start: int, a_end: int, b_start: int, b_end: int, origin: float, cell_axis_size: float) -> float:
-	var overlap_start := maxi(a_start, b_start)
-	var overlap_end := mini(a_end, b_end)
-	return origin + (float(overlap_start) + float(overlap_end)) * 0.5 * cell_axis_size
+func _ranges_overlap_by_required_cells(a_start: int, a_end: int, b_start: int, b_end: int) -> bool:
+	var overlap_cells := mini(a_end, b_end) - maxi(a_start, b_start)
+	return overlap_cells >= maxi(minimum_overlap_cells, 1)
 
 
 func _is_chair_furniture(furniture: Node2D) -> bool:
