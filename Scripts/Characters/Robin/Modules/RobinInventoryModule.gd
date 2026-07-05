@@ -100,7 +100,7 @@ func add_item(
 			item["need_effect_path"] = need_effect_path
 			item["can_discard"] = can_discard
 			item["can_transfer"] = can_transfer
-			_notify_food_encyclopedia_if_needed(category_id, item_id)
+			_notify_food_encyclopedia_if_needed(category_id, item_id, display_name)
 			inventory_changed.emit()
 			return true
 
@@ -123,7 +123,7 @@ func add_item(
 		"can_discard": can_discard,
 		"can_transfer": can_transfer,
 	})
-	_notify_food_encyclopedia_if_needed(category_id, item_id)
+	_notify_food_encyclopedia_if_needed(category_id, item_id, display_name)
 	inventory_changed.emit()
 	return true
 
@@ -225,7 +225,7 @@ func _add_initial_items_once() -> void:
 		add_food_item(item_data, 1)
 
 
-func _notify_food_encyclopedia_if_needed(category_id: StringName, item_id: StringName) -> void:
+func _notify_food_encyclopedia_if_needed(category_id: StringName, item_id: StringName, display_name: String = "") -> void:
 	if item_id == &"":
 		return
 	if not _is_food_encyclopedia_category(category_id):
@@ -233,7 +233,7 @@ func _notify_food_encyclopedia_if_needed(category_id: StringName, item_id: Strin
 	var encyclopedia := get_node_or_null("/root/FoodEncyclopedia")
 	if encyclopedia == null or not encyclopedia.has_method("unlock_item_id"):
 		return
-	encyclopedia.call("unlock_item_id", item_id)
+	encyclopedia.call("unlock_item_id", item_id, display_name)
 
 
 func _is_food_encyclopedia_category(category_id: StringName) -> bool:
