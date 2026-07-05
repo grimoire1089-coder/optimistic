@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="CharacterMoodEntryData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Systems/Mood/CharacterMoodEntryData.gd" id="1_entry"]
+
+[resource]
+script = ExtResource("1_entry")
+entry_id = &"social_low_contact"
+display_name = "交流不足"
+detail_text = "交流が少なく、心情が少し沈み始めています。"
+body = "交流が少なく、心情が少し沈み始めています。"
+point = -8
