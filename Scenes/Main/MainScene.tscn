@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://mk1ctmvwoywn"]
 
-[ext_resource type="Script" uid="uid://g87b50guc8nn" path="res://Scripts/Scenes/Main/MainScene.gd" id="1_main_script"]
+[ext_resource type="Script" path="res://Scripts/Scenes/Main/MainSceneLayoutSynced.gd" id="1_main_script"]
 [ext_resource type="PackedScene" uid="uid://cb0fyv6e2f40m" path="res://Scenes/Characters/Robin/RobinWanderActor.tscn" id="2_robin"]
 [ext_resource type="Script" uid="uid://cst0ytwwy48v" path="res://Scripts/Scenes/Main/Modules/CanvasGlowEnvironmentModule.gd" id="3_canvas_glow"]
 [ext_resource type="PackedScene" path="res://Scenes/UI/HUD/ClockDisplay.tscn" id="4_clock_display"]
@@ -30,7 +30,7 @@
 [ext_resource type="PackedScene" path="res://Scenes/UI/Books/BookLibraryUI.tscn" id="27_book_library_ui"]
 [ext_resource type="PackedScene" path="res://Scenes/UI/Billing/BillPanel.tscn" id="28_bill_panel"]
 [ext_resource type="PackedScene" path="res://Scenes/UI/HUD/BillButton.tscn" id="29_bill_button"]
-[ext_resource type="Script" uid="uid://cc1ned3ctnwlq" path="res://Scripts/UI/HUD/Modules/HudButtonActiveFrameController.gd" id="30_hud_active_frame"]
+[ext_resource type="Script" path="res://Scripts/UI/HUD/Modules/HudButtonFrameController.gd" id="30_hud_active_frame"]
 [ext_resource type="PackedScene" path="res://Scenes/UI/HUD/MoveButton.tscn" id="31_move_button"]
 [ext_resource type="PackedScene" path="res://Scenes/UI/HUD/MoveMenu.tscn" id="32_move_menu"]
 [ext_resource type="Script" path="res://Scripts/UI/Debug/SimpleProfilerHud.gd" id="33_profiler_hud"]
