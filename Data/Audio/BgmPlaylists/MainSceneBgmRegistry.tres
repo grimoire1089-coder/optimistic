@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="BgmPlaylistRegistry" load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Systems/Audio/BgmPlaylistRegistry.gd" id="1_registry_script"]
+[ext_resource type="Resource" path="res://Data/Audio/BgmPlaylists/RobinRoomBgmPlaylist.tres" id="2_robin_room_playlist"]
+[ext_resource type="Resource" path="res://Data/Audio/BgmPlaylists/InfrastructureRoomBgmPlaylist.tres" id="3_infrastructure_room_playlist"]
+
+[resource]
+script = ExtResource("1_registry_script")
+default_playlist = ExtResource("2_robin_room_playlist")
+location_ids = PackedStringArray("robin_room", "infrastructure_room")
+playlists = Array[Resource]([ExtResource("2_robin_room_playlist"), ExtResource("3_infrastructure_room_playlist")])
