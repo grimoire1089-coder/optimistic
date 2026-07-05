@@ -32,6 +32,8 @@ const DINING_LOCK_REASON := "DiningDrink"
 @export var prefer_connected_dining_seat: bool = true
 @export var dining_minimum_overlap_cells: int = 2
 @export var snap_to_connected_dining_seat_when_drinking: bool = true
+@export var lower_actor_behind_dining_furniture_when_drinking: bool = true
+@export var dining_actor_z_index: int = -30
 
 var _body: CharacterBody2D
 var _needs_module: CharacterNeedsModule
@@ -63,6 +65,9 @@ var _target_dining_seat_cell: Vector2i = INVALID_GRID_POSITION
 var _target_dining_seat_grid_position: Vector2i = INVALID_GRID_POSITION
 var _target_dining_seat_grid_footprint: Vector2i = Vector2i.ZERO
 var _dining_seat_used_for_current_drink := false
+var _body_z_override_active := false
+var _saved_body_z_index := 0
+var _saved_body_z_as_relative := true
 var _path_cells: Array[Vector2i] = []
 
 
@@ -321,6 +326,7 @@ func _begin_drinking(food_data: FoodItemData, start_progress: float) -> void:
 	_snap_body_to_drink_grid_center()
 	_snap_body_to_dining_seat_if_needed()
 	_lock_dining_seat_if_needed()
+	_apply_body_z_override_if_needed()
 	_drink_food_data = food_data
 	_is_drinking = true
 	_is_active = true
@@ -369,6 +375,30 @@ func _lock_dining_seat_if_needed() -> void:
 	_target_dining_seat.set_meta(BUILD_LOCK_REASON_META, DINING_LOCK_REASON)
 
 
+func _apply_body_z_override_if_needed() -> void:
+	if not lower_actor_behind_dining_furniture_when_drinking:
+		return
+	if not _dining_seat_used_for_current_drink:
+		return
+	if _body == null or _body_z_override_active:
+		return
+	_body_z_override_active = true
+	_saved_body_z_index = _body.z_index
+	_saved_body_z_as_relative = _body.z_as_relative
+	_body.z_as_relative = true
+	_body.z_index = dining_actor_z_index
+
+
+func _restore_body_z_override() -> void:
+	if not _body_z_override_active:
+		return
+	_body_z_override_active = false
+	if _body == null:
+		return
+	_body.z_as_relative = _saved_body_z_as_relative
+	_body.z_index = _saved_body_z_index
+
+
 func _update_drinking(delta: float) -> void:
 	var duration := maxf(drink_duration_seconds, 0.1)
 	_drink_timer = minf(_drink_timer + maxf(delta, 0.0), duration)
@@ -383,6 +413,7 @@ func _complete_drinking() -> void:
 	var food_data := _drink_food_data
 	_is_drinking = false
 	_drink_food_data = null
+	_restore_body_z_override()
 	if food_data != null:
 		_consume_water_bottle(food_data)
 	_finish_hydrate_action()
@@ -455,6 +486,7 @@ func _record_bill_water_usage(units: int, reason: String) -> void:
 
 
 func _finish_hydrate_action() -> void:
+	_restore_body_z_override()
 	_clear_hydrate_target()
 	_clear_dining_seat_target()
 	_move_start_distance = 0.0
@@ -464,6 +496,7 @@ func _finish_hydrate_action() -> void:
 
 
 func _reset_hydrate_action() -> void:
+	_restore_body_z_override()
 	_clear_hydrate_target()
 	_clear_dining_seat_target()
 	_move_start_distance = 0.0
