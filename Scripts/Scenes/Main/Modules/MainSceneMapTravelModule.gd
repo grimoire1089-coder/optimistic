@@ -1,6 +1,8 @@
 extends Node
 class_name MainSceneMapTravelModule
 
+signal active_map_changed(map_id: StringName)
+
 const MAP_ID_ROBIN_ROOM: StringName = &"robin_room"
 const MAP_ID_INFRASTRUCTURE_ROOM: StringName = &"infrastructure_room"
 const DEFAULT_TRAVEL_SFX_PATH := "res://Assets/Audio/SFX/Game/Sci-fi_door_opening.ogg"
@@ -91,6 +93,7 @@ func set_active_map(map_id: StringName, force: bool = false) -> void:
 	_sync_runtime_build_nodes()
 	_sync_travel_buttons()
 	_update_debug_label()
+	active_map_changed.emit(_active_map_id)
 
 
 func _get_map_for_id(map_id: StringName) -> RoomMapGridModule:
