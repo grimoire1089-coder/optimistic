@@ -11,6 +11,7 @@ const DEFAULT_LOCATION_BACKGROUND_TEXTURE_PATH := "res://Assets/Maps/Location/Lo
 const DEFAULT_GATHERING_TABLE_PATH := "res://Data/Exploration/GatheringTables/CapsuleFarmMushroomDistrictGatheringTable.tres"
 const GATHERING_EFFECT_MODULE_SCRIPT_PATH := "res://Scripts/Systems/Exploration/ExplorationGatheringEffectModule.gd"
 const SKILL_GATHERING: StringName = &"gathering"
+const SKILL_UPGRADE_GATHERING_AMOUNT_PLUS: StringName = &"gathering_amount_plus"
 
 @export var worker_path: NodePath = NodePath("../Robin")
 @export var skills_module_path: NodePath = NodePath("../Robin/AICharacterSkillsModule")
@@ -181,8 +182,9 @@ func _grant_exploration_event_reward() -> void:
 		return
 
 	var base_amount: int = _get_random_gathering_amount(table)
-	var bonus_amount: int = _get_gathering_amount_bonus(gathering_level)
-	var amount: int = maxi(base_amount + bonus_amount, 1)
+	var level_bonus_amount: int = _get_gathering_amount_bonus(gathering_level)
+	var upgrade_bonus_amount: int = _get_gathering_amount_plus_bonus()
+	var amount: int = maxi(base_amount + level_bonus_amount + upgrade_bonus_amount, 1)
 	var added: bool = false
 	if inventory.has_method("add_food_item"):
 		added = inventory.call("add_food_item", food_data, amount) == true
@@ -207,8 +209,10 @@ func _grant_exploration_event_reward() -> void:
 		_play_gathering_effect(food_data, amount)
 		_add_gathering_experience()
 		var bonus_text: String = ""
-		if bonus_amount > 0:
-			bonus_text = " / 採取Lv%dボーナス +%d" % [gathering_level, bonus_amount]
+		if level_bonus_amount > 0:
+			bonus_text += " / 採取Lv%dボーナス +%d" % [gathering_level, level_bonus_amount]
+		if upgrade_bonus_amount > 0:
+			bonus_text += " / 採取量＋1 Lv%d発動 +%d" % [_get_gathering_amount_plus_level(), upgrade_bonus_amount]
 		_push_message("探索イベント: %s x%d を見つけました。採取EXP +%d%s" % [food_data.display_name, amount, maxi(gathering_experience_per_event, 0), bonus_text])
 	else:
 		_push_message("探索イベント: %s を見つけましたが、インベントリに空きがありません。" % food_data.display_name)
@@ -300,6 +304,25 @@ func _get_gathering_amount_bonus(skill_level: int) -> int:
 	var safe_step: int = maxi(gathering_amount_bonus_level_step, 1)
 	var raw_bonus: int = floori(float(skill_level) / float(safe_step))
 	return clampi(raw_bonus, 0, maxi(gathering_amount_bonus_max, 0))
+
+
+func _get_gathering_amount_plus_level() -> int:
+	var skills_module: Node = _get_skills_module()
+	if skills_module == null:
+		return 0
+	if skills_module.has_method("get_skill_upgrade_level"):
+		return maxi(int(skills_module.call("get_skill_upgrade_level", SKILL_UPGRADE_GATHERING_AMOUNT_PLUS)), 0)
+	if skills_module.has_method("get_gathering_amount_plus_level"):
+		return maxi(int(skills_module.call("get_gathering_amount_plus_level")), 0)
+	return 0
+
+
+func _get_gathering_amount_plus_bonus() -> int:
+	var upgrade_level: int = clampi(_get_gathering_amount_plus_level(), 0, 10)
+	if upgrade_level <= 0:
+		return 0
+	var chance: float = clampf(float(upgrade_level) * 0.10, 0.0, 1.0)
+	return 1 if _rng.randf() < chance else 0
 
 
 func _add_gathering_experience() -> void:
