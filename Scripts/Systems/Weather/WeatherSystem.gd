@@ -10,6 +10,7 @@ const RAIN_AMBIENCE_PATH := "res://Assets/Audio/Ambience/Rain.ogg"
 
 @export var start_weather: StringName = WEATHER_SUNNY
 @export_range(0.0, 1.0, 0.01) var rain_chance: float = 0.35
+@export var play_ambience_directly: bool = false
 @export var rain_ambience_path: String = RAIN_AMBIENCE_PATH
 
 var current_weather_id: StringName = WEATHER_SUNNY
@@ -22,7 +23,7 @@ func _ready() -> void:
 	add_to_group(&"weather_system")
 	_rng.randomize()
 	current_weather_id = _normalize_weather_id(start_weather)
-	_apply_weather_ambience()
+	_apply_weather_ambience_if_enabled()
 	call_deferred("_connect_game_clock")
 
 
@@ -55,10 +56,10 @@ func update_daily_weather(day: int) -> void:
 func set_weather(weather_id: StringName) -> void:
 	var normalized_weather_id := _normalize_weather_id(weather_id)
 	if current_weather_id == normalized_weather_id:
-		_apply_weather_ambience()
+		_apply_weather_ambience_if_enabled()
 		return
 	current_weather_id = normalized_weather_id
-	_apply_weather_ambience()
+	_apply_weather_ambience_if_enabled()
 	weather_changed.emit(current_weather_id, get_weather_display_name())
 
 
@@ -72,7 +73,7 @@ func get_save_data() -> Dictionary:
 func apply_save_data(data: Dictionary) -> void:
 	current_weather_id = _normalize_weather_id(StringName(str(data.get("current_weather_id", String(WEATHER_SUNNY)))))
 	_last_midnight_update_day = int(data.get("last_midnight_update_day", -1))
-	_apply_weather_ambience()
+	_apply_weather_ambience_if_enabled()
 	weather_changed.emit(current_weather_id, get_weather_display_name())
 
 
@@ -106,7 +107,9 @@ func _normalize_weather_id(weather_id: StringName) -> StringName:
 			return WEATHER_SUNNY
 
 
-func _apply_weather_ambience() -> void:
+func _apply_weather_ambience_if_enabled() -> void:
+	if not play_ambience_directly:
+		return
 	if current_weather_id == WEATHER_RAIN:
 		_play_rain_ambience()
 		return
