@@ -641,16 +641,16 @@ func _is_processing_queue(channel: int) -> bool:
 			return _is_processing_normal_queue
 
 
-func _set_processing_queue(channel: int, is_processing: bool) -> void:
+func _set_processing_queue(channel: int, processing: bool) -> void:
 	match channel:
 		LogChannel.CHARACTER:
-			_is_processing_character_queue = is_processing
+			_is_processing_character_queue = processing
 		LogChannel.EXPLORATION:
-			_is_processing_exploration_queue = is_processing
+			_is_processing_exploration_queue = processing
 		LogChannel.DEBUG:
-			_is_processing_debug_queue = is_processing
+			_is_processing_debug_queue = processing
 		_:
-			_is_processing_normal_queue = is_processing
+			_is_processing_normal_queue = processing
 
 
 func _trim_message_array(messages: Array[Dictionary]) -> void:
