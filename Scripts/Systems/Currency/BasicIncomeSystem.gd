@@ -4,7 +4,7 @@ class_name BasicIncomeSystem
 signal basic_income_received(amount: int, period_index: int, season_id: String, season_day: int)
 
 const SAVE_KEY_LAST_PAID_PERIOD := "basic_income_last_paid_period"
-const DEFAULT_INCOME_AMOUNT := 1000
+const DEFAULT_INCOME_AMOUNT := 200000
 
 @export var income_amount: int = DEFAULT_INCOME_AMOUNT
 @export var income_reason: String = "basic_income"
