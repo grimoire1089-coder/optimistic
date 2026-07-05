@@ -39,8 +39,8 @@
 [ext_resource type="Resource" path="res://Data/Audio/BgmPlaylists/MainSceneBgmRegistry.tres" id="36_main_scene_bgm_registry"]
 [ext_resource type="Script" path="res://Scripts/Systems/Audio/AmbiencePlaylistPlayerModule.gd" id="37_ambience_playlist_player"]
 [ext_resource type="Resource" path="res://Data/Audio/AmbiencePlaylists/NoAmbiencePlaylist.tres" id="38_no_ambience_playlist"]
-[ext_resource type="Script" path="res://Scripts/Scenes/Main/Modules/MainSceneAmbienceLocationModule.gd" id="39_ambience_location_module"]
-[ext_resource type="Resource" path="res://Data/Audio/AmbiencePlaylists/MainSceneAmbienceRegistry.tres" id="40_main_scene_ambience_registry"]
+[ext_resource type="Script" path="res://Scripts/Scenes/Main/Modules/MainSceneWeatherAmbienceModule.gd" id="39_weather_ambience_module"]
+[ext_resource type="Resource" path="res://Data/Audio/AmbiencePlaylists/MainSceneWeatherAmbienceRegistry.tres" id="40_main_scene_weather_ambience_registry"]
 
 [sub_resource type="Environment" id="Environment_ctt6t"]
 glow_enabled = true
@@ -64,9 +64,9 @@ registry = ExtResource("36_main_scene_bgm_registry")
 script = ExtResource("37_ambience_playlist_player")
 playlist = ExtResource("38_no_ambience_playlist")
 
-[node name="MainSceneAmbienceLocationModule" type="Node" parent="."]
-script = ExtResource("39_ambience_location_module")
-registry = ExtResource("40_main_scene_ambience_registry")
+[node name="MainSceneWeatherAmbienceModule" type="Node" parent="."]
+script = ExtResource("39_weather_ambience_module")
+registry = ExtResource("40_main_scene_weather_ambience_registry")
 
 [node name="MainSceneSleepFastForwardModule" parent="." unique_id=352965313 instance=ExtResource("22_sleep_fast_forward")]
 
