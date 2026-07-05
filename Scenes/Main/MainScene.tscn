@@ -41,6 +41,7 @@
 [ext_resource type="Resource" path="res://Data/Audio/AmbiencePlaylists/NoAmbiencePlaylist.tres" id="38_no_ambience_playlist"]
 [ext_resource type="Script" path="res://Scripts/Scenes/Main/Modules/MainSceneWeatherAmbienceModule.gd" id="39_weather_ambience_module"]
 [ext_resource type="Resource" path="res://Data/Audio/AmbiencePlaylists/MainSceneWeatherAmbienceRegistry.tres" id="40_main_scene_weather_ambience_registry"]
+[ext_resource type="PackedScene" path="res://Scenes/UI/HUD/PlaceholderHudButton.tscn" id="41_placeholder_hud_button"]
 
 [sub_resource type="Environment" id="Environment_ctt6t"]
 glow_enabled = true
@@ -174,6 +175,21 @@ anchors_preset = 3
 [node name="WorkCreditButton" parent="CanvasLayer" unique_id=917382376 instance=ExtResource("7_work_credit_button")]
 
 [node name="BillButton" parent="CanvasLayer" unique_id=1144506046 instance=ExtResource("29_bill_button")]
+
+[node name="PlaceholderHudButton01" parent="CanvasLayer" instance=ExtResource("41_placeholder_hud_button")]
+text = "仮01"
+
+[node name="PlaceholderHudButton02" parent="CanvasLayer" instance=ExtResource("41_placeholder_hud_button")]
+text = "仮02"
+
+[node name="PlaceholderHudButton03" parent="CanvasLayer" instance=ExtResource("41_placeholder_hud_button")]
+text = "仮03"
+
+[node name="PlaceholderHudButton04" parent="CanvasLayer" instance=ExtResource("41_placeholder_hud_button")]
+text = "仮04"
+
+[node name="PlaceholderHudButton05" parent="CanvasLayer" instance=ExtResource("41_placeholder_hud_button")]
+text = "仮05"
 
 [node name="HudButtonActiveFrameController" type="Node" parent="CanvasLayer" unique_id=1649931530]
 script = ExtResource("30_hud_active_frame")
