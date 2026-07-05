@@ -16,10 +16,10 @@ const FOOD_ICON_SIZE := Vector2(64.0, 64.0)
 @export var category_tabs_path: NodePath = NodePath("ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs")
 @export var close_button_path: NodePath = NodePath("ScreenMargin/MainPanel/MainMargin/RootRows/Header/CloseButton")
 @export var food_item_rows_path: NodePath = NodePath("ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage/FoodListPanel/FoodListMargin/FoodListRows/FoodItemScroll/FoodItemRows")
-@export var detail_icon_path: NodePath = NodePath("ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage/FoodDetailPanel/FoodDetailMargin/FoodDetailRows/DetailIcon")
-@export var detail_name_label_path: NodePath = NodePath("ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage/FoodDetailPanel/FoodDetailMargin/FoodDetailRows/DetailNameLabel")
-@export var detail_description_label_path: NodePath = NodePath("ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage/FoodDetailPanel/FoodDetailMargin/FoodDetailRows/DetailDescriptionLabel")
-@export var detail_meta_label_path: NodePath = NodePath("ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage/FoodDetailPanel/FoodDetailMargin/FoodDetailRows/DetailMetaLabel")
+@export var detail_icon_path: NodePath = NodePath("ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage/FoodDetailPanel/FoodDetailMargin/DetailScroll/FoodDetailRows/DetailIcon")
+@export var detail_name_label_path: NodePath = NodePath("ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage/FoodDetailPanel/FoodDetailMargin/DetailScroll/FoodDetailRows/DetailNameLabel")
+@export var detail_description_label_path: NodePath = NodePath("ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage/FoodDetailPanel/FoodDetailMargin/DetailScroll/FoodDetailRows/DetailDescriptionLabel")
+@export var detail_meta_label_path: NodePath = NodePath("ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage/FoodDetailPanel/FoodDetailMargin/DetailScroll/FoodDetailRows/DetailMetaLabel")
 @export var food_item_paths: PackedStringArray = PackedStringArray(DEFAULT_FOOD_ITEM_PATHS)
 @export var pause_scene_tree: bool = true
 @export var pause_game_clock: bool = true
@@ -174,9 +174,10 @@ func _make_food_row(entry: Dictionary, index: int) -> Button:
 
 	var margin := MarginContainer.new()
 	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	margin.add_theme_constant_override("margin_left", 6)
+	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	margin.add_theme_constant_override("margin_left", 4)
 	margin.add_theme_constant_override("margin_top", 2)
-	margin.add_theme_constant_override("margin_right", 8)
+	margin.add_theme_constant_override("margin_right", 6)
 	margin.add_theme_constant_override("margin_bottom", 2)
 	row.add_child(margin)
 
@@ -185,7 +186,7 @@ func _make_food_row(entry: Dictionary, index: int) -> Button:
 	hbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	hbox.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	hbox.alignment = BoxContainer.ALIGNMENT_BEGIN
-	hbox.add_theme_constant_override("separation", 12)
+	hbox.add_theme_constant_override("separation", 10)
 	margin.add_child(hbox)
 
 	var icon_frame := PanelContainer.new()
@@ -210,6 +211,21 @@ func _make_food_row(entry: Dictionary, index: int) -> Button:
 	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	icon_margin.add_child(icon)
 
+	var name_frame := PanelContainer.new()
+	name_frame.custom_minimum_size = Vector2(0.0, FOOD_ICON_FRAME_SIZE.y)
+	name_frame.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	name_frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	name_frame.add_theme_stylebox_override("panel", _make_style(Color(0.090, 0.095, 0.112, 0.86), Color(0.14, 0.34, 0.38, 0.62), 1, 8, 8.0))
+	hbox.add_child(name_frame)
+
+	var name_margin := MarginContainer.new()
+	name_margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	name_margin.add_theme_constant_override("margin_left", 14)
+	name_margin.add_theme_constant_override("margin_top", 6)
+	name_margin.add_theme_constant_override("margin_right", 14)
+	name_margin.add_theme_constant_override("margin_bottom", 6)
+	name_frame.add_child(name_margin)
+
 	var name_label := Label.new()
 	name_label.text = String(entry.get("display_name", "未登録食品"))
 	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -219,7 +235,7 @@ func _make_food_row(entry: Dictionary, index: int) -> Button:
 	name_label.clip_text = true
 	name_label.add_theme_color_override("font_color", Color(0.92, 0.98, 1.0, 1.0))
 	name_label.add_theme_font_size_override("font_size", 16)
-	hbox.add_child(name_label)
+	name_margin.add_child(name_label)
 
 	return row
 
@@ -247,15 +263,15 @@ func _apply_food_row_style(row: Button, is_selected: bool) -> void:
 	if row == null:
 		return
 	if is_selected:
-		row.add_theme_stylebox_override("normal", _make_style(Color(0.20, 0.20, 0.23, 0.96), Color(0.0, 1.45, 1.45, 0.95), 2, 9, 4.0))
-		row.add_theme_stylebox_override("hover", _make_style(Color(0.23, 0.23, 0.27, 0.98), Color(0.0, 1.80, 1.80, 1.0), 2, 9, 4.0))
-		row.add_theme_stylebox_override("pressed", _make_style(Color(0.08, 0.25, 0.28, 1.0), Color(0.25, 2.0, 2.0, 1.0), 2, 9, 4.0))
-		row.add_theme_stylebox_override("focus", _make_style(Color(0.20, 0.20, 0.23, 0.96), Color(0.0, 1.80, 1.80, 1.0), 2, 9, 4.0))
+		row.add_theme_stylebox_override("normal", _make_style(Color(0.10, 0.11, 0.14, 0.72), Color(0.0, 0.0, 0.0, 0.0), 0, 9, 2.0))
+		row.add_theme_stylebox_override("hover", _make_style(Color(0.13, 0.14, 0.17, 0.82), Color(0.0, 0.0, 0.0, 0.0), 0, 9, 2.0))
+		row.add_theme_stylebox_override("pressed", _make_style(Color(0.07, 0.18, 0.20, 0.86), Color(0.0, 0.0, 0.0, 0.0), 0, 9, 2.0))
+		row.add_theme_stylebox_override("focus", _make_style(Color(0.10, 0.11, 0.14, 0.72), Color(0.0, 0.0, 0.0, 0.0), 0, 9, 2.0))
 		return
-	row.add_theme_stylebox_override("normal", _make_style(Color(0.075, 0.080, 0.092, 0.88), Color(0.18, 0.28, 0.30, 0.62), 1, 9, 4.0))
-	row.add_theme_stylebox_override("hover", _make_style(Color(0.12, 0.13, 0.15, 0.96), Color(0.0, 1.25, 1.25, 0.82), 2, 9, 4.0))
-	row.add_theme_stylebox_override("pressed", _make_style(Color(0.08, 0.20, 0.22, 1.0), Color(0.25, 1.6, 1.6, 0.95), 2, 9, 4.0))
-	row.add_theme_stylebox_override("focus", _make_style(Color(0.12, 0.13, 0.15, 0.96), Color(0.0, 1.25, 1.25, 0.82), 2, 9, 4.0))
+	row.add_theme_stylebox_override("normal", _make_style(Color(0.05, 0.055, 0.065, 0.48), Color(0.0, 0.0, 0.0, 0.0), 0, 9, 2.0))
+	row.add_theme_stylebox_override("hover", _make_style(Color(0.08, 0.09, 0.105, 0.66), Color(0.0, 0.0, 0.0, 0.0), 0, 9, 2.0))
+	row.add_theme_stylebox_override("pressed", _make_style(Color(0.07, 0.16, 0.18, 0.78), Color(0.0, 0.0, 0.0, 0.0), 0, 9, 2.0))
+	row.add_theme_stylebox_override("focus", _make_style(Color(0.08, 0.09, 0.105, 0.66), Color(0.0, 0.0, 0.0, 0.0), 0, 9, 2.0))
 
 
 func _make_food_entry(item_path: String) -> Dictionary:
@@ -365,7 +381,7 @@ func _apply_visual_theme() -> void:
 	if food_detail_panel != null:
 		food_detail_panel.add_theme_stylebox_override("panel", _make_style(Color(0.075, 0.075, 0.095, 0.96), Color(1.0, 0.36, 0.95, 0.35), 1, 12, 12.0))
 
-	var flavor_box := get_node_or_null("ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage/FoodDetailPanel/FoodDetailMargin/FoodDetailRows/FlavorBox") as PanelContainer
+	var flavor_box := get_node_or_null("ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage/FoodDetailPanel/FoodDetailMargin/DetailScroll/FoodDetailRows/FlavorBox") as PanelContainer
 	if flavor_box != null:
 		flavor_box.add_theme_stylebox_override("panel", _make_style(Color(0.08, 0.055, 0.10, 0.86), Color(0.92, 0.42, 1.0, 0.30), 1, 10, 10.0))
 
