@@ -3,6 +3,7 @@ extends Node
 signal bgm_finished(stream: AudioStream)
 
 const SFX_POOL_SIZE := 8
+const BGM_SILENCE_DB := -80.0
 
 var _bgm_player: AudioStreamPlayer
 var _ambience_player: AudioStreamPlayer
@@ -10,6 +11,11 @@ var _voice_player: AudioStreamPlayer
 var _sfx_players: Array[AudioStreamPlayer] = []
 var _current_bgm: AudioStream = null
 var _current_ambience: AudioStream = null
+var _bgm_fade_tween: Tween
+var _bgm_default_volume_db: float = 0.0
+var _pending_bgm: AudioStream = null
+var _pending_bgm_position: float = 0.0
+var _pending_bgm_fade_in_seconds: float = 0.0
 
 
 func _ready() -> void:
@@ -26,14 +32,45 @@ func play_bgm(stream: AudioStream, from_position: float = 0.0, restart_if_same: 
 	if not restart_if_same and _current_bgm == stream and _bgm_player.playing:
 		return
 
+	_kill_bgm_fade()
+	_clear_pending_bgm()
 	_current_bgm = stream
 	_bgm_player.stop()
+	_bgm_player.volume_db = _bgm_default_volume_db
 	_bgm_player.stream = stream
 	_bgm_player.play(from_position)
 
 
+func play_bgm_fade(stream: AudioStream, from_position: float = 0.0, restart_if_same: bool = false, fade_out_seconds: float = 0.5, fade_in_seconds: float = 0.5) -> void:
+	if stream == null:
+		return
+
+	if not restart_if_same and _current_bgm == stream and _bgm_player.playing:
+		return
+
+	var safe_fade_out_seconds: float = maxf(fade_out_seconds, 0.0)
+	var safe_fade_in_seconds: float = maxf(fade_in_seconds, 0.0)
+
+	_kill_bgm_fade()
+	_clear_pending_bgm()
+
+	if _current_bgm == null or not _bgm_player.playing or safe_fade_out_seconds <= 0.0:
+		_start_bgm_with_fade_in(stream, from_position, safe_fade_in_seconds)
+		return
+
+	_pending_bgm = stream
+	_pending_bgm_position = from_position
+	_pending_bgm_fade_in_seconds = safe_fade_in_seconds
+	_bgm_fade_tween = create_tween()
+	_bgm_fade_tween.tween_property(_bgm_player, "volume_db", BGM_SILENCE_DB, safe_fade_out_seconds)
+	_bgm_fade_tween.tween_callback(Callable(self, "_play_pending_bgm_after_fade_out"))
+
+
 func stop_bgm() -> void:
+	_kill_bgm_fade()
+	_clear_pending_bgm()
 	_bgm_player.stop()
+	_bgm_player.volume_db = _bgm_default_volume_db
 	_current_bgm = null
 
 
@@ -140,6 +177,7 @@ func _create_bgm_player() -> void:
 	_bgm_player.name = "BGMPlayer"
 	_bgm_player.bus = String(AudioSettings.BUS_BGM)
 	_bgm_player.finished.connect(_on_bgm_player_finished)
+	_bgm_default_volume_db = _bgm_player.volume_db
 	add_child(_bgm_player)
 
 
@@ -174,6 +212,47 @@ func _get_available_sfx_player() -> AudioStreamPlayer:
 			return player
 
 	return _sfx_players[0]
+
+
+func _start_bgm_with_fade_in(stream: AudioStream, from_position: float, fade_in_seconds: float) -> void:
+	if stream == null:
+		return
+
+	_current_bgm = stream
+	_bgm_player.stop()
+	_bgm_player.stream = stream
+	if fade_in_seconds > 0.0:
+		_bgm_player.volume_db = BGM_SILENCE_DB
+	else:
+		_bgm_player.volume_db = _bgm_default_volume_db
+	_bgm_player.play(from_position)
+
+	if fade_in_seconds <= 0.0:
+		return
+
+	_bgm_fade_tween = create_tween()
+	_bgm_fade_tween.tween_property(_bgm_player, "volume_db", _bgm_default_volume_db, fade_in_seconds)
+
+
+func _play_pending_bgm_after_fade_out() -> void:
+	var next_bgm: AudioStream = _pending_bgm
+	var next_position: float = _pending_bgm_position
+	var next_fade_in_seconds: float = _pending_bgm_fade_in_seconds
+	_clear_pending_bgm()
+	_bgm_fade_tween = null
+	_start_bgm_with_fade_in(next_bgm, next_position, next_fade_in_seconds)
+
+
+func _kill_bgm_fade() -> void:
+	if _bgm_fade_tween != null:
+		_bgm_fade_tween.kill()
+		_bgm_fade_tween = null
+
+
+func _clear_pending_bgm() -> void:
+	_pending_bgm = null
+	_pending_bgm_position = 0.0
+	_pending_bgm_fade_in_seconds = 0.0
 
 
 func _on_bgm_player_finished() -> void:
