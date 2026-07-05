@@ -59,7 +59,6 @@ func _make_fixed_page(old_page: HSplitContainer) -> Control:
 
 	var fixed := Control.new()
 	fixed.name = "FoodPage"
-	fixed.layout_mode = 2 as Control.LayoutMode
 	fixed.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	fixed.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	parent.add_child(fixed)
@@ -82,7 +81,6 @@ func _apply() -> void:
 
 
 func _set_half(node: Control, anchor_l: float, anchor_r: float, offset_l: float, offset_r: float) -> void:
-	node.layout_mode = 1 as Control.LayoutMode
 	node.anchor_left = anchor_l
 	node.anchor_top = 0.0
 	node.anchor_right = anchor_r
