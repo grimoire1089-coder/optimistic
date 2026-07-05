@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="CharacterMoodEntryData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Systems/Mood/CharacterMoodEntryData.gd" id="1_entry"]
+
+[resource]
+script = ExtResource("1_entry")
+entry_id = &"tired"
+display_name = "疲れた"
+detail_text = "体力が低下しています。休息が必要です。"
+body = "体力が低下しています。休息が必要です。"
+point = -10
