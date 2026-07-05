@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="CharacterMoodEntryData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Systems/Mood/CharacterMoodEntryData.gd" id="1_entry"]
+
+[resource]
+script = ExtResource("1_entry")
+entry_id = &"hygiene_surface_dirty"
+display_name = "表面汚染"
+detail_text = "外装に汚れが目立ち始めています。洗浄すると心情が安定します。"
+body = "外装に汚れが目立ち始めています。洗浄すると心情が安定します。"
+point = -8
