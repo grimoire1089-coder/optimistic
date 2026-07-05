@@ -3,6 +3,7 @@ class_name BookTravelUnlockNoticeModule
 
 const STYLER_NODE_NAME := "TravelUnlockLogStyler"
 const NORMAL_LOG_CHANNEL := 0
+const TRAVEL_UNLOCK_NOTICE_SFX_PATH := "res://Assets/Audio/SFX/UI/UI_Notice_002.ogg"
 
 
 func push_travel_unlock_notice(book: BookData) -> void:
@@ -25,6 +26,9 @@ func push_travel_unlock_notice(book: BookData) -> void:
 	if styler != null:
 		styler.register_message(message)
 
+	if _queue_normal_message_without_default_sfx(message_log, message):
+		return
+
 	if message_log.has_method("add_message"):
 		message_log.call("add_message", message)
 
@@ -40,6 +44,13 @@ func _make_travel_unlock_message(book: BookData) -> String:
 		return ""
 
 	return "移動場所が解禁されました: %s\n移動メニューの探索から選べます。" % location_name
+
+
+func _queue_normal_message_without_default_sfx(message_log: Node, message: String) -> bool:
+	if message_log == null or not message_log.has_method("_queue_message_to_channel"):
+		return false
+	message_log.call("_queue_message_to_channel", message, NORMAL_LOG_CHANNEL, false)
+	return true
 
 
 func _ensure_styler(message_log: Node) -> TravelUnlockLogStyler:
@@ -65,12 +76,15 @@ class TravelUnlockLogStyler extends Node:
 
 	var _message_log: Node
 	var _message_texts: Dictionary = {}
+	var _played_message_texts: Dictionary = {}
 	var _message_list: VBoxContainer
 	var _tab_bar: TabBar
+	var _notice_sfx: AudioStream
 
 
 	func setup(message_log: Node) -> void:
 		_message_log = message_log
+		_load_travel_unlock_notice_sfx()
 		_connect_message_list_signal()
 		_connect_tab_signal()
 		apply_gold_styles_deferred()
@@ -106,6 +120,7 @@ class TravelUnlockLogStyler extends Node:
 			if message_text.is_empty() or not _message_texts.has(message_text):
 				continue
 			_apply_gold_style(card)
+			_play_notice_for_message_if_needed(message_text)
 
 
 	func _connect_message_list_signal() -> void:
@@ -197,3 +212,19 @@ class TravelUnlockLogStyler extends Node:
 		style.set_corner_radius_all(CARD_CORNER_RADIUS)
 		style.set_content_margin_all(0.0)
 		return style
+
+
+	func _load_travel_unlock_notice_sfx() -> void:
+		if _notice_sfx != null:
+			return
+		if ResourceLoader.exists(TRAVEL_UNLOCK_NOTICE_SFX_PATH):
+			_notice_sfx = load(TRAVEL_UNLOCK_NOTICE_SFX_PATH) as AudioStream
+
+
+	func _play_notice_for_message_if_needed(message_text: String) -> void:
+		if message_text.is_empty() or _played_message_texts.has(message_text):
+			return
+		_played_message_texts[message_text] = true
+		if _notice_sfx == null:
+			return
+		AudioPlayer.play_sfx(_notice_sfx, 1.0, 0.0)
