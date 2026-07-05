@@ -9,8 +9,10 @@ const CATEGORY_DRINKS := &"drinks"
 const CATEGORY_RECIPES := &"recipes"
 const CATEGORY_MATERIALS := &"materials"
 const CATEGORY_INGREDIENTS := &"ingredients"
+const UNLIMITED_SLOT_LIMIT := -1
 
 @export var slots_per_category: int = 25
+@export var tool_slots_unlimited: bool = true
 @export var initial_item_paths: PackedStringArray = PackedStringArray()
 
 var _categories: Array[Dictionary] = [
@@ -40,6 +42,16 @@ func get_categories() -> Array[Dictionary]:
 
 func get_slots_per_category() -> int:
 	return max(slots_per_category, 0)
+
+
+func get_slot_limit(category_id: StringName) -> int:
+	if tool_slots_unlimited and category_id == CATEGORY_TOOLS:
+		return UNLIMITED_SLOT_LIMIT
+	return get_slots_per_category()
+
+
+func has_slot_limit(category_id: StringName) -> bool:
+	return get_slot_limit(category_id) != UNLIMITED_SLOT_LIMIT
 
 
 func get_items(category_id: StringName) -> Array[Dictionary]:
@@ -91,7 +103,8 @@ func add_item(
 			inventory_changed.emit()
 			return true
 
-	if items.size() >= get_slots_per_category():
+	var slot_limit := get_slot_limit(category_id)
+	if slot_limit != UNLIMITED_SLOT_LIMIT and items.size() >= slot_limit:
 		push_warning("インベントリがいっぱいです: %s" % category_id)
 		return false
 
