@@ -172,10 +172,10 @@ func _get_remaining_time_text(entry: CharacterMoodEntryInstance) -> String:
 		return ""
 	if _mood_module == null:
 		return ""
-	var remaining_minutes := entry.get_remaining_game_minutes(_mood_module.get_current_absolute_minute())
+	var remaining_minutes: int = int(entry.get_remaining_game_minutes(_mood_module.get_current_absolute_minute()))
 	if remaining_minutes <= 0:
 		return "残り 0分"
-	var hours := remaining_minutes / 60
+	var hours := floori(float(remaining_minutes) / 60.0)
 	var minutes := remaining_minutes % 60
 	if hours > 0 and minutes > 0:
 		return "残り %d時間%d分" % [hours, minutes]
