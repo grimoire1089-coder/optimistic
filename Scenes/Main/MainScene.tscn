@@ -16,7 +16,7 @@
 [ext_resource type="PackedScene" path="res://Scenes/UI/HUD/BuildModeButton.tscn" id="13_build_mode_button"]
 [ext_resource type="PackedScene" path="res://Scenes/UI/HUD/ShopButton.tscn" id="14_shop_button"]
 [ext_resource type="PackedScene" uid="uid://byfrpieqjfnvs" path="res://Scenes/UI/Shop/ShopMenu.tscn" id="15_shop_menu"]
-[ext_resource type="Script" path="res://Scripts/Systems/Audio/BgmPlaylistPlayerModule.gd" id="16_bgm_playlist_player"]
+[ext_resource type="Script" path="res://Scripts/Systems/Audio/BgmFadePlaylistPlayerModule.gd" id="16_bgm_playlist_player"]
 [ext_resource type="PackedScene" path="res://Scenes/UI/HUD/MessageLogPanel.tscn" id="17_message_log"]
 [ext_resource type="Texture2D" uid="uid://c3alnt1qvimm6" path="res://Assets/UI/Parts/Background_panel_001.png" id="18_left_panel_bg"]
 [ext_resource type="PackedScene" path="res://Scenes/UI/HUD/RobinHudButton.tscn" id="19_robin_hud_button"]
