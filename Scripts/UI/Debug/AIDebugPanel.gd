@@ -268,11 +268,11 @@ func _build_weather_controls(parent: VBoxContainer) -> void:
 	weather_buttons.add_child(roll_button)
 
 
-func _make_weather_button(label_text: String, tooltip_text: String) -> Button:
+func _make_weather_button(label_text: String, button_tooltip_text: String) -> Button:
 	var button := Button.new()
 	button.custom_minimum_size = Vector2(74.0, 28.0)
 	button.text = label_text
-	button.tooltip_text = tooltip_text
+	button.tooltip_text = button_tooltip_text
 	button.focus_mode = Control.FOCUS_NONE
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	_apply_button_style(button, Color(0.02, 0.035, 0.055, 0.96), Color(0.34, 0.78, 1.0, 0.88), Color(0.82, 0.95, 1.0, 1.0))
