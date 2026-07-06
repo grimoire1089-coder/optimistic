@@ -17,14 +17,14 @@ shadow_color = Color(0.08, 0.62, 0.95, 0.24)
 shadow_size = 10
 
 [node name="InventoryUI" type="PanelContainer"]
-custom_minimum_size = Vector2(436, 420)
+custom_minimum_size = Vector2(480, 456)
 layout_mode = 3
 anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -460.0
-offset_top = -512.0
+offset_left = -504.0
+offset_top = -548.0
 offset_right = -24.0
 offset_bottom = -92.0
 grow_horizontal = 0
@@ -62,7 +62,7 @@ text = "X"
 layout_mode = 2
 
 [node name="ScrollContainer" type="ScrollContainer" parent="MarginContainer/Rows"]
-custom_minimum_size = Vector2(0, 300)
+custom_minimum_size = Vector2(0, 336)
 layout_mode = 2
 size_flags_vertical = 3
 horizontal_scroll_mode = 0
