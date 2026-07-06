@@ -127,7 +127,11 @@ func _should_lock_movement_buttons() -> bool:
 	if robin == null or not robin.has_method("get_current_need_action_id"):
 		return false
 	var action_id_value: Variant = robin.call("get_current_need_action_id")
-	var action_id := action_id_value if action_id_value is StringName else StringName(String(action_id_value))
+	var action_id: StringName = &""
+	if action_id_value is StringName:
+		action_id = action_id_value
+	else:
+		action_id = StringName(String(action_id_value))
 	return MOVEMENT_LOCK_ACTION_IDS.has(action_id)
 
 
@@ -213,7 +217,7 @@ func _apply_button_frame(button: Button, is_active: bool) -> void:
 	button.add_theme_stylebox_override("normal", _make_style(NORMAL_BG, NORMAL_BORDER, NORMAL_BORDER_WIDTH))
 	button.add_theme_stylebox_override("hover", _make_style(HOVER_BG, HOVER_BORDER, HOVER_BORDER_WIDTH))
 	button.add_theme_stylebox_override("pressed", _make_style(PRESSED_BG, PRESSED_BORDER, PRESSED_BORDER_WIDTH))
-	button.add_theme_stylebox_override("focus", _make_style(HOVER_BG, HOVER_BORDER, HOVER_BORDER_WIDTH))
+	button.add_theme_stylebox_override("focus", _make_style(HOVER_BG, HOVER_BORDER, NORMAL_BORDER_WIDTH))
 	button.add_theme_stylebox_override("disabled", _make_style(DISABLED_BG, DISABLED_BORDER, DISABLED_BORDER_WIDTH))
 
 
