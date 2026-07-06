@@ -4,7 +4,7 @@ class_name HudButtonStyle
 const HUD_BUTTON_SIZE := Vector2(80.0, 80.0)
 const HUD_BUTTON_GAP := 16.0
 const HUD_RIGHT_MARGIN := 24.0
-const HUD_ICON_MAX_WIDTH := 68
+const HUD_ICON_MAX_WIDTH := 64
 const HUD_FONT_SIZE := 11
 const HUD_CORNER_RADIUS := 8
 const HUD_CONTENT_MARGIN := 3.0
