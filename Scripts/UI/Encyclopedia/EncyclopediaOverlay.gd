@@ -5,12 +5,19 @@ const DEFAULT_ENCYCLOPEDIA_BGM_PATH := "res://Assets/Audio/BGM/Picture book.ogg"
 const DEFAULT_UNKNOWN_ICON_PATH := "res://Assets/UI/Icons/Question.png"
 const UNKNOWN_DISPLAY_NAME := "？？？"
 const CATEGORY_TAB_MODULE_SCRIPT_PATH := "res://Scripts/UI/Encyclopedia/Modules/EncyclopediaCategoryTabModule.gd"
+const ITEM_SOURCE_MODULE_SCRIPT_PATH := "res://Scripts/UI/Encyclopedia/Modules/EncyclopediaItemSourceModule.gd"
 
 const CATEGORY_FOODS := "foods"
 const CATEGORY_TOOLS := "tools"
 const CATEGORY_DRINKS := "drinks"
 const CATEGORY_INGREDIENTS := "ingredients"
 const FALLBACK_CATEGORY_IDS := [CATEGORY_TOOLS, CATEGORY_FOODS, CATEGORY_DRINKS, CATEGORY_INGREDIENTS]
+
+const DEFAULT_ITEM_SOURCE_DIRECTORIES := [
+	"res://Data/Items/Food",
+	"res://Data/Items/Ingredients",
+	"res://Data/Items/Tools",
+]
 
 const DEFAULT_FOOD_ITEM_PATHS := [
 	"res://Data/Items/Food/Food_0001_Nikuman.tres",
@@ -39,6 +46,8 @@ const ITEM_ICON_SIZE := Vector2(64.0, 64.0)
 
 @export var category_tabs_path: NodePath = NodePath("ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs")
 @export var close_button_path: NodePath = NodePath("ScreenMargin/MainPanel/MainMargin/RootRows/Header/CloseButton")
+@export var use_auto_item_sources: bool = true
+@export var item_source_directories: PackedStringArray = PackedStringArray(DEFAULT_ITEM_SOURCE_DIRECTORIES)
 @export var food_item_paths: PackedStringArray = PackedStringArray(DEFAULT_FOOD_ITEM_PATHS)
 @export var tool_item_paths: PackedStringArray = PackedStringArray(DEFAULT_TOOL_ITEM_PATHS)
 @export var drink_item_paths: PackedStringArray = PackedStringArray(DEFAULT_DRINK_ITEM_PATHS)
@@ -54,6 +63,7 @@ const ITEM_ICON_SIZE := Vector2(64.0, 64.0)
 var _category_tabs: TabContainer
 var _close_button: Button
 var _category_tab_module: Node
+var _item_source_module: Node
 var _game_clock: Node
 var _item_rows_by_category: Dictionary = {}
 var _detail_icon_by_category: Dictionary = {}
@@ -80,6 +90,7 @@ func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	visible = false
 	_get_category_tab_module()
+	_get_item_source_module()
 	_resolve_refs()
 	_load_unknown_icon_if_needed()
 	_load_default_encyclopedia_bgm_if_needed()
@@ -114,7 +125,7 @@ func open_encyclopedia() -> void:
 	_populate_all_category_entries()
 
 	var selected_row := _get_selected_row(_get_active_category_id())
-	if selected_row != null:
+	if selected_row != null and selected_row.is_inside_tree():
 		selected_row.grab_focus()
 
 
@@ -204,7 +215,7 @@ func _on_food_encyclopedia_changed() -> void:
 
 func _on_category_tab_changed(_tab: int) -> void:
 	var selected_row := _get_selected_row(_get_active_category_id())
-	if selected_row != null:
+	if selected_row != null and selected_row.is_inside_tree():
 		selected_row.grab_focus()
 
 
@@ -579,6 +590,23 @@ func _get_active_category_id() -> String:
 
 
 func _get_item_paths_for_category(category_id: String) -> PackedStringArray:
+	var fallback_paths := _get_manual_item_paths_for_category(category_id)
+	if not use_auto_item_sources:
+		return fallback_paths
+
+	var module := _get_item_source_module()
+	if module == null or not module.has_method("get_category_item_paths"):
+		return fallback_paths
+
+	var raw_paths: Variant = module.call("get_category_item_paths", category_id, fallback_paths, item_source_directories)
+	if raw_paths is PackedStringArray:
+		return raw_paths
+	if raw_paths is Array:
+		return PackedStringArray(raw_paths)
+	return fallback_paths
+
+
+func _get_manual_item_paths_for_category(category_id: String) -> PackedStringArray:
 	match category_id:
 		CATEGORY_FOODS:
 			return food_item_paths
@@ -634,6 +662,23 @@ func _get_category_tab_module() -> Node:
 	add_child(module)
 	_category_tab_module = module
 	return _category_tab_module
+
+
+func _get_item_source_module() -> Node:
+	if _item_source_module != null and is_instance_valid(_item_source_module):
+		return _item_source_module
+	if not ResourceLoader.exists(ITEM_SOURCE_MODULE_SCRIPT_PATH):
+		return null
+	var script := load(ITEM_SOURCE_MODULE_SCRIPT_PATH) as Script
+	if script == null:
+		return null
+	var module := script.new() as Node
+	if module == null:
+		return null
+	module.name = "EncyclopediaItemSourceModule"
+	add_child(module)
+	_item_source_module = module
+	return _item_source_module
 
 
 func _load_unknown_icon_if_needed() -> void:
