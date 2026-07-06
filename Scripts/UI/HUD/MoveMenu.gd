@@ -12,11 +12,11 @@ const MENU_OFFSET_LEFT := 580.0
 const MENU_OFFSET_TOP := 80.0
 const MENU_OFFSET_RIGHT := 1340.0
 const MENU_OFFSET_BOTTOM := 840.0
-const MAP_MOVE_PANEL_SIZE := Vector2(360.0, 360.0)
-const MAP_MOVE_PANEL_OFFSET_LEFT := 1356.0
+const MAP_MOVE_PANEL_SIZE := Vector2(760.0, 760.0)
+const MAP_MOVE_PANEL_OFFSET_LEFT := 580.0
 const MAP_MOVE_PANEL_OFFSET_TOP := 80.0
-const MAP_MOVE_PANEL_OFFSET_RIGHT := 1716.0
-const MAP_MOVE_PANEL_OFFSET_BOTTOM := 440.0
+const MAP_MOVE_PANEL_OFFSET_RIGHT := 1340.0
+const MAP_MOVE_PANEL_OFFSET_BOTTOM := 840.0
 
 @export var robin_path: NodePath = NodePath("../../Robin")
 @export var map_travel_module_path: NodePath = NodePath("../../MainSceneMapTravelModule")
