@@ -50,6 +50,11 @@ custom_minimum_size = Vector2(32, 28)
 layout_mode = 2
 text = "X"
 
+[node name="DetailLabel" type="Label" parent="MarginContainer/Rows"]
+layout_mode = 2
+autowrap_mode = 3
+text = "移動または探索を選んでください。"
+
 [node name="ActionList" type="VBoxContainer" parent="MarginContainer/Rows"]
 layout_mode = 2
 theme_override_constants/separation = 6
@@ -57,14 +62,9 @@ theme_override_constants/separation = 6
 [node name="MoveActionButton" type="Button" parent="MarginContainer/Rows/ActionList"]
 custom_minimum_size = Vector2(280, 56)
 layout_mode = 2
-text = "移動"
+text = "マップ移動"
 
 [node name="ExploreActionButton" type="Button" parent="MarginContainer/Rows/ActionList"]
 custom_minimum_size = Vector2(280, 56)
 layout_mode = 2
 text = "探索"
-
-[node name="DetailLabel" type="Label" parent="MarginContainer/Rows"]
-layout_mode = 2
-autowrap_mode = 3
-text = "移動または探索を選んでください。"
