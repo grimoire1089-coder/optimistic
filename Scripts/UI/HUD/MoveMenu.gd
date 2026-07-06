@@ -131,9 +131,7 @@ func _show_move_tab() -> void:
 	title_label.text = "移動"
 	var destinations: Array[Dictionary] = _get_move_destinations()
 	var active_map_id: StringName = _get_active_map_id()
-	for destination in destinations:
-		var button: Button = _create_destination_button(destination, active_map_id)
-		_add_dynamic_button(button)
+	_add_dynamic_control(_create_map_move_panel(destinations, active_map_id))
 	if visible:
 		detail_label.text = "移動先を選んでください。探索は上の探索ボタンから開けます。"
 
@@ -152,6 +150,39 @@ func _show_exploration_tab() -> void:
 			detail_label.text = "探索場所は電子書籍の購入で解禁されます。"
 		else:
 			detail_label.text = "探索時間を設定してから、探索場所を選んでください。"
+
+
+func _create_map_move_panel(destinations: Array[Dictionary], active_map_id: StringName) -> Control:
+	var panel: PanelContainer = PanelContainer.new()
+	panel.name = "MapMovePanel"
+	panel.custom_minimum_size = Vector2(280.0, 120.0)
+	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+
+	var margin: MarginContainer = MarginContainer.new()
+	margin.name = "MapMoveMargin"
+	margin.add_theme_constant_override("margin_left", 16)
+	margin.add_theme_constant_override("margin_top", 8)
+	margin.add_theme_constant_override("margin_right", 8)
+	margin.add_theme_constant_override("margin_bottom", 8)
+	panel.add_child(margin)
+
+	var container: VBoxContainer = VBoxContainer.new()
+	container.name = "MapMoveUI"
+	container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	container.add_theme_constant_override("separation", 6)
+	margin.add_child(container)
+
+	var label: Label = Label.new()
+	label.name = "MapMoveTitleLabel"
+	label.text = "移動"
+	label.add_theme_font_size_override("font_size", 15)
+	container.add_child(label)
+
+	for destination in destinations:
+		var button: Button = _create_destination_button(destination, active_map_id)
+		_destination_buttons.append(button)
+		container.add_child(button)
+	return panel
 
 
 func _create_exploration_message_card() -> Control:
