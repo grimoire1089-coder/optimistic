@@ -2,7 +2,7 @@ extends PanelContainer
 class_name RobinInventoryUI
 
 const BOTTOM_RIGHT_MARGIN := Vector2(24.0, 92.0)
-const PANEL_SIZE := Vector2(436.0, 420.0)
+const PANEL_SIZE := Vector2(480.0, 456.0)
 
 @export var actor_path: NodePath = NodePath("../../Robin")
 @export var inventory_module_child_name: StringName = &"RobinInventoryModule"
