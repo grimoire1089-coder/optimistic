@@ -2,6 +2,8 @@ extends Control
 
 @export var clock_path: NodePath
 @export var weather_path: NodePath
+@export var season_icon_directory: String = "res://Assets/UI/Parts"
+@export var season_icon_size: Vector2 = Vector2(56, 56)
 @export var panel_bg_color: Color = Color(0.01, 0.025, 0.04, 0.88)
 @export var panel_border_color: Color = Color(0.33, 0.85, 1.0, 0.95)
 @export var panel_glow_color: Color = Color(0.12, 0.65, 1.0, 0.38)
@@ -13,15 +15,29 @@ extends Control
 
 @onready var bgm_mute_button: Button = %BGMMuteButton
 @onready var panel_container: PanelContainer = %PanelContainer
+@onready var season_icon_rect: TextureRect = %SeasonIconRect
 @onready var time_label: Label = %TimeLabel
 @onready var phase_label: Label = %PhaseLabel
 
+const SEASON_ICON_KEYWORDS := {
+	"spring": ["spring", "春"],
+	"summer": ["summer", "夏"],
+	"autumn": ["autumn", "fall", "秋"],
+	"winter": ["winter", "冬"],
+}
+
+const SEASON_ICON_EXTENSIONS := ["png", "webp", "svg", "jpg", "jpeg"]
+
 var _clock: GameClockSystem
 var _weather: GameWeatherSystem
+var _season_icon_paths: Dictionary = {}
+var _current_icon_season_id: String = ""
 
 
 func _ready() -> void:
 	_apply_neon_style()
+	_setup_season_icon_rect()
+	_build_season_icon_cache()
 	_setup_bgm_mute_button()
 	_clock = _find_clock()
 	_weather = _find_weather()
@@ -32,6 +48,7 @@ func _ready() -> void:
 	if _clock == null:
 		time_label.text = "--:--"
 		phase_label.text = "%s / 時刻なし" % _get_weather_display_text()
+		_refresh_season_icon("")
 		push_warning("ClockDisplay: GameClockSystem が見つかりません。")
 		return
 
@@ -71,6 +88,92 @@ func _apply_label_neon_style(label: Label, font_color: Color, font_size: int, sh
 	label.add_theme_constant_override("shadow_offset_x", 0)
 	label.add_theme_constant_override("shadow_offset_y", 0)
 	label.add_theme_constant_override("shadow_outline_size", shadow_outline_size)
+
+
+func _setup_season_icon_rect() -> void:
+	if season_icon_rect == null:
+		return
+	season_icon_rect.custom_minimum_size = season_icon_size
+	season_icon_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	season_icon_rect.tooltip_text = "季節"
+	season_icon_rect.visible = false
+
+
+func _build_season_icon_cache() -> void:
+	_season_icon_paths.clear()
+
+	var dir := DirAccess.open(season_icon_directory)
+	if dir == null:
+		push_warning("ClockDisplay: 季節アイコン用フォルダが見つかりません: %s" % season_icon_directory)
+		return
+
+	dir.list_dir_begin()
+	var file_name := dir.get_next()
+	while file_name != "":
+		if not dir.current_is_dir():
+			_register_season_icon_file(file_name)
+		file_name = dir.get_next()
+	dir.list_dir_end()
+
+
+func _register_season_icon_file(file_name: String) -> void:
+	var extension := file_name.get_extension().to_lower()
+	if not SEASON_ICON_EXTENSIONS.has(extension):
+		return
+
+	var normalized_name := file_name.to_lower()
+	for season_id in SEASON_ICON_KEYWORDS.keys():
+		if _season_icon_paths.has(season_id):
+			continue
+		var keywords: Array = SEASON_ICON_KEYWORDS[season_id]
+		for keyword in keywords:
+			if normalized_name.contains(str(keyword).to_lower()):
+				_season_icon_paths[season_id] = "%s/%s" % [_get_season_icon_base_dir(), file_name]
+				return
+
+
+func _get_season_icon_base_dir() -> String:
+	var base_dir := season_icon_directory
+	if base_dir.ends_with("/"):
+		base_dir = base_dir.left(base_dir.length() - 1)
+	return base_dir
+
+
+func _refresh_season_icon(season_id: String) -> void:
+	if season_icon_rect == null:
+		return
+
+	if season_id == "":
+		season_icon_rect.texture = null
+		season_icon_rect.visible = false
+		_current_icon_season_id = ""
+		return
+
+	if season_id == _current_icon_season_id:
+		return
+
+	_current_icon_season_id = season_id
+	var icon_path := str(_season_icon_paths.get(season_id, ""))
+	if icon_path == "":
+		season_icon_rect.texture = null
+		season_icon_rect.visible = false
+		push_warning("ClockDisplay: 季節アイコンが見つかりません: %s" % season_id)
+		return
+
+	if not ResourceLoader.exists(icon_path):
+		season_icon_rect.texture = null
+		season_icon_rect.visible = false
+		push_warning("ClockDisplay: 季節アイコンを読み込めません: %s" % icon_path)
+		return
+
+	var texture := ResourceLoader.load(icon_path)
+	if texture is Texture2D:
+		season_icon_rect.texture = texture
+		season_icon_rect.visible = true
+	else:
+		season_icon_rect.texture = null
+		season_icon_rect.visible = false
+		push_warning("ClockDisplay: 季節アイコンがTexture2Dではありません: %s" % icon_path)
 
 
 func _setup_bgm_mute_button() -> void:
@@ -180,6 +283,7 @@ func _refresh() -> void:
 		_clock.get_phase_display_name(),
 		_clock.get_time_text(),
 	]
+	_refresh_season_icon(_clock.get_season_id())
 
 
 func _get_weather_display_text() -> String:
