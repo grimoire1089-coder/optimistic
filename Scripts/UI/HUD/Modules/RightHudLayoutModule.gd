@@ -23,7 +23,7 @@ const PASSIVE_FRAME_BUTTONS := [
 const BUTTON_LAYOUTS := {
 	"RobinHudButton": Vector2(HudButtonStyle.FIRST_ROW_ROBIN_LEFT, HudButtonStyle.FIRST_ROW_TOP),
 	"ShopButton": Vector2(HudButtonStyle.FIRST_ROW_INVENTORY_LEFT, HudButtonStyle.FIRST_ROW_TOP),
-	"BookButton": Vector2(HudButtonStyle.SECOND_ROW_CRAFT_LEFT, HudButtonStyle.SECOND_ROW_TOP),
+	"BookButton": Vector2(HudButtonStyle.FIRST_ROW_BUILD_LEFT, HudButtonStyle.FIRST_ROW_TOP),
 	"InventoryButton": Vector2(HudButtonStyle.FIRST_ROW_SHOP_LEFT, HudButtonStyle.FIRST_ROW_TOP),
 	"BuildModeButton": Vector2(HudButtonStyle.THIRD_ROW_PLACEHOLDER_03_LEFT, HudButtonStyle.THIRD_ROW_TOP),
 	"MoveButton": Vector2(HudButtonStyle.SECOND_ROW_MOVE_LEFT, HudButtonStyle.SECOND_ROW_TOP),
@@ -33,7 +33,7 @@ const BUTTON_LAYOUTS := {
 	"BillButton": Vector2(HudButtonStyle.SECOND_ROW_BILL_LEFT, HudButtonStyle.SECOND_ROW_TOP),
 	"PlanHudButton": Vector2(HudButtonStyle.THIRD_ROW_PLACEHOLDER_01_LEFT, HudButtonStyle.THIRD_ROW_TOP),
 	"PlaceholderHudButton02": Vector2(HudButtonStyle.THIRD_ROW_PLACEHOLDER_02_LEFT, HudButtonStyle.THIRD_ROW_TOP),
-	"PlaceholderHudButton03": Vector2(HudButtonStyle.FIRST_ROW_BUILD_LEFT, HudButtonStyle.FIRST_ROW_TOP),
+	"PlaceholderHudButton03": Vector2(HudButtonStyle.SECOND_ROW_CRAFT_LEFT, HudButtonStyle.SECOND_ROW_TOP),
 	"EncyclopediaButton": Vector2(HudButtonStyle.THIRD_ROW_PLACEHOLDER_04_LEFT, HudButtonStyle.THIRD_ROW_TOP),
 	"PlaceholderHudButton05": Vector2(HudButtonStyle.SECOND_ROW_SETTINGS_LEFT, HudButtonStyle.SECOND_ROW_TOP),
 }
