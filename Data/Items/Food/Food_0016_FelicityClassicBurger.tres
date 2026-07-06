@@ -2,7 +2,6 @@
 
 [ext_resource type="Script" uid="uid://cgyi4b7bbmqn" path="res://Scripts/Items/Food/FoodItemData.gd" id="1_food_data"]
 [ext_resource type="Texture2D" uid="uid://cpry7tp3cnpko" path="res://Assets/Items/Icons/Food/Food_0016.png" id="2_food_icon"]
-[ext_resource type="Resource" path="res://Data/Needs/Effects/need_effect_hunger_plus.tres" id="3_hunger_effect"]
 
 [resource]
 script = ExtResource("1_food_data")
@@ -12,4 +11,4 @@ description = "Bar「Felicity」の定番バーガー。肉とチーズの満足
 icon = ExtResource("2_food_icon")
 buy_price = 220
 sell_price = 110
-need_effect = ExtResource("3_hunger_effect")
+nutrition_value = 30.0
