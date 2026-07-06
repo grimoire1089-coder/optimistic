@@ -285,8 +285,7 @@ func _update_debug_label() -> void:
 	var active_map := get_active_map()
 	if active_map == null:
 		return
-	var grid_size := active_map.get_grid_size()
-	_debug_label.text = "%s 起動中 / Grid %d x %d" % [active_map.map_display_name, grid_size.x, grid_size.y]
+	_debug_label.text = active_map.map_display_name
 
 
 func _connect_buttons() -> void:
