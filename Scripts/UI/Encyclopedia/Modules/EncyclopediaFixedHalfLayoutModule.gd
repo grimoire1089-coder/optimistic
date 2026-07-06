@@ -90,7 +90,7 @@ func _make_fixed_page(old_page: HSplitContainer, page_name: String) -> Control:
 
 	var fixed := Control.new()
 	fixed.name = page_name
-	fixed.layout_mode = 2 as Control.LayoutMode
+	fixed.set("layout_mode", 2)
 	fixed.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	fixed.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	parent.add_child(fixed)
@@ -126,7 +126,7 @@ func _find_child_by_names(parent: Node, names: Array) -> Control:
 
 
 func _set_half(node: Control, anchor_l: float, anchor_r: float, offset_l: float, offset_r: float) -> void:
-	node.layout_mode = 1 as Control.LayoutMode
+	node.set("layout_mode", 1)
 	node.anchor_left = anchor_l
 	node.anchor_top = 0.0
 	node.anchor_right = anchor_r
