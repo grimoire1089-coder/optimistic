@@ -148,6 +148,10 @@ func get_time_text() -> String:
 	return "%02d:%02d" % [get_hour(), get_minute()]
 
 
+func get_current_time_text() -> String:
+	return "%s %s" % [get_calendar_text(), get_time_text()]
+
+
 func get_day_text() -> String:
 	return get_calendar_text()
 
