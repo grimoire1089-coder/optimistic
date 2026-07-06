@@ -17,6 +17,7 @@ const HOVER_BORDER_WIDTH := 2
 const PRESSED_BORDER_WIDTH := 2
 const DISABLED_BORDER_WIDTH := 1
 const ACTIVE_BORDER_WIDTH := 4
+const MOVEMENT_LOCK_CONTROLLER_GROUP: StringName = &"hud_movement_lock_controller"
 
 const BUTTON_TO_UI := {
 	"RobinHudButton": "AICharacterHud",
@@ -50,11 +51,17 @@ var _movement_button_original_disabled: Dictionary = {}
 
 
 func _ready() -> void:
+	if not is_in_group(MOVEMENT_LOCK_CONTROLLER_GROUP):
+		add_to_group(MOVEMENT_LOCK_CONTROLLER_GROUP)
 	call_deferred("_connect_and_sync")
 
 
 func _process(_delta: float) -> void:
 	_sync_movement_button_locks()
+
+
+func refresh_movement_button_locks() -> void:
+	_sync_movement_button_locks(true)
 
 
 func _connect_and_sync() -> void:
