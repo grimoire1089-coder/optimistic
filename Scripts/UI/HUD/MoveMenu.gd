@@ -38,6 +38,7 @@ var _exploration_location_system: Node
 var _map_move_panel: PanelContainer
 var _menu_mode: StringName = MENU_MODE_MOVE
 var _selected_exploration_minutes: int = 0
+var _is_map_move_processing: bool = false
 
 
 func _ready() -> void:
@@ -48,6 +49,7 @@ func _ready() -> void:
 	close_button.pressed.connect(close_menu)
 	_configure_tab_buttons()
 	_connect_book_library_signal()
+	_connect_robin_entrance_travel_completed_signal()
 	_refresh_content()
 
 
@@ -55,6 +57,7 @@ func open_menu() -> void:
 	visible = true
 	_menu_mode = MENU_MODE_MOVE
 	_hide_map_move_panel()
+	_connect_robin_entrance_travel_completed_signal()
 	_apply_shop_aligned_layout()
 	_refresh_content()
 
@@ -74,7 +77,7 @@ func toggle_menu() -> void:
 func _configure_tab_buttons() -> void:
 	if move_action_button != null:
 		move_action_button.visible = true
-		move_action_button.disabled = false
+		move_action_button.disabled = _is_map_move_processing
 		move_action_button.toggle_mode = true
 		move_action_button.text = "マップ移動"
 		move_action_button.tooltip_text = "部屋マップ間の移動先を別パネルで開きます。"
@@ -92,6 +95,10 @@ func _configure_tab_buttons() -> void:
 
 
 func _on_move_action_pressed() -> void:
+	if _is_map_move_processing:
+		if visible:
+			detail_label.text = "マップ移動中です。完了までお待ちください。"
+		return
 	_menu_mode = MENU_MODE_MOVE
 	_refresh_content()
 	_show_map_move_panel()
@@ -114,6 +121,7 @@ func _on_close_map_move_panel_pressed() -> void:
 
 func _sync_tab_button_state() -> void:
 	if move_action_button != null:
+		move_action_button.disabled = _is_map_move_processing
 		move_action_button.set_pressed_no_signal(_is_map_move_panel_open())
 	if explore_action_button != null:
 		explore_action_button.set_pressed_no_signal(_menu_mode == MENU_MODE_EXPLORE)
@@ -149,7 +157,10 @@ func _place_detail_label_under_title() -> void:
 func _show_move_tab() -> void:
 	title_label.text = "移動"
 	if visible:
-		detail_label.text = "マップ移動または探索を選んでください。"
+		if _is_map_move_processing:
+			detail_label.text = "マップ移動中です。完了までお待ちください。"
+		else:
+			detail_label.text = "マップ移動または探索を選んでください。"
 
 
 func _show_exploration_tab() -> void:
@@ -247,6 +258,7 @@ func _create_map_move_panel(destinations: Array[Dictionary], active_map_id: Stri
 		if _get_map_id_from_destination(destination) == active_map_id:
 			continue
 		var button: Button = _create_destination_button(destination, active_map_id)
+		button.disabled = _is_map_move_processing or button.disabled
 		container.add_child(button)
 	return panel
 
@@ -339,22 +351,28 @@ func _on_destination_button_pressed(destination: Dictionary) -> void:
 
 
 func _on_map_destination_pressed(destination: Dictionary) -> void:
+	if _is_map_move_processing:
+		detail_label.text = "マップ移動中です。完了までお待ちください。"
+		return
 	var target_map_id: StringName = _get_map_id_from_destination(destination)
 	if target_map_id == _get_active_map_id():
 		detail_label.text = "すでに%sにいます。" % _get_destination_display_name(destination)
 		_refresh_content()
 		return
 
+	_set_map_move_processing(true)
 	if _try_entrance_travel(target_map_id):
 		detail_label.text = "%sへ移動中です。" % _get_destination_display_name(destination)
 		close_menu()
 		return
 
 	if _try_direct_travel(target_map_id):
+		_set_map_move_processing(false)
 		detail_label.text = "%sへ移動しました。" % _get_destination_display_name(destination)
 		close_menu()
 		return
 
+	_set_map_move_processing(false)
 	detail_label.text = "移動先のマップがまだ準備できていません: %s" % _get_destination_display_name(destination)
 	_refresh_content()
 
@@ -373,6 +391,28 @@ func _on_exploration_destination_pressed(destination: Dictionary) -> void:
 		return
 	detail_label.text = "今は探索へ出発できません: %s" % _get_destination_display_name(destination)
 	_refresh_content()
+
+
+func _set_map_move_processing(is_processing: bool) -> void:
+	_is_map_move_processing = is_processing
+	_set_map_move_panel_destination_buttons_disabled(is_processing)
+	_sync_tab_button_state()
+
+
+func _set_map_move_panel_destination_buttons_disabled(disabled: bool) -> void:
+	if _map_move_panel == null or not is_instance_valid(_map_move_panel):
+		return
+	for child in _map_move_panel.find_children("*", "Button", true, false):
+		var button: Button = child as Button
+		if button == null or button.name == "CloseButton":
+			continue
+		button.disabled = disabled
+
+
+func _on_robin_entrance_travel_completed(_target_map_id: StringName) -> void:
+	_set_map_move_processing(false)
+	if visible and _menu_mode == MENU_MODE_MOVE:
+		_refresh_content()
 
 
 func _add_dynamic_button(button: Button) -> void:
@@ -491,6 +531,7 @@ func _get_book_unlocked_destinations() -> Array[Dictionary]:
 
 
 func _try_entrance_travel(target_map_id: StringName) -> bool:
+	_connect_robin_entrance_travel_completed_signal()
 	var robin: Node = _get_robin()
 	if robin == null or not robin.has_method("request_entrance_travel"):
 		return false
@@ -665,6 +706,15 @@ func _connect_book_library_signal() -> void:
 	var callable := Callable(self, "_on_book_library_changed")
 	if not library.is_connected("library_changed", callable):
 		library.connect("library_changed", callable)
+
+
+func _connect_robin_entrance_travel_completed_signal() -> void:
+	var robin: Node = _get_robin()
+	if robin == null or not robin.has_signal("entrance_travel_completed"):
+		return
+	var callable := Callable(self, "_on_robin_entrance_travel_completed")
+	if not robin.is_connected("entrance_travel_completed", callable):
+		robin.connect("entrance_travel_completed", callable)
 
 
 func _resolve_book_library() -> Node:
