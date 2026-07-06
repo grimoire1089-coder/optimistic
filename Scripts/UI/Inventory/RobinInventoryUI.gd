@@ -143,6 +143,7 @@ func _create_slot_button() -> Button:
 	slot_button.focus_mode = Control.FOCUS_NONE
 	slot_button.clip_text = true
 	slot_button.expand_icon = false
+	slot_button.clip_contents = true
 	slot_button.add_child(_create_item_icon_rect())
 	return slot_button
 
@@ -151,7 +152,9 @@ func _create_item_icon_rect() -> TextureRect:
 	var icon_rect := TextureRect.new()
 	icon_rect.name = "ItemIcon"
 	icon_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	icon_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	icon_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon_rect.custom_minimum_size = ITEM_ICON_SIZE
 	icon_rect.anchor_left = 0.5
 	icon_rect.anchor_top = 0.5
 	icon_rect.anchor_right = 0.5
