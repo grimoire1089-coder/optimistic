@@ -217,7 +217,7 @@ func _apply_button_frame(button: Button, is_active: bool) -> void:
 	button.add_theme_stylebox_override("normal", _make_style(NORMAL_BG, NORMAL_BORDER, NORMAL_BORDER_WIDTH))
 	button.add_theme_stylebox_override("hover", _make_style(HOVER_BG, HOVER_BORDER, HOVER_BORDER_WIDTH))
 	button.add_theme_stylebox_override("pressed", _make_style(PRESSED_BG, PRESSED_BORDER, PRESSED_BORDER_WIDTH))
-	button.add_theme_stylebox_override("focus", _make_style(HOVER_BG, HOVER_BORDER, NORMAL_BORDER_WIDTH))
+	button.add_theme_stylebox_override("focus", _make_style(HOVER_BG, HOVER_BORDER, HOVER_BORDER_WIDTH))
 	button.add_theme_stylebox_override("disabled", _make_style(DISABLED_BG, DISABLED_BORDER, DISABLED_BORDER_WIDTH))
 
 
