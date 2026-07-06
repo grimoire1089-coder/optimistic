@@ -202,7 +202,7 @@ func _create_map_move_panel(destinations: Array[Dictionary], active_map_id: Stri
 	panel.name = "MapMovePanel"
 	panel.visible = true
 	panel.z_index = z_index + 1
-	panel.theme_override_styles["panel"] = _create_map_move_panel_style()
+	panel.add_theme_stylebox_override("panel", _create_map_move_panel_style())
 
 	var margin: MarginContainer = MarginContainer.new()
 	margin.name = "MapMoveMargin"
