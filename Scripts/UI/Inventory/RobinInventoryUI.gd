@@ -3,11 +3,13 @@ class_name RobinInventoryUI
 
 const BOTTOM_RIGHT_MARGIN := Vector2(24.0, 92.0)
 const PANEL_SIZE := Vector2(480.0, 456.0)
+const ITEM_ICON_SIZE := Vector2(64.0, 64.0)
 
 @export var actor_path: NodePath = NodePath("../../Robin")
 @export var inventory_module_child_name: StringName = &"RobinInventoryModule"
-@export var slot_size: Vector2 = Vector2(68, 68)
+@export var slot_size: Vector2 = Vector2(72.0, 72.0)
 @export var grid_columns: int = 5
+@export_range(0, 24, 1) var grid_separation: int = 6
 
 @onready var title_label: Label = $MarginContainer/Rows/Header/TitleLabel
 @onready var close_button: Button = $MarginContainer/Rows/Header/CloseButton
@@ -96,10 +98,15 @@ func _setup_tabs() -> void:
 func _refresh() -> void:
 	_clear_grid()
 	title_label.text = "ロビンのインベントリ"
-	grid.columns = max(grid_columns, 1)
+	var safe_columns: int = max(grid_columns, 1)
+	grid.columns = safe_columns
+	grid.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	grid.add_theme_constant_override("h_separation", grid_separation)
+	grid.add_theme_constant_override("v_separation", grid_separation)
 
 	if _inventory_module == null:
 		detail_label.text = "インベントリ未接続"
+		_update_grid_minimum_size(0)
 		return
 
 	if _categories.is_empty():
@@ -107,6 +114,7 @@ func _refresh() -> void:
 
 	if _categories.is_empty():
 		detail_label.text = "カテゴリがありません。"
+		_update_grid_minimum_size(0)
 		return
 
 	var category := _categories[_current_category_index]
@@ -115,6 +123,7 @@ func _refresh() -> void:
 	var items := _inventory_module.get_items(category_id)
 	var slot_limit := _inventory_module.get_slot_limit(category_id)
 	var slot_count := _get_visible_slot_count(slot_limit, items.size())
+	_update_grid_minimum_size(slot_count)
 
 	for index in range(slot_count):
 		var slot_button := _create_slot_button()
@@ -133,8 +142,25 @@ func _create_slot_button() -> Button:
 	slot_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	slot_button.focus_mode = Control.FOCUS_NONE
 	slot_button.clip_text = true
-	slot_button.expand_icon = true
+	slot_button.expand_icon = false
+	slot_button.add_child(_create_item_icon_rect())
 	return slot_button
+
+
+func _create_item_icon_rect() -> TextureRect:
+	var icon_rect := TextureRect.new()
+	icon_rect.name = "ItemIcon"
+	icon_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	icon_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon_rect.anchor_left = 0.5
+	icon_rect.anchor_top = 0.5
+	icon_rect.anchor_right = 0.5
+	icon_rect.anchor_bottom = 0.5
+	icon_rect.offset_left = -ITEM_ICON_SIZE.x * 0.5
+	icon_rect.offset_top = -ITEM_ICON_SIZE.y * 0.5
+	icon_rect.offset_right = ITEM_ICON_SIZE.x * 0.5
+	icon_rect.offset_bottom = ITEM_ICON_SIZE.y * 0.5
+	return icon_rect
 
 
 func _apply_item_to_slot(slot_button: Button, item: Dictionary) -> void:
@@ -143,9 +169,12 @@ func _apply_item_to_slot(slot_button: Button, item: Dictionary) -> void:
 	slot_button.text = ""
 	slot_button.tooltip_text = _build_item_tooltip(display_name, amount)
 
+	var icon_rect := slot_button.get_node_or_null("ItemIcon") as TextureRect
 	var icon_path := String(item.get("icon_path", ""))
-	if icon_path != "" and ResourceLoader.exists(icon_path):
-		slot_button.icon = load(icon_path) as Texture2D
+	if icon_rect != null:
+		icon_rect.texture = null
+		if icon_path != "" and ResourceLoader.exists(icon_path):
+			icon_rect.texture = load(icon_path) as Texture2D
 
 	_add_amount_badge(slot_button, amount)
 
@@ -190,6 +219,15 @@ func _get_visible_slot_count(slot_limit: int, item_count: int) -> int:
 	if slot_limit == RobinInventoryModule.UNLIMITED_SLOT_LIMIT:
 		return max(item_count, _inventory_module.get_slots_per_category())
 	return slot_limit
+
+
+func _update_grid_minimum_size(slot_count: int) -> void:
+	var safe_columns: int = max(grid_columns, 1)
+	var visible_rows: int = max(ceili(float(max(slot_count, 1)) / float(safe_columns)), 1)
+	grid.custom_minimum_size = Vector2(
+		float(safe_columns) * slot_size.x + float(max(safe_columns - 1, 0) * grid_separation),
+		float(visible_rows) * slot_size.y + float(max(visible_rows - 1, 0) * grid_separation)
+	)
 
 
 func _build_detail_text(category_name: String, item_count: int, slot_limit: int) -> String:
