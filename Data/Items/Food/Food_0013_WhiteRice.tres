@@ -1,7 +1,6 @@
 [gd_resource type="Resource" script_class="FoodItemData" format=3 uid="uid://cpms561gltt7f"]
 
 [ext_resource type="Script" uid="uid://cgyi4b7bbmqn" path="res://Scripts/Items/Food/FoodItemData.gd" id="1_food_data"]
-[ext_resource type="Resource" path="res://Data/Needs/Effects/need_effect_hunger_plus.tres" id="2_d1lxk"]
 [ext_resource type="Texture2D" uid="uid://wkrxd88ut6f" path="res://Assets/Items/Icons/Food/Food_0013.png" id="2_food_icon"]
 
 [resource]
@@ -10,4 +9,4 @@ item_id = &"food_0013_white_rice"
 display_name = "  白米"
 icon = ExtResource("2_food_icon")
 sell_price = 8
-need_effect = ExtResource("2_d1lxk")
+nutrition_value = 30.0
