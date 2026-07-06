@@ -12,5 +12,4 @@ grow_horizontal = 0
 grow_vertical = 0
 mouse_default_cursor_shape = 2
 focus_mode = 0
-text = "Placeholder"
 script = ExtResource("1_placeholder_button")
