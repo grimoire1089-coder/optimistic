@@ -15,3 +15,10 @@ func _set_non_build_buttons_disabled(is_disabled: bool) -> void:
 	_set_canvas_button_disabled("MoveButton", is_disabled)
 	_set_canvas_button_disabled("EncyclopediaButton", is_disabled)
 	_set_canvas_button_disabled("SettingsButton", is_disabled)
+
+
+func _get_startup_debug_text() -> String:
+	var robin_room_map := get_node_or_null("RobinRoomMap") as RoomMapGridModule
+	if robin_room_map == null:
+		return "Main Scene"
+	return robin_room_map.map_display_name
