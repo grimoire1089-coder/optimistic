@@ -74,15 +74,20 @@ func _make_fixed_page(old_page: HSplitContainer, page_name: String) -> Control:
 
 	var index := old_page.get_index()
 	var tab_title := ""
-	if parent is TabContainer:
-		var tabs := parent as TabContainer
-		if index >= 0 and index < tabs.get_tab_count():
-			tab_title = tabs.get_tab_title(index)
+	var tab_container := parent as TabContainer
+	var was_blocking_signals := false
+	if tab_container != null:
+		was_blocking_signals = tab_container.is_blocking_signals()
+		if index >= 0 and index < tab_container.get_tab_count():
+			tab_title = tab_container.get_tab_title(index)
 
 	var left := _find_child_by_names(old_page, LEFT_NAMES)
 	var right := _find_child_by_names(old_page, RIGHT_NAMES)
 	if left == null or right == null:
 		return old_page
+
+	if tab_container != null:
+		tab_container.set_block_signals(true)
 
 	old_page.remove_child(left)
 	old_page.remove_child(right)
@@ -97,8 +102,10 @@ func _make_fixed_page(old_page: HSplitContainer, page_name: String) -> Control:
 	parent.move_child(fixed, index)
 	fixed.add_child(left)
 	fixed.add_child(right)
-	if parent is TabContainer and not tab_title.is_empty():
-		(parent as TabContainer).set_tab_title(index, tab_title)
+	if tab_container != null and not tab_title.is_empty():
+		tab_container.set_tab_title(index, tab_title)
+	if tab_container != null:
+		tab_container.set_block_signals(was_blocking_signals)
 	old_page.queue_free()
 	return fixed
 
