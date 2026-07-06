@@ -244,6 +244,8 @@ func _create_map_move_panel(destinations: Array[Dictionary], active_map_id: Stri
 	container.add_child(label)
 
 	for destination in destinations:
+		if _get_map_id_from_destination(destination) == active_map_id:
+			continue
 		var button: Button = _create_destination_button(destination, active_map_id)
 		container.add_child(button)
 	return panel
