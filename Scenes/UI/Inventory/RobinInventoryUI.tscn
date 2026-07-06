@@ -31,6 +31,8 @@ grow_horizontal = 0
 grow_vertical = 0
 theme_override_styles/panel = SubResource("StyleBoxFlat_inventory_panel")
 script = ExtResource("1_inventory_ui")
+slot_size = Vector2(72, 72)
+grid_separation = 6
 
 [node name="MarginContainer" type="MarginContainer" parent="."]
 layout_mode = 2
@@ -68,6 +70,7 @@ size_flags_vertical = 3
 horizontal_scroll_mode = 0
 
 [node name="Grid" type="GridContainer" parent="MarginContainer/Rows/ScrollContainer"]
+custom_minimum_size = Vector2(384, 306)
 layout_mode = 2
 columns = 5
 theme_override_constants/h_separation = 6
