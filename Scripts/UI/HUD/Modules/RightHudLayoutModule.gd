@@ -22,9 +22,9 @@ const PASSIVE_FRAME_BUTTONS := [
 
 const BUTTON_LAYOUTS := {
 	"RobinHudButton": Vector2(HudButtonStyle.FIRST_ROW_ROBIN_LEFT, HudButtonStyle.FIRST_ROW_TOP),
-	"ShopButton": Vector2(HudButtonStyle.FIRST_ROW_SHOP_LEFT, HudButtonStyle.FIRST_ROW_TOP),
+	"ShopButton": Vector2(HudButtonStyle.FIRST_ROW_INVENTORY_LEFT, HudButtonStyle.FIRST_ROW_TOP),
 	"BookButton": Vector2(HudButtonStyle.FIRST_ROW_BOOK_LEFT, HudButtonStyle.FIRST_ROW_TOP),
-	"InventoryButton": Vector2(HudButtonStyle.FIRST_ROW_INVENTORY_LEFT, HudButtonStyle.FIRST_ROW_TOP),
+	"InventoryButton": Vector2(HudButtonStyle.FIRST_ROW_SHOP_LEFT, HudButtonStyle.FIRST_ROW_TOP),
 	"BuildModeButton": Vector2(HudButtonStyle.THIRD_ROW_PLACEHOLDER_03_LEFT, HudButtonStyle.THIRD_ROW_TOP),
 	"MoveButton": Vector2(HudButtonStyle.SECOND_ROW_MOVE_LEFT, HudButtonStyle.SECOND_ROW_TOP),
 	"WorkCreditButton": Vector2(HudButtonStyle.SECOND_ROW_WORK_LEFT, HudButtonStyle.SECOND_ROW_TOP),
