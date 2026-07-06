@@ -85,7 +85,7 @@ func _configure_tab_buttons() -> void:
 			move_action_button.pressed.connect(_on_move_action_pressed)
 	if explore_action_button != null:
 		explore_action_button.visible = true
-		explore_action_button.disabled = false
+		explore_action_button.disabled = _is_map_move_processing
 		explore_action_button.toggle_mode = true
 		explore_action_button.text = "探索"
 		explore_action_button.tooltip_text = "解禁済みの探索ロケーションを表示します。"
@@ -107,6 +107,10 @@ func _on_move_action_pressed() -> void:
 
 
 func _on_explore_action_pressed() -> void:
+	if _is_map_move_processing:
+		if visible:
+			detail_label.text = "マップ移動中です。完了までお待ちください。"
+		return
 	_menu_mode = MENU_MODE_EXPLORE
 	_hide_map_move_panel()
 	_refresh_content()
@@ -124,6 +128,7 @@ func _sync_tab_button_state() -> void:
 		move_action_button.disabled = _is_map_move_processing
 		move_action_button.set_pressed_no_signal(_is_map_move_panel_open())
 	if explore_action_button != null:
+		explore_action_button.disabled = _is_map_move_processing
 		explore_action_button.set_pressed_no_signal(_menu_mode == MENU_MODE_EXPLORE)
 
 
