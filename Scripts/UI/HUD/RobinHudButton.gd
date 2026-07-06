@@ -2,17 +2,24 @@ extends Button
 class_name RobinHudButton
 
 const DEFAULT_CLICK_SFX_PATH := "res://Assets/Audio/SFX/UI/UI_Click_001.ogg"
+const DEFAULT_AI_CHARACTER_ICON_PATH := "res://Assets/UI/Icons/AI_Character.png"
 
 @export var label_text: String = "ロビン"
 @export var ai_hud_path: NodePath = NodePath("../AICharacterHud")
 @export var robin_path: NodePath = NodePath("../../Robin")
 @export var click_sfx: AudioStream
 @export var click_sfx_volume_db: float = 0.0
+@export var ai_character_icon: Texture2D
 
 
 func _ready() -> void:
 	_apply_square_button_layout()
-	text = label_text
+	_load_default_ai_character_icon_if_needed()
+	if icon != null:
+		HudButtonStyle.apply_icon_button_layout(self)
+		text = ""
+	elif text.is_empty():
+		text = label_text
 	_load_default_click_sfx_if_needed()
 	pressed.connect(_on_pressed)
 
@@ -44,6 +51,15 @@ func _load_default_click_sfx_if_needed() -> void:
 		return
 	if ResourceLoader.exists(DEFAULT_CLICK_SFX_PATH):
 		click_sfx = load(DEFAULT_CLICK_SFX_PATH) as AudioStream
+
+
+func _load_default_ai_character_icon_if_needed() -> void:
+	if ai_character_icon == null and icon != null:
+		ai_character_icon = icon
+	if ai_character_icon == null and ResourceLoader.exists(DEFAULT_AI_CHARACTER_ICON_PATH):
+		ai_character_icon = load(DEFAULT_AI_CHARACTER_ICON_PATH) as Texture2D
+	if ai_character_icon != null:
+		icon = ai_character_icon
 
 
 func _apply_square_button_layout() -> void:
