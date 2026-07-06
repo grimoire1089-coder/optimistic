@@ -4,6 +4,7 @@ class_name RobinInventoryUI
 const BOTTOM_RIGHT_MARGIN := Vector2(24.0, 92.0)
 const PANEL_SIZE := Vector2(480.0, 456.0)
 const ITEM_ICON_SIZE := Vector2(64.0, 64.0)
+const SLOTS_PER_PAGE := 20
 
 @export var actor_path: NodePath = NodePath("../../Robin")
 @export var inventory_module_child_name: StringName = &"RobinInventoryModule"
@@ -13,6 +14,9 @@ const ITEM_ICON_SIZE := Vector2(64.0, 64.0)
 
 @onready var title_label: Label = $MarginContainer/Rows/Header/TitleLabel
 @onready var close_button: Button = $MarginContainer/Rows/Header/CloseButton
+@onready var previous_page_button: Button = $MarginContainer/Rows/Header/PreviousPageButton
+@onready var page_label: Label = $MarginContainer/Rows/Header/PageLabel
+@onready var next_page_button: Button = $MarginContainer/Rows/Header/NextPageButton
 @onready var tab_bar: TabBar = $MarginContainer/Rows/TabBar
 @onready var grid: GridContainer = $MarginContainer/Rows/ScrollContainer/Grid
 @onready var detail_label: Label = $MarginContainer/Rows/DetailLabel
@@ -20,6 +24,7 @@ const ITEM_ICON_SIZE := Vector2(64.0, 64.0)
 var _inventory_module: RobinInventoryModule
 var _categories: Array[Dictionary] = []
 var _current_category_index: int = 0
+var _current_page_index: int = 0
 
 
 func _ready() -> void:
@@ -28,6 +33,8 @@ func _ready() -> void:
 	_apply_bottom_right_layout()
 	call_deferred("_apply_bottom_right_layout")
 	close_button.pressed.connect(close)
+	previous_page_button.pressed.connect(_on_previous_page_pressed)
+	next_page_button.pressed.connect(_on_next_page_pressed)
 	tab_bar.tab_changed.connect(_on_tab_changed)
 	_resolve_inventory_module()
 	_setup_tabs()
@@ -103,10 +110,11 @@ func _refresh() -> void:
 	grid.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	grid.add_theme_constant_override("h_separation", grid_separation)
 	grid.add_theme_constant_override("v_separation", grid_separation)
+	_update_grid_minimum_size(SLOTS_PER_PAGE)
 
 	if _inventory_module == null:
 		detail_label.text = "インベントリ未接続"
-		_update_grid_minimum_size(0)
+		_update_page_controls(0)
 		return
 
 	if _categories.is_empty():
@@ -114,7 +122,7 @@ func _refresh() -> void:
 
 	if _categories.is_empty():
 		detail_label.text = "カテゴリがありません。"
-		_update_grid_minimum_size(0)
+		_update_page_controls(0)
 		return
 
 	var category := _categories[_current_category_index]
@@ -122,13 +130,17 @@ func _refresh() -> void:
 	var category_name := String(category.get("display_name", ""))
 	var items := _inventory_module.get_items(category_id)
 	var slot_limit := _inventory_module.get_slot_limit(category_id)
-	var slot_count := _get_visible_slot_count(slot_limit, items.size())
-	_update_grid_minimum_size(slot_count)
+	var total_slot_count := _get_total_slot_count(slot_limit, items.size())
+	var page_count := _get_page_count(total_slot_count)
+	_current_page_index = clampi(_current_page_index, 0, page_count - 1)
+	_update_page_controls(total_slot_count)
 
-	for index in range(slot_count):
+	var start_index := _current_page_index * SLOTS_PER_PAGE
+	for local_index in range(SLOTS_PER_PAGE):
 		var slot_button := _create_slot_button()
-		if index < items.size():
-			_apply_item_to_slot(slot_button, items[index] as Dictionary)
+		var item_index := start_index + local_index
+		if item_index < items.size():
+			_apply_item_to_slot(slot_button, items[item_index] as Dictionary)
 		else:
 			slot_button.text = ""
 		grid.add_child(slot_button)
@@ -218,10 +230,25 @@ func _make_amount_badge_style() -> StyleBoxFlat:
 	return style
 
 
-func _get_visible_slot_count(slot_limit: int, item_count: int) -> int:
+func _get_total_slot_count(slot_limit: int, item_count: int) -> int:
 	if slot_limit == RobinInventoryModule.UNLIMITED_SLOT_LIMIT:
-		return max(item_count, _inventory_module.get_slots_per_category())
-	return slot_limit
+		return max(item_count, _inventory_module.get_slots_per_category(), SLOTS_PER_PAGE)
+	return max(slot_limit, item_count, SLOTS_PER_PAGE)
+
+
+func _get_page_count(total_slot_count: int) -> int:
+	return max(ceili(float(max(total_slot_count, 1)) / float(SLOTS_PER_PAGE)), 1)
+
+
+func _update_page_controls(total_slot_count: int) -> void:
+	var page_count := _get_page_count(total_slot_count)
+	var has_multiple_pages := page_count > 1
+	previous_page_button.visible = has_multiple_pages
+	page_label.visible = has_multiple_pages
+	next_page_button.visible = has_multiple_pages
+	previous_page_button.disabled = _current_page_index <= 0
+	next_page_button.disabled = _current_page_index >= page_count - 1
+	page_label.text = "%d/%d" % [_current_page_index + 1, page_count]
 
 
 func _update_grid_minimum_size(slot_count: int) -> void:
@@ -246,6 +273,17 @@ func _clear_grid() -> void:
 
 func _on_tab_changed(tab_index: int) -> void:
 	_current_category_index = tab_index
+	_current_page_index = 0
+	_refresh()
+
+
+func _on_previous_page_pressed() -> void:
+	_current_page_index = max(_current_page_index - 1, 0)
+	_refresh()
+
+
+func _on_next_page_pressed() -> void:
+	_current_page_index += 1
 	_refresh()
 
 
