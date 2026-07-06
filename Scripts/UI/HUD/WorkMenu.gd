@@ -24,6 +24,7 @@ const BOTTOM_RIGHT_PANEL_SIZE := Vector2(356.0, 196.0)
 var _refresh_timer: float = 0.0
 var _worker: Node
 var _connected_worker: Node
+var _is_work_processing: bool = false
 
 
 func _ready() -> void:
@@ -65,6 +66,10 @@ func toggle_menu() -> void:
 	open_menu()
 
 
+func is_work_processing() -> bool:
+	return _is_work_processing or _is_worker_working()
+
+
 func _refresh() -> void:
 	title_label.text = "仕事"
 	var rank := _get_first_job_rank()
@@ -77,7 +82,7 @@ func _refresh() -> void:
 		pay,
 	]
 	var sleeping := _is_worker_sleeping()
-	var working := _is_worker_working()
+	var working := is_work_processing()
 	job_001_button.disabled = sleeping or working
 	if sleeping:
 		detail_label.text = sleeping_detail_text
@@ -97,7 +102,7 @@ func _on_job_001_pressed() -> void:
 		_refresh()
 		_push_message(sleeping_detail_text)
 		return
-	if _is_worker_working():
+	if is_work_processing():
 		_refresh()
 		_push_message(working_detail_text)
 		return
@@ -109,12 +114,20 @@ func _on_job_001_pressed() -> void:
 		return
 
 	if worker.call("request_work_at_entrance", first_job_id, first_job_name, first_job_minutes) == true:
+		_set_work_processing(true)
 		_push_message("%sへ向かいます。" % first_job_name)
 		close_menu()
 		return
 
+	_set_work_processing(false)
 	_refresh()
 	_push_message(work_unavailable_text)
+
+
+func _set_work_processing(work_processing: bool) -> void:
+	_is_work_processing = work_processing
+	if visible:
+		_refresh()
 
 
 func _is_worker_sleeping() -> bool:
@@ -170,6 +183,7 @@ func _connect_worker_signals() -> void:
 func _on_worker_work_completed(job_id: StringName) -> void:
 	if job_id != first_job_id:
 		return
+	_set_work_processing(false)
 	var previous_rank := _get_first_job_rank()
 	var pay := _get_first_job_pay_for_rank(previous_rank)
 	_add_work_pay(pay, "work_%s_rank_%d" % [String(job_id), previous_rank])
