@@ -35,15 +35,33 @@ const TOGGLE_STATE_BUTTONS := [
 	"BuildModeButton",
 ]
 
+const MOVEMENT_LOCK_BUTTONS := [
+	"MoveButton",
+	"WorkCreditButton",
+]
+
+const MOVEMENT_LOCK_ACTION_IDS := [
+	&"map_travel",
+	&"part_time_work",
+]
+
+var _movement_buttons_locked: bool = false
+var _movement_button_original_disabled: Dictionary = {}
+
 
 func _ready() -> void:
 	call_deferred("_connect_and_sync")
+
+
+func _process(_delta: float) -> void:
+	_sync_movement_button_locks()
 
 
 func _connect_and_sync() -> void:
 	RightHudLayout.apply_button_layout(get_parent())
 	_connect_open_ui_signals()
 	_connect_toggle_state_button_signals()
+	_sync_movement_button_locks(true)
 	_sync_all_button_frames()
 
 
@@ -91,6 +109,67 @@ func _sync_all_button_frames() -> void:
 	for button_name in RightHudLayout.PASSIVE_FRAME_BUTTONS:
 		var button := parent_node.get_node_or_null(String(button_name)) as Button
 		_apply_button_frame(button, false)
+
+
+func _sync_movement_button_locks(force: bool = false) -> void:
+	var should_lock := _should_lock_movement_buttons()
+	if not force and should_lock == _movement_buttons_locked:
+		return
+	_movement_buttons_locked = should_lock
+	_apply_movement_button_lock(should_lock)
+	_sync_all_button_frames()
+
+
+func _should_lock_movement_buttons() -> bool:
+	if _is_move_menu_processing():
+		return true
+	var robin := _get_robin_actor()
+	if robin == null or not robin.has_method("get_current_need_action_id"):
+		return false
+	var action_id_value: Variant = robin.call("get_current_need_action_id")
+	var action_id := action_id_value if action_id_value is StringName else StringName(String(action_id_value))
+	return MOVEMENT_LOCK_ACTION_IDS.has(action_id)
+
+
+func _is_move_menu_processing() -> bool:
+	var parent_node := get_parent()
+	if parent_node == null:
+		return false
+	var move_menu := parent_node.get_node_or_null("MoveMenu")
+	if move_menu == null:
+		return false
+	return move_menu.get("_is_map_move_processing") == true
+
+
+func _get_robin_actor() -> Node:
+	var parent_node := get_parent()
+	if parent_node != null:
+		var scene_root := parent_node.get_parent()
+		if scene_root != null:
+			var robin := scene_root.get_node_or_null("Robin")
+			if robin != null:
+				return robin
+	var current_scene := get_tree().current_scene
+	if current_scene == null:
+		return null
+	return current_scene.get_node_or_null("Robin")
+
+
+func _apply_movement_button_lock(locked: bool) -> void:
+	var parent_node := get_parent()
+	if parent_node == null:
+		return
+	for button_name in MOVEMENT_LOCK_BUTTONS:
+		var button := parent_node.get_node_or_null(String(button_name)) as Button
+		if button == null:
+			continue
+		if locked:
+			if not _movement_button_original_disabled.has(button_name):
+				_movement_button_original_disabled[button_name] = button.disabled
+			button.disabled = true
+		else:
+			button.disabled = bool(_movement_button_original_disabled.get(button_name, false))
+			_movement_button_original_disabled.erase(button_name)
 
 
 func _on_ui_visibility_changed(button_name: String, canvas_item: CanvasItem) -> void:
