@@ -16,7 +16,7 @@ const CRAFT_MENU_SIZE := Vector2(304.0, 172.0)
 const PASSIVE_FRAME_BUTTONS := [
 	"PlanHudButton",
 	"PlaceholderHudButton02",
-	"PlaceholderHudButton03",
+	"InteractButton",
 	"PlaceholderHudButton05",
 ]
 
@@ -33,7 +33,7 @@ const BUTTON_LAYOUTS := {
 	"BillButton": Vector2(HudButtonStyle.SECOND_ROW_BILL_LEFT, HudButtonStyle.SECOND_ROW_TOP),
 	"PlanHudButton": Vector2(HudButtonStyle.THIRD_ROW_PLACEHOLDER_01_LEFT, HudButtonStyle.THIRD_ROW_TOP),
 	"PlaceholderHudButton02": Vector2(HudButtonStyle.THIRD_ROW_PLACEHOLDER_02_LEFT, HudButtonStyle.THIRD_ROW_TOP),
-	"PlaceholderHudButton03": Vector2(HudButtonStyle.SECOND_ROW_CRAFT_LEFT, HudButtonStyle.SECOND_ROW_TOP),
+	"InteractButton": Vector2(HudButtonStyle.SECOND_ROW_CRAFT_LEFT, HudButtonStyle.SECOND_ROW_TOP),
 	"EncyclopediaButton": Vector2(HudButtonStyle.THIRD_ROW_PLACEHOLDER_04_LEFT, HudButtonStyle.THIRD_ROW_TOP),
 	"PlaceholderHudButton05": Vector2(HudButtonStyle.SECOND_ROW_SETTINGS_LEFT, HudButtonStyle.SECOND_ROW_TOP),
 }
