@@ -32,6 +32,7 @@ var _book_library: Node
 var _exploration_location_system: Node
 var _menu_mode: StringName = MENU_MODE_MOVE
 var _selected_exploration_minutes: int = 0
+var _map_move_ui_open: bool = false
 
 
 func _ready() -> void:
@@ -48,12 +49,14 @@ func _ready() -> void:
 func open_menu() -> void:
 	visible = true
 	_menu_mode = MENU_MODE_MOVE
+	_map_move_ui_open = false
 	_apply_shop_aligned_layout()
 	_refresh_content()
 
 
 func close_menu() -> void:
 	visible = false
+	_map_move_ui_open = false
 
 
 func toggle_menu() -> void:
@@ -85,17 +88,24 @@ func _configure_tab_buttons() -> void:
 
 func _on_move_action_pressed() -> void:
 	_menu_mode = MENU_MODE_MOVE
+	_map_move_ui_open = true
 	_refresh_content()
 
 
 func _on_explore_action_pressed() -> void:
 	_menu_mode = MENU_MODE_EXPLORE
+	_map_move_ui_open = false
+	_refresh_content()
+
+
+func _on_close_map_move_ui_pressed() -> void:
+	_map_move_ui_open = false
 	_refresh_content()
 
 
 func _sync_tab_button_state() -> void:
 	if move_action_button != null:
-		move_action_button.set_pressed_no_signal(_menu_mode == MENU_MODE_MOVE)
+		move_action_button.set_pressed_no_signal(_map_move_ui_open)
 	if explore_action_button != null:
 		explore_action_button.set_pressed_no_signal(_menu_mode == MENU_MODE_EXPLORE)
 
@@ -129,11 +139,15 @@ func _place_detail_label_under_title() -> void:
 
 func _show_move_tab() -> void:
 	title_label.text = "移動"
-	var destinations: Array[Dictionary] = _get_move_destinations()
-	var active_map_id: StringName = _get_active_map_id()
-	_add_dynamic_control(_create_map_move_panel(destinations, active_map_id))
+	if _map_move_ui_open:
+		var destinations: Array[Dictionary] = _get_move_destinations()
+		var active_map_id: StringName = _get_active_map_id()
+		_add_dynamic_control(_create_map_move_sub_ui(destinations, active_map_id))
 	if visible:
-		detail_label.text = "移動先を選んでください。探索は上の探索ボタンから開けます。"
+		if _map_move_ui_open:
+			detail_label.text = "マップ移動UIの中から移動先を選んでください。"
+		else:
+			detail_label.text = "マップ移動または探索を選んでください。"
 
 
 func _show_exploration_tab() -> void:
@@ -152,10 +166,10 @@ func _show_exploration_tab() -> void:
 			detail_label.text = "探索時間を設定してから、探索場所を選んでください。"
 
 
-func _create_map_move_panel(destinations: Array[Dictionary], active_map_id: StringName) -> Control:
+func _create_map_move_sub_ui(destinations: Array[Dictionary], active_map_id: StringName) -> Control:
 	var panel: PanelContainer = PanelContainer.new()
-	panel.name = "MapMovePanel"
-	panel.custom_minimum_size = Vector2(280.0, 120.0)
+	panel.name = "MapMoveSubUI"
+	panel.custom_minimum_size = Vector2(280.0, 150.0)
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 
 	var margin: MarginContainer = MarginContainer.new()
@@ -172,10 +186,29 @@ func _create_map_move_panel(destinations: Array[Dictionary], active_map_id: Stri
 	container.add_theme_constant_override("separation", 6)
 	margin.add_child(container)
 
+	var header: HBoxContainer = HBoxContainer.new()
+	header.name = "MapMoveHeader"
+	container.add_child(header)
+
+	var title: Label = Label.new()
+	title.name = "MapMoveTitleLabel"
+	title.text = "マップ移動"
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	title.add_theme_font_size_override("font_size", 15)
+	header.add_child(title)
+
+	var close_sub_ui_button: Button = Button.new()
+	close_sub_ui_button.name = "CloseMapMoveUIButton"
+	close_sub_ui_button.text = "閉じる"
+	close_sub_ui_button.custom_minimum_size = Vector2(72.0, 28.0)
+	close_sub_ui_button.focus_mode = Control.FOCUS_NONE
+	close_sub_ui_button.pressed.connect(_on_close_map_move_ui_pressed)
+	header.add_child(close_sub_ui_button)
+
 	var label: Label = Label.new()
-	label.name = "MapMoveTitleLabel"
+	label.name = "MapMoveContentLabel"
 	label.text = "移動"
-	label.add_theme_font_size_override("font_size", 15)
+	label.add_theme_font_size_override("font_size", 14)
 	container.add_child(label)
 
 	for destination in destinations:
