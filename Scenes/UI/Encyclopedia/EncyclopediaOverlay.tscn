@@ -1,6 +1,10 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://Scripts/UI/Encyclopedia/EncyclopediaOverlay.gd" id="1_encyclopedia_overlay"]
+[ext_resource type="PackedScene" path="res://Scenes/UI/Encyclopedia/Pages/FoodEncyclopediaPage.tscn" id="2_food_page"]
+[ext_resource type="PackedScene" path="res://Scenes/UI/Encyclopedia/Pages/ToolEncyclopediaPage.tscn" id="3_tool_page"]
+[ext_resource type="PackedScene" path="res://Scenes/UI/Encyclopedia/Pages/DrinkEncyclopediaPage.tscn" id="4_drink_page"]
+[ext_resource type="PackedScene" path="res://Scenes/UI/Encyclopedia/Pages/IngredientEncyclopediaPage.tscn" id="5_ingredient_page"]
 
 [node name="EncyclopediaOverlay" type="Control"]
 layout_mode = 3
@@ -73,7 +77,7 @@ text = "デカダンス生活図鑑"
 layout_mode = 2
 theme_override_colors/font_color = Color(0.62, 0.88, 0.92, 0.88)
 theme_override_font_sizes/font_size = 13
-text = "食品・料理・飲料の記録から始める、世界観確認用の全画面テンプレート。"
+text = "食品・ツール・飲料・食材の記録を確認する、世界観確認用の全画面テンプレート。"
 
 [node name="CloseButton" type="Button" parent="ScreenMargin/MainPanel/MainMargin/RootRows/Header"]
 custom_minimum_size = Vector2(108, 36)
@@ -91,125 +95,14 @@ layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
-[node name="FoodPage" type="HSplitContainer" parent="ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs"]
+[node name="FoodPage" parent="ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs" instance=ExtResource("2_food_page")]
 layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 3
-split_offset = 376
 
-[node name="FoodListPanel" type="PanelContainer" parent="ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage"]
-custom_minimum_size = Vector2(376, 0)
+[node name="ToolPage" parent="ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs" instance=ExtResource("3_tool_page")]
 layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 3
 
-[node name="FoodListMargin" type="MarginContainer" parent="ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage/FoodListPanel"]
+[node name="DrinkPage" parent="ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs" instance=ExtResource("4_drink_page")]
 layout_mode = 2
-theme_override_constants/margin_left = 12
-theme_override_constants/margin_top = 12
-theme_override_constants/margin_right = 12
-theme_override_constants/margin_bottom = 12
 
-[node name="FoodListRows" type="VBoxContainer" parent="ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage/FoodListPanel/FoodListMargin"]
+[node name="IngredientPage" parent="ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs" instance=ExtResource("5_ingredient_page")]
 layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 3
-theme_override_constants/separation = 6
-
-[node name="FoodTabTitle" type="Label" parent="ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage/FoodListPanel/FoodListMargin/FoodListRows"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.92, 1, 0.92, 1)
-theme_override_font_sizes/font_size = 21
-text = "食品タブ"
-
-[node name="FoodTabHint" type="Label" parent="ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage/FoodListPanel/FoodListMargin/FoodListRows"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.72, 0.86, 0.82, 0.82)
-theme_override_font_sizes/font_size = 12
-text = "ここから料理・食材・飲料の図鑑ページを増やしていく。"
-autowrap_mode = 3
-
-[node name="FoodItemScroll" type="ScrollContainer" parent="ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage/FoodListPanel/FoodListMargin/FoodListRows"]
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 3
-horizontal_scroll_mode = 0
-
-[node name="FoodItemRows" type="VBoxContainer" parent="ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage/FoodListPanel/FoodListMargin/FoodListRows/FoodItemScroll"]
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 0
-theme_override_constants/separation = 6
-
-[node name="FoodDetailPanel" type="PanelContainer" parent="ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage"]
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 3
-
-[node name="FoodDetailMargin" type="MarginContainer" parent="ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage/FoodDetailPanel"]
-layout_mode = 2
-theme_override_constants/margin_left = 14
-theme_override_constants/margin_top = 14
-theme_override_constants/margin_right = 14
-theme_override_constants/margin_bottom = 14
-
-[node name="DetailScroll" type="ScrollContainer" parent="ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage/FoodDetailPanel/FoodDetailMargin"]
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 3
-horizontal_scroll_mode = 0
-
-[node name="FoodDetailRows" type="VBoxContainer" parent="ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage/FoodDetailPanel/FoodDetailMargin/DetailScroll"]
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 0
-theme_override_constants/separation = 6
-
-[node name="DetailIcon" type="TextureRect" parent="ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage/FoodDetailPanel/FoodDetailMargin/DetailScroll/FoodDetailRows"]
-custom_minimum_size = Vector2(384, 384)
-layout_mode = 2
-size_flags_horizontal = 4
-expand_mode = 1
-stretch_mode = 5
-
-[node name="DetailNameLabel" type="Label" parent="ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage/FoodDetailPanel/FoodDetailMargin/DetailScroll/FoodDetailRows"]
-layout_mode = 2
-theme_override_colors/font_color = Color(1, 0.96, 0.80, 1)
-theme_override_font_sizes/font_size = 26
-text = "食品テンプレート"
-horizontal_alignment = 1
-
-[node name="DetailDescriptionLabel" type="RichTextLabel" parent="ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage/FoodDetailPanel/FoodDetailMargin/DetailScroll/FoodDetailRows"]
-custom_minimum_size = Vector2(0, 96)
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 3
-bbcode_enabled = false
-text = "食品タブ用の図鑑テンプレートです。ここに食品・料理・飲料の世界観説明を追加していきます。"
-scroll_active = true
-
-[node name="DetailMetaLabel" type="Label" parent="ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage/FoodDetailPanel/FoodDetailMargin/DetailScroll/FoodDetailRows"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.74, 0.92, 1, 0.88)
-theme_override_font_sizes/font_size = 14
-text = "カテゴリ：食品 / 登録数：0"
-horizontal_alignment = 1
-
-[node name="FlavorBox" type="PanelContainer" parent="ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage/FoodDetailPanel/FoodDetailMargin/DetailScroll/FoodDetailRows"]
-custom_minimum_size = Vector2(0, 56)
-layout_mode = 2
-size_flags_horizontal = 3
-
-[node name="FlavorMargin" type="MarginContainer" parent="ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage/FoodDetailPanel/FoodDetailMargin/DetailScroll/FoodDetailRows/FlavorBox"]
-layout_mode = 2
-theme_override_constants/margin_left = 14
-theme_override_constants/margin_top = 8
-theme_override_constants/margin_right = 14
-theme_override_constants/margin_bottom = 8
-
-[node name="FlavorText" type="Label" parent="ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage/FoodDetailPanel/FoodDetailMargin/DetailScroll/FoodDetailRows/FlavorBox/FlavorMargin"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.90, 0.78, 1, 0.90)
-theme_override_font_sizes/font_size = 13
-text = "Felicityの温もり、街区ごとの食文化、住民たちの好物や思い出をここに重ねていく。"
-autowrap_mode = 3
