@@ -1,6 +1,6 @@
 # Food icon assets
 
-食品・料理・食材の画像はこのフォルダに置く。
+食品・料理の画像はこのフォルダに置く。
 
 Godot path:
 
@@ -10,7 +10,6 @@ res://Assets/Items/Icons/Food/
 
 ## 用途
 
-- 食材アイコン
 - 料理アイコン
 - インベントリやレシピUIで使う食品画像
 
@@ -26,4 +25,4 @@ res://Assets/Items/Icons/Food/
 ## 置き分け
 
 - UIボタンやUI専用アイコンは `res://Assets/UI/Icons/`
-- 食品・食材・料理の画像は `res://Assets/Items/Icons/Food/`
+- 食品・料理の画像は `res://Assets/Items/Icons/Food/`
