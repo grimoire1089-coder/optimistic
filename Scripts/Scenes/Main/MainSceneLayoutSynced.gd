@@ -8,3 +8,10 @@ func _apply_reserved_bottom_hud_layout() -> void:
 		return
 	RightHudLayout.apply_main_scene_layout(canvas_layer)
 	_configure_map_grid_toggle_button(canvas_layer.get_node_or_null(MAP_GRID_TOGGLE_BUTTON_NAME) as Button)
+
+
+func _set_non_build_buttons_disabled(is_disabled: bool) -> void:
+	super(is_disabled)
+	_set_canvas_button_disabled("MoveButton", is_disabled)
+	_set_canvas_button_disabled("EncyclopediaButton", is_disabled)
+	_set_canvas_button_disabled("SettingsButton", is_disabled)
