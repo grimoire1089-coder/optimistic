@@ -2,7 +2,6 @@ extends Button
 class_name EncyclopediaButton
 
 const DEFAULT_CLICK_SFX_PATH := "res://Assets/Audio/SFX/UI/UI_Click_001.ogg"
-const HUD_BUTTON_SIZE := Vector2(80.0, 80.0)
 
 @export var label_text: String = "図鑑"
 @export var encyclopedia_overlay_path: NodePath = NodePath("../EncyclopediaOverlay")
@@ -13,8 +12,8 @@ const HUD_BUTTON_SIZE := Vector2(80.0, 80.0)
 
 func _ready() -> void:
 	add_to_group("encyclopedia_button")
-	custom_minimum_size = HUD_BUTTON_SIZE
-	mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	HudButtonStyle.apply_square_button_visual(self)
+	HudButtonStyle.apply_icon_button_layout(self)
 	text = label_text
 	_load_default_click_sfx_if_needed()
 	if not pressed.is_connected(_on_pressed):
