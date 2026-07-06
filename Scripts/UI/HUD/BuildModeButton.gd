@@ -3,6 +3,11 @@ class_name BuildModeButton
 
 const DEFAULT_CLICK_SFX_PATH := "res://Assets/Audio/SFX/UI/UI_Click_001.ogg"
 const DEFAULT_BUILD_ICON_PATH := "res://Assets/UI/Icons/Build_Mode.png"
+const HUD_BUTTON_SIZE := Vector2(80.0, 80.0)
+const HUD_ICON_MAX_WIDTH := 68
+const HUD_RIGHT_MARGIN := 24.0
+const FIRST_ROW_TOP := 184.0
+const FIRST_ROW_BUILD_LEFT := -(HUD_RIGHT_MARGIN + HUD_BUTTON_SIZE.x)
 
 @export var label_text: String = "ビルド"
 @export var active_label_text: String = "ビルド中"
@@ -107,21 +112,26 @@ func _connect_controller() -> void:
 
 
 func _apply_layout() -> void:
-	custom_minimum_size = Vector2(56.0, 56.0)
-	offset_left = -144.0
-	offset_top = -80.0
-	offset_right = -88.0
-	offset_bottom = -24.0
+	custom_minimum_size = HUD_BUTTON_SIZE
+	anchor_left = 1.0
+	anchor_top = 0.0
+	anchor_right = 1.0
+	anchor_bottom = 0.0
+	offset_left = FIRST_ROW_BUILD_LEFT
+	offset_top = FIRST_ROW_TOP
+	offset_right = FIRST_ROW_BUILD_LEFT + HUD_BUTTON_SIZE.x
+	offset_bottom = FIRST_ROW_TOP + HUD_BUTTON_SIZE.y
 	mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	expand_icon = true
 	icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	vertical_icon_alignment = VERTICAL_ALIGNMENT_CENTER
 	add_theme_font_size_override("font_size", 11)
-	add_theme_constant_override("icon_max_width", 40)
+	add_theme_constant_override("icon_max_width", HUD_ICON_MAX_WIDTH)
 	add_theme_constant_override("h_separation", 0)
 	add_theme_stylebox_override("normal", _style(Color(0.10, 0.10, 0.12, 0.95), Color(0.26, 0.28, 0.32, 1.0), 1))
 	add_theme_stylebox_override("hover", _style(Color(0.15, 0.15, 0.18, 0.98), Color(0.0, 1.65, 1.65, 0.95), 2))
 	add_theme_stylebox_override("pressed", _style(Color(0.04, 0.20, 0.22, 1.0), Color(0.25, 2.4, 2.4, 1.0), 2))
+	add_theme_stylebox_override("disabled", _style(Color(0.08, 0.08, 0.09, 0.62), Color(0.18, 0.18, 0.20, 0.8), 1))
 
 
 func _style(bg: Color, border: Color, width: int) -> StyleBoxFlat:
