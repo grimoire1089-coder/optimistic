@@ -255,6 +255,20 @@ func _add_dynamic_button(button: Button) -> void:
 func _add_dynamic_control(control: Control) -> void:
 	_dynamic_controls.append(control)
 	action_list.add_child(control)
+	var target_index: int = _get_dynamic_control_insert_index()
+	if control.get_index() != target_index:
+		action_list.move_child(control, target_index)
+
+
+func _get_dynamic_control_insert_index() -> int:
+	if action_list == null:
+		return 0
+	var anchor: Control = move_action_button
+	if _menu_mode == MENU_MODE_EXPLORE and explore_action_button != null:
+		anchor = explore_action_button
+	if anchor == null or anchor.get_parent() != action_list:
+		return action_list.get_child_count() - 1
+	return clampi(anchor.get_index() + _dynamic_controls.size(), 0, action_list.get_child_count() - 1)
 
 
 func _clear_dynamic_controls() -> void:
