@@ -2,16 +2,22 @@ extends Button
 class_name BookButton
 
 const DEFAULT_CLICK_SFX_PATH := "res://Assets/Audio/SFX/UI/UI_Click_001.ogg"
+const DEFAULT_BOOK_ICON_PATH := "res://Assets/UI/Icons/Chip_Books_small.png"
 
 @export var book_library_ui_path: NodePath = NodePath("../BookLibraryUI")
 @export var fallback_group_name: StringName = &"book_library_ui"
 @export var click_sfx: AudioStream
 @export var click_sfx_volume_db: float = 0.0
+@export var book_icon: Texture2D
 
 
 func _ready() -> void:
 	_apply_square_button_layout()
-	if text.is_empty():
+	_load_default_book_icon_if_needed()
+	if icon != null:
+		HudButtonStyle.apply_icon_button_layout(self)
+		text = ""
+	elif text.is_empty():
 		text = "書籍"
 	_load_default_click_sfx_if_needed()
 	pressed.connect(_on_pressed)
@@ -56,6 +62,15 @@ func _load_default_click_sfx_if_needed() -> void:
 		return
 	if ResourceLoader.exists(DEFAULT_CLICK_SFX_PATH):
 		click_sfx = load(DEFAULT_CLICK_SFX_PATH) as AudioStream
+
+
+func _load_default_book_icon_if_needed() -> void:
+	if book_icon == null and icon != null:
+		book_icon = icon
+	if book_icon == null and ResourceLoader.exists(DEFAULT_BOOK_ICON_PATH):
+		book_icon = load(DEFAULT_BOOK_ICON_PATH) as Texture2D
+	if book_icon != null:
+		icon = book_icon
 
 
 func _apply_square_button_layout() -> void:
