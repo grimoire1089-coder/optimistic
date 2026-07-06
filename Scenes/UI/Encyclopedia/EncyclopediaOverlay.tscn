@@ -95,10 +95,10 @@ layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
-[node name="FoodPage" parent="ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs" instance=ExtResource("2_food_page")]
+[node name="ToolPage" parent="ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs" instance=ExtResource("3_tool_page")]
 layout_mode = 2
 
-[node name="ToolPage" parent="ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs" instance=ExtResource("3_tool_page")]
+[node name="FoodPage" parent="ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs" instance=ExtResource("2_food_page")]
 layout_mode = 2
 
 [node name="DrinkPage" parent="ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs" instance=ExtResource("4_drink_page")]
