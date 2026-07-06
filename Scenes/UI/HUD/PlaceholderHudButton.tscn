@@ -1,4 +1,6 @@
-[gd_scene format=3]
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/UI/HUD/PlaceholderHudButton.gd" id="1_placeholder_button"]
 
 [node name="PlaceholderHudButton" type="Button"]
 custom_minimum_size = Vector2(80, 80)
@@ -10,4 +12,5 @@ grow_horizontal = 0
 grow_vertical = 0
 mouse_default_cursor_shape = 2
 focus_mode = 0
-text = "仮"
+text = "Placeholder"
+script = ExtResource("1_placeholder_button")
