@@ -10,7 +10,7 @@ const CATEGORY_FOODS := "foods"
 const CATEGORY_TOOLS := "tools"
 const CATEGORY_DRINKS := "drinks"
 const CATEGORY_INGREDIENTS := "ingredients"
-const FALLBACK_CATEGORY_IDS := [CATEGORY_FOODS, CATEGORY_TOOLS, CATEGORY_DRINKS, CATEGORY_INGREDIENTS]
+const FALLBACK_CATEGORY_IDS := [CATEGORY_TOOLS, CATEGORY_FOODS, CATEGORY_DRINKS, CATEGORY_INGREDIENTS]
 
 const DEFAULT_FOOD_ITEM_PATHS := [
 	"res://Data/Items/Food/Food_0001_Nikuman.tres",
@@ -257,7 +257,7 @@ func _make_item_row(category_id: String, entry: Dictionary, index: int) -> Butto
 	row.focus_mode = Control.FOCUS_ALL
 	row.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	row.text = ""
-	row.tooltip_text = _get_entry_tooltip(entry)
+	row.tooltip_text = ""
 	row.pressed.connect(Callable(self, "_on_item_row_pressed").bind(category_id, index))
 	_apply_item_row_style(row, false)
 
@@ -456,10 +456,8 @@ func _get_entry_icon(entry: Dictionary) -> Texture2D:
 	return entry.get("icon") as Texture2D
 
 
-func _get_entry_tooltip(entry: Dictionary) -> String:
-	if not _is_entry_unlocked(entry):
-		return "未解放"
-	return String(entry.get("description", ""))
+func _get_entry_tooltip(_entry: Dictionary) -> String:
+	return ""
 
 
 func _is_entry_unlocked(entry: Dictionary) -> bool:
