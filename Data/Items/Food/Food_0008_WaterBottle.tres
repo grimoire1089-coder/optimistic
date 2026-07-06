@@ -2,7 +2,6 @@
 
 [ext_resource type="Script" uid="uid://cgyi4b7bbmqn" path="res://Scripts/Items/Food/FoodItemData.gd" id="1_food_data"]
 [ext_resource type="Texture2D" uid="uid://ckthp0uwht7av" path="res://Assets/Items/Icons/Food/Food_0008.png" id="2_food_icon"]
-[ext_resource type="Resource" path="res://Data/Needs/Effects/need_effect_water_full.tres" id="3_water_full_effect"]
 
 [resource]
 script = ExtResource("1_food_data")
@@ -12,4 +11,4 @@ description = "濾過水入りのボトル。"
 icon = ExtResource("2_food_icon")
 category_id = &"drinks"
 sell_price = 10
-need_effect = ExtResource("3_water_full_effect")
+hydration_value = 100.0
