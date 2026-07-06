@@ -73,7 +73,7 @@ func _scan_directory(directory_path: String) -> bool:
 
 
 func _add_item_path_if_valid(item_path: String) -> void:
-	if item_path.get_extension().to_lower() not in SUPPORTED_EXTENSIONS:
+	if not (item_path.get_extension().to_lower() in SUPPORTED_EXTENSIONS):
 		return
 	if not ResourceLoader.exists(item_path):
 		return
@@ -91,7 +91,7 @@ func _add_item_path_if_valid(item_path: String) -> void:
 		return
 
 	var paths: Array = _cached_item_paths_by_category.get(category_id, [])
-	if item_path not in paths:
+	if not (item_path in paths):
 		paths.append(item_path)
 		_cached_item_paths_by_category[category_id] = paths
 
