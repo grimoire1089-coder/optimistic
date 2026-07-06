@@ -1,10 +1,9 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene format=3 uid="uid://cqgkvwdio2jid"]
 
-[ext_resource type="Script" path="res://Scripts/UI/HUD/BookButton.gd" id="1_book_button"]
+[ext_resource type="Script" uid="uid://davcwvr5a17to" path="res://Scripts/UI/HUD/BookButton.gd" id="1_book_button"]
 
-[node name="BookButton" type="Button"]
+[node name="BookButton" type="Button" unique_id=733240145]
 custom_minimum_size = Vector2(56, 56)
-layout_mode = 3
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
