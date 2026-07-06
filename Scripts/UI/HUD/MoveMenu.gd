@@ -398,9 +398,9 @@ func _on_exploration_destination_pressed(destination: Dictionary) -> void:
 	_refresh_content()
 
 
-func _set_map_move_processing(is_processing: bool) -> void:
-	_is_map_move_processing = is_processing
-	_set_map_move_panel_destination_buttons_disabled(is_processing)
+func _set_map_move_processing(map_move_processing: bool) -> void:
+	_is_map_move_processing = map_move_processing
+	_set_map_move_panel_destination_buttons_disabled(map_move_processing)
 	_sync_tab_button_state()
 
 
