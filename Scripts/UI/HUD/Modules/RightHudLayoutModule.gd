@@ -1,6 +1,8 @@
 extends RefCounted
 class_name RightHudLayoutModule
 
+const HudButtonStyle := preload("res://Scripts/UI/HUD/Modules/HudButtonStyle.gd")
+
 const RIGHT_PANEL_MARGIN := Vector2(24.0, 92.0)
 const AI_CHARACTER_HUD_SIZE := Vector2(480.0, 456.0)
 const AI_CHARACTER_NEED_BAR_WIDTH := 290.0
