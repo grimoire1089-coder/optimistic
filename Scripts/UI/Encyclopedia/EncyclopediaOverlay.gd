@@ -43,6 +43,7 @@ const DEFAULT_INGREDIENT_ITEM_PATHS := [
 const ITEM_ROW_HEIGHT := 76.0
 const ITEM_ICON_FRAME_SIZE := Vector2(72.0, 72.0)
 const ITEM_ICON_SIZE := Vector2(64.0, 64.0)
+const ITEM_LIST_BOTTOM_PADDING := 18.0
 
 @export var category_tabs_path: NodePath = NodePath("ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs")
 @export var close_button_path: NodePath = NodePath("ScreenMargin/MainPanel/MainMargin/RootRows/Header/CloseButton")
@@ -245,6 +246,7 @@ func _populate_category_entries(category_id: String) -> void:
 		row_buttons.append(row)
 
 	if entries.size() > 0:
+		_add_item_list_bottom_padding(item_rows)
 		var selected_index := clampi(int(_selected_index_by_category.get(category_id, 0)), 0, entries.size() - 1)
 		_select_entry(category_id, selected_index)
 	else:
@@ -259,6 +261,16 @@ func _clear_category_rows(category_id: String) -> void:
 	for child in item_rows.get_children():
 		item_rows.remove_child(child)
 		child.queue_free()
+
+
+func _add_item_list_bottom_padding(item_rows: VBoxContainer) -> void:
+	if item_rows == null:
+		return
+	var spacer := Control.new()
+	spacer.name = "ItemListBottomPadding"
+	spacer.custom_minimum_size = Vector2(0.0, ITEM_LIST_BOTTOM_PADDING)
+	spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	item_rows.add_child(spacer)
 
 
 func _make_item_row(category_id: String, entry: Dictionary, index: int) -> Button:
