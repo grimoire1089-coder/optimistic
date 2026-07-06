@@ -123,6 +123,8 @@ func _sync_movement_button_locks(force: bool = false) -> void:
 func _should_lock_movement_buttons() -> bool:
 	if _is_move_menu_processing():
 		return true
+	if _is_work_menu_processing():
+		return true
 	var robin := _get_robin_actor()
 	if robin == null or not robin.has_method("get_current_need_action_id"):
 		return false
@@ -143,6 +145,18 @@ func _is_move_menu_processing() -> bool:
 	if move_menu == null:
 		return false
 	return move_menu.get("_is_map_move_processing") == true
+
+
+func _is_work_menu_processing() -> bool:
+	var parent_node := get_parent()
+	if parent_node == null:
+		return false
+	var work_menu := parent_node.get_node_or_null("WorkMenu")
+	if work_menu == null:
+		return false
+	if work_menu.has_method("is_work_processing"):
+		return work_menu.call("is_work_processing") == true
+	return work_menu.get("_is_work_processing") == true
 
 
 func _get_robin_actor() -> Node:
