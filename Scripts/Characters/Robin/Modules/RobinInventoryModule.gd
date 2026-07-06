@@ -237,7 +237,7 @@ func _notify_food_encyclopedia_if_needed(category_id: StringName, item_id: Strin
 
 
 func _is_food_encyclopedia_category(category_id: StringName) -> bool:
-	return category_id == CATEGORY_FOODS or category_id == CATEGORY_DRINKS or category_id == CATEGORY_INGREDIENTS
+	return category_id == CATEGORY_TOOLS or category_id == CATEGORY_FOODS or category_id == CATEGORY_DRINKS or category_id == CATEGORY_INGREDIENTS
 
 
 func _find_item_entry(category_id: StringName, item_id: StringName) -> Dictionary:
