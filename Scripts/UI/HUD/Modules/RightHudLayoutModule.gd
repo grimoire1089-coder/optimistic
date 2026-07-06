@@ -1,31 +1,6 @@
 extends RefCounted
 class_name RightHudLayoutModule
 
-const HUD_BUTTON_SIZE := Vector2(80.0, 80.0)
-const HUD_BUTTON_GAP := 16.0
-const HUD_RIGHT_MARGIN := 24.0
-const FIRST_ROW_TOP := 232.0
-const SECOND_ROW_TOP := FIRST_ROW_TOP + HUD_BUTTON_SIZE.y + HUD_BUTTON_GAP
-const THIRD_ROW_TOP := SECOND_ROW_TOP + HUD_BUTTON_SIZE.y + HUD_BUTTON_GAP
-
-const FIRST_ROW_BUILD_LEFT := -(HUD_RIGHT_MARGIN + HUD_BUTTON_SIZE.x)
-const FIRST_ROW_INVENTORY_LEFT := FIRST_ROW_BUILD_LEFT - HUD_BUTTON_SIZE.x - HUD_BUTTON_GAP
-const FIRST_ROW_BOOK_LEFT := FIRST_ROW_INVENTORY_LEFT - HUD_BUTTON_SIZE.x - HUD_BUTTON_GAP
-const FIRST_ROW_SHOP_LEFT := FIRST_ROW_BOOK_LEFT - HUD_BUTTON_SIZE.x - HUD_BUTTON_GAP
-const FIRST_ROW_ROBIN_LEFT := FIRST_ROW_SHOP_LEFT - HUD_BUTTON_SIZE.x - HUD_BUTTON_GAP
-
-const SECOND_ROW_BILL_LEFT := -(HUD_RIGHT_MARGIN + HUD_BUTTON_SIZE.x)
-const SECOND_ROW_SETTINGS_LEFT := SECOND_ROW_BILL_LEFT - HUD_BUTTON_SIZE.x - HUD_BUTTON_GAP
-const SECOND_ROW_CRAFT_LEFT := SECOND_ROW_SETTINGS_LEFT - HUD_BUTTON_SIZE.x - HUD_BUTTON_GAP
-const SECOND_ROW_WORK_LEFT := SECOND_ROW_CRAFT_LEFT - HUD_BUTTON_SIZE.x - HUD_BUTTON_GAP
-const SECOND_ROW_MOVE_LEFT := SECOND_ROW_WORK_LEFT - HUD_BUTTON_SIZE.x - HUD_BUTTON_GAP
-
-const THIRD_ROW_PLACEHOLDER_05_LEFT := -(HUD_RIGHT_MARGIN + HUD_BUTTON_SIZE.x)
-const THIRD_ROW_PLACEHOLDER_04_LEFT := THIRD_ROW_PLACEHOLDER_05_LEFT - HUD_BUTTON_SIZE.x - HUD_BUTTON_GAP
-const THIRD_ROW_PLACEHOLDER_03_LEFT := THIRD_ROW_PLACEHOLDER_04_LEFT - HUD_BUTTON_SIZE.x - HUD_BUTTON_GAP
-const THIRD_ROW_PLACEHOLDER_02_LEFT := THIRD_ROW_PLACEHOLDER_03_LEFT - HUD_BUTTON_SIZE.x - HUD_BUTTON_GAP
-const THIRD_ROW_PLACEHOLDER_01_LEFT := THIRD_ROW_PLACEHOLDER_02_LEFT - HUD_BUTTON_SIZE.x - HUD_BUTTON_GAP
-
 const RIGHT_PANEL_MARGIN := Vector2(24.0, 92.0)
 const AI_CHARACTER_HUD_SIZE := Vector2(480.0, 456.0)
 const AI_CHARACTER_NEED_BAR_WIDTH := 290.0
@@ -44,21 +19,21 @@ const PASSIVE_FRAME_BUTTONS := [
 ]
 
 const BUTTON_LAYOUTS := {
-	"RobinHudButton": Vector2(FIRST_ROW_ROBIN_LEFT, FIRST_ROW_TOP),
-	"ShopButton": Vector2(FIRST_ROW_SHOP_LEFT, FIRST_ROW_TOP),
-	"BookButton": Vector2(FIRST_ROW_BOOK_LEFT, FIRST_ROW_TOP),
-	"InventoryButton": Vector2(FIRST_ROW_INVENTORY_LEFT, FIRST_ROW_TOP),
-	"BuildModeButton": Vector2(FIRST_ROW_BUILD_LEFT, FIRST_ROW_TOP),
-	"MoveButton": Vector2(SECOND_ROW_MOVE_LEFT, SECOND_ROW_TOP),
-	"WorkCreditButton": Vector2(SECOND_ROW_WORK_LEFT, SECOND_ROW_TOP),
-	"CraftButton": Vector2(SECOND_ROW_CRAFT_LEFT, SECOND_ROW_TOP),
-	"SettingsButton": Vector2(THIRD_ROW_PLACEHOLDER_05_LEFT, THIRD_ROW_TOP),
-	"BillButton": Vector2(SECOND_ROW_BILL_LEFT, SECOND_ROW_TOP),
-	"PlaceholderHudButton01": Vector2(THIRD_ROW_PLACEHOLDER_01_LEFT, THIRD_ROW_TOP),
-	"PlaceholderHudButton02": Vector2(THIRD_ROW_PLACEHOLDER_02_LEFT, THIRD_ROW_TOP),
-	"PlaceholderHudButton03": Vector2(THIRD_ROW_PLACEHOLDER_03_LEFT, THIRD_ROW_TOP),
-	"EncyclopediaButton": Vector2(THIRD_ROW_PLACEHOLDER_04_LEFT, THIRD_ROW_TOP),
-	"PlaceholderHudButton05": Vector2(SECOND_ROW_SETTINGS_LEFT, SECOND_ROW_TOP),
+	"RobinHudButton": Vector2(HudButtonStyle.FIRST_ROW_ROBIN_LEFT, HudButtonStyle.FIRST_ROW_TOP),
+	"ShopButton": Vector2(HudButtonStyle.FIRST_ROW_SHOP_LEFT, HudButtonStyle.FIRST_ROW_TOP),
+	"BookButton": Vector2(HudButtonStyle.FIRST_ROW_BOOK_LEFT, HudButtonStyle.FIRST_ROW_TOP),
+	"InventoryButton": Vector2(HudButtonStyle.FIRST_ROW_INVENTORY_LEFT, HudButtonStyle.FIRST_ROW_TOP),
+	"BuildModeButton": Vector2(HudButtonStyle.FIRST_ROW_BUILD_LEFT, HudButtonStyle.FIRST_ROW_TOP),
+	"MoveButton": Vector2(HudButtonStyle.SECOND_ROW_MOVE_LEFT, HudButtonStyle.SECOND_ROW_TOP),
+	"WorkCreditButton": Vector2(HudButtonStyle.SECOND_ROW_WORK_LEFT, HudButtonStyle.SECOND_ROW_TOP),
+	"CraftButton": Vector2(HudButtonStyle.SECOND_ROW_CRAFT_LEFT, HudButtonStyle.SECOND_ROW_TOP),
+	"SettingsButton": Vector2(HudButtonStyle.THIRD_ROW_PLACEHOLDER_05_LEFT, HudButtonStyle.THIRD_ROW_TOP),
+	"BillButton": Vector2(HudButtonStyle.SECOND_ROW_BILL_LEFT, HudButtonStyle.SECOND_ROW_TOP),
+	"PlaceholderHudButton01": Vector2(HudButtonStyle.THIRD_ROW_PLACEHOLDER_01_LEFT, HudButtonStyle.THIRD_ROW_TOP),
+	"PlaceholderHudButton02": Vector2(HudButtonStyle.THIRD_ROW_PLACEHOLDER_02_LEFT, HudButtonStyle.THIRD_ROW_TOP),
+	"PlaceholderHudButton03": Vector2(HudButtonStyle.THIRD_ROW_PLACEHOLDER_03_LEFT, HudButtonStyle.THIRD_ROW_TOP),
+	"EncyclopediaButton": Vector2(HudButtonStyle.THIRD_ROW_PLACEHOLDER_04_LEFT, HudButtonStyle.THIRD_ROW_TOP),
+	"PlaceholderHudButton05": Vector2(HudButtonStyle.SECOND_ROW_SETTINGS_LEFT, HudButtonStyle.SECOND_ROW_TOP),
 }
 
 const RIGHT_PANEL_LAYOUTS := {
@@ -83,7 +58,7 @@ static func apply_button_layout(parent_node: Node) -> void:
 		var control := parent_node.get_node_or_null(String(button_name)) as Control
 		if control == null:
 			continue
-		place_top_right_control(control, BUTTON_LAYOUTS[button_name], HUD_BUTTON_SIZE)
+		place_top_right_control(control, BUTTON_LAYOUTS[button_name], HudButtonStyle.HUD_BUTTON_SIZE)
 
 
 static func apply_right_panel_layout(parent_node: Node) -> void:
@@ -110,28 +85,8 @@ static func apply_craft_menu_layout(parent_node: Node) -> void:
 
 
 static func place_top_right_control(control: Control, top_right_offset: Vector2, control_size: Vector2) -> void:
-	if control == null:
-		return
-	control.custom_minimum_size = control_size
-	control.anchor_left = 1.0
-	control.anchor_top = 0.0
-	control.anchor_right = 1.0
-	control.anchor_bottom = 0.0
-	control.offset_left = top_right_offset.x
-	control.offset_top = top_right_offset.y
-	control.offset_right = top_right_offset.x + control_size.x
-	control.offset_bottom = top_right_offset.y + control_size.y
+	HudButtonStyle.place_top_right_control(control, top_right_offset, control_size)
 
 
 static func place_bottom_right_control(control: Control, bottom_right_margin: Vector2, control_size: Vector2) -> void:
-	if control == null:
-		return
-	control.custom_minimum_size = control_size
-	control.anchor_left = 1.0
-	control.anchor_top = 1.0
-	control.anchor_right = 1.0
-	control.anchor_bottom = 1.0
-	control.offset_left = -bottom_right_margin.x - control_size.x
-	control.offset_top = -bottom_right_margin.y - control_size.y
-	control.offset_right = -bottom_right_margin.x
-	control.offset_bottom = -bottom_right_margin.y
+	HudButtonStyle.place_bottom_right_control(control, bottom_right_margin, control_size)
