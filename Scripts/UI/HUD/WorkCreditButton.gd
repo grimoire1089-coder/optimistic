@@ -3,6 +3,7 @@ class_name WorkCreditButton
 
 const DEFAULT_CLICK_SFX_PATH := "res://Assets/Audio/SFX/UI/UI_Click_001.ogg"
 const DEFAULT_WORK_ICON_PATH := "res://Assets/UI/Icons/Work.png"
+const LOCKED_MESSAGE := "今は使えません。"
 const MOVEMENT_LOCK_ACTION_IDS := [
 	&"map_travel",
 	&"part_time_work",
@@ -30,6 +31,7 @@ func _ready() -> void:
 
 func _on_pressed() -> void:
 	if _is_movement_locked():
+		_push_message(LOCKED_MESSAGE)
 		return
 	_play_click_sfx()
 	var work_menu := get_node_or_null(work_menu_path) as WorkMenu
@@ -67,6 +69,13 @@ func _find_robin_actor() -> Node:
 	if current_scene == null:
 		return null
 	return current_scene.get_node_or_null("Robin")
+
+
+func _push_message(message: String) -> void:
+	var message_log := get_tree().get_first_node_in_group(&"message_log") as MessageLogPanel
+	if message_log == null:
+		return
+	message_log.add_message(message)
 
 
 func _play_click_sfx() -> void:
