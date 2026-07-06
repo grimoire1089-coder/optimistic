@@ -102,10 +102,30 @@ func _sync_tab_button_state() -> void:
 func _refresh_content() -> void:
 	_clear_dynamic_controls()
 	_sync_tab_button_state()
+	_place_detail_label_under_active_tab()
 	if _menu_mode == MENU_MODE_EXPLORE:
 		_show_exploration_tab()
 		return
 	_show_move_tab()
+
+
+func _place_detail_label_under_active_tab() -> void:
+	if detail_label == null or action_list == null:
+		return
+	var anchor_button: Control = move_action_button
+	if _menu_mode == MENU_MODE_EXPLORE and explore_action_button != null:
+		anchor_button = explore_action_button
+	if anchor_button == null or anchor_button.get_parent() != action_list:
+		return
+	var current_parent: Node = detail_label.get_parent()
+	if current_parent != action_list:
+		if current_parent != null:
+			current_parent.remove_child(detail_label)
+		action_list.add_child(detail_label)
+	detail_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var target_index: int = anchor_button.get_index() + 1
+	if detail_label.get_index() != target_index:
+		action_list.move_child(detail_label, target_index)
 
 
 func _show_move_tab() -> void:
