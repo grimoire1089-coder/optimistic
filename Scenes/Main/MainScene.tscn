@@ -46,6 +46,7 @@
 [ext_resource type="PackedScene" path="res://Scenes/UI/HUD/EncyclopediaButton.tscn" id="43_encyclopedia_button"]
 [ext_resource type="PackedScene" path="res://Scenes/UI/HUD/PlanHudButton.tscn" id="44_plan_hud_button"]
 [ext_resource type="PackedScene" path="res://Scenes/UI/HUD/InteractButton.tscn" id="45_interact_button"]
+[ext_resource type="PackedScene" path="res://Scenes/UI/HUD/ManagementButton.tscn" id="46_management_button"]
 
 [sub_resource type="Environment" id="Environment_ctt6t"]
 glow_enabled = true
@@ -184,7 +185,7 @@ anchors_preset = 3
 
 [node name="PlanHudButton" parent="CanvasLayer" instance=ExtResource("44_plan_hud_button")]
 
-[node name="PlaceholderHudButton02" parent="CanvasLayer" instance=ExtResource("41_placeholder_hud_button")]
+[node name="ManagementButton" parent="CanvasLayer" instance=ExtResource("46_management_button")]
 
 [node name="InteractButton" parent="CanvasLayer" instance=ExtResource("45_interact_button")]
 
