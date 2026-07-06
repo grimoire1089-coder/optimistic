@@ -114,7 +114,7 @@ offset_right = 410.0
 offset_bottom = 72.0
 theme_override_colors/font_color = Color(0.88, 0.98, 1, 1)
 theme_override_font_sizes/font_size = 18
-text = "Robin Room / Grid 15 x 15"
+text = "ロビンの部屋"
 
 [node name="AIDebugPanel" type="Control" parent="CanvasLayer" unique_id=187734902]
 layout_mode = 3
