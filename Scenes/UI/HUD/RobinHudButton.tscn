@@ -1,21 +1,21 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://Scripts/UI/HUD/RobinHudButton.gd" id="1_robin_hud_button"]
+[ext_resource type="Texture2D" path="res://Assets/UI/Icons/AI_Character.png" id="2_ai_character_icon"]
 
 [node name="RobinHudButton" type="Button"]
-custom_minimum_size = Vector2(56, 56)
+custom_minimum_size = Vector2(80, 80)
 layout_mode = 3
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
-offset_left = -336.0
-offset_top = 176.0
-offset_right = -280.0
-offset_bottom = 232.0
 grow_horizontal = 0
 grow_vertical = 0
 mouse_default_cursor_shape = 2
-text = "ロビン"
+focus_mode = 0
+icon = ExtResource("2_ai_character_icon")
+expand_icon = true
 script = ExtResource("1_robin_hud_button")
 ai_hud_path = NodePath("../AICharacterHud")
 robin_path = NodePath("../../Robin")
+ai_character_icon = ExtResource("2_ai_character_icon")
