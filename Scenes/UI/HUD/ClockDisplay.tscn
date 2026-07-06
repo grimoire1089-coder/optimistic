@@ -41,22 +41,35 @@ size_flags_vertical = 3
 
 [node name="MarginContainer" type="MarginContainer" parent="HBoxContainer/PanelContainer"]
 layout_mode = 2
-theme_override_constants/margin_left = 18
+theme_override_constants/margin_left = 12
 theme_override_constants/margin_top = 12
 theme_override_constants/margin_right = 18
 theme_override_constants/margin_bottom = 12
 
-[node name="VBoxContainer" type="VBoxContainer" parent="HBoxContainer/PanelContainer/MarginContainer"]
+[node name="ContentHBox" type="HBoxContainer" parent="HBoxContainer/PanelContainer/MarginContainer"]
 layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="SeasonIconRect" type="TextureRect" parent="HBoxContainer/PanelContainer/MarginContainer/ContentHBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(56, 56)
+layout_mode = 2
+tooltip_text = "季節"
+stretch_mode = 5
+
+[node name="VBoxContainer" type="VBoxContainer" parent="HBoxContainer/PanelContainer/MarginContainer/ContentHBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
 theme_override_constants/separation = 4
 
-[node name="TimeLabel" type="Label" parent="HBoxContainer/PanelContainer/MarginContainer/VBoxContainer"]
+[node name="TimeLabel" type="Label" parent="HBoxContainer/PanelContainer/MarginContainer/ContentHBox/VBoxContainer"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "1年目 春 1日目"
 horizontal_alignment = 2
 
-[node name="PhaseLabel" type="Label" parent="HBoxContainer/PanelContainer/MarginContainer/VBoxContainer"]
+[node name="PhaseLabel" type="Label" parent="HBoxContainer/PanelContainer/MarginContainer/ContentHBox/VBoxContainer"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "晴れ / 朝 09:00"
