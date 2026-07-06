@@ -2,10 +2,10 @@ extends Control
 
 @export var clock_path: NodePath
 @export var weather_path: NodePath
-@export var spring_icon_path: String = "res://Assets/UI/Parts/春.png"
-@export var summer_icon_path: String = "res://Assets/UI/Parts/夏.png"
-@export var autumn_icon_path: String = "res://Assets/UI/Parts/秋.png"
-@export var winter_icon_path: String = "res://Assets/UI/Parts/冬.png"
+@export var spring_icon_path: String = "res://Assets/UI/Parts/Spring.png"
+@export var summer_icon_path: String = "res://Assets/UI/Parts/Summer.png"
+@export var autumn_icon_path: String = "res://Assets/UI/Parts/Autumn.png"
+@export var winter_icon_path: String = "res://Assets/UI/Parts/Winter.png"
 @export var season_icon_size: Vector2 = Vector2(56, 56)
 @export var panel_bg_color: Color = Color(0.01, 0.025, 0.04, 0.88)
 @export var panel_border_color: Color = Color(0.33, 0.85, 1.0, 0.95)
