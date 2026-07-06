@@ -3,6 +3,7 @@ class_name WorkMenu
 
 const BOTTOM_RIGHT_MARGIN := Vector2(24.0, 92.0)
 const BOTTOM_RIGHT_PANEL_SIZE := Vector2(356.0, 196.0)
+const MOVEMENT_LOCK_CONTROLLER_GROUP: StringName = &"hud_movement_lock_controller"
 
 @export var first_job_id: StringName = &"part_time_001"
 @export var first_job_name: String = "仕事001"
@@ -126,8 +127,13 @@ func _on_job_001_pressed() -> void:
 
 func _set_work_processing(work_processing: bool) -> void:
 	_is_work_processing = work_processing
+	_notify_movement_lock_controller()
 	if visible:
 		_refresh()
+
+
+func _notify_movement_lock_controller() -> void:
+	get_tree().call_group(MOVEMENT_LOCK_CONTROLLER_GROUP, "refresh_movement_button_locks")
 
 
 func _is_worker_sleeping() -> bool:
