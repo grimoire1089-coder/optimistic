@@ -1,15 +1,9 @@
-[gd_resource type="Resource" script_class="BgmPlaylistData" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="BgmPlaylistData" format=3 uid="uid://dgpekudmxy5db"]
 
-[ext_resource type="Script" path="res://Scripts/Systems/Audio/BgmPlaylistData.gd" id="1_playlist_script"]
+[ext_resource type="Script" uid="uid://clac2kdws6ew5" path="res://Scripts/Systems/Audio/BgmPlaylistData.gd" id="1_playlist_script"]
 
 [resource]
 script = ExtResource("1_playlist_script")
 playlist_id = &"robin_room"
 display_name = "ロビンの部屋"
 tracks = PackedStringArray("res://Assets/Audio/BGM/Room BGM 001.ogg", "res://Assets/Audio/BGM/Room BGM 002.ogg", "res://Assets/Audio/BGM/Room BGM 003.ogg", "res://Assets/Audio/BGM/Room BGM 004.ogg", "res://Assets/Audio/BGM/Room BGM 005.ogg", "res://Assets/Audio/BGM/Room BGM 006.ogg", "res://Assets/Audio/BGM/Room BGM 007.ogg", "res://Assets/Audio/BGM/Room BGM 008.ogg")
-shuffle_tracks = false
-start_index = 0
-restart_if_same = true
-advance_when_finished = true
-fade_out_seconds = 0.5
-fade_in_seconds = 0.5
