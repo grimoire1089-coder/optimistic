@@ -1,0 +1,15 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/UI/HUD/PlaceholderHudButton.gd" id="1_button_script"]
+
+[node name="PlanHudButton" type="Button"]
+custom_minimum_size = Vector2(80, 80)
+layout_mode = 3
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+grow_horizontal = 0
+grow_vertical = 0
+mouse_default_cursor_shape = 2
+focus_mode = 0
+script = ExtResource("1_button_script")
