@@ -79,7 +79,11 @@ func add_item(
 	sell_price: int = 0,
 	need_effect_path: String = "",
 	can_discard: bool = true,
-	can_transfer: bool = true
+	can_transfer: bool = true,
+	nutrition_value: float = 0.0,
+	hydration_value: float = 0.0,
+	extra_need_values: Dictionary = {},
+	need_values: Dictionary = {}
 ) -> bool:
 	if amount <= 0:
 		return false
@@ -88,6 +92,8 @@ func add_item(
 		return false
 
 	_setup_empty_categories()
+	var safe_need_values := _copy_need_values(need_values)
+	var safe_extra_need_values := _copy_need_values(extra_need_values)
 	var items := _items_by_category[category_id] as Array
 	for item in items:
 		if item.get("id", &"") == item_id:
@@ -100,6 +106,10 @@ func add_item(
 			item["need_effect_path"] = need_effect_path
 			item["can_discard"] = can_discard
 			item["can_transfer"] = can_transfer
+			item["nutrition_value"] = nutrition_value
+			item["hydration_value"] = hydration_value
+			item["extra_need_values"] = safe_extra_need_values
+			item["need_values"] = safe_need_values
 			_notify_food_encyclopedia_if_needed(category_id, item_id, display_name)
 			inventory_changed.emit()
 			return true
@@ -122,6 +132,10 @@ func add_item(
 		"need_effect_path": need_effect_path,
 		"can_discard": can_discard,
 		"can_transfer": can_transfer,
+		"nutrition_value": nutrition_value,
+		"hydration_value": hydration_value,
+		"extra_need_values": safe_extra_need_values,
+		"need_values": safe_need_values,
 	})
 	_notify_food_encyclopedia_if_needed(category_id, item_id, display_name)
 	inventory_changed.emit()
@@ -147,7 +161,11 @@ func add_food_item(food_data: FoodItemData, amount: int = 1) -> bool:
 		food_data.sell_price,
 		food_data.get_need_effect_path(),
 		food_data.can_discard,
-		food_data.can_transfer
+		food_data.can_transfer,
+		food_data.nutrition_value,
+		food_data.hydration_value,
+		food_data.extra_need_values,
+		food_data.get_need_values(true)
 	)
 
 
@@ -251,3 +269,13 @@ func _find_item_entry(category_id: StringName, item_id: StringName) -> Dictionar
 		if entry.get("id", &"") == item_id:
 			return entry
 	return {}
+
+
+func _copy_need_values(source: Dictionary) -> Dictionary:
+	var result: Dictionary = {}
+	for raw_need_id in source.keys():
+		var need_id := StringName(raw_need_id)
+		if need_id == &"":
+			continue
+		result[need_id] = float(source[raw_need_id])
+	return result
