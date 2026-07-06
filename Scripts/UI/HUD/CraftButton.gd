@@ -2,6 +2,7 @@ extends Button
 class_name CraftButton
 
 const DEFAULT_CLICK_SFX_PATH := "res://Assets/Audio/SFX/UI/UI_Click_001.ogg"
+const DEFAULT_CRAFT_ICON_PATH := "res://Assets/UI/Icons/Craft.png"
 const DEFAULT_LABEL_CODES := [0x5236, 0x4f5c]
 
 @export var label_text: String = ""
@@ -9,11 +10,17 @@ const DEFAULT_LABEL_CODES := [0x5236, 0x4f5c]
 @export var fallback_group_name: StringName = &"craft_menu"
 @export var click_sfx: AudioStream
 @export var click_sfx_volume_db: float = 0.0
+@export var craft_icon: Texture2D
 
 
 func _ready() -> void:
 	_apply_square_button_layout()
-	text = _get_label_text()
+	_load_default_craft_icon_if_needed()
+	if icon != null:
+		HudButtonStyle.apply_icon_button_layout(self)
+		text = ""
+	else:
+		text = _get_label_text()
 	_load_default_click_sfx_if_needed()
 	pressed.connect(_on_pressed)
 	call_deferred("_apply_hud_button_layout_after_parent")
@@ -68,6 +75,15 @@ func _load_default_click_sfx_if_needed() -> void:
 		return
 	if ResourceLoader.exists(DEFAULT_CLICK_SFX_PATH):
 		click_sfx = load(DEFAULT_CLICK_SFX_PATH) as AudioStream
+
+
+func _load_default_craft_icon_if_needed() -> void:
+	if craft_icon == null and icon != null:
+		craft_icon = icon
+	if craft_icon == null and ResourceLoader.exists(DEFAULT_CRAFT_ICON_PATH):
+		craft_icon = load(DEFAULT_CRAFT_ICON_PATH) as Texture2D
+	if craft_icon != null:
+		icon = craft_icon
 
 
 func _apply_square_button_layout() -> void:
