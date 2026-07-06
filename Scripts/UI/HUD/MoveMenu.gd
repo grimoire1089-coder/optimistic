@@ -12,6 +12,11 @@ const MENU_OFFSET_LEFT := 580.0
 const MENU_OFFSET_TOP := 80.0
 const MENU_OFFSET_RIGHT := 1340.0
 const MENU_OFFSET_BOTTOM := 840.0
+const MAP_MOVE_PANEL_SIZE := Vector2(360.0, 360.0)
+const MAP_MOVE_PANEL_OFFSET_LEFT := 1356.0
+const MAP_MOVE_PANEL_OFFSET_TOP := 80.0
+const MAP_MOVE_PANEL_OFFSET_RIGHT := 1716.0
+const MAP_MOVE_PANEL_OFFSET_BOTTOM := 440.0
 
 @export var robin_path: NodePath = NodePath("../../Robin")
 @export var map_travel_module_path: NodePath = NodePath("../../MainSceneMapTravelModule")
@@ -30,9 +35,9 @@ var _dynamic_controls: Array[Control] = []
 var _duration_spin_box: SpinBox
 var _book_library: Node
 var _exploration_location_system: Node
+var _map_move_panel: PanelContainer
 var _menu_mode: StringName = MENU_MODE_MOVE
 var _selected_exploration_minutes: int = 0
-var _map_move_ui_open: bool = false
 
 
 func _ready() -> void:
@@ -49,14 +54,14 @@ func _ready() -> void:
 func open_menu() -> void:
 	visible = true
 	_menu_mode = MENU_MODE_MOVE
-	_map_move_ui_open = false
+	_hide_map_move_panel()
 	_apply_shop_aligned_layout()
 	_refresh_content()
 
 
 func close_menu() -> void:
 	visible = false
-	_map_move_ui_open = false
+	_hide_map_move_panel()
 
 
 func toggle_menu() -> void:
@@ -72,7 +77,7 @@ func _configure_tab_buttons() -> void:
 		move_action_button.disabled = false
 		move_action_button.toggle_mode = true
 		move_action_button.text = "マップ移動"
-		move_action_button.tooltip_text = "部屋マップ間の移動先を表示します。"
+		move_action_button.tooltip_text = "部屋マップ間の移動先を別パネルで開きます。"
 		if not move_action_button.pressed.is_connected(_on_move_action_pressed):
 			move_action_button.pressed.connect(_on_move_action_pressed)
 	if explore_action_button != null:
@@ -88,24 +93,28 @@ func _configure_tab_buttons() -> void:
 
 func _on_move_action_pressed() -> void:
 	_menu_mode = MENU_MODE_MOVE
-	_map_move_ui_open = true
 	_refresh_content()
+	_show_map_move_panel()
+	if visible:
+		detail_label.text = "新しいマップ移動パネルから移動先を選んでください。"
 
 
 func _on_explore_action_pressed() -> void:
 	_menu_mode = MENU_MODE_EXPLORE
-	_map_move_ui_open = false
+	_hide_map_move_panel()
 	_refresh_content()
 
 
-func _on_close_map_move_ui_pressed() -> void:
-	_map_move_ui_open = false
-	_refresh_content()
+func _on_close_map_move_panel_pressed() -> void:
+	_hide_map_move_panel()
+	_sync_tab_button_state()
+	if visible and _menu_mode == MENU_MODE_MOVE:
+		detail_label.text = "マップ移動または探索を選んでください。"
 
 
 func _sync_tab_button_state() -> void:
 	if move_action_button != null:
-		move_action_button.set_pressed_no_signal(_map_move_ui_open)
+		move_action_button.set_pressed_no_signal(_is_map_move_panel_open())
 	if explore_action_button != null:
 		explore_action_button.set_pressed_no_signal(_menu_mode == MENU_MODE_EXPLORE)
 
@@ -139,15 +148,8 @@ func _place_detail_label_under_title() -> void:
 
 func _show_move_tab() -> void:
 	title_label.text = "移動"
-	if _map_move_ui_open:
-		var destinations: Array[Dictionary] = _get_move_destinations()
-		var active_map_id: StringName = _get_active_map_id()
-		_add_dynamic_control(_create_map_move_sub_ui(destinations, active_map_id))
 	if visible:
-		if _map_move_ui_open:
-			detail_label.text = "マップ移動UIの中から移動先を選んでください。"
-		else:
-			detail_label.text = "マップ移動または探索を選んでください。"
+		detail_label.text = "マップ移動または探索を選んでください。"
 
 
 func _show_exploration_tab() -> void:
@@ -166,56 +168,116 @@ func _show_exploration_tab() -> void:
 			detail_label.text = "探索時間を設定してから、探索場所を選んでください。"
 
 
-func _create_map_move_sub_ui(destinations: Array[Dictionary], active_map_id: StringName) -> Control:
+func _show_map_move_panel() -> void:
+	_hide_map_move_panel()
+	var destinations: Array[Dictionary] = _get_move_destinations()
+	var active_map_id: StringName = _get_active_map_id()
+	_map_move_panel = _create_map_move_panel(destinations, active_map_id)
+	var panel_parent: Node = get_parent()
+	if panel_parent == null:
+		add_child(_map_move_panel)
+	else:
+		panel_parent.add_child(_map_move_panel)
+	_apply_map_move_panel_layout(_map_move_panel)
+	_sync_tab_button_state()
+
+
+func _hide_map_move_panel() -> void:
+	if _map_move_panel == null or not is_instance_valid(_map_move_panel):
+		_map_move_panel = null
+		return
+	var parent: Node = _map_move_panel.get_parent()
+	if parent != null:
+		parent.remove_child(_map_move_panel)
+	_map_move_panel.queue_free()
+	_map_move_panel = null
+
+
+func _is_map_move_panel_open() -> bool:
+	return _map_move_panel != null and is_instance_valid(_map_move_panel) and _map_move_panel.visible
+
+
+func _create_map_move_panel(destinations: Array[Dictionary], active_map_id: StringName) -> PanelContainer:
 	var panel: PanelContainer = PanelContainer.new()
-	panel.name = "MapMoveSubUI"
-	panel.custom_minimum_size = Vector2(280.0, 150.0)
-	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	panel.name = "MapMovePanel"
+	panel.visible = true
+	panel.z_index = z_index + 1
+	panel.theme_override_styles["panel"] = _create_map_move_panel_style()
 
 	var margin: MarginContainer = MarginContainer.new()
 	margin.name = "MapMoveMargin"
-	margin.add_theme_constant_override("margin_left", 16)
-	margin.add_theme_constant_override("margin_top", 8)
-	margin.add_theme_constant_override("margin_right", 8)
-	margin.add_theme_constant_override("margin_bottom", 8)
+	margin.add_theme_constant_override("margin_left", 12)
+	margin.add_theme_constant_override("margin_top", 10)
+	margin.add_theme_constant_override("margin_right", 12)
+	margin.add_theme_constant_override("margin_bottom", 10)
 	panel.add_child(margin)
 
 	var container: VBoxContainer = VBoxContainer.new()
-	container.name = "MapMoveUI"
+	container.name = "MapMoveRows"
 	container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	container.add_theme_constant_override("separation", 6)
+	container.add_theme_constant_override("separation", 8)
 	margin.add_child(container)
 
 	var header: HBoxContainer = HBoxContainer.new()
-	header.name = "MapMoveHeader"
+	header.name = "Header"
 	container.add_child(header)
 
 	var title: Label = Label.new()
-	title.name = "MapMoveTitleLabel"
+	title.name = "TitleLabel"
 	title.text = "マップ移動"
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	title.add_theme_font_size_override("font_size", 15)
+	title.add_theme_font_size_override("font_size", 18)
 	header.add_child(title)
 
-	var close_sub_ui_button: Button = Button.new()
-	close_sub_ui_button.name = "CloseMapMoveUIButton"
-	close_sub_ui_button.text = "閉じる"
-	close_sub_ui_button.custom_minimum_size = Vector2(72.0, 28.0)
-	close_sub_ui_button.focus_mode = Control.FOCUS_NONE
-	close_sub_ui_button.pressed.connect(_on_close_map_move_ui_pressed)
-	header.add_child(close_sub_ui_button)
+	var close_panel_button: Button = Button.new()
+	close_panel_button.name = "CloseButton"
+	close_panel_button.text = "X"
+	close_panel_button.custom_minimum_size = Vector2(32.0, 28.0)
+	close_panel_button.focus_mode = Control.FOCUS_NONE
+	close_panel_button.pressed.connect(_on_close_map_move_panel_pressed)
+	header.add_child(close_panel_button)
 
 	var label: Label = Label.new()
-	label.name = "MapMoveContentLabel"
+	label.name = "MoveLabel"
 	label.text = "移動"
-	label.add_theme_font_size_override("font_size", 14)
+	label.add_theme_font_size_override("font_size", 15)
 	container.add_child(label)
 
 	for destination in destinations:
 		var button: Button = _create_destination_button(destination, active_map_id)
-		_destination_buttons.append(button)
 		container.add_child(button)
 	return panel
+
+
+func _create_map_move_panel_style() -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.025, 0.03, 0.045, 0.96)
+	style.border_width_left = 2
+	style.border_width_top = 2
+	style.border_width_right = 2
+	style.border_width_bottom = 2
+	style.border_color = Color(0.14, 0.8, 0.95, 1.0)
+	style.corner_radius_top_left = 12
+	style.corner_radius_top_right = 12
+	style.corner_radius_bottom_right = 12
+	style.corner_radius_bottom_left = 12
+	return style
+
+
+func _apply_map_move_panel_layout(panel: PanelContainer) -> void:
+	if panel == null:
+		return
+	panel.custom_minimum_size = MAP_MOVE_PANEL_SIZE
+	panel.anchor_left = 0.0
+	panel.anchor_top = 0.0
+	panel.anchor_right = 0.0
+	panel.anchor_bottom = 0.0
+	panel.offset_left = MAP_MOVE_PANEL_OFFSET_LEFT
+	panel.offset_top = MAP_MOVE_PANEL_OFFSET_TOP
+	panel.offset_right = MAP_MOVE_PANEL_OFFSET_RIGHT
+	panel.offset_bottom = MAP_MOVE_PANEL_OFFSET_BOTTOM
+	panel.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	panel.grow_vertical = Control.GROW_DIRECTION_BOTH
 
 
 func _create_exploration_message_card() -> Control:
