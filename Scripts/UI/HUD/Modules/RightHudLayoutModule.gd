@@ -1,7 +1,7 @@
 extends RefCounted
 class_name RightHudLayoutModule
 
-const HudButtonStyle := preload("res://Scripts/UI/HUD/Modules/HudButtonStyle.gd")
+const HudButtonStyleModule := preload("res://Scripts/UI/HUD/Modules/HudButtonStyle.gd")
 
 const RIGHT_PANEL_MARGIN := Vector2(24.0, 92.0)
 const AI_CHARACTER_HUD_SIZE := Vector2(480.0, 456.0)
@@ -21,21 +21,21 @@ const PASSIVE_FRAME_BUTTONS := [
 ]
 
 const BUTTON_LAYOUTS := {
-	"RobinHudButton": Vector2(HudButtonStyle.FIRST_ROW_ROBIN_LEFT, HudButtonStyle.FIRST_ROW_TOP),
-	"ShopButton": Vector2(HudButtonStyle.FIRST_ROW_INVENTORY_LEFT, HudButtonStyle.FIRST_ROW_TOP),
-	"BookButton": Vector2(HudButtonStyle.FIRST_ROW_BUILD_LEFT, HudButtonStyle.FIRST_ROW_TOP),
-	"InventoryButton": Vector2(HudButtonStyle.FIRST_ROW_SHOP_LEFT, HudButtonStyle.FIRST_ROW_TOP),
-	"BuildModeButton": Vector2(HudButtonStyle.THIRD_ROW_PLACEHOLDER_03_LEFT, HudButtonStyle.THIRD_ROW_TOP),
-	"MoveButton": Vector2(HudButtonStyle.SECOND_ROW_MOVE_LEFT, HudButtonStyle.SECOND_ROW_TOP),
-	"WorkCreditButton": Vector2(HudButtonStyle.SECOND_ROW_WORK_LEFT, HudButtonStyle.SECOND_ROW_TOP),
-	"CraftButton": Vector2(HudButtonStyle.FIRST_ROW_BOOK_LEFT, HudButtonStyle.FIRST_ROW_TOP),
-	"SettingsButton": Vector2(HudButtonStyle.THIRD_ROW_PLACEHOLDER_05_LEFT, HudButtonStyle.THIRD_ROW_TOP),
-	"BillButton": Vector2(HudButtonStyle.SECOND_ROW_BILL_LEFT, HudButtonStyle.SECOND_ROW_TOP),
-	"PlanHudButton": Vector2(HudButtonStyle.THIRD_ROW_PLACEHOLDER_01_LEFT, HudButtonStyle.THIRD_ROW_TOP),
-	"ManagementButton": Vector2(HudButtonStyle.THIRD_ROW_PLACEHOLDER_02_LEFT, HudButtonStyle.THIRD_ROW_TOP),
-	"InteractButton": Vector2(HudButtonStyle.SECOND_ROW_CRAFT_LEFT, HudButtonStyle.SECOND_ROW_TOP),
-	"EncyclopediaButton": Vector2(HudButtonStyle.THIRD_ROW_PLACEHOLDER_04_LEFT, HudButtonStyle.THIRD_ROW_TOP),
-	"PlaceholderHudButton05": Vector2(HudButtonStyle.SECOND_ROW_SETTINGS_LEFT, HudButtonStyle.SECOND_ROW_TOP),
+	"RobinHudButton": Vector2(HudButtonStyleModule.FIRST_ROW_ROBIN_LEFT, HudButtonStyleModule.FIRST_ROW_TOP),
+	"ShopButton": Vector2(HudButtonStyleModule.FIRST_ROW_INVENTORY_LEFT, HudButtonStyleModule.FIRST_ROW_TOP),
+	"BookButton": Vector2(HudButtonStyleModule.FIRST_ROW_BUILD_LEFT, HudButtonStyleModule.FIRST_ROW_TOP),
+	"InventoryButton": Vector2(HudButtonStyleModule.FIRST_ROW_SHOP_LEFT, HudButtonStyleModule.FIRST_ROW_TOP),
+	"BuildModeButton": Vector2(HudButtonStyleModule.THIRD_ROW_PLACEHOLDER_03_LEFT, HudButtonStyleModule.THIRD_ROW_TOP),
+	"MoveButton": Vector2(HudButtonStyleModule.SECOND_ROW_MOVE_LEFT, HudButtonStyleModule.SECOND_ROW_TOP),
+	"WorkCreditButton": Vector2(HudButtonStyleModule.SECOND_ROW_WORK_LEFT, HudButtonStyleModule.SECOND_ROW_TOP),
+	"CraftButton": Vector2(HudButtonStyleModule.FIRST_ROW_BOOK_LEFT, HudButtonStyleModule.FIRST_ROW_TOP),
+	"SettingsButton": Vector2(HudButtonStyleModule.THIRD_ROW_PLACEHOLDER_05_LEFT, HudButtonStyleModule.THIRD_ROW_TOP),
+	"BillButton": Vector2(HudButtonStyleModule.SECOND_ROW_BILL_LEFT, HudButtonStyleModule.SECOND_ROW_TOP),
+	"PlanHudButton": Vector2(HudButtonStyleModule.THIRD_ROW_PLACEHOLDER_01_LEFT, HudButtonStyleModule.THIRD_ROW_TOP),
+	"ManagementButton": Vector2(HudButtonStyleModule.THIRD_ROW_PLACEHOLDER_02_LEFT, HudButtonStyleModule.THIRD_ROW_TOP),
+	"InteractButton": Vector2(HudButtonStyleModule.SECOND_ROW_CRAFT_LEFT, HudButtonStyleModule.SECOND_ROW_TOP),
+	"EncyclopediaButton": Vector2(HudButtonStyleModule.THIRD_ROW_PLACEHOLDER_04_LEFT, HudButtonStyleModule.THIRD_ROW_TOP),
+	"PlaceholderHudButton05": Vector2(HudButtonStyleModule.SECOND_ROW_SETTINGS_LEFT, HudButtonStyleModule.SECOND_ROW_TOP),
 }
 
 const RIGHT_PANEL_LAYOUTS := {
@@ -60,7 +60,7 @@ static func apply_button_layout(parent_node: Node) -> void:
 		var control := parent_node.get_node_or_null(String(button_name)) as Control
 		if control == null:
 			continue
-		place_top_right_control(control, BUTTON_LAYOUTS[button_name], HudButtonStyle.HUD_BUTTON_SIZE)
+		place_top_right_control(control, BUTTON_LAYOUTS[button_name], HudButtonStyleModule.HUD_BUTTON_SIZE)
 
 
 static func apply_right_panel_layout(parent_node: Node) -> void:
@@ -87,8 +87,8 @@ static func apply_craft_menu_layout(parent_node: Node) -> void:
 
 
 static func place_top_right_control(control: Control, top_right_offset: Vector2, control_size: Vector2) -> void:
-	HudButtonStyle.place_top_right_control(control, top_right_offset, control_size)
+	HudButtonStyleModule.place_top_right_control(control, top_right_offset, control_size)
 
 
 static func place_bottom_right_control(control: Control, bottom_right_margin: Vector2, control_size: Vector2) -> void:
-	HudButtonStyle.place_bottom_right_control(control, bottom_right_margin, control_size)
+	HudButtonStyleModule.place_bottom_right_control(control, bottom_right_margin, control_size)
