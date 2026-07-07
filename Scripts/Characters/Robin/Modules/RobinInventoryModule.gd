@@ -9,6 +9,7 @@ const CATEGORY_DRINKS := &"drinks"
 const CATEGORY_RECIPES := &"recipes"
 const CATEGORY_MATERIALS := &"materials"
 const CATEGORY_INGREDIENTS := &"ingredients"
+const CATEGORY_MISC := &"misc"
 const UNLIMITED_SLOT_LIMIT := -1
 
 @export var slots_per_category: int = 25
@@ -22,6 +23,7 @@ var _categories: Array[Dictionary] = [
 	{"id": CATEGORY_RECIPES, "display_name": "レシピ"},
 	{"id": CATEGORY_MATERIALS, "display_name": "素材"},
 	{"id": CATEGORY_INGREDIENTS, "display_name": "食材"},
+	{"id": CATEGORY_MISC, "display_name": "雑貨"},
 ]
 
 var _items_by_category: Dictionary = {}
@@ -219,8 +221,6 @@ func has_category(category_id: StringName) -> bool:
 func _setup_empty_categories() -> void:
 	for category in _categories:
 		var category_id: StringName = category.get("id", &"")
-		if category_id == &"":
-			continue
 		if not _items_by_category.has(category_id):
 			_items_by_category[category_id] = []
 
@@ -230,32 +230,36 @@ func _add_initial_items_once() -> void:
 		return
 	_initial_items_added = true
 	for item_path in initial_item_paths:
-		var path := String(item_path).strip_edges()
-		if path.is_empty():
-			continue
-		if not ResourceLoader.exists(path):
-			push_warning("Initial inventory item not found: %s" % path)
-			continue
-		var item_data := load(path) as FoodItemData
-		if item_data == null:
-			push_warning("Initial inventory item is not FoodItemData: %s" % path)
-			continue
-		add_food_item(item_data, 1)
+		_add_item_from_resource_path(String(item_path))
 
 
-func _notify_food_encyclopedia_if_needed(category_id: StringName, item_id: StringName, display_name: String = "") -> void:
-	if item_id == &"":
+func _add_item_from_resource_path(item_path: String) -> void:
+	if item_path.is_empty() or not ResourceLoader.exists(item_path):
 		return
-	if not _is_food_encyclopedia_category(category_id):
+	var resource := load(item_path)
+	if resource is FoodItemData:
+		add_food_item(resource as FoodItemData, 1)
 		return
-	var encyclopedia := get_node_or_null("/root/FoodEncyclopedia")
-	if encyclopedia == null or not encyclopedia.has_method("unlock_item_id"):
-		return
-	encyclopedia.call("unlock_item_id", item_id, display_name)
-
-
-func _is_food_encyclopedia_category(category_id: StringName) -> bool:
-	return category_id == CATEGORY_TOOLS or category_id == CATEGORY_FOODS or category_id == CATEGORY_DRINKS or category_id == CATEGORY_INGREDIENTS
+	if resource != null and resource.has_method("to_inventory_item"):
+		var item_data: Dictionary = resource.call("to_inventory_item")
+		add_item(
+			item_data.get("category_id", CATEGORY_TOOLS),
+			item_data.get("id", &""),
+			item_data.get("display_name", ""),
+			int(item_data.get("amount", 1)),
+			item_data.get("icon_path", ""),
+			int(item_data.get("stack_max", 1)),
+			item_data.get("description", ""),
+			int(item_data.get("buy_price", 0)),
+			int(item_data.get("sell_price", 0)),
+			item_data.get("need_effect_path", ""),
+			bool(item_data.get("can_discard", true)),
+			bool(item_data.get("can_transfer", true)),
+			float(item_data.get("nutrition_value", 0.0)),
+			float(item_data.get("hydration_value", 0.0)),
+			item_data.get("extra_need_values", {}),
+			item_data.get("need_values", {})
+		)
 
 
 func _find_item_entry(category_id: StringName, item_id: StringName) -> Dictionary:
@@ -263,19 +267,22 @@ func _find_item_entry(category_id: StringName, item_id: StringName) -> Dictionar
 		return {}
 	var items := _items_by_category[category_id] as Array
 	for item in items:
-		if not (item is Dictionary):
-			continue
-		var entry := item as Dictionary
-		if entry.get("id", &"") == item_id:
-			return entry
+		if item is Dictionary and item.get("id", &"") == item_id:
+			return item as Dictionary
 	return {}
 
 
-func _copy_need_values(source: Dictionary) -> Dictionary:
-	var result: Dictionary = {}
-	for raw_need_id in source.keys():
-		var need_id := StringName(raw_need_id)
-		if need_id == &"":
-			continue
-		result[need_id] = float(source[raw_need_id])
+func _copy_need_values(values: Dictionary) -> Dictionary:
+	var result := {}
+	for key in values.keys():
+		result[StringName(String(key))] = float(values[key])
 	return result
+
+
+func _notify_food_encyclopedia_if_needed(category_id: StringName, item_id: StringName, display_name: String) -> void:
+	if category_id != CATEGORY_FOODS and category_id != CATEGORY_DRINKS:
+		return
+	var encyclopedia := get_node_or_null("/root/FoodEncyclopedia")
+	if encyclopedia == null or not encyclopedia.has_method("register_food_discovered"):
+		return
+	encyclopedia.call("register_food_discovered", item_id, display_name)
