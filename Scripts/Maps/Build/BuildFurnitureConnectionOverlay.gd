@@ -5,7 +5,6 @@ class_name BuildFurnitureConnectionOverlay
 @export var furniture_placement_module_path: NodePath = NodePath("../FurniturePlacementModule")
 @export var build_mode_controller_path: NodePath = NodePath("../BuildModeController")
 @export var show_only_in_build_mode: bool = true
-@export var refresh_interval_seconds: float = 0.2
 @export var minimum_overlap_cells: int = 2
 @export var line_color: Color = Color(0.2, 1.0, 0.35, 0.90)
 @export var line_glow_color: Color = Color(0.2, 1.0, 0.35, 0.24)
@@ -17,8 +16,10 @@ class_name BuildFurnitureConnectionOverlay
 var _room_map: RoomMapGridModule
 var _placement: FurniturePlacementModule
 var _controller: BuildModeController
+var _connected_room_map: RoomMapGridModule
+var _connected_placement: FurniturePlacementModule
+var _connected_controller: BuildModeController
 var _connections: Array[Dictionary] = []
-var _refresh_timer: float = 0.0
 var _last_layout_version: int = -1
 var _was_active: bool = false
 
@@ -26,34 +27,22 @@ var _was_active: bool = false
 func _ready() -> void:
 	z_as_relative = false
 	_resolve_refs()
-	set_process(true)
+	_connect_signals()
+	_refresh_active_state(true)
+	_sync_process_enabled()
 
 
-func _process(delta: float) -> void:
+func _exit_tree() -> void:
+	_disconnect_room_map_signal()
+	_disconnect_placement_signal()
+	_disconnect_controller_signal()
+
+
+func _process(_delta: float) -> void:
 	_resolve_refs()
-	var active := _is_active()
-	if not active:
-		_was_active = false
-		_last_layout_version = -1
-		if not _connections.is_empty():
-			_connections.clear()
-			queue_redraw()
-		return
-
-	_refresh_timer -= maxf(delta, 0.0)
-	if _refresh_timer > 0.0 and _was_active:
-		return
-	_refresh_timer = maxf(refresh_interval_seconds, 0.05)
-
-	var layout_version := _get_layout_version()
-	if _was_active and layout_version == _last_layout_version:
-		queue_redraw()
-		return
-
-	_was_active = true
-	_last_layout_version = layout_version
-	_rebuild_connections()
-	queue_redraw()
+	_connect_signals()
+	_refresh_active_state(false)
+	_sync_process_enabled()
 
 
 func _draw() -> void:
@@ -184,6 +173,26 @@ func _safe_footprint(footprint: Vector2i) -> Vector2i:
 	return Vector2i(maxi(footprint.x, 1), maxi(footprint.y, 1))
 
 
+func _refresh_active_state(force_rebuild: bool) -> void:
+	if not _is_active():
+		_was_active = false
+		_last_layout_version = -1
+		if not _connections.is_empty():
+			_connections.clear()
+			queue_redraw()
+		return
+
+	var layout_version := _get_layout_version()
+	if force_rebuild or not _was_active or layout_version != _last_layout_version:
+		_was_active = true
+		_last_layout_version = layout_version
+		_rebuild_connections()
+		queue_redraw()
+		return
+
+	_was_active = true
+
+
 func _get_layout_version() -> int:
 	if _placement == null:
 		return -1
@@ -200,6 +209,13 @@ func _is_active() -> bool:
 	return _controller.is_build_mode_enabled()
 
 
+func _sync_process_enabled() -> void:
+	if not is_inside_tree():
+		return
+	var needs_controller := show_only_in_build_mode and _controller == null
+	set_process(_room_map == null or _placement == null or needs_controller)
+
+
 func _resolve_refs() -> void:
 	if _room_map == null and not room_map_path.is_empty():
 		_room_map = get_node_or_null(room_map_path) as RoomMapGridModule
@@ -209,3 +225,87 @@ func _resolve_refs() -> void:
 		_controller = get_node_or_null(build_mode_controller_path) as BuildModeController
 	if _controller == null:
 		_controller = get_tree().get_first_node_in_group(&"build_mode_controller") as BuildModeController
+
+
+func _connect_signals() -> void:
+	_connect_room_map_signal()
+	_connect_placement_signal()
+	_connect_controller_signal()
+
+
+func _connect_room_map_signal() -> void:
+	if _connected_room_map == _room_map:
+		return
+	_disconnect_room_map_signal()
+	if _room_map == null:
+		return
+	_connected_room_map = _room_map
+	var callable := Callable(self, "_on_room_map_rect_changed")
+	if not _connected_room_map.map_rect_changed.is_connected(callable):
+		_connected_room_map.map_rect_changed.connect(callable)
+
+
+func _disconnect_room_map_signal() -> void:
+	if _connected_room_map == null:
+		return
+	var callable := Callable(self, "_on_room_map_rect_changed")
+	if is_instance_valid(_connected_room_map) and _connected_room_map.map_rect_changed.is_connected(callable):
+		_connected_room_map.map_rect_changed.disconnect(callable)
+	_connected_room_map = null
+
+
+func _connect_placement_signal() -> void:
+	if _connected_placement == _placement:
+		return
+	_disconnect_placement_signal()
+	if _placement == null:
+		return
+	_connected_placement = _placement
+	var callable := Callable(self, "_on_placement_layout_changed")
+	if _connected_placement.has_signal(&"layout_changed") and not _connected_placement.is_connected(&"layout_changed", callable):
+		_connected_placement.connect(&"layout_changed", callable)
+
+
+func _disconnect_placement_signal() -> void:
+	if _connected_placement == null:
+		return
+	var callable := Callable(self, "_on_placement_layout_changed")
+	if is_instance_valid(_connected_placement) and _connected_placement.has_signal(&"layout_changed") and _connected_placement.is_connected(&"layout_changed", callable):
+		_connected_placement.disconnect(&"layout_changed", callable)
+	_connected_placement = null
+
+
+func _connect_controller_signal() -> void:
+	if _connected_controller == _controller:
+		return
+	_disconnect_controller_signal()
+	if _controller == null:
+		return
+	_connected_controller = _controller
+	var callable := Callable(self, "_on_build_mode_changed")
+	if not _connected_controller.build_mode_changed.is_connected(callable):
+		_connected_controller.build_mode_changed.connect(callable)
+
+
+func _disconnect_controller_signal() -> void:
+	if _connected_controller == null:
+		return
+	var callable := Callable(self, "_on_build_mode_changed")
+	if is_instance_valid(_connected_controller) and _connected_controller.build_mode_changed.is_connected(callable):
+		_connected_controller.build_mode_changed.disconnect(callable)
+	_connected_controller = null
+
+
+func _on_build_mode_changed(_enabled: bool) -> void:
+	_refresh_active_state(true)
+	_sync_process_enabled()
+
+
+func _on_placement_layout_changed(layout_version: int) -> void:
+	_last_layout_version = layout_version - 1
+	_refresh_active_state(false)
+
+
+func _on_room_map_rect_changed(_visual_rect: Rect2, _grid_rect: Rect2, _grid_size: Vector2i) -> void:
+	if _is_active():
+		queue_redraw()
