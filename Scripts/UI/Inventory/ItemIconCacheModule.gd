@@ -1,10 +1,7 @@
 extends Node
 class_name ItemIconCacheModule
 
-@export var max_cached_icons: int = 64:
-	set(value):
-		max_cached_icons = maxi(value, 1)
-		_trim_cache()
+@export var max_cached_icons: int = 64
 
 var _textures_by_path: Dictionary = {}
 var _access_order: Array[String] = []
@@ -34,7 +31,7 @@ func get_texture(icon_path: String) -> Texture2D:
 
 
 func set_max_cached_icons(value: int) -> void:
-	max_cached_icons = value
+	max_cached_icons = maxi(value, 1)
 	_trim_cache()
 
 
