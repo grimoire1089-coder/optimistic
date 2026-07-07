@@ -4,6 +4,11 @@
 
 Reduce FPS drops when a food encyclopedia unlock notice is shown.
 
+## Status
+
+Resolved for now.
+Robin verified the current behavior as OK after the hidden encyclopedia rebuild fix.
+
 ## Current main fixes
 
 ### 1. Dedicated gold message API
@@ -47,7 +52,7 @@ The notice module preloads the food unlock SFX through `prepare_runtime_cache()`
 `MessageLogPanel.gd` also caches card StyleBoxFlat instances by channel and style id.
 This avoids creating a new StyleBoxFlat for every message card.
 
-## Next step if FPS still drops
+## Next step if FPS drops again
 
 Check message-card animation and queue timing next.
 Possible next mitigation: disable animation for encyclopedia unlock cards or batch unlock notices.
