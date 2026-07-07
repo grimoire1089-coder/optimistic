@@ -14,6 +14,7 @@ var _half_layout_module: Node
 
 func _ready() -> void:
 	_get_half_layout_module()
+	_prepare_unlock_notice_module()
 
 
 func unlock_item_id(item_id: StringName, display_name: String = "") -> bool:
@@ -87,6 +88,13 @@ func _notify_unlock_notice(item_id: StringName, display_name: String) -> void:
 	if module == null or not module.has_method("push_food_unlock_notice"):
 		return
 	module.call("push_food_unlock_notice", item_id, display_name)
+
+
+func _prepare_unlock_notice_module() -> void:
+	var module := _get_unlock_notice_module()
+	if module == null or not module.has_method("prepare_runtime_cache"):
+		return
+	module.call("prepare_runtime_cache")
 
 
 func _get_unlock_notice_module() -> Node:
