@@ -48,6 +48,7 @@
 [ext_resource type="PackedScene" path="res://Scenes/UI/HUD/InteractButton.tscn" id="45_interact_button"]
 [ext_resource type="PackedScene" path="res://Scenes/UI/HUD/ManagementButton.tscn" id="46_management_button"]
 [ext_resource type="PackedScene" path="res://Scenes/UI/City/CityPanel.tscn" id="47_city_panel"]
+[ext_resource type="PackedScene" path="res://Scenes/Characters/Zippy/ZippyActor.tscn" id="48_zippy_actor"]
 
 [sub_resource type="Environment" id="Environment_ctt6t"]
 glow_enabled = true
@@ -93,6 +94,10 @@ room_map_path = NodePath("../RobinRoomMap")
 furniture_root_path = NodePath("../RobinRoomMap/FurnitureRoot")
 
 [node name="Robin" parent="." unique_id=892635706 instance=ExtResource("2_robin")]
+click_sfx = ExtResource("4_ctt6t")
+
+[node name="Zippy" parent="." instance=ExtResource("48_zippy_actor")]
+position = Vector2(760, 520)
 click_sfx = ExtResource("4_ctt6t")
 
 [node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=295553793]
