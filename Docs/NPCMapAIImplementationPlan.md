@@ -101,7 +101,9 @@
 Scripts/Characters/Modules/AICharacterMovementCoordinator.gd
 Scripts/Characters/Modules/AICharacterRandomWanderModule.gd
 Scripts/Characters/Modules/AICharacterDirectionalSpriteModule.gd
+Scripts/Characters/Modules/AICharacterInventoryBaseModule.gd
 Scripts/Characters/Modules/AICharacterInventoryModule.gd
+Scripts/Characters/Modules/AICharacterInventoryLookup.gd
 Scripts/Characters/Zippy/ZippyActor.gd
 Scenes/Characters/Zippy/ZippyActor.tscn
 ```
@@ -114,13 +116,35 @@ Scenes/Characters/Zippy/ZippyActor.tscn
 AIキャラクター共通の正式名は `AICharacterInventoryModule` とする。
 ジッピーなど、今後追加するAIキャラクターはこの名前でインベントリを持たせる。
 
-`RobinInventoryModule` は既存のロビン、ショップ、制作、水分補給などの参照を壊さないため、段階的な互換名として残す。
-一度に全置換せず、動作確認しながら以下の順で移行する。
+現在の安全な構成:
+
+```text
+AICharacterInventoryBaseModule
+  └ RobinInventoryModule
+      └ AICharacterInventoryModule
+```
+
+- `AICharacterInventoryBaseModule` は実装本体。
+- `RobinInventoryModule` は既存ロビン参照を壊さないための互換エイリアス。
+- `AICharacterInventoryModule` は新しい正式名。
+- `AICharacterInventoryLookup` は正式名優先、旧名fallbackでインベントリを探す共通ヘルパー。
+
+すでに共通ヘルパーへ寄せたもの:
+
+```text
+Scripts/UI/Inventory/RobinInventoryUI.gd
+Scripts/UI/Shop/ShopMenu.gd
+Scripts/UI/HUD/CraftMenu.gd
+Scripts/Systems/Exploration/ExplorationLocationSystem.gd
+Scripts/Characters/Modules/AICharacterCraftBehaviorModule.gd
+```
+
+今後の移行方針:
 
 1. 新規AIキャラクターは `AICharacterInventoryModule` を使う。
-2. ロビンのシーン側も `AICharacterInventoryModule` へ寄せる。
-3. 水分補給、制作、ショップ、インベントリUIの型参照を `AICharacterInventoryModule` へ寄せる。
-4. 全部安定したら `RobinInventoryModule` は薄い互換エイリアスにする。
+2. 既存コードは `AICharacterInventoryLookup` 経由で取得する。
+3. 大きい行動モジュールは1つずつ赤エラー確認しながら寄せる。
+4. `RobinInventoryModule` は互換エイリアスとして残し、削除しない。
 
 ## 保留中
 
