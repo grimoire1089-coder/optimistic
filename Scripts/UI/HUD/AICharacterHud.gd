@@ -17,7 +17,7 @@ const NEED_BAR_WIDTH := 290.0
 @onready var action_queue_panel: AICharacterActionQueuePanel = $MarginContainer/Rows/Tabs/ActionQueueTab/ActionQueueScroll/ActionQueueRows
 @onready var skills_panel: CharacterSkillsPanel = $MarginContainer/Rows/Tabs/SkillsTab/CharacterSkillsPanel
 
-var _actor: RobinWanderActor
+var _actor: Node
 var _refresh_timer: float = 0.0
 var _last_logged_need_id: StringName = &""
 var _last_logged_action_id: StringName = &""
@@ -30,13 +30,13 @@ func _ready() -> void:
 	_setup_tabs()
 	_push_debug_result("AI HUD", "ready", true, "非表示状態で待機します")
 
-func toggle_actor(actor: RobinWanderActor) -> void:
-	if visible:
+func toggle_actor(actor: Node) -> void:
+	if visible and _actor == actor:
 		hide_hud()
 		return
 	show_actor(actor)
 
-func show_actor(actor: RobinWanderActor) -> void:
+func show_actor(actor: Node) -> void:
 	_push_debug_message("AI HUD", "show_actor 開始")
 	_actor = actor
 	visible = true
@@ -56,14 +56,15 @@ func show_actor(actor: RobinWanderActor) -> void:
 		_update_action_label()
 		_push_debug_result("AI HUD", "show_actor", false, "actor が null です")
 		return
-	title_label.text = _actor.display_name
-	needs_panel.set_needs_module(_actor.get_needs_module())
-	mood_panel.set_mood_module(_actor.get_mood_module())
+	var actor_name := _get_actor_display_name(_actor)
+	title_label.text = actor_name
+	needs_panel.set_needs_module(_get_actor_needs_module())
+	mood_panel.set_mood_module(_get_actor_mood_module())
 	action_queue_panel.set_actor(_actor)
 	if skills_panel != null:
-		skills_panel.set_skills_module(_actor.get_skills_module())
+		skills_panel.set_skills_module(_get_actor_skills_module())
 	_update_action_label()
-	_push_debug_result("AI HUD", "show_actor", true, "target=%s" % _actor.display_name)
+	_push_debug_result("AI HUD", "show_actor", true, "target=%s" % actor_name)
 
 func hide_hud() -> void:
 	visible = false
@@ -72,7 +73,7 @@ func hide_hud() -> void:
 func clear_actor() -> void:
 	var previous_actor_name := "none"
 	if _actor != null:
-		previous_actor_name = _actor.display_name
+		previous_actor_name = _get_actor_display_name(_actor)
 	_actor = null
 	_last_logged_need_id = &""
 	_last_logged_action_id = &""
@@ -131,9 +132,9 @@ func _update_action_label() -> void:
 	if _actor == null:
 		action_label.text = "行動: -"
 		return
-	var need_id := _actor.get_current_lowest_need_id()
-	var action_id := _actor.get_current_need_action_id()
-	var action_text := _actor.get_current_action_display_text()
+	var need_id := _get_actor_lowest_need_id()
+	var action_id := _get_actor_need_action_id()
+	var action_text := _get_actor_action_text()
 	action_label.text = "行動: %s" % action_text
 	_log_ai_action_if_changed(need_id, action_id)
 
@@ -145,9 +146,47 @@ func _log_ai_action_if_changed(need_id: StringName, action_id: StringName) -> vo
 	_last_logged_need_id = need_id
 	_last_logged_action_id = action_id
 	_push_debug_message(
-		"AI:%s" % _actor.display_name,
+		"AI:%s" % _get_actor_display_name(_actor),
 		"現在の判断: lowest_need=%s / next_action=%s" % [String(need_id), String(action_id)]
 	)
+
+func _get_actor_display_name(actor: Node) -> String:
+	if actor == null:
+		return "AI Character"
+	var display_name_value: Variant = actor.get("display_name")
+	if display_name_value != null and not str(display_name_value).is_empty():
+		return str(display_name_value)
+	return actor.name
+
+func _get_actor_needs_module() -> CharacterNeedsModule:
+	if _actor == null or not _actor.has_method("get_needs_module"):
+		return null
+	return _actor.call("get_needs_module") as CharacterNeedsModule
+
+func _get_actor_mood_module() -> CharacterMoodModule:
+	if _actor == null or not _actor.has_method("get_mood_module"):
+		return null
+	return _actor.call("get_mood_module") as CharacterMoodModule
+
+func _get_actor_skills_module() -> AICharacterSkillsModule:
+	if _actor == null or not _actor.has_method("get_skills_module"):
+		return null
+	return _actor.call("get_skills_module") as AICharacterSkillsModule
+
+func _get_actor_lowest_need_id() -> StringName:
+	if _actor == null or not _actor.has_method("get_current_lowest_need_id"):
+		return &""
+	return StringName(String(_actor.call("get_current_lowest_need_id")))
+
+func _get_actor_need_action_id() -> StringName:
+	if _actor == null or not _actor.has_method("get_current_need_action_id"):
+		return CharacterNeedActionIds.IDLE
+	return StringName(String(_actor.call("get_current_need_action_id")))
+
+func _get_actor_action_text() -> String:
+	if _actor == null or not _actor.has_method("get_current_action_display_text"):
+		return "-"
+	return str(_actor.call("get_current_action_display_text"))
 
 func _get_message_log() -> MessageLogPanel:
 	var node := get_tree().get_first_node_in_group(&"message_log")
