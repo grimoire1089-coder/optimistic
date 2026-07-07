@@ -5,7 +5,7 @@ const CARD_MIN_SIZE := Vector2(0.0, 124.0)
 const PORTRAIT_SIZE := Vector2(96.0, 96.0)
 
 
-static func rebuild(list_container: VBoxContainer, residents: Array[NpcResidentData]) -> void:
+static func rebuild(list_container: VBoxContainer, residents: Array[NpcResidentData], relationships_by_source: Dictionary = {}) -> void:
 	if list_container == null:
 		return
 	_clear_children(list_container)
@@ -15,7 +15,9 @@ static func rebuild(list_container: VBoxContainer, residents: Array[NpcResidentD
 	for resident in residents:
 		if resident == null:
 			continue
-		list_container.add_child(_create_resident_card(resident))
+		var source_key := String(resident.resident_id)
+		var relationships: Array = relationships_by_source.get(source_key, [])
+		list_container.add_child(_create_resident_card(resident, relationships))
 
 
 static func _clear_children(parent: Node) -> void:
@@ -35,7 +37,7 @@ static func _create_empty_label() -> Label:
 	return label
 
 
-static func _create_resident_card(resident: NpcResidentData) -> PanelContainer:
+static func _create_resident_card(resident: NpcResidentData, relationships: Array) -> PanelContainer:
 	var card_panel := PanelContainer.new()
 	card_panel.custom_minimum_size = CARD_MIN_SIZE
 	card_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -75,6 +77,10 @@ static func _create_resident_card(resident: NpcResidentData) -> PanelContainer:
 	status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	info_column.add_child(status_label)
 
+	var relationship_label := _create_label(_make_relationship_text(relationships), 12)
+	relationship_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	info_column.add_child(relationship_label)
+
 	var memo_label := _create_label(resident.status_text, 12)
 	memo_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	info_column.add_child(memo_label)
@@ -91,6 +97,20 @@ static func _make_status_text(resident: NpcResidentData) -> String:
 	if not resident.relationship_text.is_empty():
 		parts.append("関係: %s" % resident.relationship_text)
 	return "　".join(parts)
+
+
+static func _make_relationship_text(relationships: Array) -> String:
+	if relationships.is_empty():
+		return "関係値: 未設定"
+	var parts: Array[String] = []
+	for item in relationships:
+		var relationship := item as NpcRelationshipData
+		if relationship == null:
+			continue
+		parts.append(relationship.get_summary_text())
+	if parts.is_empty():
+		return "関係値: 未設定"
+	return "関係値: %s" % " / ".join(parts)
 
 
 static func _create_label(text_value: String, font_size: int) -> Label:
