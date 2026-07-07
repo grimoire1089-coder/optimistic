@@ -24,12 +24,8 @@ func push_food_unlock_notice(item_id: StringName, display_name: String = "") -> 
 
 	if _queue_normal_message_without_default_sfx(message_log, message):
 		return
-
 	if message_log.has_method("add_message"):
 		message_log.call("add_message", message)
-
-	if styler != null:
-		styler.apply_gold_styles_deferred()
 
 
 func _make_food_unlock_message(item_id: StringName, display_name: String) -> String:
@@ -74,18 +70,14 @@ class FoodEncyclopediaUnlockLogStyler extends Node:
 	var _pending_message_texts: Dictionary = {}
 	var _played_message_texts: Dictionary = {}
 	var _message_list: VBoxContainer
-	var _tab_bar: TabBar
 	var _notice_sfx: AudioStream
 	var _gold_style: StyleBoxFlat
-	var _is_apply_queued := false
 
 
 	func setup(message_log: Node) -> void:
 		_message_log = message_log
 		_load_food_unlock_notice_sfx()
 		_connect_message_list_signal()
-		_connect_tab_signal()
-		apply_gold_styles_deferred()
 
 
 	func register_message(message: String) -> void:
@@ -94,42 +86,6 @@ class FoodEncyclopediaUnlockLogStyler extends Node:
 			return
 		_message_texts[key] = true
 		_pending_message_texts[key] = true
-		apply_gold_styles_deferred()
-
-
-	func apply_gold_styles_deferred() -> void:
-		if _is_apply_queued:
-			return
-		_is_apply_queued = true
-		call_deferred("apply_gold_styles")
-
-
-	func apply_gold_styles() -> void:
-		_is_apply_queued = false
-		if _message_log == null or not is_instance_valid(_message_log):
-			return
-		if int(_message_log.get("_current_channel")) != NORMAL_LOG_CHANNEL:
-			return
-		if _pending_message_texts.is_empty() and _message_texts.is_empty():
-			return
-
-		var list := _get_message_list()
-		if list == null:
-			return
-
-		for index in range(list.get_child_count() - 1, -1, -1):
-			if _pending_message_texts.is_empty():
-				return
-			var holder := list.get_child(index)
-			var card := _find_panel_container(holder)
-			if card == null:
-				continue
-			var message_text := _find_message_text(card)
-			if message_text.is_empty() or not _pending_message_texts.has(message_text):
-				continue
-			_apply_gold_style(card)
-			_pending_message_texts.erase(message_text)
-			_play_notice_for_message_if_needed(message_text)
 
 
 	func _connect_message_list_signal() -> void:
@@ -141,25 +97,28 @@ class FoodEncyclopediaUnlockLogStyler extends Node:
 			list.child_entered_tree.connect(callable)
 
 
-	func _connect_tab_signal() -> void:
-		var tab_bar := _get_tab_bar()
-		if tab_bar == null:
+	func _on_message_list_child_entered_tree(child: Node) -> void:
+		_try_apply_gold_style_to_holder(child)
+
+
+	func _try_apply_gold_style_to_holder(holder: Node) -> void:
+		if holder == null:
 			return
-		var callable := Callable(self, "_on_log_tab_changed")
-		if not tab_bar.tab_changed.is_connected(callable):
-			tab_bar.tab_changed.connect(callable)
-
-
-	func _on_message_list_child_entered_tree(_child: Node) -> void:
-		apply_gold_styles_deferred()
-
-
-	func _on_log_tab_changed(_tab: int) -> void:
 		if _message_texts.is_empty():
 			return
-		for message_text in _message_texts.keys():
-			_pending_message_texts[String(message_text)] = true
-		apply_gold_styles_deferred()
+
+		var card := _find_panel_container(holder)
+		if card == null:
+			return
+
+		var message_text := _find_message_text(card)
+		if message_text.is_empty() or not _message_texts.has(message_text):
+			return
+
+		_apply_gold_style(card)
+		if _pending_message_texts.has(message_text):
+			_pending_message_texts.erase(message_text)
+			_play_notice_for_message_if_needed(message_text)
 
 
 	func _get_message_list() -> VBoxContainer:
@@ -171,17 +130,6 @@ class FoodEncyclopediaUnlockLogStyler extends Node:
 		if value is VBoxContainer:
 			_message_list = value as VBoxContainer
 		return _message_list
-
-
-	func _get_tab_bar() -> TabBar:
-		if _tab_bar != null and is_instance_valid(_tab_bar):
-			return _tab_bar
-		if _message_log == null or not is_instance_valid(_message_log):
-			return null
-		var value: Variant = _message_log.get("tab_bar")
-		if value is TabBar:
-			_tab_bar = value as TabBar
-		return _tab_bar
 
 
 	func _find_panel_container(node: Node) -> PanelContainer:
