@@ -6,6 +6,7 @@ const MoveSlot := preload("res://Scripts/Characters/Modules/AICharacterMovementC
 @export var ai_actor_group_name: StringName = &"ai_character_actor"
 @export var use_shared_move_slot: bool = true
 @export var avoid_ai_character_grids: bool = true
+@export var limit_path_to_one_grid_step: bool = true
 
 
 func setup(body: Node2D) -> void:
@@ -35,6 +36,19 @@ func _can_step_now() -> bool:
 	if MoveSlot.is_other_actor_moving(_body, ai_actor_group_name):
 		return false
 	return MoveSlot.request_move(_body)
+
+
+func _pick_random_walkable_top_left_excluding(excluded_cell: Vector2i) -> Vector2i:
+	if not limit_path_to_one_grid_step:
+		return super._pick_random_walkable_top_left_excluding(excluded_cell)
+	var candidates: Array[Vector2i] = []
+	for direction in [Vector2i.DOWN, Vector2i.RIGHT, Vector2i.UP, Vector2i.LEFT]:
+		var candidate := excluded_cell + direction
+		if _is_actor_grid_area_walkable(candidate):
+			candidates.append(candidate)
+	if candidates.is_empty():
+		return INVALID_GRID_POSITION
+	return candidates[_rng.randi_range(0, candidates.size() - 1)]
 
 
 func _get_all_walkable_top_left_cells() -> Array[Vector2i]:
