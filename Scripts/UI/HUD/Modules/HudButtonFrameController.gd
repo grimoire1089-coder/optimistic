@@ -48,6 +48,7 @@ const MOVEMENT_LOCK_ACTION_IDS := [
 
 var _movement_buttons_locked: bool = false
 var _movement_button_original_disabled: Dictionary = {}
+var _connected_robin: Node
 
 
 func _ready() -> void:
@@ -56,8 +57,8 @@ func _ready() -> void:
 	call_deferred("_connect_and_sync")
 
 
-func _process(_delta: float) -> void:
-	_sync_movement_button_locks()
+func _exit_tree() -> void:
+	_disconnect_robin_movement_signals()
 
 
 func refresh_movement_button_locks() -> void:
@@ -68,6 +69,7 @@ func _connect_and_sync() -> void:
 	RightHudLayout.apply_button_layout(get_parent())
 	_connect_open_ui_signals()
 	_connect_toggle_state_button_signals()
+	_connect_robin_movement_signals()
 	_sync_movement_button_locks(true)
 	_sync_all_button_frames()
 
@@ -119,6 +121,7 @@ func _sync_all_button_frames() -> void:
 
 
 func _sync_movement_button_locks(force: bool = false) -> void:
+	_connect_robin_movement_signals()
 	var should_lock := _should_lock_movement_buttons()
 	if not force and should_lock == _movement_buttons_locked:
 		return
@@ -203,6 +206,7 @@ func _on_ui_visibility_changed(button_name: String, canvas_item: CanvasItem) -> 
 		return
 	var button := parent_node.get_node_or_null(button_name) as Button
 	_apply_button_frame(button, canvas_item.visible)
+	_sync_movement_button_locks(true)
 
 
 func _on_toggle_button_changed(_enabled: bool, button: Button) -> void:
@@ -223,6 +227,44 @@ func _is_canvas_item_visible(node: Node) -> bool:
 	if node is CanvasItem:
 		return (node as CanvasItem).visible
 	return false
+
+
+func _connect_robin_movement_signals() -> void:
+	var robin := _get_robin_actor()
+	if robin == _connected_robin:
+		return
+	_disconnect_robin_movement_signals()
+	_connected_robin = robin
+	if _connected_robin == null:
+		return
+	_connect_robin_signal(&"entrance_travel_completed")
+	_connect_robin_signal(&"work_started")
+	_connect_robin_signal(&"work_completed")
+
+
+func _connect_robin_signal(signal_name: StringName) -> void:
+	if _connected_robin == null:
+		return
+	if not _connected_robin.has_signal(signal_name):
+		return
+	var callable := Callable(self, "_on_robin_movement_lock_state_changed")
+	if not _connected_robin.is_connected(signal_name, callable):
+		_connected_robin.connect(signal_name, callable)
+
+
+func _disconnect_robin_movement_signals() -> void:
+	if _connected_robin == null or not is_instance_valid(_connected_robin):
+		_connected_robin = null
+		return
+	var callable := Callable(self, "_on_robin_movement_lock_state_changed")
+	for signal_name in [&"entrance_travel_completed", &"work_started", &"work_completed"]:
+		if _connected_robin.has_signal(signal_name) and _connected_robin.is_connected(signal_name, callable):
+			_connected_robin.disconnect(signal_name, callable)
+	_connected_robin = null
+
+
+func _on_robin_movement_lock_state_changed(_value: Variant = null) -> void:
+	call_deferred("refresh_movement_button_locks")
 
 
 func _apply_button_frame(button: Button, is_active: bool) -> void:
