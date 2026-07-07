@@ -17,6 +17,7 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 0
 script = ExtResource("1_encyclopedia_overlay")
+item_source_directories = PackedStringArray("res://Data/Items/Food", "res://Data/Items/Ingredients", "res://Data/Items/Tools", "res://Data/Items/Materials", "res://Data/Items/Misc")
 
 [node name="DimBackground" type="ColorRect" parent="."]
 layout_mode = 1
