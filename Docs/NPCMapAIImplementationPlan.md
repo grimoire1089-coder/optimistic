@@ -43,23 +43,27 @@
 - グリッド上を歩く
 - たまに止まる
 - 家具配置を避ける
+- AIキャラクターが立っているグリッドを避ける
 - 2x4グリッドの足元を保つ
 - クリックでAI HUDを開ける
 
 これだけを安定させる。
 
-### 2. RobinRandomWanderModuleを汎用化する
+### 2. 同時に動くAIを制限する
 
-`RobinRandomWanderModule` は中身としてはかなり汎用的で、`setup(body: Node2D)` を受けて動く。
-そのため、いきなり別ロジックを作るより、次の方針が安全。
+現段階では、複数AIを同時に動かさない。
+`AICharacterMovementCoordinator` で移動枠を1つだけ持ち、誰かが移動中なら他のAIは待機に戻る。
 
-1. 既存ファイルは消さない。
-2. `AICharacterRandomWanderModule.gd` を新規作成する。
-3. まずは `RobinRandomWanderModule.gd` のロジックを移植する。
-4. ロビン側は後で差し替える。
-5. ジッピー側は新モジュールで先に試す。
+これで、家具探索、グリッド移動、クリック判定、表示デバッグの原因切り分けを簡単にする。
 
-### 3. ZippyActor本体は薄く保つ
+### 3. AIキャラクターのいるグリッドは候補から外す
+
+家具と同じ考え方で、AIキャラクターが占有しているグリッドは経路候補から外す。
+
+現在はまず、同じ `2x4` footprint のAIとして扱う。
+将来的にキャラごとにサイズが変わる場合は、`get_actor_grid_footprint()` を全AIに持たせて拡張する。
+
+### 4. ZippyActor本体は薄く保つ
 
 `ZippyActor.gd` に移動や行動を直書きしない。
 
@@ -73,7 +77,7 @@
 
 移動計算、方向決定、経路探索はモジュール側に置く。
 
-### 4. 欲求行動は後回し
+### 5. 欲求行動は後回し
 
 ジッピーにも `AICharacterNeedsBundle` はある。
 ただし、睡眠、給水、シャワー、読書、クラフトなどはまだ付けない。
@@ -91,65 +95,64 @@
 7. クラフト
 8. 入口移動
 
-## 次の実装候補
-
-### Step 1: 汎用ランダム移動モジュールを作る
-
-追加予定:
+## 実装済み
 
 ```text
+Scripts/Characters/Modules/AICharacterMovementCoordinator.gd
 Scripts/Characters/Modules/AICharacterRandomWanderModule.gd
-```
-
-役割:
-
-- グリッド移動
-- 停止時間と歩行時間の抽選
-- 家具配置の回避
-- 2x4 footprint対応
-- `get_facing_direction()`
-- `is_idle()`
-- `is_moving()`
-
-### Step 2: ZippyActorへ移動モジュールを追加する
-
-追加・変更予定:
-
-```text
-Scenes/Characters/Zippy/ZippyActor.tscn
-Scripts/Characters/Zippy/ZippyActor.gd
-```
-
-`ZippyActor.gd` では以下だけ行う。
-
-```gdscript
-func _physics_process(delta: float) -> void:
-    var velocity := wander_module.get_velocity(delta)
-    self.velocity = velocity
-    move_and_slide()
-```
-
-グリッドステップ移動を使う場合は、モジュールが直接位置補間するので `velocity` はゼロでもよい。
-
-### Step 3: 方向別画像モジュールを作る
-
-追加予定:
-
-```text
 Scripts/Characters/Modules/AICharacterDirectionalSpriteModule.gd
+Scripts/Characters/Zippy/ZippyActor.gd
+Scenes/Characters/Zippy/ZippyActor.tscn
 ```
 
-画像は向きごとに別ファイルで持つ。
+現在のジッピーは、ロビン風のグリッドランダム移動を使う。
+遠い目標グリッドへ向かえるが、実際に補間で進む一歩は基本的に1グリッド単位にしている。
+
+## 保留中
+
+### 方向別画像
+
+`AICharacterDirectionalSpriteModule` は作成済み。
+ただし、ジッピーの背面・左・右画像がまだ無いため、方向別画像の実確認は後回しにする。
+
+現状は `Zippy_Game_Front.png` だけを使い、未設定方向は正面画像へフォールバックする。
+画像が用意できたら、以下のパスを設定して再開する。
 
 ```text
-Assets/Characters/Zippy/Walk/Zippy_Game_Front.png
 Assets/Characters/Zippy/Walk/Zippy_Game_Back.png
 Assets/Characters/Zippy/Walk/Zippy_Game_Left.png
 Assets/Characters/Zippy/Walk/Zippy_Game_Right.png
 ```
 
-最初は正面だけでも動かす。
-左右・背面画像が来たら切り替える。
+## 次の実装候補
+
+### Step A: 移動安全性の確認を続ける
+
+確認すること:
+
+- ジッピーがグリッド単位で動くこと。
+- ロビンが移動中ならジッピーが待機すること。
+- ジッピーがロビンのいる2x4グリッドを目的地にしないこと。
+- POS表示で赤枠が2x4のまま保たれること。
+
+### Step B: 座るAIをジッピーへ追加する
+
+画像が不要な次の候補として、既存の `AICharacterSitBehaviorModule` をジッピーへ追加する。
+
+狙い:
+
+- ロビンと同じ家具探索系AIの最初の共通テストにする。
+- 椅子・スツール・ソファの使用確認をする。
+- まずは短時間座るだけにして、欲求回復や複雑な演出は後で足す。
+
+### Step C: 水分補給AIをジッピーへ追加する
+
+座る動作が安定したら、既存の `AICharacterHydrateBehaviorModule` をジッピーへ追加する。
+
+狙い:
+
+- 欲求に応じて行動する最初の実用AIにする。
+- 接続席やテーブル上の飲み物表示と連携できるか確認する。
 
 ## 注意点
 
@@ -158,9 +161,3 @@ Assets/Characters/Zippy/Walk/Zippy_Game_Right.png
 - NPCが増えた時に全員が重い行動探索をしないよう、最初はランダム移動だけにする。
 - 欲求による家具探索は、少人数で安定してから追加する。
 - 画面外NPCは後で省略処理にする。
-
-## 結論
-
-次にやるなら、ジッピーへ「ロビン風のグリッドランダム移動」を入れるのが良い。
-
-ただし、ロビン専用名のまま流用するのではなく、`AICharacterRandomWanderModule` として汎用化してから、ジッピーに接続する。
