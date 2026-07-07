@@ -46,3 +46,17 @@ func _get_all_walkable_top_left_cells() -> Array[Vector2i]:
 		_get_safe_actor_grid_footprint(),
 		Callable(self, "_is_actor_grid_area_walkable")
 	)
+
+
+func _is_actor_grid_area_walkable(top_left_cell: Vector2i, footprint_override: Vector2i = Vector2i.ZERO) -> bool:
+	if not super._is_actor_grid_area_walkable(top_left_cell, footprint_override):
+		return false
+	if not avoid_ai_character_grids:
+		return true
+	return not _has_other_ai_in_grid_area(top_left_cell, _get_effective_footprint(footprint_override))
+
+
+func _get_effective_footprint(footprint_override: Vector2i) -> Vector2i:
+	if footprint_override.x > 0 and footprint_override.y > 0:
+		return AICharacterGridMovementHelper.get_safe_footprint(footprint_override)
+	return _get_safe_actor_grid_footprint()
