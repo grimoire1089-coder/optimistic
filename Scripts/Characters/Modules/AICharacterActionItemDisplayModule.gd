@@ -22,6 +22,9 @@ var _display_add_deferred := false
 var _current_icon_path := ""
 var _was_standing_lapis := false
 var _update_timer: Timer
+var _explicit_item_visible := false
+var _explicit_icon_path := ""
+var _explicit_global_center: Variant = null
 
 
 func _ready() -> void:
@@ -43,6 +46,25 @@ func setup(body: Node2D) -> void:
 		_update_timer.start()
 
 
+func show_item_icon(icon_path: String, global_center: Variant = null) -> void:
+	_explicit_item_visible = not icon_path.is_empty()
+	_explicit_icon_path = icon_path
+	_explicit_global_center = global_center
+	_request_display()
+	_apply_explicit_item_icon()
+	_sync_update_timer_interval()
+
+
+func clear_item_icon() -> void:
+	_explicit_item_visible = false
+	_explicit_icon_path = ""
+	_explicit_global_center = null
+	_current_icon_path = ""
+	if _item_rect != null and is_instance_valid(_item_rect):
+		_item_rect.visible = false
+	_sync_update_timer_interval()
+
+
 func refresh_action_item_display() -> void:
 	_resolve_refs()
 	_snap_lapis_position_if_needed()
@@ -56,6 +78,8 @@ func _on_update_timer_timeout() -> void:
 
 
 func _get_next_update_interval() -> float:
+	if _explicit_item_visible:
+		return idle_check_interval_seconds
 	if _get_active_item_source() != null:
 		return update_interval_seconds
 	if _is_standing_lapis_active() or _was_standing_lapis:
@@ -65,6 +89,9 @@ func _get_next_update_interval() -> float:
 
 func _update_display() -> void:
 	if _item_rect == null or not is_instance_valid(_item_rect):
+		return
+	if _explicit_item_visible:
+		_apply_explicit_item_icon()
 		return
 	var source := _get_active_item_source()
 	if source == null:
@@ -87,6 +114,24 @@ func _update_display() -> void:
 	_item_rect.visible = _item_rect.texture != null
 	_item_rect.size = item_display_size
 	_update_item_rect_position(source)
+
+
+func _apply_explicit_item_icon() -> void:
+	if _item_rect == null or not is_instance_valid(_item_rect):
+		return
+	if not _explicit_item_visible or _explicit_icon_path.is_empty():
+		_item_rect.visible = false
+		return
+	if _explicit_icon_path != _current_icon_path:
+		_current_icon_path = _explicit_icon_path
+		_item_rect.texture = _load_icon(_explicit_icon_path)
+	_item_rect.visible = _item_rect.texture != null
+	_item_rect.size = item_display_size
+	if _explicit_global_center is Vector2:
+		var center: Vector2 = _explicit_global_center
+		_item_rect.global_position = center - item_display_size * 0.5
+	else:
+		_item_rect.position = item_center_offset - item_display_size * 0.5
 
 
 func _update_item_rect_position(source: Node) -> void:
@@ -265,6 +310,7 @@ func _ensure_display_deferred() -> void:
 	_item_rect.z_index = item_z_index
 	_item_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_body.add_child(_item_rect)
+	_apply_explicit_item_icon()
 
 
 func _ensure_update_timer() -> void:
