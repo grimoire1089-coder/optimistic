@@ -28,6 +28,10 @@ func unlock_item_id(item_id: StringName, display_name: String = "") -> bool:
 	return true
 
 
+func register_food_discovered(item_id: StringName, display_name: String = "") -> bool:
+	return unlock_item_id(item_id, display_name)
+
+
 func unlock_food_item(food_data: FoodItemData) -> bool:
 	if food_data == null:
 		return false
