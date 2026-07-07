@@ -69,48 +69,73 @@ func _process(_delta: float) -> void:
 
 
 func _run_loading_tasks() -> void:
-	var tasks: Array[LoadingTaskModule] = _get_enabled_loading_tasks()
+	var tasks: Array[Node] = _get_enabled_loading_tasks()
 	if tasks.is_empty():
 		await get_tree().process_frame
 		return
 
 	var total_weight: float = _get_total_task_weight(tasks)
 	var completed_weight: float = 0.0
-	var context := {
+	var context: Dictionary = {
 		"target_scene_path": _target_scene_path,
 	}
 
 	for task in tasks:
-		var task_name := task.get_task_display_name()
+		var task_name: String = _get_task_display_name(task)
 		if not task_name.is_empty():
 			status_label.text = task_name
 
-		task.run_task(context)
-		completed_weight += task.get_task_weight()
+		if task.has_method("run_task"):
+			task.call("run_task", context)
+		completed_weight += _get_task_weight(task)
 		progress_bar.value = _get_task_progress_value(completed_weight, total_weight)
 		await get_tree().process_frame
 
 
-func _get_enabled_loading_tasks() -> Array[LoadingTaskModule]:
-	var result: Array[LoadingTaskModule] = []
+func _get_enabled_loading_tasks() -> Array[Node]:
+	var result: Array[Node] = []
 	if task_modules_root == null:
 		return result
 
 	for child in task_modules_root.get_children():
-		var task := child as LoadingTaskModule
-		if task == null:
+		if not (child is Node):
 			continue
-		if not task.is_task_enabled():
+		var task := child as Node
+		if not _is_task_enabled(task):
 			continue
 		result.append(task)
 
 	return result
 
 
-func _get_total_task_weight(tasks: Array[LoadingTaskModule]) -> float:
+func _is_task_enabled(task: Node) -> bool:
+	if task == null:
+		return false
+	if task.has_method("is_task_enabled"):
+		return task.call("is_task_enabled") == true
+	return false
+
+
+func _get_task_display_name(task: Node) -> String:
+	if task == null:
+		return ""
+	if task.has_method("get_task_display_name"):
+		return String(task.call("get_task_display_name"))
+	return ""
+
+
+func _get_task_weight(task: Node) -> float:
+	if task == null:
+		return 0.0
+	if task.has_method("get_task_weight"):
+		return maxf(float(task.call("get_task_weight")), 0.0)
+	return 0.0
+
+
+func _get_total_task_weight(tasks: Array[Node]) -> float:
 	var result := 0.0
 	for task in tasks:
-		result += task.get_task_weight()
+		result += _get_task_weight(task)
 	return maxf(result, 0.001)
 
 
