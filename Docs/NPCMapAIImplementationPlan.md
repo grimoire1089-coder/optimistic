@@ -121,15 +121,14 @@ AIキャラクター共通の正式名は `AICharacterInventoryModule` とする
 ```text
 AICharacterInventoryBaseModule
   └ AICharacterInventoryModule
-      └ 旧ロビン用互換alias
 ```
 
 - `AICharacterInventoryBaseModule` は実装本体。
 - `AICharacterInventoryModule` は新しい正式名。
-- 旧ロビン用互換aliasは、既存ロビン参照を壊さないための一時的な薄い別名。
 - `AICharacterInventoryLookup` は正式名優先でインベントリを探す共通ヘルパー。
+- 旧ロビン用互換alias `Scripts/Characters/Robin/Modules/RobinInventoryModule.gd` は削除済み。
 
-すでに共通ヘルパーへ寄せたもの:
+共通ヘルパーへ寄せたもの:
 
 ```text
 Scripts/UI/Inventory/RobinInventoryUI.gd
@@ -137,6 +136,8 @@ Scripts/UI/Shop/ShopMenu.gd
 Scripts/UI/HUD/CraftMenu.gd
 Scripts/Systems/Exploration/ExplorationLocationSystem.gd
 Scripts/Characters/Modules/AICharacterCraftBehaviorModule.gd
+Scripts/Characters/Modules/AICharacterHydrateBehaviorModule.gd
+Scripts/Characters/Robin/RobinWanderActor.gd
 ```
 
 旧名 fallback を空にしたもの:
@@ -145,33 +146,30 @@ Scripts/Characters/Modules/AICharacterCraftBehaviorModule.gd
 Scripts/UI/Inventory/RobinInventoryUI.gd
 Scripts/UI/Shop/ShopMenu.gd
 Scripts/UI/HUD/CraftMenu.gd
+Scripts/Systems/Exploration/ExplorationLocationSystem.gd
 Scripts/Characters/Modules/AICharacterCraftBehaviorModule.gd
 ```
 
-削除前に残っている主な旧名参照:
+旧名・型依存を外したもの:
 
 ```text
-Scripts/Systems/Exploration/ExplorationLocationSystem.gd
 Scripts/Characters/Modules/AICharacterHydrateBehaviorModule.gd
 Scripts/Characters/Robin/RobinWanderActor.gd
 Scenes/Characters/Robin/RobinWanderActor.tscn
+```
+
+削除完了:
+
+```text
 Scripts/Characters/Robin/Modules/RobinInventoryModule.gd
 ```
 
-削除までの目安:
-
-1. 探索系の旧名fallbackを空にする。
-2. Hydrate行動モジュールの旧名・型依存を外す。
-3. `RobinWanderActor.gd` の `$RobinInventoryModule` 固定参照を外す。
-4. `RobinWanderActor.tscn` のノード名を `AICharacterInventoryModule` に変更する。
-5. 検索で旧名参照が互換alias本体だけになったら、最後に alias ファイルを削除する。
-
-今後の移行方針:
+移行完了後の運用方針:
 
 1. 新規AIキャラクターは `AICharacterInventoryModule` を使う。
 2. 既存コードは `AICharacterInventoryLookup` 経由で取得する。
-3. 大きい行動モジュールは1つずつ赤エラー確認しながら寄せる。
-4. 旧ロビン用互換aliasへの参照がゼロになったら、そのファイルを削除する。
+3. 新しい参照では `RobinInventoryModule` を使わない。
+4. 行動モジュールは、具体クラス型ではなく互換メソッド確認でインベントリを扱う。
 
 ## 保留中
 
