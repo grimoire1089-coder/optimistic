@@ -3,6 +3,7 @@ class_name MessageLogPanel
 
 const DEFAULT_NOTICE_SFX_PATH := "res://Assets/Audio/SFX/UI/UI_Notice_001.ogg"
 const FOOD_ENCYCLOPEDIA_UNLOCK_STYLE_ID := &"food_encyclopedia_unlock"
+const TRAVEL_UNLOCK_STYLE_ID := &"travel_unlock"
 
 ## TXT出力先。Godotのユーザーデータフォルダ内に保存する。
 ## Windowsなら概ね %APPDATA%/Godot/app_userdata/<project>/debug_logs/ に入る。
@@ -40,12 +41,16 @@ enum LogChannel { NORMAL, CHARACTER, EXPLORATION, DEBUG }
 @export var food_unlock_card_background_color: Color = Color(0.060, 0.048, 0.024, 0.98)
 @export var food_unlock_card_border_color: Color = Color(1.00, 0.76, 0.18, 0.98)
 @export var food_unlock_card_text_color: Color = Color(1.0, 0.95, 0.78, 1.0)
+@export var travel_unlock_card_background_color: Color = Color(0.060, 0.048, 0.024, 0.98)
+@export var travel_unlock_card_border_color: Color = Color(1.00, 0.76, 0.18, 0.98)
+@export var travel_unlock_card_text_color: Color = Color(1.0, 0.95, 0.78, 1.0)
 @export var show_game_timestamp_on_cards: bool = true
 @export var card_timestamp_text_color: Color = Color(0.50, 0.86, 1.0, 0.90)
 @export var debug_card_timestamp_text_color: Color = Color(1.0, 0.74, 0.38, 0.90)
 @export var character_card_timestamp_text_color: Color = Color(0.62, 1.0, 0.75, 0.90)
 @export var exploration_card_timestamp_text_color: Color = Color(0.76, 0.78, 1.0, 0.90)
 @export var food_unlock_card_timestamp_text_color: Color = Color(1.0, 0.80, 0.32, 0.90)
+@export var travel_unlock_card_timestamp_text_color: Color = Color(1.0, 0.80, 0.32, 0.90)
 @export_range(8, 24, 1) var card_timestamp_font_size: int = 12
 @export_range(10, 28, 1) var card_message_font_size: int = 15
 
@@ -86,27 +91,78 @@ func _ready() -> void:
 	_update_export_debug_button()
 
 
+func add_log_entry(entry: Dictionary) -> void:
+	var message := str(entry.get("message", "")).strip_edges()
+	if message.is_empty():
+		return
+
+	var channel := _get_log_entry_channel(entry, LogChannel.NORMAL)
+	var style_id := _get_log_entry_style_id(entry)
+	var issued_at_text := _get_log_entry_issued_at_text(entry)
+	var should_play_sfx := bool(entry.get("should_play_sfx", false))
+	var custom_sfx := _get_log_entry_sfx(entry)
+	var custom_sfx_volume_db := _get_log_entry_sfx_volume_db(entry)
+	var animate := bool(entry.get("animate", true))
+
+	if channel == LogChannel.DEBUG:
+		should_play_sfx = false
+		custom_sfx = null
+
+	_queue_message_entry(channel, {
+		"message": message,
+		"issued_at_text": issued_at_text,
+		"should_play_sfx": should_play_sfx,
+		"style_id": style_id,
+		"custom_sfx": custom_sfx,
+		"custom_sfx_volume_db": custom_sfx_volume_db,
+		"animate": animate,
+	})
+
+
 func add_message(message: String) -> void:
-	_queue_message_to_channel(message, LogChannel.NORMAL, true)
+	add_log_entry({
+		"message": message,
+		"channel": LogChannel.NORMAL,
+		"should_play_sfx": true,
+	})
 
 
 func add_food_encyclopedia_unlock_message(message: String, notice_stream: AudioStream = null, volume_db: float = 0.0) -> void:
-	_queue_message_to_channel_with_style(
-		message,
-		LogChannel.NORMAL,
-		false,
-		FOOD_ENCYCLOPEDIA_UNLOCK_STYLE_ID,
-		notice_stream,
-		volume_db
-	)
+	add_log_entry({
+		"message": message,
+		"channel": LogChannel.NORMAL,
+		"style_id": FOOD_ENCYCLOPEDIA_UNLOCK_STYLE_ID,
+		"custom_sfx": notice_stream,
+		"custom_sfx_volume_db": volume_db,
+		"should_play_sfx": false,
+	})
+
+
+func add_travel_unlock_message(message: String, notice_stream: AudioStream = null, volume_db: float = 0.0) -> void:
+	add_log_entry({
+		"message": message,
+		"channel": LogChannel.NORMAL,
+		"style_id": TRAVEL_UNLOCK_STYLE_ID,
+		"custom_sfx": notice_stream,
+		"custom_sfx_volume_db": volume_db,
+		"should_play_sfx": false,
+	})
 
 
 func add_character_message(message: String) -> void:
-	_queue_message_to_channel(message, LogChannel.CHARACTER, true)
+	add_log_entry({
+		"message": message,
+		"channel": LogChannel.CHARACTER,
+		"should_play_sfx": true,
+	})
 
 
 func add_exploration_message(message: String) -> void:
-	_queue_message_to_channel(message, LogChannel.EXPLORATION, true)
+	add_log_entry({
+		"message": message,
+		"channel": LogChannel.EXPLORATION,
+		"should_play_sfx": true,
+	})
 
 
 func add_debug_message(message: String) -> void:
@@ -270,24 +326,21 @@ func _queue_message_to_channel_with_style(
 	custom_sfx: AudioStream = null,
 	custom_sfx_volume_db: float = 0.0
 ) -> void:
-	var trimmed_message := message.strip_edges()
-	if trimmed_message.is_empty():
-		return
-
-	if channel == LogChannel.DEBUG:
-		should_play_sfx = false
-		custom_sfx = null
-
-	var queue := _get_queued_messages_for_channel(channel)
-	queue.append({
-		"message": trimmed_message,
-		"issued_at_text": _make_game_issued_at_text(),
+	add_log_entry({
+		"message": message,
+		"channel": channel,
 		"should_play_sfx": should_play_sfx,
 		"style_id": style_id,
 		"custom_sfx": custom_sfx,
 		"custom_sfx_volume_db": custom_sfx_volume_db,
 	})
 
+
+func _queue_message_entry(channel: int, message_entry: Dictionary) -> void:
+	if not _is_valid_channel(channel):
+		return
+	var queue := _get_queued_messages_for_channel(channel)
+	queue.append(message_entry)
 	_start_queue_processor(channel)
 
 
@@ -310,7 +363,8 @@ func _process_message_queue(channel: int) -> void:
 			str(entry.get("issued_at_text", "")),
 			StringName(String(entry.get("style_id", &""))),
 			entry.get("custom_sfx", null) as AudioStream,
-			float(entry.get("custom_sfx_volume_db", 0.0))
+			float(entry.get("custom_sfx_volume_db", 0.0)),
+			bool(entry.get("animate", true))
 		)
 
 		if not _get_queued_messages_for_channel(channel).is_empty() and queued_message_delay_seconds > 0.0:
@@ -329,7 +383,8 @@ func _add_message_to_channel_immediate(
 	issued_at_text: String = "",
 	style_id: StringName = &"",
 	custom_sfx: AudioStream = null,
-	custom_sfx_volume_db: float = 0.0
+	custom_sfx_volume_db: float = 0.0,
+	animate_card: bool = true
 ) -> void:
 	var trimmed_message := message.strip_edges()
 	if trimmed_message.is_empty():
@@ -344,7 +399,7 @@ func _add_message_to_channel_immediate(
 	messages.append(message_entry)
 
 	if channel == _current_channel:
-		_create_message_card(message_entry, channel, true)
+		_create_message_card(message_entry, channel, animate_card)
 
 	_trim_old_messages(channel)
 	_update_header()
@@ -608,7 +663,7 @@ func _make_card_style(channel: int, style_id: StringName = &"") -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
 	style.bg_color = _get_card_background_color(channel, style_id)
 	style.border_color = _get_card_border_color(channel, style_id)
-	style.set_border_width_all(2 if style_id == FOOD_ENCYCLOPEDIA_UNLOCK_STYLE_ID else 1)
+	style.set_border_width_all(2 if _is_gold_notice_style(style_id) else 1)
 	style.set_corner_radius_all(10)
 	style.set_content_margin_all(0.0)
 	return style
@@ -617,6 +672,8 @@ func _make_card_style(channel: int, style_id: StringName = &"") -> StyleBoxFlat:
 func _get_card_background_color(channel: int, style_id: StringName = &"") -> Color:
 	if style_id == FOOD_ENCYCLOPEDIA_UNLOCK_STYLE_ID:
 		return food_unlock_card_background_color
+	if style_id == TRAVEL_UNLOCK_STYLE_ID:
+		return travel_unlock_card_background_color
 	match channel:
 		LogChannel.CHARACTER:
 			return character_card_background_color
@@ -631,6 +688,8 @@ func _get_card_background_color(channel: int, style_id: StringName = &"") -> Col
 func _get_card_border_color(channel: int, style_id: StringName = &"") -> Color:
 	if style_id == FOOD_ENCYCLOPEDIA_UNLOCK_STYLE_ID:
 		return food_unlock_card_border_color
+	if style_id == TRAVEL_UNLOCK_STYLE_ID:
+		return travel_unlock_card_border_color
 	match channel:
 		LogChannel.CHARACTER:
 			return character_card_border_color
@@ -643,8 +702,11 @@ func _get_card_border_color(channel: int, style_id: StringName = &"") -> Color:
 
 
 func _get_card_text_color(message_entry: Dictionary, channel: int) -> Color:
-	if _get_message_entry_style_id(message_entry) == FOOD_ENCYCLOPEDIA_UNLOCK_STYLE_ID:
+	var style_id := _get_message_entry_style_id(message_entry)
+	if style_id == FOOD_ENCYCLOPEDIA_UNLOCK_STYLE_ID:
 		return food_unlock_card_text_color
+	if style_id == TRAVEL_UNLOCK_STYLE_ID:
+		return travel_unlock_card_text_color
 	match channel:
 		LogChannel.CHARACTER:
 			return character_card_text_color
@@ -657,8 +719,11 @@ func _get_card_text_color(message_entry: Dictionary, channel: int) -> Color:
 
 
 func _get_card_timestamp_text_color(message_entry: Dictionary, channel: int) -> Color:
-	if _get_message_entry_style_id(message_entry) == FOOD_ENCYCLOPEDIA_UNLOCK_STYLE_ID:
+	var style_id := _get_message_entry_style_id(message_entry)
+	if style_id == FOOD_ENCYCLOPEDIA_UNLOCK_STYLE_ID:
 		return food_unlock_card_timestamp_text_color
+	if style_id == TRAVEL_UNLOCK_STYLE_ID:
+		return travel_unlock_card_timestamp_text_color
 	match channel:
 		LogChannel.CHARACTER:
 			return character_card_timestamp_text_color
@@ -668,6 +733,10 @@ func _get_card_timestamp_text_color(message_entry: Dictionary, channel: int) -> 
 			return debug_card_timestamp_text_color
 		_:
 			return card_timestamp_text_color
+
+
+func _is_gold_notice_style(style_id: StringName) -> bool:
+	return style_id == FOOD_ENCYCLOPEDIA_UNLOCK_STYLE_ID or style_id == TRAVEL_UNLOCK_STYLE_ID
 
 
 func _get_messages_for_channel(channel: int) -> Array[Dictionary]:
@@ -773,6 +842,53 @@ func _get_message_entry_style_id(message_entry: Dictionary) -> StringName:
 
 func _has_visible_timestamp(message_entry: Dictionary) -> bool:
 	return show_game_timestamp_on_cards and not _get_message_entry_issued_at_text(message_entry).is_empty()
+
+
+func _get_log_entry_channel(entry: Dictionary, fallback: int) -> int:
+	var raw_channel: Variant = entry.get("channel", fallback)
+	if raw_channel is int:
+		var channel_int := int(raw_channel)
+		if _is_valid_channel(channel_int):
+			return channel_int
+		return fallback
+
+	var channel_text := String(raw_channel).strip_edges().to_lower()
+	match channel_text:
+		"normal", "default", "通常":
+			return LogChannel.NORMAL
+		"character", "characters", "キャラクター":
+			return LogChannel.CHARACTER
+		"exploration", "explore", "探索":
+			return LogChannel.EXPLORATION
+		"debug", "デバッグ":
+			return LogChannel.DEBUG
+		_:
+			return fallback
+
+
+func _get_log_entry_style_id(entry: Dictionary) -> StringName:
+	return StringName(String(entry.get("style_id", &"")))
+
+
+func _get_log_entry_issued_at_text(entry: Dictionary) -> String:
+	if entry.has("issued_at_text"):
+		return str(entry.get("issued_at_text", ""))
+	if bool(entry.get("use_auto_timestamp", true)):
+		return _make_game_issued_at_text()
+	return ""
+
+
+func _get_log_entry_sfx(entry: Dictionary) -> AudioStream:
+	var custom_sfx := entry.get("custom_sfx", null) as AudioStream
+	if custom_sfx != null:
+		return custom_sfx
+	return entry.get("sfx", null) as AudioStream
+
+
+func _get_log_entry_sfx_volume_db(entry: Dictionary) -> float:
+	if entry.has("custom_sfx_volume_db"):
+		return float(entry.get("custom_sfx_volume_db", 0.0))
+	return float(entry.get("sfx_volume_db", 0.0))
 
 
 func _make_game_issued_at_text() -> String:
