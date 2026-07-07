@@ -21,7 +21,7 @@ var _item_rect: TextureRect
 var _display_add_deferred := false
 var _current_icon_path := ""
 var _was_standing_lapis := false
-var _update_timer := 0.0
+var _update_timer: Timer
 
 
 func _ready() -> void:
@@ -29,7 +29,8 @@ func _ready() -> void:
 	_resolve_refs()
 	_was_standing_lapis = _is_standing_lapis_active()
 	_request_display()
-	set_process(true)
+	_ensure_update_timer()
+	_update_timer.start()
 
 
 func setup(body: Node2D) -> void:
@@ -37,17 +38,21 @@ func setup(body: Node2D) -> void:
 	_resolve_refs()
 	_was_standing_lapis = _is_standing_lapis_active()
 	_request_display()
+	_ensure_update_timer()
+	if _update_timer != null and _update_timer.is_stopped():
+		_update_timer.start()
 
 
-func _process(delta: float) -> void:
-	_update_timer -= maxf(delta, 0.0)
-	if _update_timer > 0.0:
-		return
-	_update_timer = maxf(_get_next_update_interval(), 0.05)
+func refresh_action_item_display() -> void:
 	_resolve_refs()
 	_snap_lapis_position_if_needed()
 	_request_display()
 	_update_display()
+	_sync_update_timer_interval()
+
+
+func _on_update_timer_timeout() -> void:
+	refresh_action_item_display()
 
 
 func _get_next_update_interval() -> float:
@@ -260,6 +265,29 @@ func _ensure_display_deferred() -> void:
 	_item_rect.z_index = item_z_index
 	_item_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_body.add_child(_item_rect)
+
+
+func _ensure_update_timer() -> void:
+	if _update_timer != null and is_instance_valid(_update_timer):
+		return
+	_update_timer = Timer.new()
+	_update_timer.name = "ActionItemDisplayUpdateTimer"
+	_update_timer.one_shot = false
+	_update_timer.autostart = false
+	_update_timer.wait_time = maxf(idle_check_interval_seconds, 0.05)
+	_update_timer.timeout.connect(_on_update_timer_timeout)
+	add_child(_update_timer)
+
+
+func _sync_update_timer_interval() -> void:
+	if _update_timer == null or not is_instance_valid(_update_timer):
+		return
+	var next_wait_time := maxf(_get_next_update_interval(), 0.05)
+	if is_equal_approx(_update_timer.wait_time, next_wait_time):
+		return
+	_update_timer.wait_time = next_wait_time
+	if not _update_timer.is_stopped():
+		_update_timer.start()
 
 
 func _resolve_refs() -> void:
