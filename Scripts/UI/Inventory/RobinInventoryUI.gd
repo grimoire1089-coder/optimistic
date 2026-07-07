@@ -9,6 +9,7 @@ const SORT_MODE_NAME: StringName = &"name"
 const SORT_MODE_AMOUNT: StringName = &"amount"
 const UNLIMITED_SLOT_LIMIT := -1
 const ITEM_ICON_CACHE_SCRIPT_PATH := "res://Scripts/UI/Inventory/ItemIconCacheModule.gd"
+const InventoryLookup := preload("res://Scripts/Characters/Modules/AICharacterInventoryLookup.gd")
 
 @export var actor_path: NodePath = NodePath("../../Robin")
 @export var inventory_module_child_name: StringName = &"AICharacterInventoryModule"
@@ -92,21 +93,9 @@ func _resolve_inventory_module() -> void:
 		push_warning("インベントリ対象AIが見つかりません: %s" % actor_path)
 		return
 
-	if actor.has_method("get_inventory_module"):
-		var inventory_value = actor.call("get_inventory_module")
-		if inventory_value is Node:
-			_inventory_module = inventory_value
-	else:
-		_inventory_module = actor.get_node_or_null(NodePath(String(inventory_module_child_name)))
-		if _inventory_module == null and not legacy_inventory_module_child_name.is_empty():
-			_inventory_module = actor.get_node_or_null(NodePath(String(legacy_inventory_module_child_name)))
-
+	_inventory_module = InventoryLookup.get_inventory_module(actor, inventory_module_child_name, legacy_inventory_module_child_name)
 	if _inventory_module == null:
 		push_warning("AIキャラクターのインベントリモジュールが見つかりません。")
-		return
-	if not _inventory_module.has_method("get_categories") or not _inventory_module.has_method("get_items"):
-		push_warning("インベントリ互換のないノードです: %s" % _inventory_module.name)
-		_inventory_module = null
 		return
 
 	var refresh_callable := Callable(self, "_refresh")
