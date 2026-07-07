@@ -1,9 +1,17 @@
 extends ShopMenu
 class_name ShopMenuTwoLineCards
 
+signal shop_layout_invalidated(shop_id: StringName)
+signal shop_database_layout_invalidated
+
 var _last_purchase_multiplier: int = -1
 var _item_card_buttons: Dictionary = {}
 var _item_card_price_labels: Dictionary = {}
+var _shop_list_layout_built: bool = false
+var _known_shop_cache_version: int = -1
+var _current_tab_shop_key: String = ""
+var _item_layout_cache: Dictionary = {}
+var _current_item_layout_key: String = ""
 
 
 func _process(_delta: float) -> void:
@@ -11,7 +19,7 @@ func _process(_delta: float) -> void:
 		_last_purchase_multiplier = _get_purchase_multiplier()
 		return
 
-	var current_multiplier := _get_purchase_multiplier()
+	var current_multiplier: int = _get_purchase_multiplier()
 	if current_multiplier == _last_purchase_multiplier:
 		return
 	_last_purchase_multiplier = current_multiplier
@@ -30,14 +38,54 @@ func _hide_item_popup() -> void:
 	pass
 
 
+func _reload_shops() -> void:
+	_shops.clear()
+	if shop_database != null:
+		ShopRuntimeCache.prepare_database(shop_database)
+		_shops = ShopRuntimeCache.get_shops(shop_database)
+
+	var current_cache_version: int = ShopRuntimeCache.get_version()
+	if _known_shop_cache_version >= 0 and current_cache_version != _known_shop_cache_version:
+		_free_shop_list_layout()
+		_free_all_item_layouts()
+	_known_shop_cache_version = current_cache_version
+
+	if _selected_shop_index >= _shops.size():
+		_selected_shop_index = -1
+
+
 func _show_shop_list() -> void:
-	super._show_shop_list()
+	_hide_item_popup()
+	_detach_current_item_grid_to_cache()
+	_restore_previous_bgm_if_needed()
+	_selected_shop_index = -1
+	_current_shop_tab_index = 0
+	title_label.text = "ショップ一覧"
+	back_button.visible = false
+	shop_list_view.visible = true
+	shop_detail_view.visible = false
+
+	if shop_database == null:
+		detail_label.text = "ShopDatabase が未設定です。"
+		return
+
+	if _shops.is_empty():
+		detail_label.text = "登録されたショップがありません。"
+		return
+
+	_ensure_shop_list_layout()
+	detail_label.text = "行きたいお店を選んでください。"
 	_clear_duplicated_shop_list_detail()
 
 
-func _refresh_item_grid(shop: ShopData) -> void:
-	super._refresh_item_grid(shop)
-	_apply_purchase_guide_to_detail_label()
+func _ensure_shop_list_layout() -> void:
+	if _shop_list_layout_built and shop_list.get_child_count() > 0:
+		return
+
+	super._clear_shop_list()
+	for index in range(_shops.size()):
+		shop_list.add_child(_create_shop_button(_shops[index], index))
+	_shop_list_layout_built = true
 
 
 func _create_shop_button(shop: ShopData, index: int) -> Button:
@@ -97,7 +145,7 @@ func _show_shop_detail(shop_index: int) -> void:
 
 	_selected_shop_index = shop_index
 	_last_purchase_multiplier = _get_purchase_multiplier()
-	var shop := _shops[_selected_shop_index]
+	var shop: ShopData = _shops[_selected_shop_index]
 	title_label.text = _single_line_shop_name(shop)
 	back_button.visible = true
 	shop_list_view.visible = false
@@ -107,8 +155,69 @@ func _show_shop_detail(shop_index: int) -> void:
 	description_label.text = shop.description
 	_apply_shop_portrait(shop)
 	_play_shop_bgm(shop)
-	_setup_item_tabs(shop)
+	_setup_item_tabs_if_needed(shop)
 	_refresh_item_grid(shop)
+
+
+func _setup_item_tabs_if_needed(shop: ShopData) -> void:
+	var shop_key: String = ShopRuntimeCache.get_shop_cache_key(shop)
+	if _current_tab_shop_key == shop_key and item_tab_bar.tab_count > 0:
+		var tabs: Array[ShopTabData] = shop.get_tabs()
+		if tabs.is_empty():
+			item_tab_bar.visible = false
+			_current_shop_tab_index = 0
+			return
+		item_tab_bar.visible = true
+		_current_shop_tab_index = clampi(_current_shop_tab_index, 0, tabs.size() - 1)
+		if item_tab_bar.current_tab != _current_shop_tab_index:
+			item_tab_bar.current_tab = _current_shop_tab_index
+		return
+
+	_current_tab_shop_key = shop_key
+	_setup_item_tabs(shop)
+
+
+func _refresh_item_grid(shop: ShopData) -> void:
+	_hide_item_popup()
+	if shop == null:
+		return
+
+	var tab_id: StringName = _get_current_shop_tab_id(shop)
+	var cache_key: String = ShopRuntimeCache.get_tab_cache_key(shop, tab_id)
+	var credits: int = _get_wallet_credits()
+
+	if cache_key == _current_item_layout_key and item_grid.get_child_count() > 0:
+		_refresh_purchase_states()
+		return
+
+	var has_cached_layout: bool = _item_layout_cache.has(cache_key)
+	_detach_current_item_grid_to_cache()
+	_current_item_layout_key = cache_key
+
+	if has_cached_layout:
+		_attach_cached_item_cards(cache_key)
+		_refresh_purchase_states()
+		return
+
+	var entries: Array[ShopItemData] = ShopRuntimeCache.get_items_for_shop_tab(shop, tab_id)
+	if entries.is_empty():
+		_item_layout_cache[cache_key] = []
+		detail_label.text = "このタブの商品はまだありません。"
+		return
+
+	var cards: Array[Control] = []
+	for entry in entries:
+		var item_card: Control = _create_item_card(entry, credits)
+		cards.append(item_card)
+		item_grid.add_child(item_card)
+	_item_layout_cache[cache_key] = cards
+
+	detail_label.text = "所持クレジット: %d" % credits
+	_apply_purchase_guide_to_detail_label()
+
+
+func _load_entry_icon(entry: ShopItemData) -> Texture2D:
+	return ShopRuntimeCache.get_icon_for_entry(entry)
 
 
 func _create_item_card(entry: ShopItemData, credits: int) -> Control:
@@ -170,10 +279,10 @@ func _create_item_card(entry: ShopItemData, credits: int) -> Control:
 	description_label_card.add_theme_font_size_override("font_size", 11)
 	info_column.add_child(description_label_card)
 
-	var is_book := entry.is_book_product()
-	var is_owned_book := is_book and _is_book_owned(entry)
-	var purchase_amount := _get_purchase_amount(entry)
-	var total_price := entry.get_unit_price() * purchase_amount
+	var is_book: bool = entry.is_book_product()
+	var is_owned_book: bool = is_book and _is_book_owned(entry)
+	var purchase_amount: int = _get_purchase_amount(entry)
+	var total_price: int = entry.get_unit_price() * purchase_amount
 
 	var action_column := VBoxContainer.new()
 	action_column.custom_minimum_size = Vector2(116, 0)
@@ -255,13 +364,13 @@ func _on_buy_pressed(entry: ShopItemData) -> void:
 
 
 func _on_book_buy_pressed(entry: ShopItemData) -> void:
-	var book := entry.get_book_data()
+	var book: BookData = entry.get_book_data()
 	if book == null:
 		_refresh_purchase_states()
 		detail_label.text = "書籍データが見つかりません。"
 		return
 
-	var library := _resolve_book_library()
+	var library: Node = _resolve_book_library()
 	if library == null or not library.has_method("add_book"):
 		_refresh_purchase_states()
 		detail_label.text = "書籍ライブラリが見つかりません。"
@@ -272,7 +381,7 @@ func _on_book_buy_pressed(entry: ShopItemData) -> void:
 		detail_label.text = "購入済みです: %s" % entry.get_display_name()
 		return
 
-	var total_price := entry.get_unit_price()
+	var total_price: int = entry.get_unit_price()
 	_is_purchase_refresh_suppressed = true
 	var did_spend: bool = _spend_credits(total_price, entry)
 	_is_purchase_refresh_suppressed = false
@@ -308,7 +417,7 @@ func _refresh_purchase_states() -> void:
 
 	var shop: ShopData = _shops[_selected_shop_index]
 	var tab_id: StringName = _get_current_shop_tab_id(shop)
-	var entries: Array[ShopItemData] = shop.get_available_items_for_tab(tab_id)
+	var entries: Array[ShopItemData] = ShopRuntimeCache.get_items_for_shop_tab(shop, tab_id)
 	var credits: int = _get_wallet_credits()
 	for entry in entries:
 		_refresh_purchase_state_for_entry(entry, credits)
@@ -348,10 +457,119 @@ func _refresh_purchase_state_for_entry(entry: ShopItemData, credits: int) -> voi
 	buy_button.disabled = not entry.is_available or total_price > credits
 
 
+func invalidate_shop_layout(shop_id: StringName = &"") -> void:
+	if shop_id == &"":
+		ShopRuntimeCache.mark_cache_dirty()
+		_reload_shops()
+		_free_shop_list_layout()
+		_free_all_item_layouts()
+		shop_database_layout_invalidated.emit()
+		return
+
+	_free_shop_list_layout()
+	_free_shop_item_layout(String(shop_id))
+	shop_layout_invalidated.emit(shop_id)
+
+
+func _attach_cached_item_cards(cache_key: String) -> void:
+	var cards: Array[Control] = _get_cached_item_cards(cache_key)
+	for card in cards:
+		if card.get_parent() != item_grid:
+			item_grid.add_child(card)
+
+
+func _detach_current_item_grid_to_cache() -> void:
+	if item_grid == null:
+		return
+	if _current_item_layout_key.is_empty() and item_grid.get_child_count() <= 0:
+		return
+
+	var cards: Array[Control] = []
+	for child in item_grid.get_children():
+		item_grid.remove_child(child)
+		if child is Control and is_instance_valid(child):
+			cards.append(child as Control)
+
+	if not _current_item_layout_key.is_empty():
+		_item_layout_cache[_current_item_layout_key] = cards
+
+
+func _get_cached_item_cards(cache_key: String) -> Array[Control]:
+	var result: Array[Control] = []
+	var cached_value: Variant = _item_layout_cache.get(cache_key, [])
+	if not (cached_value is Array):
+		return result
+	for value in cached_value:
+		if value is Control and is_instance_valid(value):
+			result.append(value as Control)
+	return result
+
+
 func _clear_item_grid() -> void:
-	_item_card_buttons.clear()
-	_item_card_price_labels.clear()
-	super._clear_item_grid()
+	_free_all_item_layouts()
+
+
+func _free_shop_list_layout() -> void:
+	_shop_list_layout_built = false
+	super._clear_shop_list()
+
+
+func _free_all_item_layouts() -> void:
+	var freed_ids: Dictionary = {}
+	for cached_value in _item_layout_cache.values():
+		if not (cached_value is Array):
+			continue
+		for value in cached_value:
+			if value is Control:
+				_queue_free_control_once(value as Control, freed_ids)
+	for child in item_grid.get_children():
+		if child is Control:
+			_queue_free_control_once(child as Control, freed_ids)
+	_item_layout_cache = {}
+	_item_card_buttons = {}
+	_item_card_price_labels = {}
+	_current_item_layout_key = ""
+	_current_tab_shop_key = ""
+
+
+func _free_shop_item_layout(shop_key: String) -> void:
+	if shop_key.strip_edges().is_empty():
+		_free_all_item_layouts()
+		return
+
+	var freed_ids: Dictionary = {}
+	var key_prefix: String = "%s|" % shop_key
+	var keys_to_remove: Array[String] = []
+	for cache_key in _item_layout_cache.keys():
+		var key_text: String = String(cache_key)
+		if key_text.begins_with(key_prefix):
+			keys_to_remove.append(key_text)
+
+	for cache_key in keys_to_remove:
+		var cards: Array[Control] = _get_cached_item_cards(cache_key)
+		for card in cards:
+			_queue_free_control_once(card, freed_ids)
+		_item_layout_cache.erase(cache_key)
+		if _current_item_layout_key == cache_key:
+			_current_item_layout_key = ""
+
+	if _current_tab_shop_key == shop_key:
+		_current_tab_shop_key = ""
+	_item_card_buttons = {}
+	_item_card_price_labels = {}
+
+
+func _queue_free_control_once(control: Control, freed_ids: Dictionary) -> void:
+	if control == null or not is_instance_valid(control):
+		return
+	var instance_id: int = control.get_instance_id()
+	if freed_ids.has(instance_id):
+		return
+	freed_ids[instance_id] = true
+	var parent: Node = control.get_parent()
+	if parent != null:
+		parent.remove_child(control)
+	control.queue_free()
 
 
 func _apply_purchase_guide_to_detail_label() -> void:
