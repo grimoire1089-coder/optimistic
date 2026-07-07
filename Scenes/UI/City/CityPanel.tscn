@@ -145,7 +145,7 @@ text = "住人ページ"
 
 [node name="DescriptionLabel" type="Label" parent="MarginContainer/Rows/Body/ContentRows/Pages/ResidentsPage/MarginContainer/Rows"]
 layout_mode = 2
-text = "ここにデカダンスの住人一覧や関係情報を追加していきます。"
+text = "ここにNPCの様子、生活状態、関係情報、会話のきっかけを追加していきます。"
 autowrap_mode = 3
 
 [node name="InvestmentPage" type="PanelContainer" parent="MarginContainer/Rows/Body/ContentRows/Pages"]
