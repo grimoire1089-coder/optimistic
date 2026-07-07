@@ -9,7 +9,7 @@ const WANDER_SCRIPT := preload("res://Scripts/Characters/Modules/AICharacterRand
 const SIT_SCRIPT := preload("res://Scripts/Characters/Modules/AICharacterReservedSitBehaviorModule.gd")
 const HYDRATE_SCRIPT := preload("res://Scripts/Characters/Modules/AICharacterTableSeatHydrateModule.gd")
 const ITEM_DISPLAY_SCRIPT := preload("res://Scripts/Characters/Modules/AICharacterActionItemDisplayModule.gd")
-const INVENTORY_SCRIPT := preload("res://Scripts/Characters/Modules/AICharacterInventoryModule.gd")
+const INVENTORY_SCRIPT := preload("res://Scripts/Characters/Robin/Modules/RobinInventoryModule.gd")
 const MoveSlot := preload("res://Scripts/Characters/Modules/AICharacterMovementCoordinator.gd")
 
 @export var resident_id: StringName = &"zippy"
