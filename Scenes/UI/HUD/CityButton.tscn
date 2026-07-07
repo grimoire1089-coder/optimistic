@@ -1,0 +1,20 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://Scripts/UI/HUD/CityButton.gd" id="1_city_button"]
+[ext_resource type="Texture2D" uid="uid://co54sowew8haf" path="res://Assets/UI/Icons/Decadence.png" id="2_city_icon"]
+
+[node name="CityButton" type="Button"]
+custom_minimum_size = Vector2(80, 80)
+layout_mode = 3
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+grow_horizontal = 0
+grow_vertical = 0
+mouse_default_cursor_shape = 2
+focus_mode = 0
+icon = ExtResource("2_city_icon")
+expand_icon = true
+script = ExtResource("1_city_button")
+city_panel_path = NodePath("../CityPanel")
+city_icon = ExtResource("2_city_icon")
