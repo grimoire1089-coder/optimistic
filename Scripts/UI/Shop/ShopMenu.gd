@@ -47,6 +47,8 @@ var _item_popup_price_label: Label
 var _room_map: RoomMapGridModule
 var _map_travel_module: Node
 var _layout_room_map: RoomMapGridModule
+var _is_purchase_refresh_suppressed := false
+var _is_shop_detail_refresh_queued := false
 
 
 func _ready() -> void:
@@ -694,13 +696,18 @@ func _on_buy_pressed(entry: ShopItemData) -> void:
 
 	var purchase_amount: int = _get_purchase_amount(entry)
 	var total_price: int = entry.get_unit_price() * purchase_amount
-	if not _spend_credits(total_price, entry):
+	_is_purchase_refresh_suppressed = true
+	var did_spend := _spend_credits(total_price, entry)
+	_is_purchase_refresh_suppressed = false
+	if not did_spend:
 		_refresh_current_shop_detail()
 		detail_label.text = "クレジットが足りません。必要: %d / 所持: %d" % [total_price, _get_wallet_credits()]
 		return
 
 	if not _add_entry_to_inventory(entry, purchase_amount):
+		_is_purchase_refresh_suppressed = true
 		_refund_credits(total_price, entry)
+		_is_purchase_refresh_suppressed = false
 		_refresh_current_shop_detail()
 		detail_label.text = "インベントリに空きがありません。購入を取り消しました。"
 		return
@@ -727,13 +734,21 @@ func _on_book_buy_pressed(entry: ShopItemData) -> void:
 		return
 
 	var total_price := entry.get_unit_price()
-	if not _spend_credits(total_price, entry):
+	_is_purchase_refresh_suppressed = true
+	var did_spend := _spend_credits(total_price, entry)
+	_is_purchase_refresh_suppressed = false
+	if not did_spend:
 		_refresh_current_shop_detail()
 		detail_label.text = "クレジットが足りません。必要: %d / 所持: %d" % [total_price, _get_wallet_credits()]
 		return
 
-	if library.call("add_book", book) != true:
+	_is_purchase_refresh_suppressed = true
+	var did_add_book := library.call("add_book", book) == true
+	_is_purchase_refresh_suppressed = false
+	if not did_add_book:
+		_is_purchase_refresh_suppressed = true
 		_refund_credits(total_price, entry)
+		_is_purchase_refresh_suppressed = false
 		_refresh_current_shop_detail()
 		detail_label.text = "書籍の登録に失敗しました。購入を取り消しました。"
 		return
@@ -761,6 +776,20 @@ func _refresh_current_shop_detail() -> void:
 		_show_shop_list()
 		return
 	_show_shop_detail(_selected_shop_index)
+
+
+func _queue_refresh_current_shop_detail() -> void:
+	if _is_shop_detail_refresh_queued:
+		return
+	_is_shop_detail_refresh_queued = true
+	call_deferred("_flush_queued_shop_detail_refresh")
+
+
+func _flush_queued_shop_detail_refresh() -> void:
+	_is_shop_detail_refresh_queued = false
+	if not visible:
+		return
+	_refresh_current_shop_detail()
 
 
 func _is_book_owned(entry: ShopItemData) -> bool:
@@ -824,14 +853,18 @@ func _clear_item_grid() -> void:
 
 
 func _on_wallet_balance_changed(_new_balance: int, _delta: int, _reason: String) -> void:
+	if _is_purchase_refresh_suppressed:
+		return
 	if not visible:
 		return
 	if _selected_shop_index >= 0:
-		_refresh_current_shop_detail()
+		_queue_refresh_current_shop_detail()
 
 
 func _on_book_library_changed() -> void:
+	if _is_purchase_refresh_suppressed:
+		return
 	if not visible:
 		return
 	if _selected_shop_index >= 0:
-		_refresh_current_shop_detail()
+		_queue_refresh_current_shop_detail()
