@@ -49,6 +49,7 @@
 [ext_resource type="PackedScene" path="res://Scenes/UI/HUD/ManagementButton.tscn" id="46_management_button"]
 [ext_resource type="PackedScene" path="res://Scenes/UI/City/CityPanel.tscn" id="47_city_panel"]
 [ext_resource type="PackedScene" path="res://Scenes/Characters/Zippy/ZippyActor.tscn" id="48_zippy_actor"]
+[ext_resource type="PackedScene" path="res://Scenes/UI/Debug/AIPositionDebugToggle.tscn" id="49_position_debug_toggle"]
 
 [sub_resource type="Environment" id="Environment_ctt6t"]
 glow_enabled = true
@@ -97,7 +98,7 @@ furniture_root_path = NodePath("../RobinRoomMap/FurnitureRoot")
 click_sfx = ExtResource("4_ctt6t")
 
 [node name="Zippy" parent="." instance=ExtResource("48_zippy_actor")]
-position = Vector2(760, 520)
+position = Vector2(690, 520)
 click_sfx = ExtResource("4_ctt6t")
 
 [node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=295553793]
@@ -126,6 +127,8 @@ text = "ロビンの部屋"
 layout_mode = 3
 anchors_preset = 0
 script = ExtResource("25_ai_debug_panel")
+
+[node name="AIPositionDebugToggle" parent="CanvasLayer" instance=ExtResource("49_position_debug_toggle")]
 
 [node name="SimpleProfilerHud" type="Control" parent="CanvasLayer"]
 script = ExtResource("33_profiler_hud")
