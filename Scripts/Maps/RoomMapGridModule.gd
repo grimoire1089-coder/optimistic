@@ -24,8 +24,12 @@ const INVALID_DEBUG_GRID_POSITION := Vector2i(-999999, -999999)
 @export var frame_outer_glow_width: float = 24.0
 @export var frame_middle_glow_width: float = 12.0
 @export var frame_core_line_width: float = 4.0
-@export var show_ai_movement_debug_highlight: bool = false
-@export var map_state_poll_interval_seconds: float = 0.25
+@export var show_ai_movement_debug_highlight: bool = false:
+	set(value):
+		_show_ai_movement_debug_highlight = value
+		_on_ai_movement_debug_highlight_changed()
+	get:
+		return _show_ai_movement_debug_highlight
 @export var movement_debug_redraw_interval_seconds: float = 0.15
 @export var ai_movement_path_fill_color: Color = Color(0.0, 1.0, 1.0, 0.18)
 @export var ai_movement_path_border_color: Color = Color(0.0, 2.0, 2.0, 0.55)
@@ -39,34 +43,42 @@ const INVALID_DEBUG_GRID_POSITION := Vector2i(-999999, -999999)
 var _last_visual_rect := Rect2()
 var _last_grid_rect := Rect2()
 var _last_grid_size := Vector2i.ZERO
-var _map_state_poll_timer := 0.0
 var _movement_debug_redraw_timer := 0.0
+var _show_ai_movement_debug_highlight := false
 
 
 func _ready() -> void:
 	z_as_relative = false
-	_sync_map_state(true)
-	queue_redraw()
+	_connect_layout_refresh_signals()
+	_refresh_map_layout(true)
+	_sync_debug_process_enabled()
+
+
+func _exit_tree() -> void:
+	_disconnect_layout_refresh_signals()
 
 
 func _process(delta: float) -> void:
-	_map_state_poll_timer -= maxf(delta, 0.0)
-	if _map_state_poll_timer <= 0.0:
-		_map_state_poll_timer = maxf(map_state_poll_interval_seconds, 0.05)
-		if _sync_map_state(false):
-			queue_redraw()
+	if not show_ai_movement_debug_highlight:
+		_sync_debug_process_enabled()
+		return
 
-	if show_ai_movement_debug_highlight:
-		_movement_debug_redraw_timer -= maxf(delta, 0.0)
-		if _movement_debug_redraw_timer <= 0.0:
-			_movement_debug_redraw_timer = maxf(movement_debug_redraw_interval_seconds, 0.05)
-			queue_redraw()
-	else:
-		_movement_debug_redraw_timer = 0.0
+	_movement_debug_redraw_timer -= maxf(delta, 0.0)
+	if _movement_debug_redraw_timer <= 0.0:
+		_movement_debug_redraw_timer = maxf(movement_debug_redraw_interval_seconds, 0.05)
+		queue_redraw()
 
 
 func is_buildable() -> bool:
 	return buildable
+
+
+func refresh_map_layout(force_emit: bool = true) -> void:
+	_refresh_map_layout(force_emit)
+
+
+func set_ai_movement_debug_highlight(enabled: bool) -> void:
+	show_ai_movement_debug_highlight = enabled
 
 
 func get_visual_map_rect() -> Rect2:
@@ -155,7 +167,7 @@ func get_grid_area_rect(grid_position: Vector2i, footprint: Vector2i = Vector2i(
 	var safe_footprint := Vector2i(maxi(footprint.x, 1), maxi(footprint.y, 1))
 	var area_position := grid_to_world_cell_position(grid_position)
 	var area_size := Vector2(float(safe_footprint.x), float(safe_footprint.y)) * _get_safe_cell_size()
-	return Rect2(area_position, area_size)
+	return Rect2(area_position, safe_cell_size)
 
 
 func world_to_grid(world_position: Vector2) -> Vector2i:
@@ -431,6 +443,55 @@ func _draw_outside_rect_stroke(base_rect: Rect2, color: Color, width: float) -> 
 		return
 	var stroke_width := source_width * 0.5
 	draw_rect(base_rect.grow(stroke_width * 0.5), color, false, stroke_width)
+
+
+func _connect_layout_refresh_signals() -> void:
+	var viewport := get_viewport()
+	if viewport != null and not viewport.size_changed.is_connected(_on_viewport_size_changed):
+		viewport.size_changed.connect(_on_viewport_size_changed)
+	if not visibility_changed.is_connected(_on_visibility_changed):
+		visibility_changed.connect(_on_visibility_changed)
+
+
+func _disconnect_layout_refresh_signals() -> void:
+	var viewport := get_viewport()
+	if viewport != null and viewport.size_changed.is_connected(_on_viewport_size_changed):
+		viewport.size_changed.disconnect(_on_viewport_size_changed)
+	if visibility_changed.is_connected(_on_visibility_changed):
+		visibility_changed.disconnect(_on_visibility_changed)
+
+
+func _on_viewport_size_changed() -> void:
+	_refresh_map_layout(true)
+
+
+func _on_visibility_changed() -> void:
+	_refresh_map_layout(true)
+	_sync_debug_process_enabled()
+
+
+func _on_ai_movement_debug_highlight_changed() -> void:
+	_movement_debug_redraw_timer = 0.0
+	_sync_debug_process_enabled()
+	if is_inside_tree():
+		queue_redraw()
+
+
+func _sync_debug_process_enabled() -> void:
+	if not is_inside_tree():
+		return
+	if show_ai_movement_debug_highlight and is_visible_in_tree():
+		set_process(true)
+		return
+	set_process(false)
+	_movement_debug_redraw_timer = 0.0
+
+
+func _refresh_map_layout(force_emit: bool) -> void:
+	if _sync_map_state(force_emit):
+		queue_redraw()
+	elif force_emit:
+		queue_redraw()
 
 
 func _sync_map_state(force_emit: bool) -> bool:
