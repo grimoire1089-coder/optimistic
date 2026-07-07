@@ -15,6 +15,9 @@ const UNLIMITED_SLOT_LIMIT := -1
 @export var slots_per_category: int = 25
 @export var tool_slots_unlimited: bool = true
 @export var initial_item_paths: PackedStringArray = PackedStringArray()
+@export var owner_display_name: String = ""
+@export var owned_item_ids: PackedStringArray = PackedStringArray(["tool_0001_lapis"])
+@export var owned_item_name_format: String = "%sの%s"
 
 var _categories: Array[Dictionary] = [
 	{"id": CATEGORY_TOOLS, "display_name": "ツール"},
@@ -85,7 +88,9 @@ func add_item(
 	nutrition_value: float = 0.0,
 	hydration_value: float = 0.0,
 	extra_need_values: Dictionary = {},
-	need_values: Dictionary = {}
+	need_values: Dictionary = {},
+	item_owner_display_name: String = "",
+	base_display_name: String = ""
 ) -> bool:
 	if amount <= 0:
 		return false
@@ -96,11 +101,15 @@ func add_item(
 	_setup_empty_categories()
 	var safe_need_values := _copy_need_values(need_values)
 	var safe_extra_need_values := _copy_need_values(extra_need_values)
+	var safe_base_display_name := base_display_name if not base_display_name.strip_edges().is_empty() else display_name
 	var items := _items_by_category[category_id] as Array
 	for item in items:
 		if item.get("id", &"") == item_id:
 			var safe_stack_max := maxi(stack_max, 1)
 			item["amount"] = mini(int(item.get("amount", 0)) + amount, safe_stack_max)
+			item["display_name"] = display_name
+			item["base_display_name"] = safe_base_display_name
+			item["owner_display_name"] = item_owner_display_name
 			item["stack_max"] = safe_stack_max
 			item["description"] = description
 			item["buy_price"] = buy_price
@@ -125,6 +134,8 @@ func add_item(
 		"id": item_id,
 		"category_id": category_id,
 		"display_name": display_name,
+		"base_display_name": safe_base_display_name,
+		"owner_display_name": item_owner_display_name,
 		"amount": amount,
 		"icon_path": icon_path,
 		"stack_max": maxi(stack_max, 1),
@@ -151,10 +162,12 @@ func add_food_item(food_data: FoodItemData, amount: int = 1) -> bool:
 	if food_data.item_id == &"":
 		push_warning("食品IDが空です。")
 		return false
+	var item_owner_name := _get_item_owner_display_name(food_data.item_id)
+	var item_display_name := _get_owned_item_display_name(food_data.item_id, food_data.display_name, item_owner_name)
 	return add_item(
 		food_data.category_id,
 		food_data.item_id,
-		food_data.display_name,
+		item_display_name,
 		amount,
 		food_data.get_icon_path(),
 		food_data.stack_max,
@@ -167,7 +180,9 @@ func add_food_item(food_data: FoodItemData, amount: int = 1) -> bool:
 		food_data.nutrition_value,
 		food_data.hydration_value,
 		food_data.extra_need_values,
-		food_data.get_need_values(true)
+		food_data.get_need_values(true),
+		item_owner_name,
+		food_data.display_name
 	)
 
 
@@ -242,10 +257,14 @@ func _add_item_from_resource_path(item_path: String) -> void:
 		return
 	if resource != null and resource.has_method("to_inventory_item"):
 		var item_data: Dictionary = resource.call("to_inventory_item")
+		var item_id: StringName = item_data.get("id", &"")
+		var raw_display_name := String(item_data.get("display_name", ""))
+		var item_owner_name := _get_item_owner_display_name(item_id)
+		var item_display_name := _get_owned_item_display_name(item_id, raw_display_name, item_owner_name)
 		add_item(
 			item_data.get("category_id", CATEGORY_TOOLS),
-			item_data.get("id", &""),
-			item_data.get("display_name", ""),
+			item_id,
+			item_display_name,
 			int(item_data.get("amount", 1)),
 			item_data.get("icon_path", ""),
 			int(item_data.get("stack_max", 1)),
@@ -258,7 +277,9 @@ func _add_item_from_resource_path(item_path: String) -> void:
 			float(item_data.get("nutrition_value", 0.0)),
 			float(item_data.get("hydration_value", 0.0)),
 			item_data.get("extra_need_values", {}),
-			item_data.get("need_values", {})
+			item_data.get("need_values", {}),
+			item_owner_name,
+			raw_display_name
 		)
 
 
@@ -270,6 +291,32 @@ func _find_item_entry(category_id: StringName, item_id: StringName) -> Dictionar
 		if item is Dictionary and item.get("id", &"") == item_id:
 			return item as Dictionary
 	return {}
+
+
+func _get_item_owner_display_name(item_id: StringName) -> String:
+	if owner_display_name.strip_edges().is_empty():
+		return ""
+	if not _is_owned_item(item_id):
+		return ""
+	return owner_display_name.strip_edges()
+
+
+func _get_owned_item_display_name(item_id: StringName, base_name: String, item_owner_name: String) -> String:
+	if item_owner_name.strip_edges().is_empty():
+		return base_name
+	if base_name.strip_edges().is_empty():
+		return base_name
+	if owned_item_name_format.find("%s") == -1:
+		return "%sの%s" % [item_owner_name, base_name]
+	return owned_item_name_format % [item_owner_name, base_name]
+
+
+func _is_owned_item(item_id: StringName) -> bool:
+	var item_id_text := String(item_id)
+	for owned_id in owned_item_ids:
+		if String(owned_id) == item_id_text:
+			return true
+	return false
 
 
 func _copy_need_values(values: Dictionary) -> Dictionary:
