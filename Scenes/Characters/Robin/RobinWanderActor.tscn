@@ -86,7 +86,7 @@ floor_sleep_energy_ratio = 0.01
 script = ExtResource("9_hydrate_behavior")
 needs_module_path = NodePath("../AICharacterNeedsBundle/CharacterNeedsModule")
 need_planner_path = NodePath("../AICharacterNeedsBundle/NeedDrivenAIPlanner")
-inventory_module_path = NodePath("../RobinInventoryModule")
+inventory_module_path = NodePath("../AICharacterInventoryModule")
 furniture_root_path = NodePath("../../RobinRoomMap/FurnitureRoot")
 furniture_placement_module_path = NodePath("../../FurniturePlacementModule")
 room_map_path = NodePath("../../RobinRoomMap")
@@ -150,7 +150,7 @@ actor_grid_footprint = Vector2i(2, 4)
 
 [node name="AICharacterCraftBehaviorModule" type="Node" parent="." groups=["ai_movement_behavior"]]
 script = ExtResource("13_craft_behavior")
-inventory_module_path = NodePath("../RobinInventoryModule")
+inventory_module_path = NodePath("../AICharacterInventoryModule")
 furniture_root_path = NodePath("../../RobinRoomMap/FurnitureRoot")
 furniture_placement_module_path = NodePath("../../FurniturePlacementModule")
 room_map_path = NodePath("../../RobinRoomMap")
@@ -198,23 +198,3 @@ bar_size = Vector2(84, 10)
 script = ExtResource("11_action_item_display")
 hydrate_behavior_path = NodePath("../AICharacterHydrateBehaviorModule")
 craft_behavior_path = NodePath("../AICharacterCraftBehaviorModule")
-read_book_behavior_path = NodePath("../AICharacterReadBookBehaviorModule")
-item_center_offset = Vector2(0, -18)
-item_display_size = Vector2(70, 70)
-
-[node name="RobinWalkSpriteAnimator" type="Node" parent="."]
-script = ExtResource("4_animator")
-sprite_path = NodePath("../Sprite2D")
-frames_per_second = 5.0
-moving_bob_amount = 2.0
-moving_rotation_degrees = 0.8
-moving_scale_amount = 0.008
-fit_fallback_visible_frame_size = Vector2(202, 420)
-
-[node name="RobinMovementAreaFrame" type="Control" parent="."]
-script = ExtResource("5_movement_area_frame")
-actor_path = NodePath("..")
-raw_modulate_color = Color(1, 2.8, 2.8, 1)
-outer_glow_width = 24.0
-middle_glow_width = 12.0
-core_line_width = 4.0
