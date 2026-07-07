@@ -6,8 +6,10 @@ signal craft_completed(recipe: CraftRecipeData, quantity: int)
 
 const INVALID_GRID_POSITION := Vector2i(-999999, -999999)
 const COOKING_CATEGORY_ID: StringName = &"cooking"
+const InventoryLookup := preload("res://Scripts/Characters/Modules/AICharacterInventoryLookup.gd")
 
-@export var inventory_module_path: NodePath = NodePath("../RobinInventoryModule")
+@export var inventory_module_path: NodePath = NodePath("../AICharacterInventoryModule")
+@export var legacy_inventory_module_path: NodePath = NodePath("../RobinInventoryModule")
 @export var skills_module_path: NodePath = NodePath("../AICharacterSkillsModule")
 @export var furniture_root_path: NodePath = NodePath("../../RobinRoomMap/FurnitureRoot")
 @export var furniture_placement_module_path: NodePath = NodePath("../../FurniturePlacementModule")
@@ -19,7 +21,7 @@ const COOKING_CATEGORY_ID: StringName = &"cooking"
 @export_range(1, 999, 1) var cooking_experience_per_game_minute: int = 1
 
 var _body: CharacterBody2D
-var _inventory_module: RobinInventoryModule
+var _inventory_module: Node
 var _skills_module: AICharacterSkillsModule
 var _furniture_root: Node
 var _furniture_placement: Node
@@ -190,7 +192,7 @@ func _complete_crafting() -> void:
 		_reset_action()
 		return
 	var output_amount := _recipe.output_amount * _quantity
-	if not _inventory_module.add_food_item(_recipe.output_item, output_amount):
+	if not _add_food_to_inventory(_recipe.output_item, output_amount):
 		_refund_ingredients()
 		_push_message("完成品を追加できませんでした。")
 		_reset_action()
@@ -203,6 +205,8 @@ func _complete_crafting() -> void:
 
 
 func _consume_ingredients() -> bool:
+	if _inventory_module == null or not _inventory_module.has_method("remove_item"):
+		return false
 	for ingredient in _recipe.ingredients:
 		if ingredient == null or ingredient.item_data == null:
 			continue
@@ -214,7 +218,7 @@ func _consume_ingredients() -> bool:
 	for ingredient in _recipe.ingredients:
 		if ingredient == null or ingredient.item_data == null:
 			continue
-		_inventory_module.remove_item(ingredient.item_data.category_id, ingredient.item_data.item_id, ingredient.amount * _quantity)
+		_inventory_module.call("remove_item", ingredient.item_data.category_id, ingredient.item_data.item_id, ingredient.amount * _quantity)
 	return true
 
 
@@ -224,12 +228,42 @@ func _refund_ingredients() -> void:
 	for ingredient in _recipe.ingredients:
 		if ingredient == null or ingredient.item_data == null:
 			continue
-		_inventory_module.add_food_item(ingredient.item_data, ingredient.amount * _quantity)
+		_add_food_to_inventory(ingredient.item_data, ingredient.amount * _quantity)
+
+
+func _add_food_to_inventory(item_data: FoodItemData, amount: int) -> bool:
+	if _inventory_module == null or item_data == null:
+		return false
+	if _inventory_module.has_method("add_food_item"):
+		return _inventory_module.call("add_food_item", item_data, amount) == true
+	if not _inventory_module.has_method("add_item"):
+		return false
+	return _inventory_module.call(
+		"add_item",
+		item_data.category_id,
+		item_data.item_id,
+		item_data.display_name,
+		maxi(amount, 1),
+		item_data.get_icon_path(),
+		item_data.stack_max,
+		item_data.description,
+		item_data.buy_price,
+		item_data.sell_price,
+		item_data.get_need_effect_path(),
+		item_data.can_discard,
+		item_data.can_transfer
+	) == true
 
 
 func _get_inventory_item_amount(category_id: StringName, item_id: StringName) -> int:
+	if _inventory_module == null or not _inventory_module.has_method("get_items"):
+		return 0
+	var entries_value: Variant = _inventory_module.call("get_items", category_id)
+	if not (entries_value is Array):
+		return 0
+	var entries: Array = entries_value
 	var total := 0
-	for entry in _inventory_module.get_items(category_id):
+	for entry in entries:
 		if entry is Dictionary and entry.get("id", &"") == item_id:
 			total += int(entry.get("amount", 0))
 	return total
@@ -537,8 +571,12 @@ func _push_message(message: String) -> void:
 
 
 func _resolve_refs() -> void:
-	if _inventory_module == null:
-		_inventory_module = get_node_or_null(inventory_module_path) as RobinInventoryModule
+	if _inventory_module == null or not is_instance_valid(_inventory_module):
+		_inventory_module = _get_inventory_module_from_path(inventory_module_path)
+		if _inventory_module == null:
+			_inventory_module = _get_inventory_module_from_path(legacy_inventory_module_path)
+		if _inventory_module == null and _body != null:
+			_inventory_module = InventoryLookup.get_inventory_module(_body)
 	if _skills_module == null:
 		_skills_module = get_node_or_null(skills_module_path) as AICharacterSkillsModule
 	if _furniture_root == null:
@@ -549,3 +587,12 @@ func _resolve_refs() -> void:
 		_room_map = get_node_or_null(room_map_path) as RoomMapGridModule
 	if _clock == null:
 		_clock = get_tree().get_first_node_in_group("game_clock") as GameClockSystem
+
+
+func _get_inventory_module_from_path(module_path: NodePath) -> Node:
+	if module_path.is_empty():
+		return null
+	var module := get_node_or_null(module_path)
+	if InventoryLookup.is_inventory_compatible(module):
+		return module
+	return null
