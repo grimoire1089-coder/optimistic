@@ -13,12 +13,10 @@ const DEFAULT_BUILD_ICON_PATH := "res://Assets/UI/Icons/Build_Mode.png"
 @export var build_mode_icon: Texture2D
 @export var show_text: bool = false
 @export var click_sfx_volume_db: float = 0.0
-@export var state_poll_interval_seconds: float = 0.25
 
 var _controller: BuildModeController
 var _room_map: Node
 var _local_enabled := false
-var _state_poll_timer := 0.0
 
 
 func _ready() -> void:
@@ -31,14 +29,14 @@ func _ready() -> void:
 	_load_default_click_sfx_if_needed()
 	_sync_button_state()
 	pressed.connect(_on_pressed)
+	_sync_process_enabled()
 
 
-func _process(delta: float) -> void:
-	_state_poll_timer -= maxf(delta, 0.0)
-	if _state_poll_timer > 0.0:
-		return
-	_state_poll_timer = maxf(state_poll_interval_seconds, 0.05)
+func _process(_delta: float) -> void:
+	_resolve_refs()
+	_connect_controller()
 	_sync_button_state()
+	_sync_process_enabled()
 
 
 func _on_pressed() -> void:
@@ -51,8 +49,17 @@ func _on_build_mode_changed(_enabled: bool) -> void:
 	_sync_button_state()
 
 
+func _on_buildable_changed(_buildable: bool) -> void:
+	_sync_button_state()
+
+
+func refresh_build_state() -> void:
+	_sync_button_state()
+
+
 func _sync_button_state() -> void:
 	_resolve_refs()
+	_connect_controller()
 	var can_build := _can_build()
 	disabled = not can_build
 	if not can_build:
@@ -91,6 +98,10 @@ func _set_enabled(enabled: bool) -> void:
 	button_pressed = next_enabled
 
 
+func _sync_process_enabled() -> void:
+	set_process(_controller == null or _room_map == null)
+
+
 func _resolve_refs() -> void:
 	if _controller == null and not build_mode_controller_path.is_empty():
 		_controller = get_node_or_null(build_mode_controller_path) as BuildModeController
@@ -101,9 +112,12 @@ func _resolve_refs() -> void:
 func _connect_controller() -> void:
 	if _controller == null:
 		return
-	var callable := Callable(self, "_on_build_mode_changed")
-	if not _controller.build_mode_changed.is_connected(callable):
-		_controller.build_mode_changed.connect(callable)
+	var build_callable := Callable(self, "_on_build_mode_changed")
+	if not _controller.build_mode_changed.is_connected(build_callable):
+		_controller.build_mode_changed.connect(build_callable)
+	var buildable_callable := Callable(self, "_on_buildable_changed")
+	if not _controller.buildable_changed.is_connected(buildable_callable):
+		_controller.buildable_changed.connect(buildable_callable)
 
 
 func _apply_layout() -> void:
