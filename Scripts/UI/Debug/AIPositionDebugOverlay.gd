@@ -16,9 +16,9 @@ func _ready() -> void:
 	set_process(visible)
 
 
-func set_debug_visible(is_visible: bool) -> void:
-	visible = is_visible
-	set_process(is_visible)
+func set_debug_visible(debug_visible: bool) -> void:
+	visible = debug_visible
+	set_process(debug_visible)
 	queue_redraw()
 
 
