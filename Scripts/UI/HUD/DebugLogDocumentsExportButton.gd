@@ -21,10 +21,6 @@ func _ready() -> void:
 	_update_visibility()
 
 
-func _process(_delta: float) -> void:
-	_update_visibility()
-
-
 func _on_pressed() -> void:
 	_resolve_refs()
 	var messages: PackedStringArray = _get_debug_messages()
