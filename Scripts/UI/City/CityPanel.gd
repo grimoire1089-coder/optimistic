@@ -1,0 +1,127 @@
+extends PanelContainer
+class_name CityPanel
+
+@export var room_map_path: NodePath = NodePath("../../RobinRoomMap")
+@export var map_travel_module_path: NodePath = NodePath("../../MainSceneMapTravelModule")
+@export var center_on_map_grid: bool = true
+
+const MAP_CENTER_PANEL_SIZE := Vector2(760.0, 760.0)
+
+@onready var close_button: Button = $MarginContainer/Rows/Header/CloseButton
+@onready var guide_label: Label = $MarginContainer/Rows/Body/ContentRows/GuideLabel
+
+var _room_map: RoomMapGridModule
+var _map_travel_module: Node
+var _layout_room_map: RoomMapGridModule
+
+
+func _ready() -> void:
+	visible = false
+	add_to_group(&"city_panel")
+	_apply_map_center_layout()
+	call_deferred("_apply_map_center_layout")
+	if close_button != null:
+		close_button.text = "X"
+		close_button.pressed.connect(close_menu)
+	if guide_label != null:
+		guide_label.text = "都市パネル（仮）"
+
+
+func open_menu() -> void:
+	_apply_map_center_layout()
+	visible = true
+
+
+func close_menu() -> void:
+	visible = false
+
+
+func toggle_menu() -> void:
+	if visible:
+		close_menu()
+		return
+	open_menu()
+
+
+func _exit_tree() -> void:
+	_disconnect_map_rect_signal()
+
+
+func _apply_map_center_layout() -> void:
+	if not center_on_map_grid:
+		return
+
+	var panel_size := MAP_CENTER_PANEL_SIZE
+	custom_minimum_size = panel_size
+	set_anchors_preset(Control.PRESET_TOP_LEFT)
+
+	var center := _get_map_layout_center()
+	var half_size := panel_size * 0.5
+	offset_left = round(center.x - half_size.x)
+	offset_top = round(center.y - half_size.y)
+	offset_right = round(center.x + half_size.x)
+	offset_bottom = round(center.y + half_size.y)
+
+
+func _get_map_layout_center() -> Vector2:
+	var active_map := _get_active_room_map()
+	_connect_map_rect_signal(active_map)
+	if active_map != null:
+		var grid_rect := active_map.get_grid_rect()
+		if grid_rect.size.x > 0.0 and grid_rect.size.y > 0.0:
+			return grid_rect.get_center()
+
+	var viewport_rect := get_viewport_rect()
+	return viewport_rect.position + viewport_rect.size * 0.5
+
+
+func _get_active_room_map() -> RoomMapGridModule:
+	var travel_module := _get_map_travel_module()
+	if travel_module != null and travel_module.has_method("get_active_map"):
+		var active_map := travel_module.call("get_active_map") as RoomMapGridModule
+		if active_map != null:
+			return active_map
+	return _get_room_map()
+
+
+func _get_map_travel_module() -> Node:
+	if _map_travel_module != null and is_instance_valid(_map_travel_module):
+		return _map_travel_module
+	_map_travel_module = get_node_or_null(map_travel_module_path)
+	return _map_travel_module
+
+
+func _get_room_map() -> RoomMapGridModule:
+	if _room_map != null and is_instance_valid(_room_map):
+		return _room_map
+	_room_map = get_node_or_null(room_map_path) as RoomMapGridModule
+	return _room_map
+
+
+func _connect_map_rect_signal(room_map: RoomMapGridModule) -> void:
+	if _layout_room_map == room_map:
+		return
+	_disconnect_map_rect_signal()
+	_layout_room_map = room_map
+	if _layout_room_map == null:
+		return
+
+	var callable := Callable(self, "_on_room_map_rect_changed")
+	if not _layout_room_map.map_rect_changed.is_connected(callable):
+		_layout_room_map.map_rect_changed.connect(callable)
+
+
+func _disconnect_map_rect_signal() -> void:
+	if _layout_room_map == null or not is_instance_valid(_layout_room_map):
+		_layout_room_map = null
+		return
+
+	var callable := Callable(self, "_on_room_map_rect_changed")
+	if _layout_room_map.map_rect_changed.is_connected(callable):
+		_layout_room_map.map_rect_changed.disconnect(callable)
+	_layout_room_map = null
+
+
+func _on_room_map_rect_changed(_visual_rect: Rect2, _grid_rect: Rect2, _grid_size: Vector2i) -> void:
+	if visible:
+		call_deferred("_apply_map_center_layout")
