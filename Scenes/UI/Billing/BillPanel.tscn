@@ -17,13 +17,13 @@ shadow_color = Color(0.08, 0.62, 0.95, 0.24)
 shadow_size = 10
 
 [node name="BillPanel" type="PanelContainer"]
-custom_minimum_size = Vector2(420, 456)
+custom_minimum_size = Vector2(480, 456)
 layout_mode = 3
 anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -444.0
+offset_left = -504.0
 offset_top = -548.0
 offset_right = -24.0
 offset_bottom = -92.0
@@ -71,17 +71,19 @@ theme_override_font_sizes/font_size = 12
 text = "今季使用量  水道 0 / 電気 0"
 
 [node name="BillScroll" type="ScrollContainer" parent="MarginContainer/Rows"]
+custom_minimum_size = Vector2(0, 266)
 layout_mode = 2
 size_flags_vertical = 3
 horizontal_scroll_mode = 0
+vertical_scroll_mode = 0
 
 [node name="BillList" type="VBoxContainer" parent="MarginContainer/Rows/BillScroll"]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_constants/separation = 8
+theme_override_constants/separation = 6
 
 [node name="EmptyLabel" type="Label" parent="MarginContainer/Rows/BillScroll/BillList"]
-custom_minimum_size = Vector2(0, 280)
+custom_minimum_size = Vector2(0, 260)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
