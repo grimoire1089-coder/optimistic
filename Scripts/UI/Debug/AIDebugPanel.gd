@@ -517,8 +517,7 @@ func _make_status_text() -> String:
 		var movement_module := _get_actor_movement_module(_actor)
 		if movement_module != null and movement_module.has_method("get_debug_movement_summary"):
 			grid_text = str(movement_module.call("get_debug_movement_summary"))
-	return "対象: %s / 行動: %s
-%s" % [_get_actor_display_name(_actor), action_text, grid_text]
+	return "対象: %s / 行動: %s\n%s" % [_get_actor_display_name(_actor), action_text, grid_text]
 
 
 func _make_weather_text() -> String:
