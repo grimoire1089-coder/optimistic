@@ -2,7 +2,8 @@ extends PanelContainer
 class_name BillPanel
 
 const BOTTOM_RIGHT_MARGIN := Vector2(24.0, 92.0)
-const PANEL_SIZE := Vector2(420.0, 456.0)
+const PANEL_SIZE := Vector2(480.0, 456.0)
+const BILL_CARD_HEIGHT := 82.0
 
 @onready var title_label: Label = $MarginContainer/Rows/Header/TitleLabel
 @onready var close_button: Button = $MarginContainer/Rows/Header/CloseButton
@@ -132,18 +133,18 @@ func _refresh(_a = null, _b = null, _c = null) -> void:
 
 func _create_bill_card(bill: Dictionary) -> Control:
 	var card := PanelContainer.new()
-	card.custom_minimum_size = Vector2(0.0, 94.0)
+	card.custom_minimum_size = Vector2(0.0, BILL_CARD_HEIGHT)
 	card.add_theme_stylebox_override("panel", _make_card_style(bool(bill.get("paid", false))))
 
 	var margin := MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 10)
-	margin.add_theme_constant_override("margin_top", 8)
-	margin.add_theme_constant_override("margin_right", 10)
-	margin.add_theme_constant_override("margin_bottom", 8)
+	margin.add_theme_constant_override("margin_left", 8)
+	margin.add_theme_constant_override("margin_top", 5)
+	margin.add_theme_constant_override("margin_right", 8)
+	margin.add_theme_constant_override("margin_bottom", 5)
 	card.add_child(margin)
 
 	var rows := VBoxContainer.new()
-	rows.add_theme_constant_override("separation", 6)
+	rows.add_theme_constant_override("separation", 3)
 	margin.add_child(rows)
 
 	var top_row := HBoxContainer.new()
@@ -153,11 +154,11 @@ func _create_bill_card(bill: Dictionary) -> Control:
 	var title := Label.new()
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	title.text = "%s / CR %d" % [String(bill.get("title", "")), int(bill.get("amount", 0))]
-	title.add_theme_font_size_override("font_size", 16)
+	title.add_theme_font_size_override("font_size", 15)
 	top_row.add_child(title)
 
 	var pay_button := Button.new()
-	pay_button.custom_minimum_size = Vector2(86.0, 30.0)
+	pay_button.custom_minimum_size = Vector2(80.0, 26.0)
 	pay_button.text = "支払済み" if bool(bill.get("paid", false)) else "支払う"
 	pay_button.disabled = bool(bill.get("paid", false)) or int(bill.get("amount", 0)) <= 0 or not _can_spend(int(bill.get("amount", 0)))
 	pay_button.pressed.connect(Callable(self, "_on_pay_bill_pressed").bind(String(bill.get("id", ""))))
@@ -165,7 +166,7 @@ func _create_bill_card(bill: Dictionary) -> Control:
 
 	var meta := Label.new()
 	meta.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	meta.add_theme_font_size_override("font_size", 12)
+	meta.add_theme_font_size_override("font_size", 11)
 	meta.add_theme_color_override("font_color", Color(0.68, 0.88, 0.94, 1.0))
 	meta.text = _make_bill_meta_text(bill)
 	rows.add_child(meta)
@@ -244,5 +245,5 @@ func _make_card_style(is_paid: bool) -> StyleBoxFlat:
 	style.border_color = Color(0.16, 0.48, 0.56, 0.70) if is_paid else Color(1.0, 0.62, 0.18, 0.92)
 	style.set_border_width_all(1)
 	style.set_corner_radius_all(8)
-	style.set_content_margin_all(4.0)
+	style.set_content_margin_all(2.0)
 	return style
