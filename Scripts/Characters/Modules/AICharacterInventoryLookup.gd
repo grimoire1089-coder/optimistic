@@ -28,6 +28,15 @@ static func get_inventory_module(
 	return null
 
 
+static func get_inventory_module_from_path(owner: Node, module_path: NodePath) -> Node:
+	if owner == null or module_path.is_empty():
+		return null
+	var inventory := owner.get_node_or_null(module_path)
+	if _is_inventory_compatible(inventory):
+		return inventory
+	return null
+
+
 static func is_inventory_compatible(inventory: Node) -> bool:
 	return _is_inventory_compatible(inventory)
 
