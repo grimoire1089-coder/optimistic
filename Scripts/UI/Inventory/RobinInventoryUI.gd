@@ -19,12 +19,14 @@ const SLOTS_PER_PAGE := 20
 @onready var next_page_button: Button = $MarginContainer/Rows/Header/NextPageButton
 @onready var tab_bar: TabBar = $MarginContainer/Rows/TabBar
 @onready var grid: GridContainer = $MarginContainer/Rows/ScrollContainer/Grid
-@onready var detail_label: Label = $MarginContainer/Rows/DetailLabel
+@onready var detail_label: Label = $MarginContainer/Rows/Footer/DetailLabel
+@onready var search_line_edit: LineEdit = $MarginContainer/Rows/Footer/SearchLineEdit
 
 var _inventory_module: RobinInventoryModule
 var _categories: Array[Dictionary] = []
 var _current_category_index: int = 0
 var _current_page_index: int = 0
+var _search_query: String = ""
 
 
 func _ready() -> void:
@@ -35,6 +37,7 @@ func _ready() -> void:
 	close_button.pressed.connect(close)
 	previous_page_button.pressed.connect(_on_previous_page_pressed)
 	next_page_button.pressed.connect(_on_next_page_pressed)
+	search_line_edit.text_changed.connect(_on_search_text_changed)
 	tab_bar.tab_changed.connect(_on_tab_changed)
 	_resolve_inventory_module()
 	_setup_tabs()
@@ -129,8 +132,9 @@ func _refresh() -> void:
 	var category_id := category.get("id", &"") as StringName
 	var category_name := String(category.get("display_name", ""))
 	var items := _inventory_module.get_items(category_id)
+	var visible_items := _get_search_filtered_items(items)
 	var slot_limit := _inventory_module.get_slot_limit(category_id)
-	var total_slot_count := _get_total_slot_count(slot_limit, items.size())
+	var total_slot_count := _get_total_slot_count(slot_limit, visible_items.size(), _is_search_active())
 	var page_count := _get_page_count(total_slot_count)
 	_current_page_index = clampi(_current_page_index, 0, page_count - 1)
 	_update_page_controls(total_slot_count)
@@ -139,13 +143,13 @@ func _refresh() -> void:
 	for local_index in range(SLOTS_PER_PAGE):
 		var slot_button := _create_slot_button()
 		var item_index := start_index + local_index
-		if item_index < items.size():
-			_apply_item_to_slot(slot_button, items[item_index] as Dictionary)
+		if item_index < visible_items.size():
+			_apply_item_to_slot(slot_button, visible_items[item_index] as Dictionary)
 		else:
 			slot_button.text = ""
 		grid.add_child(slot_button)
 
-	detail_label.text = _build_detail_text(category_name, items.size(), slot_limit)
+	detail_label.text = _build_detail_text(category_name, items.size(), visible_items.size(), slot_limit)
 
 
 func _create_slot_button() -> Button:
@@ -230,7 +234,37 @@ func _make_amount_badge_style() -> StyleBoxFlat:
 	return style
 
 
-func _get_total_slot_count(slot_limit: int, item_count: int) -> int:
+func _get_search_filtered_items(items: Array[Dictionary]) -> Array[Dictionary]:
+	if not _is_search_active():
+		return items
+	var result: Array[Dictionary] = []
+	var query := _search_query.to_lower()
+	for item in items:
+		if _item_matches_search(item, query):
+			result.append(item)
+	return result
+
+
+func _item_matches_search(item: Dictionary, query: String) -> bool:
+	if query.is_empty():
+		return true
+	var display_name := String(item.get("display_name", "")).to_lower()
+	if display_name.contains(query):
+		return true
+	var item_id := String(item.get("id", &"")).to_lower()
+	if item_id.contains(query):
+		return true
+	var description := String(item.get("description", "")).to_lower()
+	return description.contains(query)
+
+
+func _is_search_active() -> bool:
+	return not _search_query.is_empty()
+
+
+func _get_total_slot_count(slot_limit: int, item_count: int, search_active: bool) -> int:
+	if search_active:
+		return max(item_count, SLOTS_PER_PAGE)
 	if slot_limit == RobinInventoryModule.UNLIMITED_SLOT_LIMIT:
 		return max(item_count, _inventory_module.get_slots_per_category(), SLOTS_PER_PAGE)
 	return max(slot_limit, item_count, SLOTS_PER_PAGE)
@@ -260,7 +294,9 @@ func _update_grid_minimum_size(slot_count: int) -> void:
 	)
 
 
-func _build_detail_text(category_name: String, item_count: int, slot_limit: int) -> String:
+func _build_detail_text(category_name: String, item_count: int, visible_item_count: int, slot_limit: int) -> String:
+	if _is_search_active():
+		return "%s  検索 %d/%d" % [category_name, visible_item_count, item_count]
 	if slot_limit == RobinInventoryModule.UNLIMITED_SLOT_LIMIT:
 		return "%s  %d/無制限" % [category_name, item_count]
 	return "%s  %d/%d" % [category_name, item_count, slot_limit]
@@ -273,6 +309,12 @@ func _clear_grid() -> void:
 
 func _on_tab_changed(tab_index: int) -> void:
 	_current_category_index = tab_index
+	_current_page_index = 0
+	_refresh()
+
+
+func _on_search_text_changed(new_text: String) -> void:
+	_search_query = new_text.strip_edges()
 	_current_page_index = 0
 	_refresh()
 
