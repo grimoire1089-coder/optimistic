@@ -10,6 +10,53 @@ func _exit_tree() -> void:
 	_clear_chair_claim(_target_dining_seat)
 
 
+func _find_best_connected_dining_seat() -> Dictionary:
+	if _furniture_root == null or _room_map == null or _body == null:
+		return {}
+	var chairs: Array[Node2D] = []
+	var tables: Array[Node2D] = []
+	for child in _furniture_root.get_children():
+		var furniture := child as Node2D
+		if furniture == null or not furniture.has_meta("grid_position"):
+			continue
+		if AICharacterDiningSeatHelper.is_table_furniture(furniture):
+			tables.append(furniture)
+		elif AICharacterDiningSeatHelper.is_chair_furniture(furniture) and _can_use_chair(furniture):
+			chairs.append(furniture)
+	var best: Dictionary = {}
+	var best_score := INF
+	for chair in chairs:
+		var chair_cell := AICharacterDiningSeatHelper.get_furniture_grid_position(chair)
+		if not AICharacterDiningSeatHelper.is_valid_grid_position(chair_cell):
+			continue
+		var connected_table := AICharacterDiningSeatHelper.find_connected_table_for_chair(chair, tables, dining_minimum_overlap_cells)
+		if connected_table == null:
+			continue
+		var use_cell := AICharacterDiningSeatHelper.get_chair_use_cell(
+			_room_map,
+			chair,
+			_get_actor_grid_footprint(),
+			Callable(self, "_is_target_cell_walkable"),
+			false
+		)
+		if not AICharacterDiningSeatHelper.is_valid_grid_position(use_cell):
+			continue
+		var use_position := _room_map.grid_to_world_area_center(use_cell, _get_actor_grid_footprint())
+		var score := _body.global_position.distance_squared_to(use_position)
+		if best.is_empty() or score < best_score:
+			best_score = score
+			best = {
+				"chair": chair,
+				"table": connected_table,
+				"use_cell": use_cell,
+				"chair_cell": chair_cell,
+				"chair_footprint": AICharacterDiningSeatHelper.get_furniture_footprint(chair),
+				"table_cell": AICharacterDiningSeatHelper.get_furniture_grid_position(connected_table),
+				"table_footprint": AICharacterDiningSeatHelper.get_furniture_footprint(connected_table),
+			}
+	return best
+
+
 func _has_valid_dining_seat_target() -> bool:
 	if not super._has_valid_dining_seat_target():
 		return false
