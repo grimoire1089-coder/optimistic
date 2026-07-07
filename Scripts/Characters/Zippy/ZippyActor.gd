@@ -4,6 +4,7 @@ class_name ZippyActor
 signal selected(actor: ZippyActor)
 
 const DEFAULT_CLICK_SFX_PATH := "res://Assets/Audio/SFX/UI/UI_Click_001.ogg"
+const WANDER_SCRIPT := preload("res://Scripts/Characters/Modules/AICharacterRandomWanderModule.gd")
 
 @export var resident_id: StringName = &"zippy"
 @export var display_name: String = "ジッピー"
@@ -21,7 +22,8 @@ const DEFAULT_CLICK_SFX_PATH := "res://Assets/Audio/SFX/UI/UI_Click_001.ogg"
 @onready var needs_module: CharacterNeedsModule = $AICharacterNeedsBundle/CharacterNeedsModule
 @onready var mood_module: CharacterMoodModule = $AICharacterNeedsBundle/CharacterMoodModule
 @onready var need_planner: NeedDrivenAIPlanner = $AICharacterNeedsBundle/NeedDrivenAIPlanner
-@onready var wander_module: AICharacterRandomWanderModule = $AICharacterRandomWanderModule
+
+var wander_module: AICharacterRandomWanderModule
 
 
 func _ready() -> void:
@@ -29,6 +31,7 @@ func _ready() -> void:
 	add_to_group(&"ai_character_actor")
 	_load_default_click_sfx_if_needed()
 	_connect_click_area()
+	_ensure_wander_module()
 	call_deferred("_finish_start_setup")
 
 
@@ -79,6 +82,22 @@ func get_current_action_display_text() -> String:
 	if action_id == CharacterNeedActionIds.IDLE:
 		return "待機中"
 	return String(action_id)
+
+
+func _ensure_wander_module() -> void:
+	wander_module = get_node_or_null("AICharacterRandomWanderModule") as AICharacterRandomWanderModule
+	if wander_module != null:
+		return
+	wander_module = WANDER_SCRIPT.new() as AICharacterRandomWanderModule
+	if wander_module == null:
+		return
+	wander_module.name = "AICharacterRandomWanderModule"
+	wander_module.movement_area_provider_path = NodePath("../RobinRoomMap")
+	wander_module.furniture_placement_module_path = NodePath("../FurniturePlacementModule")
+	wander_module.actor_grid_footprint = actor_grid_footprint
+	wander_module.visual_half_extents = Vector2(48.0, 96.0)
+	wander_module.idle_chance = 0.72
+	add_child(wander_module)
 
 
 func _finish_start_setup() -> void:
