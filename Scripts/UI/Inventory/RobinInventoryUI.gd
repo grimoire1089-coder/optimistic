@@ -9,7 +9,8 @@ const SORT_MODE_NAME: StringName = &"name"
 const SORT_MODE_AMOUNT: StringName = &"amount"
 
 @export var actor_path: NodePath = NodePath("../../Robin")
-@export var inventory_module_child_name: StringName = &"RobinInventoryModule"
+@export var inventory_module_child_name: StringName = &"AICharacterInventoryModule"
+@export var legacy_inventory_module_child_name: StringName = &"RobinInventoryModule"
 @export var slot_size: Vector2 = Vector2(72.0, 72.0)
 @export var grid_columns: int = 5
 @export_range(0, 24, 1) var grid_separation: int = 6
@@ -26,7 +27,7 @@ const SORT_MODE_AMOUNT: StringName = &"amount"
 @onready var detail_label: Label = $MarginContainer/Rows/Footer/DetailLabel
 @onready var search_line_edit: LineEdit = $MarginContainer/Rows/Footer/SearchLineEdit
 
-var _inventory_module: RobinInventoryModule
+var _inventory_module: AICharacterInventoryModule
 var _categories: Array[Dictionary] = []
 var _current_category_index: int = 0
 var _current_page_index: int = 0
@@ -80,16 +81,18 @@ func _resolve_inventory_module() -> void:
 
 	var actor := get_node_or_null(actor_path)
 	if actor == null:
-		push_warning("ロビンが見つかりません: %s" % actor_path)
+		push_warning("インベントリ対象AIが見つかりません: %s" % actor_path)
 		return
 
 	if actor.has_method("get_inventory_module"):
-		_inventory_module = actor.call("get_inventory_module") as RobinInventoryModule
+		_inventory_module = actor.call("get_inventory_module") as AICharacterInventoryModule
 	else:
-		_inventory_module = actor.get_node_or_null(NodePath(String(inventory_module_child_name))) as RobinInventoryModule
+		_inventory_module = actor.get_node_or_null(NodePath(String(inventory_module_child_name))) as AICharacterInventoryModule
+		if _inventory_module == null and not legacy_inventory_module_child_name.is_empty():
+			_inventory_module = actor.get_node_or_null(NodePath(String(legacy_inventory_module_child_name))) as AICharacterInventoryModule
 
 	if _inventory_module == null:
-		push_warning("ロビンのインベントリモジュールが見つかりません。")
+		push_warning("AIキャラクターのインベントリモジュールが見つかりません。")
 		return
 
 	if not _inventory_module.inventory_changed.is_connected(_refresh):
@@ -298,7 +301,7 @@ func _is_search_active() -> bool:
 func _get_total_slot_count(slot_limit: int, item_count: int, search_active: bool) -> int:
 	if search_active:
 		return max(item_count, SLOTS_PER_PAGE)
-	if slot_limit == RobinInventoryModule.UNLIMITED_SLOT_LIMIT:
+	if slot_limit == AICharacterInventoryModule.UNLIMITED_SLOT_LIMIT:
 		return max(item_count, _inventory_module.get_slots_per_category(), SLOTS_PER_PAGE)
 	return max(slot_limit, item_count, SLOTS_PER_PAGE)
 
@@ -335,7 +338,7 @@ func _update_grid_minimum_size(slot_count: int) -> void:
 func _build_detail_text(category_name: String, item_count: int, visible_item_count: int, slot_limit: int) -> String:
 	if _is_search_active():
 		return "%s  検索 %d/%d" % [category_name, visible_item_count, item_count]
-	if slot_limit == RobinInventoryModule.UNLIMITED_SLOT_LIMIT:
+	if slot_limit == AICharacterInventoryModule.UNLIMITED_SLOT_LIMIT:
 		return "%s  %d/無制限" % [category_name, item_count]
 	return "%s  %d/%d" % [category_name, item_count, slot_limit]
 
