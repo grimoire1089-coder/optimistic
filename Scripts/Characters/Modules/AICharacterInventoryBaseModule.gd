@@ -301,7 +301,7 @@ func _get_item_owner_display_name(item_id: StringName) -> String:
 	return owner_display_name.strip_edges()
 
 
-func _get_owned_item_display_name(item_id: StringName, base_name: String, item_owner_name: String) -> String:
+func _get_owned_item_display_name(_item_id: StringName, base_name: String, item_owner_name: String) -> String:
 	if item_owner_name.strip_edges().is_empty():
 		return base_name
 	if base_name.strip_edges().is_empty():
