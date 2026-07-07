@@ -5,6 +5,12 @@ const STYLER_NODE_NAME := "FoodEncyclopediaUnlockLogStyler"
 const NORMAL_LOG_CHANNEL := 0
 const FOOD_UNLOCK_NOTICE_SFX_PATH := "res://Assets/Audio/SFX/UI/UI_Notice_002.ogg"
 
+var _notice_sfx: AudioStream
+
+
+func prepare_runtime_cache() -> void:
+	_get_notice_sfx()
+
 
 func push_food_unlock_notice(item_id: StringName, display_name: String = "") -> void:
 	if item_id == &"" and display_name.strip_edges().is_empty():
@@ -55,8 +61,16 @@ func _ensure_styler(message_log: Node) -> FoodEncyclopediaUnlockLogStyler:
 	var styler := FoodEncyclopediaUnlockLogStyler.new()
 	styler.name = STYLER_NODE_NAME
 	message_log.add_child(styler)
-	styler.setup(message_log)
+	styler.setup(message_log, _get_notice_sfx())
 	return styler
+
+
+func _get_notice_sfx() -> AudioStream:
+	if _notice_sfx != null:
+		return _notice_sfx
+	if ResourceLoader.exists(FOOD_UNLOCK_NOTICE_SFX_PATH):
+		_notice_sfx = load(FOOD_UNLOCK_NOTICE_SFX_PATH) as AudioStream
+	return _notice_sfx
 
 
 class FoodEncyclopediaUnlockLogStyler extends Node:
@@ -74,9 +88,9 @@ class FoodEncyclopediaUnlockLogStyler extends Node:
 	var _gold_style: StyleBoxFlat
 
 
-	func setup(message_log: Node) -> void:
+	func setup(message_log: Node, notice_sfx: AudioStream = null) -> void:
 		_message_log = message_log
-		_load_food_unlock_notice_sfx()
+		_notice_sfx = notice_sfx
 		_connect_message_list_signal()
 
 
@@ -175,13 +189,6 @@ class FoodEncyclopediaUnlockLogStyler extends Node:
 		_gold_style.set_corner_radius_all(CARD_CORNER_RADIUS)
 		_gold_style.set_content_margin_all(0.0)
 		return _gold_style
-
-
-	func _load_food_unlock_notice_sfx() -> void:
-		if _notice_sfx != null:
-			return
-		if ResourceLoader.exists(FOOD_UNLOCK_NOTICE_SFX_PATH):
-			_notice_sfx = load(FOOD_UNLOCK_NOTICE_SFX_PATH) as AudioStream
 
 
 	func _play_notice_for_message_if_needed(message_text: String) -> void:
