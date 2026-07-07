@@ -5,7 +5,16 @@ const CATEGORY_FOODS := "foods"
 const CATEGORY_TOOLS := "tools"
 const CATEGORY_DRINKS := "drinks"
 const CATEGORY_INGREDIENTS := "ingredients"
-const CATEGORY_IDS := [CATEGORY_TOOLS, CATEGORY_FOODS, CATEGORY_DRINKS, CATEGORY_INGREDIENTS]
+const CATEGORY_MATERIALS := "materials"
+const CATEGORY_MISC := "misc"
+const CATEGORY_IDS := [
+	CATEGORY_TOOLS,
+	CATEGORY_FOODS,
+	CATEGORY_DRINKS,
+	CATEGORY_INGREDIENTS,
+	CATEGORY_MATERIALS,
+	CATEGORY_MISC,
+]
 
 
 func get_category_ids() -> Array[String]:
@@ -25,6 +34,10 @@ func get_tab_title(category_id: String) -> String:
 			return "飲料"
 		CATEGORY_INGREDIENTS:
 			return "食材"
+		CATEGORY_MATERIALS:
+			return "素材"
+		CATEGORY_MISC:
+			return "雑貨"
 		_:
 			return category_id
 
@@ -39,6 +52,10 @@ func get_page_name(category_id: String) -> String:
 			return "DrinkPage"
 		CATEGORY_INGREDIENTS:
 			return "IngredientPage"
+		CATEGORY_MATERIALS:
+			return "MaterialPage"
+		CATEGORY_MISC:
+			return "MiscPage"
 		_:
 			return ""
 
@@ -53,6 +70,10 @@ func get_tab_hint(category_id: String) -> String:
 			return "水分補給や休息に使う飲料を記録する図鑑ページ。"
 		CATEGORY_INGREDIENTS:
 			return "調理や制作の材料になる食材を記録する図鑑ページ。"
+		CATEGORY_MATERIALS:
+			return "制作・建築・依頼に使う素材を記録する図鑑ページ。"
+		CATEGORY_MISC:
+			return "生活小物や街の変わった品を記録する図鑑ページ。"
 		_:
 			return "図鑑ページ。"
 
@@ -71,6 +92,10 @@ func get_empty_description(category_id: String) -> String:
 			return "飲料タブ用の図鑑テンプレートです。ここに飲み物や水分補給アイテムの説明を追加していきます。"
 		CATEGORY_INGREDIENTS:
 			return "食材タブ用の図鑑テンプレートです。ここに調理素材や保存食材の説明を追加していきます。"
+		CATEGORY_MATERIALS:
+			return "素材タブ用の図鑑テンプレートです。ここに制作素材や建築素材の説明を追加していきます。"
+		CATEGORY_MISC:
+			return "雑貨タブ用の図鑑テンプレートです。ここに生活小物や街の品物の説明を追加していきます。"
 		_:
 			return "図鑑テンプレートです。"
 
@@ -85,5 +110,9 @@ func get_flavor_text(category_id: String) -> String:
 			return "休息、水分補給、語らいの一杯。デカダンスの日常を潤す飲み物の記録。"
 		CATEGORY_INGREDIENTS:
 			return "厨房、栽培、依頼達成を支える素材たち。料理の始まりになる食材の記録。"
+		CATEGORY_MATERIALS:
+			return "デカダンスの暮らしと制作を支える、金属片・部材・魔導素材の記録。"
+		CATEGORY_MISC:
+			return "バーの片隅、部屋の棚、街角の店先にある、生活を少し豊かにする品々。"
 		_:
 			return "デカダンス生活図鑑の記録。"
