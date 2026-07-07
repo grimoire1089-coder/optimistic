@@ -29,6 +29,7 @@ var wander_module: AICharacterRandomWanderModule
 func _ready() -> void:
 	input_pickable = false
 	add_to_group(&"ai_character_actor")
+	_register_existing_ai_actors()
 	_load_default_click_sfx_if_needed()
 	_connect_click_area()
 	_ensure_wander_module()
@@ -82,6 +83,18 @@ func get_current_action_display_text() -> String:
 	if action_id == CharacterNeedActionIds.IDLE:
 		return "待機中"
 	return String(action_id)
+
+
+func _register_existing_ai_actors() -> void:
+	var parent_node := get_parent()
+	if parent_node == null:
+		return
+	for child in parent_node.get_children():
+		var node := child as Node
+		if node == null or node == self:
+			continue
+		if node is Node2D and node.has_method("get_needs_module"):
+			node.add_to_group(&"ai_character_actor")
 
 
 func _ensure_wander_module() -> void:
