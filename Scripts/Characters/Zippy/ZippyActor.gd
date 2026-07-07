@@ -30,7 +30,7 @@ const MoveSlot := preload("res://Scripts/Characters/Modules/AICharacterMovementC
 @onready var need_planner: NeedDrivenAIPlanner = $AICharacterNeedsBundle/NeedDrivenAIPlanner
 
 var wander_module: AICharacterRandomWanderModule
-var inventory_module: AICharacterInventoryModule
+var inventory_module
 var hydrate_behavior_module: AICharacterTableSeatHydrateModule
 var sit_behavior_module: AICharacterReservedSitBehaviorModule
 var action_item_display_module: AICharacterActionItemDisplayModule
@@ -86,7 +86,7 @@ func get_need_planner() -> NeedDrivenAIPlanner:
 	return need_planner
 
 
-func get_inventory_module() -> AICharacterInventoryModule:
+func get_inventory_module():
 	return inventory_module
 
 
@@ -180,10 +180,10 @@ func _try_claim_move_slot() -> bool:
 
 
 func _ensure_inventory_module() -> void:
-	inventory_module = get_node_or_null("AICharacterInventoryModule") as AICharacterInventoryModule
+	inventory_module = get_node_or_null("AICharacterInventoryModule")
 	if inventory_module != null:
 		return
-	inventory_module = INVENTORY_SCRIPT.new() as AICharacterInventoryModule
+	inventory_module = INVENTORY_SCRIPT.new()
 	if inventory_module == null:
 		return
 	inventory_module.name = "AICharacterInventoryModule"
