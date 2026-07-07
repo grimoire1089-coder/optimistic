@@ -7,6 +7,7 @@ const DEFAULT_CLICK_SFX_PATH := "res://Assets/Audio/SFX/UI/UI_Click_001.ogg"
 const WANDER_SCRIPT := preload("res://Scripts/Characters/Modules/AICharacterRandomWanderModule.gd")
 const SIT_SCRIPT := preload("res://Scripts/Characters/Modules/AICharacterReservedSitBehaviorModule.gd")
 const HYDRATE_SCRIPT := preload("res://Scripts/Characters/Modules/AICharacterTableSeatHydrateModule.gd")
+const ITEM_DISPLAY_SCRIPT := preload("res://Scripts/Characters/Modules/AICharacterActionItemDisplayModule.gd")
 const INVENTORY_SCRIPT := preload("res://Scripts/Characters/Robin/Modules/RobinInventoryModule.gd")
 const MoveSlot := preload("res://Scripts/Characters/Modules/AICharacterMovementCoordinator.gd")
 
@@ -31,6 +32,7 @@ var wander_module: AICharacterRandomWanderModule
 var inventory_module: RobinInventoryModule
 var hydrate_behavior_module: AICharacterTableSeatHydrateModule
 var sit_behavior_module: AICharacterReservedSitBehaviorModule
+var action_item_display_module: AICharacterActionItemDisplayModule
 
 
 func _ready() -> void:
@@ -43,6 +45,7 @@ func _ready() -> void:
 	_ensure_wander_module()
 	_ensure_hydrate_behavior_module()
 	_ensure_sit_behavior_module()
+	_ensure_action_item_display_module()
 	call_deferred("_finish_start_setup")
 
 
@@ -213,7 +216,7 @@ func _ensure_hydrate_behavior_module() -> void:
 	hydrate_behavior_module.name = "AICharacterTableSeatHydrateModule"
 	hydrate_behavior_module.inventory_module_path = NodePath("../ZippyInventoryModule")
 	hydrate_behavior_module.actor_grid_footprint = actor_grid_footprint
-	hydrate_behavior_module.hydrate_request_ratio = 0.35
+	hydrate_behavior_module.hydrate_request_ratio = 0.5
 	hydrate_behavior_module.nearby_refill_distance = 48.0
 	hydrate_behavior_module.refill_cooldown_seconds = 0.0
 	hydrate_behavior_module.apply_need_effect_after_refill = true
@@ -237,6 +240,21 @@ func _ensure_sit_behavior_module() -> void:
 	add_child(sit_behavior_module)
 
 
+func _ensure_action_item_display_module() -> void:
+	action_item_display_module = get_node_or_null("AICharacterActionItemDisplayModule") as AICharacterActionItemDisplayModule
+	if action_item_display_module != null:
+		return
+	action_item_display_module = ITEM_DISPLAY_SCRIPT.new() as AICharacterActionItemDisplayModule
+	if action_item_display_module == null:
+		return
+	action_item_display_module.name = "AICharacterActionItemDisplayModule"
+	action_item_display_module.hydrate_behavior_path = NodePath("../AICharacterTableSeatHydrateModule")
+action_item_display_module.sit_behavior_path = NodePath("../AICharacterReservedSitBehaviorModule")
+action_item_display_module.item_center_offset = Vector2(0.0, -18.0)
+action_item_display_module.item_display_size = Vector2(70.0, 70.0)
+	add_child(action_item_display_module)
+
+
 func _finish_start_setup() -> void:
 	if snap_start_position_to_grid:
 		_snap_start_position_to_grid()
@@ -246,6 +264,8 @@ func _finish_start_setup() -> void:
 		hydrate_behavior_module.setup(self)
 	if sit_behavior_module != null:
 		sit_behavior_module.setup(self)
+	if action_item_display_module != null:
+		action_item_display_module.setup(self)
 
 
 func _snap_start_position_to_grid() -> void:
