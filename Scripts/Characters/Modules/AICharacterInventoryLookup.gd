@@ -2,7 +2,7 @@ extends RefCounted
 class_name AICharacterInventoryLookup
 
 const PRIMARY_CHILD_NAME: StringName = &"AICharacterInventoryModule"
-const LEGACY_CHILD_NAME: StringName = &"RobinInventoryModule"
+const LEGACY_CHILD_NAME: StringName = &""
 
 
 static func get_inventory_module(
