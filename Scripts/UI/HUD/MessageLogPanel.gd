@@ -56,7 +56,7 @@ enum LogChannel { NORMAL, CHARACTER, EXPLORATION, DEBUG }
 
 @onready var title_label: Label = %TitleLabel
 @onready var count_label: Label = %CountLabel
-@onready var export_debug_button: Button = %ExportDebugLogButton
+@onready var export_debug_button: Button = get_node_or_null("%ExportDebugLogButton") as Button
 @onready var tab_bar: TabBar = %LogTabBar
 @onready var empty_label: Label = %EmptyLabel
 @onready var scroll_container: ScrollContainer = %ScrollContainer
