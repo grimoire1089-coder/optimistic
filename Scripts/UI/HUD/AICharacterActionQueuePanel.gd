@@ -3,7 +3,7 @@ class_name AICharacterActionQueuePanel
 
 @export var refresh_interval: float = 0.25
 
-var _actor: RobinWanderActor
+var _actor: Node
 var _refresh_timer := 0.0
 
 
@@ -11,7 +11,7 @@ func _ready() -> void:
 	set_process(true)
 
 
-func set_actor(actor: RobinWanderActor) -> void:
+func set_actor(actor: Node) -> void:
 	_actor = actor
 	_refresh_timer = 0.0
 	refresh_now()
@@ -37,9 +37,9 @@ func refresh_now() -> void:
 	if _actor == null:
 		_add_label("AI character not selected.")
 		return
-	_add_label("Current: %s" % _actor.get_current_action_display_text(), 14)
-	var planner := _actor.get_need_planner()
-	var needs_module := _actor.get_needs_module()
+	_add_label("Current: %s" % _get_actor_action_text(), 14)
+	var planner := _get_actor_need_planner()
+	var needs_module := _get_actor_needs_module()
 	if planner == null or needs_module == null:
 		_add_label("Planner is not connected.")
 		return
@@ -105,6 +105,24 @@ func _add_label(text_value: String, font_size: int = 12) -> Label:
 func _clear_rows() -> void:
 	for child in get_children():
 		child.queue_free()
+
+
+func _get_actor_action_text() -> String:
+	if _actor == null or not _actor.has_method("get_current_action_display_text"):
+		return "-"
+	return str(_actor.call("get_current_action_display_text"))
+
+
+func _get_actor_need_planner() -> NeedDrivenAIPlanner:
+	if _actor == null or not _actor.has_method("get_need_planner"):
+		return null
+	return _actor.call("get_need_planner") as NeedDrivenAIPlanner
+
+
+func _get_actor_needs_module() -> CharacterNeedsModule:
+	if _actor == null or not _actor.has_method("get_needs_module"):
+		return null
+	return _actor.call("get_needs_module") as CharacterNeedsModule
 
 
 func _get_need_name(need: NeedInstance) -> String:
