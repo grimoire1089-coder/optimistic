@@ -25,6 +25,8 @@ var _update_timer: Timer
 var _explicit_item_visible := false
 var _explicit_icon_path := ""
 var _explicit_global_center: Variant = null
+var _explicit_item_owner_ref: WeakRef
+var _explicit_item_has_owner := false
 
 
 func _ready() -> void:
@@ -46,22 +48,24 @@ func setup(body: Node2D) -> void:
 		_update_timer.start()
 
 
-func show_item_icon(icon_path: String, global_center: Variant = null) -> void:
+func show_item_icon(icon_path: String, global_center: Variant = null, owner: Node = null) -> void:
+	var display_owner := owner
+	if display_owner == null:
+		display_owner = _get_active_item_source()
 	_explicit_item_visible = not icon_path.is_empty()
 	_explicit_icon_path = icon_path
 	_explicit_global_center = global_center
+	_set_explicit_item_owner(display_owner)
 	_request_display()
 	_apply_explicit_item_icon()
 	_sync_update_timer_interval()
 
 
-func clear_item_icon() -> void:
-	_explicit_item_visible = false
-	_explicit_icon_path = ""
-	_explicit_global_center = null
-	_current_icon_path = ""
-	if _item_rect != null and is_instance_valid(_item_rect):
-		_item_rect.visible = false
+func clear_item_icon(owner: Node = null) -> void:
+	if not _can_clear_explicit_item(owner):
+		return
+	_clear_explicit_item_state()
+	_hide_item_rect()
 	_sync_update_timer_interval()
 
 
@@ -79,7 +83,7 @@ func _on_update_timer_timeout() -> void:
 
 func _get_next_update_interval() -> float:
 	if _explicit_item_visible:
-		return idle_check_interval_seconds
+		return update_interval_seconds if _explicit_item_has_owner else idle_check_interval_seconds
 	if _get_active_item_source() != null:
 		return update_interval_seconds
 	if _is_standing_lapis_active() or _was_standing_lapis:
@@ -91,6 +95,10 @@ func _update_display() -> void:
 	if _item_rect == null or not is_instance_valid(_item_rect):
 		return
 	if _explicit_item_visible:
+		if _explicit_item_has_owner and not _is_explicit_item_owner_active():
+			_clear_explicit_item_state()
+			_hide_item_rect()
+			return
 		_apply_explicit_item_icon()
 		return
 	var source := _get_active_item_source()
@@ -132,6 +140,56 @@ func _apply_explicit_item_icon() -> void:
 		_item_rect.global_position = center - item_display_size * 0.5
 	else:
 		_item_rect.position = item_center_offset - item_display_size * 0.5
+
+
+func _set_explicit_item_owner(owner: Node) -> void:
+	_explicit_item_has_owner = owner != null and is_instance_valid(owner)
+	_explicit_item_owner_ref = weakref(owner) if _explicit_item_has_owner else null
+
+
+func _get_explicit_item_owner() -> Node:
+	if not _explicit_item_has_owner or _explicit_item_owner_ref == null:
+		return null
+	var owner := _explicit_item_owner_ref.get_ref() as Node
+	if owner == null or not is_instance_valid(owner):
+		return null
+	return owner
+
+
+func _is_explicit_item_owner_active() -> bool:
+	var owner := _get_explicit_item_owner()
+	if owner == null:
+		return false
+	if owner.has_method("is_action_item_display_visible"):
+		return owner.call("is_action_item_display_visible") == true
+	return owner.is_inside_tree()
+
+
+func _can_clear_explicit_item(owner: Node) -> bool:
+	if not _explicit_item_visible:
+		return true
+	if not _explicit_item_has_owner:
+		return true
+	var explicit_owner := _get_explicit_item_owner()
+	if explicit_owner == null:
+		return true
+	if owner == null:
+		return not _is_explicit_item_owner_active()
+	return owner == explicit_owner
+
+
+func _clear_explicit_item_state() -> void:
+	_explicit_item_visible = false
+	_explicit_icon_path = ""
+	_explicit_global_center = null
+	_explicit_item_owner_ref = null
+	_explicit_item_has_owner = false
+	_current_icon_path = ""
+
+
+func _hide_item_rect() -> void:
+	if _item_rect != null and is_instance_valid(_item_rect):
+		_item_rect.visible = false
 
 
 func _update_item_rect_position(source: Node) -> void:
