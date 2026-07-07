@@ -2,11 +2,13 @@ extends PanelContainer
 class_name CityPanel
 
 const ResidentsPagePresenter := preload("res://Scripts/UI/City/Modules/CityResidentsPagePresenter.gd")
+const RelationshipStore := preload("res://Scripts/UI/City/Modules/CityRelationshipStore.gd")
 
 @export var room_map_path: NodePath = NodePath("../../RobinRoomMap")
 @export var map_travel_module_path: NodePath = NodePath("../../MainSceneMapTravelModule")
 @export var center_on_map_grid: bool = true
 @export var resident_data_paths: Array[String] = ["res://Data/NPC/Residents/Npc_Zippy.tres"]
+@export var relationship_data_paths: Array[String] = ["res://Data/NPC/Relationships/Relationship_Zippy_Robin.tres"]
 
 const MAP_CENTER_PANEL_SIZE := Vector2(760.0, 760.0)
 const PAGE_NONE := &""
@@ -26,6 +28,7 @@ var _map_travel_module: Node
 var _layout_room_map: RoomMapGridModule
 var _current_page: StringName = PAGE_NONE
 var _resident_cache: Array[NpcResidentData] = []
+var _relationship_cache: Dictionary = {}
 
 
 func _ready() -> void:
@@ -41,6 +44,7 @@ func _ready() -> void:
 	if investment_button != null:
 		investment_button.pressed.connect(_on_investment_page_pressed)
 	_reload_residents()
+	_reload_relationships()
 	_refresh_residents_page()
 	_show_page(PAGE_NONE)
 
@@ -94,20 +98,19 @@ func _show_page(page_id: StringName) -> void:
 func _reload_residents() -> void:
 	_resident_cache.clear()
 	for data_path in resident_data_paths:
-		if data_path.is_empty():
-			continue
-		if not ResourceLoader.exists(data_path):
-			push_warning("Resident data not found: %s" % data_path)
+		if data_path.is_empty() or not ResourceLoader.exists(data_path):
 			continue
 		var resident := load(data_path) as NpcResidentData
-		if resident == null:
-			push_warning("Resident data is invalid: %s" % data_path)
-			continue
-		_resident_cache.append(resident)
+		if resident != null:
+			_resident_cache.append(resident)
+
+
+func _reload_relationships() -> void:
+	_relationship_cache = RelationshipStore.load_relationships(relationship_data_paths)
 
 
 func _refresh_residents_page() -> void:
-	ResidentsPagePresenter.rebuild(resident_list, _resident_cache)
+	ResidentsPagePresenter.rebuild(resident_list, _resident_cache, _relationship_cache)
 
 
 func _apply_map_center_layout() -> void:
