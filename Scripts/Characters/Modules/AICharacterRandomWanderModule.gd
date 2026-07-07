@@ -32,3 +32,17 @@ func _can_step_now() -> bool:
 	if MoveSlot.is_other_actor_moving(_body, ai_actor_group_name):
 		return false
 	return MoveSlot.request_move(_body)
+
+
+func _get_all_walkable_top_left_cells() -> Array[Vector2i]:
+	if not avoid_ai_character_grids:
+		return super._get_all_walkable_top_left_cells()
+	var cells: Array[Vector2i] = []
+	var room_map := _get_room_map()
+	if room_map == null:
+		return cells
+	return AICharacterGridMovementHelper.get_all_walkable_top_left_cells(
+		room_map,
+		_get_safe_actor_grid_footprint(),
+		Callable(self, "_is_actor_grid_area_walkable")
+	)
