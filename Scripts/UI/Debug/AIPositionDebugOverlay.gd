@@ -100,8 +100,8 @@ func _draw_click_bounds(actor: Node2D, color: Color) -> void:
 	var rect_shape := shape_node.shape as RectangleShape2D
 	if rect_shape == null:
 		return
-	var size := rect_shape.size * shape_node.global_scale.abs()
-	var rect := Rect2(shape_node.global_position - size * 0.5, size)
+	var collision_shape_size := rect_shape.size * shape_node.global_scale.abs()
+	var rect := Rect2(shape_node.global_position - collision_shape_size * 0.5, collision_shape_size)
 	draw_rect(rect, color, false, 1.0)
 
 
