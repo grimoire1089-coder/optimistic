@@ -19,4 +19,9 @@ static func prepare_default_database() -> ShopDatabase:
 static func prepare_database_path(database_path: String) -> ShopDatabase:
 	if database_path.strip_edges().is_empty():
 		return null
-	return null
+	if not ResourceLoader.exists(database_path):
+		return null
+	var loaded_database: ShopDatabase = ResourceLoader.load(database_path) as ShopDatabase
+	_database = loaded_database
+	_database_path = database_path
+	return loaded_database
