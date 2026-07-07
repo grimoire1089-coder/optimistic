@@ -12,8 +12,11 @@ const DEFAULT_GATHERING_TABLE_PATH := "res://Data/Exploration/GatheringTables/Ca
 const GATHERING_EFFECT_MODULE_SCRIPT_PATH := "res://Scripts/Systems/Exploration/ExplorationGatheringEffectModule.gd"
 const SKILL_GATHERING: StringName = &"gathering"
 const SKILL_UPGRADE_GATHERING_AMOUNT_PLUS: StringName = &"gathering_amount_plus"
+const InventoryLookup := preload("res://Scripts/Characters/Modules/AICharacterInventoryLookup.gd")
 
 @export var worker_path: NodePath = NodePath("../Robin")
+@export var inventory_module_child_name: StringName = &"AICharacterInventoryModule"
+@export var legacy_inventory_module_child_name: StringName = &"RobinInventoryModule"
 @export var skills_module_path: NodePath = NodePath("../Robin/AICharacterSkillsModule")
 @export var location_background_path: NodePath = NodePath("../LocationBackground")
 @export var stay_overlay_path: NodePath = NodePath("../WorkLocationStayOverlay")
@@ -507,11 +510,7 @@ func _get_game_minutes_from_delta(delta: float) -> float:
 
 func _get_worker_inventory_module() -> Node:
 	var worker: Node = _get_worker()
-	if worker == null:
-		return null
-	if worker.has_method("get_inventory_module"):
-		return worker.call("get_inventory_module") as Node
-	return worker.get_node_or_null("RobinInventoryModule")
+	return InventoryLookup.get_inventory_module(worker, inventory_module_child_name, legacy_inventory_module_child_name)
 
 
 func _get_worker_entrance_behavior() -> Node:
