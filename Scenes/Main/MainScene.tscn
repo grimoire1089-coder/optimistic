@@ -89,6 +89,7 @@ script = ExtResource("11_room_map_grid")
 map_visual_offset = Vector2(0, -80)
 fixed_grid_size = Vector2i(15, 15)
 fit_cell_size_to_visual_rect = true
+show_neon_frame = true
 
 [node name="FurnitureRoot" type="Node2D" parent="RobinRoomMap" unique_id=1746896953]
 z_index = 1
