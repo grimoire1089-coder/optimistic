@@ -2,6 +2,7 @@ extends Node
 class_name BuildModeController
 
 signal build_mode_changed(enabled: bool)
+signal buildable_changed(buildable: bool)
 signal furniture_selection_changed(furniture_scene: PackedScene, furniture_id: StringName, footprint: Vector2i)
 signal furniture_rotation_changed(rotation_steps: int, footprint: Vector2i)
 signal tool_mode_changed(tool_mode: StringName)
@@ -21,23 +22,30 @@ var _selected_furniture_id: StringName = &""
 var _selected_base_footprint: Vector2i = Vector2i(1, 1)
 var _selected_rotation_steps: int = 0
 var _selected_can_rotate: bool = false
+var _has_buildable_state := false
+var _last_buildable_state := false
 
 
 func _ready() -> void:
 	_resolve_room_map()
+	_sync_buildable_state(true)
 
 
 func set_room_map_path(next_room_map_path: NodePath) -> void:
 	if room_map_path == next_room_map_path:
 		_resolve_room_map()
-		if not is_buildable():
+		var current_buildable := is_buildable()
+		_sync_buildable_state()
+		if not current_buildable:
 			set_build_mode_enabled(false)
 		return
 
 	room_map_path = next_room_map_path
 	_room_map = null
 	_resolve_room_map()
-	if not is_buildable():
+	var next_buildable := is_buildable()
+	_sync_buildable_state()
+	if not next_buildable:
 		set_build_mode_enabled(false)
 
 
@@ -161,6 +169,15 @@ func _normalize_rotation_steps(rotation_steps: int) -> int:
 	if steps < 0:
 		steps += 4
 	return steps
+
+
+func _sync_buildable_state(force_emit: bool = false) -> void:
+	var next_buildable := is_buildable()
+	if not force_emit and _has_buildable_state and _last_buildable_state == next_buildable:
+		return
+	_has_buildable_state = true
+	_last_buildable_state = next_buildable
+	buildable_changed.emit(next_buildable)
 
 
 func _resolve_room_map() -> void:
