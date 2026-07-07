@@ -16,7 +16,7 @@ const InventoryLookup := preload("res://Scripts/Characters/Modules/AICharacterIn
 
 @export var worker_path: NodePath = NodePath("../Robin")
 @export var inventory_module_child_name: StringName = &"AICharacterInventoryModule"
-@export var legacy_inventory_module_child_name: StringName = &"RobinInventoryModule"
+@export var legacy_inventory_module_child_name: StringName = &""
 @export var skills_module_path: NodePath = NodePath("../Robin/AICharacterSkillsModule")
 @export var location_background_path: NodePath = NodePath("../LocationBackground")
 @export var stay_overlay_path: NodePath = NodePath("../WorkLocationStayOverlay")
