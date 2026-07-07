@@ -13,7 +13,7 @@ const InventoryLookup := preload("res://Scripts/Characters/Modules/AICharacterIn
 
 @export var actor_path: NodePath = NodePath("../../Robin")
 @export var inventory_module_child_name: StringName = &"AICharacterInventoryModule"
-@export var legacy_inventory_module_child_name: StringName = &"RobinInventoryModule"
+@export var legacy_inventory_module_child_name: StringName = &""
 @export var slot_size: Vector2 = Vector2(72.0, 72.0)
 @export var grid_columns: int = 5
 @export_range(0, 24, 1) var grid_separation: int = 6
