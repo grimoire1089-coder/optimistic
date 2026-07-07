@@ -9,7 +9,7 @@ const COOKING_CATEGORY_ID: StringName = &"cooking"
 const InventoryLookup := preload("res://Scripts/Characters/Modules/AICharacterInventoryLookup.gd")
 
 @export var inventory_module_path: NodePath = NodePath("../AICharacterInventoryModule")
-@export var legacy_inventory_module_path: NodePath = NodePath("../RobinInventoryModule")
+@export var legacy_inventory_module_path: NodePath = NodePath("")
 @export var skills_module_path: NodePath = NodePath("../AICharacterSkillsModule")
 @export var furniture_root_path: NodePath = NodePath("../../RobinRoomMap/FurnitureRoot")
 @export var furniture_placement_module_path: NodePath = NodePath("../../FurniturePlacementModule")
