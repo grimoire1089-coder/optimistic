@@ -6,6 +6,7 @@ signal food_unlocked(item_id: StringName)
 const SAVE_KEY := "unlocked_food_item_ids"
 const UNLOCK_NOTICE_MODULE_SCRIPT_PATH := "res://Scripts/Systems/Encyclopedia/Modules/FoodEncyclopediaUnlockNoticeModule.gd"
 const HALF_LAYOUT_MODULE_SCRIPT_PATH := "res://Scripts/UI/Encyclopedia/Modules/EncyclopediaFixedHalfLayoutModule.gd"
+const ENCYCLOPEDIA_OVERLAY_GROUP := "encyclopedia_overlay"
 
 var _unlocked_food_item_ids: Dictionary = {}
 var _unlock_notice_module: Node
@@ -24,7 +25,7 @@ func unlock_item_id(item_id: StringName, display_name: String = "") -> bool:
 		return false
 	_unlocked_food_item_ids[item_id] = true
 	food_unlocked.emit(item_id)
-	encyclopedia_changed.emit()
+	_emit_encyclopedia_changed_if_visible()
 	_notify_unlock_notice(item_id, display_name)
 	return true
 
@@ -80,7 +81,24 @@ func apply_save_data(data: Dictionary) -> void:
 			var item_id := StringName(String(raw_id))
 			if item_id != &"":
 				_unlocked_food_item_ids[item_id] = true
+	_emit_encyclopedia_changed_if_visible()
+
+
+func _emit_encyclopedia_changed_if_visible() -> void:
+	if not _has_visible_encyclopedia_overlay():
+		return
 	encyclopedia_changed.emit()
+
+
+func _has_visible_encyclopedia_overlay() -> bool:
+	var tree := get_tree()
+	if tree == null:
+		return false
+	for node in tree.get_nodes_in_group(ENCYCLOPEDIA_OVERLAY_GROUP):
+		var canvas_item := node as CanvasItem
+		if canvas_item != null and canvas_item.visible:
+			return true
+	return false
 
 
 func _notify_unlock_notice(item_id: StringName, display_name: String) -> void:
