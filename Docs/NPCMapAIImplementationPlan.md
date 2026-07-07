@@ -101,12 +101,26 @@
 Scripts/Characters/Modules/AICharacterMovementCoordinator.gd
 Scripts/Characters/Modules/AICharacterRandomWanderModule.gd
 Scripts/Characters/Modules/AICharacterDirectionalSpriteModule.gd
+Scripts/Characters/Modules/AICharacterInventoryModule.gd
 Scripts/Characters/Zippy/ZippyActor.gd
 Scenes/Characters/Zippy/ZippyActor.tscn
 ```
 
 現在のジッピーは、ロビン風のグリッドランダム移動を使う。
 遠い目標グリッドへ向かえるが、実際に補間で進む一歩は基本的に1グリッド単位にしている。
+
+## インベントリ名の整理
+
+AIキャラクター共通の正式名は `AICharacterInventoryModule` とする。
+ジッピーなど、今後追加するAIキャラクターはこの名前でインベントリを持たせる。
+
+`RobinInventoryModule` は既存のロビン、ショップ、制作、水分補給などの参照を壊さないため、段階的な互換名として残す。
+一度に全置換せず、動作確認しながら以下の順で移行する。
+
+1. 新規AIキャラクターは `AICharacterInventoryModule` を使う。
+2. ロビンのシーン側も `AICharacterInventoryModule` へ寄せる。
+3. 水分補給、制作、ショップ、インベントリUIの型参照を `AICharacterInventoryModule` へ寄せる。
+4. 全部安定したら `RobinInventoryModule` は薄い互換エイリアスにする。
 
 ## 保留中
 
