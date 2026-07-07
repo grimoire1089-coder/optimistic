@@ -2,6 +2,7 @@ extends Control
 class_name AIPositionDebugOverlay
 
 @export var actor_node_names: PackedStringArray = ["Robin", "Zippy"]
+@export var actor_group_name: StringName = &"ai_character_actor"
 @export var origin_radius: float = 5.0
 @export var cross_half_size: float = 14.0
 @export var redraw_interval_seconds: float = 0.1
@@ -32,11 +33,29 @@ func _process(delta: float) -> void:
 func _draw() -> void:
 	if not visible:
 		return
+	for actor in _get_debug_actors():
+		_draw_actor_position(actor)
+
+
+func _get_debug_actors() -> Array[Node2D]:
+	var actors: Array[Node2D] = []
+	var seen := {}
 	for actor_name in actor_node_names:
-		var actor := _find_actor(String(actor_name))
+		var named_actor := _find_actor(String(actor_name))
+		if named_actor == null:
+			continue
+		seen[named_actor.get_instance_id()] = true
+		actors.append(named_actor)
+	for candidate in get_tree().get_nodes_in_group(actor_group_name):
+		var actor := candidate as Node2D
 		if actor == null:
 			continue
-		_draw_actor_position(actor)
+		var id := actor.get_instance_id()
+		if seen.has(id):
+			continue
+		seen[id] = true
+		actors.append(actor)
+	return actors
 
 
 func _find_actor(actor_name: String) -> Node2D:
