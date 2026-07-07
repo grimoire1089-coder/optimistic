@@ -10,6 +10,7 @@ const DEFAULT_CLICK_SFX_PATH := "res://Assets/Audio/SFX/UI/UI_Click_001.ogg"
 @export var click_sfx: AudioStream
 @export var click_sfx_volume_db: float = 0.0
 @export var room_map_path: NodePath = NodePath("../RobinRoomMap")
+@export var ai_character_hud_path: NodePath = NodePath("../CanvasLayer/AICharacterHud")
 @export var snap_start_position_to_grid: bool = true
 @export var start_grid_position: Vector2i = Vector2i(1, 6)
 @export var actor_grid_footprint: Vector2i = Vector2i(2, 4)
@@ -85,6 +86,23 @@ func _on_click_area_input_event(_viewport: Node, event: InputEvent, _shape_idx: 
 			get_viewport().set_input_as_handled()
 			_play_click_sfx()
 			selected.emit(self)
+			_toggle_ai_character_hud()
+
+
+func _toggle_ai_character_hud() -> void:
+	if _is_build_mode_enabled():
+		return
+	var hud := get_node_or_null(ai_character_hud_path)
+	if hud == null or not hud.has_method("toggle_actor"):
+		return
+	hud.call("toggle_actor", self)
+
+
+func _is_build_mode_enabled() -> bool:
+	var controller := get_tree().get_first_node_in_group(&"build_mode_controller")
+	if controller == null or not controller.has_method("is_build_mode_enabled"):
+		return false
+	return bool(controller.call("is_build_mode_enabled"))
 
 
 func _play_click_sfx() -> void:
