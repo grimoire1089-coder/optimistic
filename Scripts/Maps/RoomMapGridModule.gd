@@ -167,7 +167,7 @@ func get_grid_area_rect(grid_position: Vector2i, footprint: Vector2i = Vector2i(
 	var safe_footprint := Vector2i(maxi(footprint.x, 1), maxi(footprint.y, 1))
 	var area_position := grid_to_world_cell_position(grid_position)
 	var area_size := Vector2(float(safe_footprint.x), float(safe_footprint.y)) * _get_safe_cell_size()
-	return Rect2(area_position, safe_cell_size)
+	return Rect2(area_position, area_size)
 
 
 func world_to_grid(world_position: Vector2) -> Vector2i:
