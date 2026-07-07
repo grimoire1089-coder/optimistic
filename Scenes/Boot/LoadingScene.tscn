@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3 uid="uid://loading_scene_boot"]
+[gd_scene load_steps=3 format=3 uid="uid://loading_scene_boot"]
 
 [ext_resource type="Script" path="res://Scripts/Scenes/Boot/LoadingScene.gd" id="1_loading_script"]
+[ext_resource type="Script" path="res://Scripts/Scenes/Boot/Modules/LoadingShopCacheTaskModule.gd" id="2_shop_cache_task"]
 
 [node name="LoadingScene" type="Control"]
 layout_mode = 3
@@ -53,3 +54,8 @@ show_percentage = true
 layout_mode = 2
 text = "準備中..."
 horizontal_alignment = 1
+
+[node name="TaskModules" type="Node" parent="."]
+
+[node name="LoadingShopCacheTaskModule" type="Node" parent="TaskModules"]
+script = ExtResource("2_shop_cache_task")
