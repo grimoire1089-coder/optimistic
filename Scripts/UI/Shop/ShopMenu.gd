@@ -4,7 +4,7 @@ class_name ShopMenu
 @export var shop_database: ShopDatabase
 @export var actor_path: NodePath = NodePath("../../Robin")
 @export var inventory_module_child_name: StringName = &"AICharacterInventoryModule"
-@export var legacy_inventory_module_child_name: StringName = &"RobinInventoryModule"
+@export var legacy_inventory_module_child_name: StringName = &""
 @export var room_map_path: NodePath = NodePath("../../RobinRoomMap")
 @export var map_travel_module_path: NodePath = NodePath("../../MainSceneMapTravelModule")
 @export var center_on_map_grid: bool = true
