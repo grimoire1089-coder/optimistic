@@ -6,13 +6,21 @@ class_name CityPanel
 @export var center_on_map_grid: bool = true
 
 const MAP_CENTER_PANEL_SIZE := Vector2(760.0, 760.0)
+const PAGE_NONE := &""
+const PAGE_RESIDENTS := &"residents"
+const PAGE_INVESTMENT := &"investment"
 
 @onready var close_button: Button = $MarginContainer/Rows/Header/CloseButton
 @onready var guide_label: Label = $MarginContainer/Rows/Body/ContentRows/GuideLabel
+@onready var residents_button: Button = $MarginContainer/Rows/Body/ContentRows/PageButtonRow/ResidentsPageButton
+@onready var investment_button: Button = $MarginContainer/Rows/Body/ContentRows/PageButtonRow/InvestmentPageButton
+@onready var residents_page: Control = $MarginContainer/Rows/Body/ContentRows/Pages/ResidentsPage
+@onready var investment_page: Control = $MarginContainer/Rows/Body/ContentRows/Pages/InvestmentPage
 
 var _room_map: RoomMapGridModule
 var _map_travel_module: Node
 var _layout_room_map: RoomMapGridModule
+var _current_page: StringName = PAGE_NONE
 
 
 func _ready() -> void:
@@ -23,8 +31,11 @@ func _ready() -> void:
 	if close_button != null:
 		close_button.text = "X"
 		close_button.pressed.connect(close_menu)
-	if guide_label != null:
-		guide_label.text = "都市パネル（仮）"
+	if residents_button != null:
+		residents_button.pressed.connect(_on_residents_page_pressed)
+	if investment_button != null:
+		investment_button.pressed.connect(_on_investment_page_pressed)
+	_show_page(PAGE_NONE)
 
 
 func open_menu() -> void:
@@ -45,6 +56,35 @@ func toggle_menu() -> void:
 
 func _exit_tree() -> void:
 	_disconnect_map_rect_signal()
+
+
+func _on_residents_page_pressed() -> void:
+	_show_page(PAGE_RESIDENTS)
+
+
+func _on_investment_page_pressed() -> void:
+	_show_page(PAGE_INVESTMENT)
+
+
+func _show_page(page_id: StringName) -> void:
+	_current_page = page_id
+	if residents_page != null:
+		residents_page.visible = page_id == PAGE_RESIDENTS
+	if investment_page != null:
+		investment_page.visible = page_id == PAGE_INVESTMENT
+	if residents_button != null:
+		residents_button.button_pressed = page_id == PAGE_RESIDENTS
+	if investment_button != null:
+		investment_button.button_pressed = page_id == PAGE_INVESTMENT
+	if guide_label == null:
+		return
+	match page_id:
+		PAGE_RESIDENTS:
+			guide_label.text = "住人ページ"
+		PAGE_INVESTMENT:
+			guide_label.text = "投資ページ"
+		_:
+			guide_label.text = "街で確認したい項目を選んでください。"
 
 
 func _apply_map_center_layout() -> void:
