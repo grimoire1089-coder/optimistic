@@ -60,7 +60,7 @@ shape = SubResource("RectangleShape2D_click_area")
 [node name="AICharacterSkillsModule" type="Node" parent="."]
 script = ExtResource("14_skills_module")
 
-[node name="RobinInventoryModule" type="Node" parent="."]
+[node name="AICharacterInventoryModule" type="Node" parent="."]
 script = ExtResource("7_inventory_module")
 initial_item_paths = PackedStringArray("res://Data/Items/Tools/Lapis_001.tres")
 owner_display_name = "ロビン"
