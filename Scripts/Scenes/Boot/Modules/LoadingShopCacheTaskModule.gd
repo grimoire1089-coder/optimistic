@@ -1,4 +1,4 @@
-extends LoadingTaskModule
+extends "res://Scripts/Scenes/Boot/Modules/LoadingTaskModule.gd"
 class_name LoadingShopCacheTaskModule
 
 
