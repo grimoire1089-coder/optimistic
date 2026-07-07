@@ -20,6 +20,7 @@ static func rebuild(list_container: VBoxContainer, residents: Array[NpcResidentD
 
 static func _clear_children(parent: Node) -> void:
 	for child in parent.get_children():
+		parent.remove_child(child)
 		child.queue_free()
 
 
