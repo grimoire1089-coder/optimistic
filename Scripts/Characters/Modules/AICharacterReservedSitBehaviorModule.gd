@@ -5,6 +5,8 @@ const SEAT_RESERVED_BY_META := &"ai_seat_reserved_by"
 const SEAT_RESERVED_NAME_META := &"ai_seat_reserved_name"
 const SEAT_RESERVED_REASON_META := &"ai_seat_reserved_reason"
 
+@export var safe_leave_retry_seconds: float = 2.0
+
 
 func _find_nearest_stool() -> Node2D:
 	if _furniture_root == null or _body == null:
@@ -48,6 +50,33 @@ func _has_valid_target_stool() -> bool:
 	if not super._has_valid_target_stool():
 		return false
 	return _is_stool_available_for_actor(_target_stool)
+
+
+func _update_sitting(delta: float) -> void:
+	_face_stool()
+	_recover_fun(delta)
+	_sit_timer -= maxf(delta, 0.0)
+	if _sit_timer > 0.0:
+		return
+	if _try_leave_seat_safely():
+		_reset()
+		_start_retry_cooldown()
+		return
+	_sit_timer = maxf(safe_leave_retry_seconds, 0.5)
+
+
+func _try_leave_seat_safely() -> bool:
+	if _body == null:
+		return false
+	var leave_cell := _target_cell
+	var footprint := _get_actor_grid_footprint()
+	if not _is_valid_grid_position(leave_cell):
+		return false
+	if not _is_target_cell_walkable(leave_cell, footprint):
+		return false
+	_body.global_position = _get_stool_use_position(leave_cell)
+	_path_cells.clear()
+	return true
 
 
 func _set_target_stool(stool: Node2D) -> void:
