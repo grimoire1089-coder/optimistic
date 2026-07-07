@@ -46,9 +46,12 @@ const STARTED_TEXT_CODES := [0x5236, 0x4f5c, 0x3092, 0x958b, 0x59cb, 0x3057, 0x3
 const START_FAILED_TEXT_CODES := [0x5236, 0x4f5c, 0x3092, 0x958b, 0x59cb, 0x3067, 0x304d, 0x307e, 0x305b, 0x3093, 0x3067, 0x3057, 0x305f, 0x3002]
 const CRAFT_TIME_LABEL_CODES := [0x5236, 0x4f5c, 0x6642, 0x9593, 0x3a, 0x20]
 const MINUTE_LABEL_CODES := [0x5206]
+const InventoryLookup := preload("res://Scripts/Characters/Modules/AICharacterInventoryLookup.gd")
 
 @export var cooking_method_id: StringName = CATEGORY_COOKING
 @export var actor_path: NodePath = NodePath("../../Robin")
+@export var inventory_module_child_name: StringName = &"AICharacterInventoryModule"
+@export var legacy_inventory_module_child_name: StringName = &"RobinInventoryModule"
 @export var furniture_placement_module_path: NodePath = NodePath("../../FurniturePlacementModule")
 @export var close_after_craft: bool = false
 
@@ -515,11 +518,7 @@ func _get_inventory_module() -> Node:
 	var actor := get_node_or_null(actor_path)
 	if actor == null:
 		actor = get_tree().get_first_node_in_group(&"ai_character")
-	if actor == null:
-		return null
-	if actor.has_method("get_inventory_module"):
-		return actor.call("get_inventory_module") as Node
-	return actor.get_node_or_null("RobinInventoryModule")
+	return InventoryLookup.get_inventory_module(actor, inventory_module_child_name, legacy_inventory_module_child_name)
 
 
 func _show_and_push(message: String) -> void:
