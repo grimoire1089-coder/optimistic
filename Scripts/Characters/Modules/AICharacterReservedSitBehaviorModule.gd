@@ -44,6 +44,12 @@ func _find_nearest_stool() -> Node2D:
 	return nearest
 
 
+func _has_valid_target_stool() -> bool:
+	if not super._has_valid_target_stool():
+		return false
+	return _is_stool_available_for_actor(_target_stool)
+
+
 func _set_target_stool(stool: Node2D) -> void:
 	if _target_stool != stool:
 		_clear_reserved_stool(_target_stool)
