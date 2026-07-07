@@ -14,6 +14,7 @@ func go_to_title() -> void:
 
 
 func go_to_main() -> void:
+	ShopRuntimeCache.prepare_default_database()
 	request_load(MAIN_SCENE_PATH)
 
 
