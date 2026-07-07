@@ -13,6 +13,7 @@ const InventoryLookup := preload("res://Scripts/Characters/Modules/AICharacterIn
 @export var furniture_root_path: NodePath = NodePath("../../RobinRoomMap/FurnitureRoot")
 @export var furniture_placement_module_path: NodePath = NodePath("../../FurniturePlacementModule")
 @export var room_map_path: NodePath = NodePath("../../RobinRoomMap")
+@export var action_item_display_path: NodePath = NodePath("../AICharacterActionItemDisplayModule")
 @export var water_need_id: StringName = CharacterNeedIds.WATER
 @export var hydrate_action_id: StringName = CharacterNeedActionIds.HYDRATE
 @export var kitchen_module_ids: Array[StringName] = [&"kitchen_module"]
@@ -43,6 +44,7 @@ var _inventory_module: Node
 var _furniture_root: Node
 var _furniture_placement_module: Node
 var _room_map: RoomMapGridModule
+var _action_item_display: Node
 var _target_kitchen: Node2D
 var _target_dining_seat: Node2D
 var _water_bottle_item: FoodItemData
@@ -337,6 +339,86 @@ func _begin_drinking(food_data: FoodItemData, start_progress: float) -> void:
 	_action_progress_ratio = _drink_start_progress
 	_facing_direction = Vector2.DOWN
 	_path_cells.clear()
+	_show_drink_item_display()
+
+
+func _show_drink_item_display() -> void:
+	if _drink_food_data == null:
+		return
+	var display := _get_action_item_display()
+	if display == null or not display.has_method("show_item_icon"):
+		return
+	display.call("show_item_icon", _drink_food_data.get_icon_path(), _get_drink_item_global_center())
+
+
+func _hide_drink_item_display() -> void:
+	var display := _get_action_item_display()
+	if display == null or not display.has_method("clear_item_icon"):
+		return
+	display.call("clear_item_icon")
+
+
+func _get_action_item_display() -> Node:
+	_resolve_refs()
+	return _action_item_display
+
+
+func _get_drink_item_global_center() -> Variant:
+	if not _dining_seat_used_for_current_drink:
+		return null
+	if _target_dining_seat == null or _room_map == null or _furniture_root == null:
+		return null
+	var tables: Array[Node2D] = []
+	for child in _furniture_root.get_children():
+		var furniture := child as Node2D
+		if furniture == null:
+			continue
+		if AICharacterDiningSeatHelper.is_table_furniture(furniture):
+			tables.append(furniture)
+	var table := AICharacterDiningSeatHelper.find_connected_table_for_chair(_target_dining_seat, tables, dining_minimum_overlap_cells)
+	if table == null:
+		return null
+	return _get_table_side_item_center(_target_dining_seat, table)
+
+
+func _get_table_side_item_center(chair: Node2D, table: Node2D) -> Variant:
+	if _room_map == null:
+		return null
+	var chair_grid := _get_furniture_grid_position(chair)
+	var chair_footprint := _get_furniture_footprint(chair)
+	var table_grid := _get_furniture_grid_position(table)
+	var table_footprint := _get_furniture_footprint(table)
+	if not _is_valid_grid_position(chair_grid) or not _is_valid_grid_position(table_grid):
+		return null
+	var chair_left := chair_grid.x
+	var chair_right := chair_grid.x + chair_footprint.x
+	var chair_top := chair_grid.y
+	var chair_bottom := chair_grid.y + chair_footprint.y
+	var table_left := table_grid.x
+	var table_right := table_grid.x + table_footprint.x
+	var table_top := table_grid.y
+	var table_bottom := table_grid.y + table_footprint.y
+	if chair_right == table_left:
+		return _get_grid_area_center_from_edges(table_left, maxi(chair_top, table_top), table_left + 1, mini(chair_bottom, table_bottom))
+	if table_right == chair_left:
+		return _get_grid_area_center_from_edges(table_right - 1, maxi(chair_top, table_top), table_right, mini(chair_bottom, table_bottom))
+	if chair_bottom == table_top:
+		return _get_grid_area_center_from_edges(maxi(chair_left, table_left), table_top, mini(chair_right, table_right), table_top + 1)
+	if table_bottom == chair_top:
+		return _get_grid_area_center_from_edges(maxi(chair_left, table_left), table_bottom - 1, mini(chair_right, table_right), table_bottom)
+	return null
+
+
+func _get_grid_area_center_from_edges(left: int, top: int, right: int, bottom: int) -> Variant:
+	if _room_map == null:
+		return null
+	if right <= left or bottom <= top:
+		return null
+	var grid_position := Vector2i(left, top)
+	var footprint := Vector2i(right - left, bottom - top)
+	if not _room_map.is_grid_area_inside(grid_position, footprint):
+		return null
+	return _room_map.grid_to_world_area_center(grid_position, footprint)
 
 
 func _snap_body_to_drink_grid_center() -> bool:
@@ -412,6 +494,7 @@ func _update_drinking(delta: float) -> void:
 
 func _complete_drinking() -> void:
 	var food_data := _drink_food_data
+	_hide_drink_item_display()
 	_is_drinking = false
 	_drink_food_data = null
 	_restore_body_z_override()
@@ -490,6 +573,7 @@ func _record_bill_water_usage(units: int, reason: String) -> void:
 
 
 func _finish_hydrate_action() -> void:
+	_hide_drink_item_display()
 	_restore_body_z_override()
 	_clear_hydrate_target()
 	_clear_dining_seat_target()
@@ -500,6 +584,7 @@ func _finish_hydrate_action() -> void:
 
 
 func _reset_hydrate_action() -> void:
+	_hide_drink_item_display()
 	_restore_body_z_override()
 	_clear_hydrate_target()
 	_clear_dining_seat_target()
@@ -1037,6 +1122,10 @@ func _resolve_refs() -> void:
 		_furniture_placement_module = get_node_or_null(furniture_placement_module_path)
 	if _room_map == null and not room_map_path.is_empty():
 		_room_map = get_node_or_null(room_map_path) as RoomMapGridModule
+	if (_action_item_display == null or not is_instance_valid(_action_item_display)) and not action_item_display_path.is_empty():
+		_action_item_display = get_node_or_null(action_item_display_path)
+	if _action_item_display == null and _body != null:
+		_action_item_display = _body.get_node_or_null("AICharacterActionItemDisplayModule")
 
 
 func _has_property(object: Object, property_name: StringName) -> bool:
