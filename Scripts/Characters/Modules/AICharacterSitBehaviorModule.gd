@@ -10,6 +10,7 @@ const BUILD_LOCK_REASON_META := &"build_lock_reason"
 @export var furniture_root_path: NodePath = NodePath("../../RobinRoomMap/FurnitureRoot")
 @export var furniture_placement_module_path: NodePath = NodePath("../../FurniturePlacementModule")
 @export var room_map_path: NodePath = NodePath("../../RobinRoomMap")
+@export var action_item_display_path: NodePath = NodePath("../AICharacterActionItemDisplayModule")
 @export var fun_need_id: StringName = CharacterNeedIds.FUN
 @export var idle_action_id: StringName = CharacterNeedActionIds.IDLE
 @export var play_action_id: StringName = CharacterNeedActionIds.PLAY
@@ -34,6 +35,7 @@ var _need_planner: NeedDrivenAIPlanner
 var _furniture_root: Node
 var _furniture_placement_module: Node
 var _room_map: RoomMapGridModule
+var _action_item_display: Node
 var _target_stool: Node2D
 var _sitting_stool: Node2D
 var _target_cell: Vector2i = INVALID_GRID_POSITION
@@ -319,6 +321,7 @@ func _start_sitting() -> void:
 	_set_sitting_stool(_target_stool)
 	if snap_to_stool_when_sitting and _target_stool != null and is_instance_valid(_target_stool):
 		_body.global_position = _get_stool_sit_position(_target_stool)
+	_show_lapis_item_display()
 
 
 func _update_sitting(delta: float) -> void:
@@ -345,6 +348,7 @@ func _start_standing_lapis() -> void:
 		maxf(standing_lapis_duration_range.y, standing_lapis_duration_range.x + 0.1)
 	)
 	_facing_direction = Vector2.DOWN
+	_show_lapis_item_display()
 
 
 func _update_standing_lapis(delta: float) -> void:
@@ -356,6 +360,27 @@ func _update_standing_lapis(delta: float) -> void:
 		_reset()
 		_snap_body_to_current_grid_center()
 		_start_retry_cooldown()
+
+
+func _show_lapis_item_display() -> void:
+	if lapis_icon_path.is_empty():
+		return
+	var display := _get_action_item_display()
+	if display == null or not display.has_method("show_item_icon"):
+		return
+	display.call("show_item_icon", lapis_icon_path, null)
+
+
+func _hide_lapis_item_display() -> void:
+	var display := _get_action_item_display()
+	if display == null or not display.has_method("clear_item_icon"):
+		return
+	display.call("clear_item_icon")
+
+
+func _get_action_item_display() -> Node:
+	_resolve_refs()
+	return _action_item_display
 
 
 func _recover_fun(delta: float) -> void:
@@ -377,6 +402,7 @@ func _get_game_minutes_from_delta(delta: float) -> float:
 
 
 func _reset() -> void:
+	_hide_lapis_item_display()
 	_clear_sitting_stool_lock()
 	_active = false
 	_sitting = false
@@ -770,3 +796,7 @@ func _resolve_refs() -> void:
 		_furniture_placement_module = get_node_or_null(furniture_placement_module_path)
 	if _room_map == null and not room_map_path.is_empty():
 		_room_map = get_node_or_null(room_map_path) as RoomMapGridModule
+	if (_action_item_display == null or not is_instance_valid(_action_item_display)) and not action_item_display_path.is_empty():
+		_action_item_display = get_node_or_null(action_item_display_path)
+	if _action_item_display == null and _body != null:
+		_action_item_display = _body.get_node_or_null("AICharacterActionItemDisplayModule")
