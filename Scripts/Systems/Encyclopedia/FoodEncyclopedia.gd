@@ -19,15 +19,11 @@ func _ready() -> void:
 
 
 func unlock_item_id(item_id: StringName, display_name: String = "") -> bool:
-	if item_id == &"":
-		return false
-	if _unlocked_food_item_ids.has(item_id):
-		return false
-	_unlocked_food_item_ids[item_id] = true
-	food_unlocked.emit(item_id)
-	_emit_encyclopedia_changed_if_visible()
-	_notify_unlock_notice(item_id, display_name)
-	return true
+	return _unlock_item_id(item_id, display_name, true)
+
+
+func register_initial_item_discovered(item_id: StringName, display_name: String = "") -> bool:
+	return _unlock_item_id(item_id, display_name, false)
 
 
 func register_food_discovered(item_id: StringName, display_name: String = "") -> bool:
@@ -82,6 +78,19 @@ func apply_save_data(data: Dictionary) -> void:
 			if item_id != &"":
 				_unlocked_food_item_ids[item_id] = true
 	_emit_encyclopedia_changed_if_visible()
+
+
+func _unlock_item_id(item_id: StringName, display_name: String, should_notify: bool) -> bool:
+	if item_id == &"":
+		return false
+	if _unlocked_food_item_ids.has(item_id):
+		return false
+	_unlocked_food_item_ids[item_id] = true
+	food_unlocked.emit(item_id)
+	_emit_encyclopedia_changed_if_visible()
+	if should_notify:
+		_notify_unlock_notice(item_id, display_name)
+	return true
 
 
 func _emit_encyclopedia_changed_if_visible() -> void:
