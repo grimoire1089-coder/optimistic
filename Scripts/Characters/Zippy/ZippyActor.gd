@@ -4,6 +4,7 @@ class_name ZippyActor
 signal selected(actor: ZippyActor)
 
 const DEFAULT_CLICK_SFX_PATH := "res://Assets/Audio/SFX/UI/UI_Click_001.ogg"
+const DEFAULT_LAPIS_ITEM_PATH := "res://Data/Items/Tools/Lapis_001.tres"
 const WANDER_SCRIPT := preload("res://Scripts/Characters/Modules/AICharacterRandomWanderModule.gd")
 const SIT_SCRIPT := preload("res://Scripts/Characters/Modules/AICharacterReservedSitBehaviorModule.gd")
 const HYDRATE_SCRIPT := preload("res://Scripts/Characters/Modules/AICharacterTableSeatHydrateModule.gd")
@@ -187,6 +188,8 @@ func _ensure_inventory_module() -> void:
 		return
 	inventory_module.name = "ZippyInventoryModule"
 	inventory_module.slots_per_category = 8
+	inventory_module.owner_display_name = display_name
+	inventory_module.initial_item_paths = PackedStringArray([DEFAULT_LAPIS_ITEM_PATH])
 	add_child(inventory_module)
 
 
