@@ -46,10 +46,12 @@ func _process(_delta: float) -> void:
 		ResourceLoader.THREAD_LOAD_LOADED:
 			_is_finished = true
 			progress_bar.value = 100.0
-			status_label.text = "起動中..."
+			status_label.text = "ショップデータ準備中..."
+			_prepare_runtime_caches()
 
 			await get_tree().process_frame
 
+			status_label.text = "起動中..."
 			var packed_scene := ResourceLoader.load_threaded_get(_target_scene_path) as PackedScene
 			SceneRouter.clear_loading_target_path()
 			SceneRouter.change_to_loaded_scene(packed_scene)
@@ -61,6 +63,10 @@ func _process(_delta: float) -> void:
 		ResourceLoader.THREAD_LOAD_INVALID_RESOURCE:
 			_is_finished = true
 			_show_error_and_return_title("無効なロード対象です: %s" % _target_scene_path)
+
+
+func _prepare_runtime_caches() -> void:
+	ShopRuntimeCache.prepare_default_database()
 
 
 func _show_error_and_return_title(message: String) -> void:
