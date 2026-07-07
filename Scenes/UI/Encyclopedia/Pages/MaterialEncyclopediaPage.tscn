@@ -1,0 +1,124 @@
+[gd_scene format=3]
+
+[node name="CategoryPage" type="HSplitContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+split_offset = 376
+
+[node name="ListPanel" type="PanelContainer" parent="."]
+custom_minimum_size = Vector2(376, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="ListMargin" type="MarginContainer" parent="ListPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 12
+
+[node name="ListRows" type="VBoxContainer" parent="ListPanel/ListMargin"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 6
+
+[node name="TabTitle" type="Label" parent="ListPanel/ListMargin/ListRows"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.92, 1, 0.92, 1)
+theme_override_font_sizes/font_size = 21
+text = "素材タブ"
+
+[node name="TabHint" type="Label" parent="ListPanel/ListMargin/ListRows"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.72, 0.86, 0.82, 0.82)
+theme_override_font_sizes/font_size = 12
+text = "制作・建築・依頼に使う素材を記録する図鑑ページ。"
+autowrap_mode = 3
+
+[node name="ItemScroll" type="ScrollContainer" parent="ListPanel/ListMargin/ListRows"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="ItemRows" type="VBoxContainer" parent="ListPanel/ListMargin/ListRows/ItemScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 0
+theme_override_constants/separation = 6
+
+[node name="DetailPanel" type="PanelContainer" parent="."]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="DetailMargin" type="MarginContainer" parent="DetailPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 14
+theme_override_constants/margin_top = 14
+theme_override_constants/margin_right = 14
+theme_override_constants/margin_bottom = 14
+
+[node name="DetailScroll" type="ScrollContainer" parent="DetailPanel/DetailMargin"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="DetailRows" type="VBoxContainer" parent="DetailPanel/DetailMargin/DetailScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 0
+theme_override_constants/separation = 6
+
+[node name="DetailIcon" type="TextureRect" parent="DetailPanel/DetailMargin/DetailScroll/DetailRows"]
+custom_minimum_size = Vector2(384, 384)
+layout_mode = 2
+size_flags_horizontal = 4
+expand_mode = 1
+stretch_mode = 5
+
+[node name="DetailNameLabel" type="Label" parent="DetailPanel/DetailMargin/DetailScroll/DetailRows"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.96, 0.80, 1)
+theme_override_font_sizes/font_size = 26
+text = "素材テンプレート"
+horizontal_alignment = 1
+
+[node name="DetailDescriptionLabel" type="RichTextLabel" parent="DetailPanel/DetailMargin/DetailScroll/DetailRows"]
+custom_minimum_size = Vector2(0, 96)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+bbcode_enabled = false
+text = "素材タブ用の図鑑テンプレートです。ここに制作素材や建築素材の説明を追加していきます。"
+scroll_active = true
+
+[node name="DetailMetaLabel" type="Label" parent="DetailPanel/DetailMargin/DetailScroll/DetailRows"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.74, 0.92, 1, 0.88)
+theme_override_font_sizes/font_size = 14
+text = "カテゴリ：素材 / 登録数：0"
+horizontal_alignment = 1
+
+[node name="FlavorBox" type="PanelContainer" parent="DetailPanel/DetailMargin/DetailScroll/DetailRows"]
+custom_minimum_size = Vector2(0, 56)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="FlavorMargin" type="MarginContainer" parent="DetailPanel/DetailMargin/DetailScroll/DetailRows/FlavorBox"]
+layout_mode = 2
+theme_override_constants/margin_left = 14
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 14
+theme_override_constants/margin_bottom = 8
+
+[node name="FlavorText" type="Label" parent="DetailPanel/DetailMargin/DetailScroll/DetailRows/FlavorBox/FlavorMargin"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.90, 0.78, 1, 0.90)
+theme_override_font_sizes/font_size = 13
+text = "デカダンスの暮らしと制作を支える、金属片・部材・魔導素材の記録。"
+autowrap_mode = 3
