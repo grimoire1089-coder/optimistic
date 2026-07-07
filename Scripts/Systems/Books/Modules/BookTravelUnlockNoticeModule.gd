@@ -22,6 +22,11 @@ func push_travel_unlock_notice(book: BookData) -> void:
 		message_log.call("add_travel_unlock_message", message)
 		return
 
+	if message_log.has_method("add_food_encyclopedia_unlock_message"):
+		var notice_sfx := _load_notice_sfx()
+		message_log.call("add_food_encyclopedia_unlock_message", message, notice_sfx, 0.0)
+		return
+
 	var styler: TravelUnlockLogStyler = _ensure_styler(message_log)
 	if styler != null:
 		styler.register_message(message)
@@ -44,6 +49,12 @@ func _make_travel_unlock_message(book: BookData) -> String:
 		return ""
 
 	return "移動場所が解禁されました: %s\n移動メニューの探索から選べます。" % location_name
+
+
+func _load_notice_sfx() -> AudioStream:
+	if not ResourceLoader.exists(TRAVEL_UNLOCK_NOTICE_SFX_PATH):
+		return null
+	return load(TRAVEL_UNLOCK_NOTICE_SFX_PATH) as AudioStream
 
 
 func _queue_normal_message_without_default_sfx(message_log: Node, message: String) -> bool:
