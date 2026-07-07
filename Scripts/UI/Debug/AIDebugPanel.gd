@@ -11,20 +11,24 @@ const FPS_LABEL_MARGIN := Vector2(96.0, 30.0)
 @export var show_only_in_debug_build: bool = true
 @export var actor_path: NodePath = NodePath("../../Robin")
 @export var needs_module_path: NodePath = NodePath("../../Robin/AICharacterNeedsBundle/CharacterNeedsModule")
+@export var actor_group_name: StringName = &"ai_character_actor"
 @export var weather_system_path: NodePath = NodePath("/root/WeatherSystem")
 @export var refresh_interval_seconds: float = 0.2
 @export var closed_refresh_interval_seconds: float = 1.0
 
-var _actor: RobinWanderActor
+var _actor: Node
+var _actor_list: Array[Node] = []
 var _needs_module: CharacterNeedsModule
 var _weather_system: Node
 var _modal_guard: Control
 var _toggle_button: Button
+var _actor_cycle_button: Button
 var _fps_panel: PanelContainer
 var _fps_label: Label
 var _panel: PanelContainer
 var _status_label: Label
 var _weather_label: Label
+var _needs_container: VBoxContainer
 var _needs_rows: Dictionary = {}
 var _refresh_timer := 0.0
 
@@ -183,6 +187,17 @@ func _build_panel() -> void:
 	title.add_theme_font_size_override("font_size", 17)
 	title_row.add_child(title)
 
+	_actor_cycle_button = Button.new()
+	_actor_cycle_button.name = "ActorCycleButton"
+	_actor_cycle_button.custom_minimum_size = Vector2(72.0, 28.0)
+	_actor_cycle_button.text = "対象"
+	_actor_cycle_button.tooltip_text = "デバッグ対象AIを切り替えます"
+	_actor_cycle_button.focus_mode = Control.FOCUS_NONE
+	_actor_cycle_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	_actor_cycle_button.pressed.connect(_on_cycle_actor_pressed)
+	_apply_button_style(_actor_cycle_button, Color(0.025, 0.035, 0.055, 0.96), Color(0.35, 0.9, 1.0, 0.9), Color(0.82, 0.98, 1.0, 1.0))
+	title_row.add_child(_actor_cycle_button)
+
 	var close_button := Button.new()
 	close_button.name = "CloseButton"
 	close_button.custom_minimum_size = Vector2(52.0, 28.0)
@@ -211,11 +226,11 @@ func _build_panel() -> void:
 	needs_title.add_theme_font_size_override("font_size", 13)
 	rows.add_child(needs_title)
 
-	var needs_container := VBoxContainer.new()
-	needs_container.name = "NeedsRows"
-	needs_container.add_theme_constant_override("separation", 4)
-	rows.add_child(needs_container)
-	_rebuild_need_rows(needs_container)
+	_needs_container = VBoxContainer.new()
+	_needs_container.name = "NeedsRows"
+	_needs_container.add_theme_constant_override("separation", 4)
+	rows.add_child(_needs_container)
+	_rebuild_need_rows(_needs_container)
 
 	var action_separator := HSeparator.new()
 	rows.add_child(action_separator)
@@ -281,6 +296,7 @@ func _make_weather_button(label_text: String, button_tooltip_text: String) -> Bu
 
 func _rebuild_need_rows(parent: VBoxContainer) -> void:
 	_needs_rows.clear()
+	_clear_children(parent)
 	var needs := _get_need_instances()
 	if needs.is_empty():
 		var empty_label := Label.new()
@@ -340,6 +356,18 @@ func _on_toggle_pressed() -> void:
 	if _toggle_button == null:
 		return
 	_set_panel_open(_toggle_button.button_pressed)
+
+
+func _on_cycle_actor_pressed() -> void:
+	_refresh_actor_list()
+	if _actor_list.is_empty():
+		_push_debug("[AI Debug] 対象AIが見つかりません")
+		return
+	var index := _actor_list.find(_actor)
+	if index < 0:
+		index = -1
+	_set_debug_actor(_actor_list[(index + 1) % _actor_list.size()])
+	_refresh_panel()
 
 
 func _on_close_pressed() -> void:
@@ -424,8 +452,9 @@ func _on_reset_and_warp_pressed() -> void:
 	if _actor.has_method("debug_reset_actions_and_snap_to_grid"):
 		success = bool(_actor.call("debug_reset_actions_and_snap_to_grid"))
 	else:
-		success = _actor.wander_module != null and _actor.wander_module.clamp_body_to_movement_area()
-	_push_debug("[AI Debug] 行動リセット+救出 %s" % ("OK" if success else "変化なし"))
+		var movement_module := _get_actor_movement_module(_actor)
+		success = movement_module != null and movement_module.has_method("clamp_body_to_movement_area") and bool(movement_module.call("clamp_body_to_movement_area"))
+	_push_debug("[AI Debug] %s 行動リセット+救出 %s" % [_get_actor_display_name(_actor), "OK" if success else "変化なし"])
 	_refresh_panel()
 
 
@@ -437,8 +466,9 @@ func _on_snap_grid_pressed() -> void:
 	if _actor.has_method("snap_to_nearest_walkable_grid"):
 		success = bool(_actor.call("snap_to_nearest_walkable_grid"))
 	else:
-		success = _actor.wander_module != null and _actor.wander_module.clamp_body_to_movement_area()
-	_push_debug("[AI Debug] グリッド整列 %s" % ("OK" if success else "変化なし"))
+		var movement_module := _get_actor_movement_module(_actor)
+		success = movement_module != null and movement_module.has_method("clamp_body_to_movement_area") and bool(movement_module.call("clamp_body_to_movement_area"))
+	_push_debug("[AI Debug] %s グリッド整列 %s" % [_get_actor_display_name(_actor), "OK" if success else "変化なし"])
 	_refresh_panel()
 
 
@@ -451,6 +481,8 @@ func _refresh_panel() -> void:
 		_status_label.text = _make_status_text()
 	if _weather_label != null:
 		_weather_label.text = _make_weather_text()
+	if _actor_cycle_button != null:
+		_actor_cycle_button.text = _get_actor_display_name(_actor)
 
 	if _needs_rows.is_empty():
 		return
@@ -478,10 +510,15 @@ func _make_status_text() -> String:
 	var action_text := "?"
 	if _actor.has_method("get_current_action_display_text"):
 		action_text = str(_actor.call("get_current_action_display_text"))
-	var grid_text := "?"
+	var grid_text := ""
 	if _actor.has_method("get_debug_actor_grid_summary"):
 		grid_text = str(_actor.call("get_debug_actor_grid_summary"))
-	return "対象: %s / 行動: %s\n%s" % [_actor.display_name, action_text, grid_text]
+	else:
+		var movement_module := _get_actor_movement_module(_actor)
+		if movement_module != null and movement_module.has_method("get_debug_movement_summary"):
+			grid_text = str(movement_module.call("get_debug_movement_summary"))
+	return "対象: %s / 行動: %s
+%s" % [_get_actor_display_name(_actor), action_text, grid_text]
 
 
 func _make_weather_text() -> String:
@@ -581,9 +618,83 @@ func _push_debug(message: String) -> void:
 
 
 func _resolve_refs() -> void:
-	if (_actor == null or not is_instance_valid(_actor)) and not actor_path.is_empty():
-		_actor = get_node_or_null(actor_path) as RobinWanderActor
+	_refresh_actor_list()
+	if _actor == null or not is_instance_valid(_actor):
+		var path_actor := get_node_or_null(actor_path) as Node
+		if path_actor != null:
+			_set_debug_actor(path_actor, false)
+	if (_actor == null or not is_instance_valid(_actor)) and not _actor_list.is_empty():
+		_set_debug_actor(_actor_list[0], false)
+	if _needs_module == null or not is_instance_valid(_needs_module):
+		_needs_module = _get_actor_needs_module(_actor)
 	if (_needs_module == null or not is_instance_valid(_needs_module)) and not needs_module_path.is_empty():
 		_needs_module = get_node_or_null(needs_module_path) as CharacterNeedsModule
 	if (_weather_system == null or not is_instance_valid(_weather_system)) and not weather_system_path.is_empty():
 		_weather_system = get_node_or_null(weather_system_path)
+
+
+func _refresh_actor_list() -> void:
+	_actor_list.clear()
+	var seen := {}
+	for candidate in get_tree().get_nodes_in_group(actor_group_name):
+		var actor := candidate as Node
+		if actor == null:
+			continue
+		var id := actor.get_instance_id()
+		if seen.has(id):
+			continue
+		seen[id] = true
+		_actor_list.append(actor)
+	var path_actor := get_node_or_null(actor_path) as Node
+	if path_actor != null and not seen.has(path_actor.get_instance_id()):
+		_actor_list.append(path_actor)
+
+
+func _set_debug_actor(actor: Node, rebuild_needs: bool = true) -> void:
+	_actor = actor
+	_needs_module = _get_actor_needs_module(_actor)
+	if rebuild_needs and _needs_container != null:
+		_rebuild_need_rows(_needs_container)
+	if _actor_cycle_button != null:
+		_actor_cycle_button.text = _get_actor_display_name(_actor)
+
+
+func _get_actor_needs_module(actor: Node) -> CharacterNeedsModule:
+	if actor == null:
+		return null
+	if actor.has_method("get_needs_module"):
+		return actor.call("get_needs_module") as CharacterNeedsModule
+	var direct := actor.get_node_or_null("AICharacterNeedsBundle/CharacterNeedsModule") as CharacterNeedsModule
+	if direct != null:
+		return direct
+	return null
+
+
+func _get_actor_movement_module(actor: Node) -> Node:
+	if actor == null:
+		return null
+	for child_name in ["AICharacterRandomWanderModule", "RobinRandomWanderModule"]:
+		var module := actor.get_node_or_null(child_name)
+		if module != null and module.has_method("clamp_body_to_movement_area"):
+			return module
+	for child in actor.get_children():
+		if child != null and child.has_method("clamp_body_to_movement_area"):
+			return child
+	return null
+
+
+func _get_actor_display_name(actor: Node) -> String:
+	if actor == null:
+		return "未接続"
+	var value: Variant = actor.get("display_name")
+	if value is String and not String(value).is_empty():
+		return String(value)
+	return actor.name
+
+
+func _clear_children(node: Node) -> void:
+	if node == null:
+		return
+	for child in node.get_children():
+		node.remove_child(child)
+		child.queue_free()
