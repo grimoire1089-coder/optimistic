@@ -1,6 +1,8 @@
 extends Node
 class_name FurniturePlacementModule
 
+signal layout_changed(layout_version: int)
+
 const BUILD_LOCK_META := &"build_locked_by_sleep"
 
 @export var room_map_path: NodePath
@@ -337,6 +339,7 @@ func _unregister_furniture(furniture: Node2D) -> void:
 
 func _mark_layout_changed() -> void:
 	_layout_version += 1
+	layout_changed.emit(_layout_version)
 
 
 func _get_unique_furniture_nodes() -> Array[Node2D]:
