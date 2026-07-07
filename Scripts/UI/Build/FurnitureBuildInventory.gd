@@ -69,6 +69,7 @@ func _ready() -> void:
 	_sync_item_category_visibility()
 	_sync_floor_buttons()
 	_update_category_detail_text()
+	_sync_process_enabled()
 
 
 func _process(_delta: float) -> void:
@@ -77,6 +78,7 @@ func _process(_delta: float) -> void:
 	_sync_visibility()
 	_sync_mode_buttons()
 	_sync_floor_buttons()
+	_sync_process_enabled()
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -274,6 +276,8 @@ func _on_floor_store_pressed() -> void:
 
 func _on_build_mode_changed(enabled: bool) -> void:
 	visible = enabled
+	_sync_mode_buttons()
+	_sync_floor_buttons()
 	if not enabled:
 		_update_category_detail_text()
 
@@ -356,6 +360,10 @@ func _sync_floor_buttons() -> void:
 		floor_003_place_button.disabled = not has_floor_module or has_floor
 	if floor_store_button != null:
 		floor_store_button.disabled = not has_floor_module or not has_floor
+
+
+func _sync_process_enabled() -> void:
+	set_process(_build_mode_controller == null or _floor_placement == null)
 
 
 func _connect_controller_signals() -> void:
