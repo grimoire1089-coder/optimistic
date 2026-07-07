@@ -13,6 +13,7 @@ class_name AICharacterActionProgressBarModule
 @export var border_color: Color = Color(0.0, 0.95, 1.0, 0.72)
 @export var corner_radius: int = 4
 @export var update_interval_seconds: float = 0.1
+@export var idle_check_interval_seconds: float = 0.35
 
 var _body: Node2D
 var _hydrate_behavior: Node
@@ -22,30 +23,35 @@ var _craft_behavior: Node
 var _read_book_behavior: Node
 var _bar: ProgressBar
 var _bar_add_deferred := false
-var _update_timer := 0.0
+var _update_timer: Timer
 
 
 func _ready() -> void:
 	_body = get_parent() as Node2D
 	_resolve_refs()
 	_request_bar()
-	set_process(true)
+	_ensure_update_timer()
+	_update_timer.start()
 
 
 func setup(body: Node2D) -> void:
 	_body = body
 	_resolve_refs()
 	_request_bar()
+	_ensure_update_timer()
+	if _update_timer != null and _update_timer.is_stopped():
+		_update_timer.start()
 
 
-func _process(delta: float) -> void:
-	_update_timer -= maxf(delta, 0.0)
-	if _update_timer > 0.0:
-		return
-	_update_timer = maxf(update_interval_seconds, 0.05)
+func refresh_action_progress_bar() -> void:
 	_resolve_refs()
 	_request_bar()
 	_update_bar()
+	_sync_update_timer_interval()
+
+
+func _on_update_timer_timeout() -> void:
+	refresh_action_progress_bar()
 
 
 func _update_bar() -> void:
@@ -144,6 +150,31 @@ func _apply_bar_style() -> void:
 
 	_bar.add_theme_stylebox_override("background", background_style)
 	_bar.add_theme_stylebox_override("fill", fill_style)
+
+
+func _ensure_update_timer() -> void:
+	if _update_timer != null and is_instance_valid(_update_timer):
+		return
+	_update_timer = Timer.new()
+	_update_timer.name = "ActionProgressBarUpdateTimer"
+	_update_timer.one_shot = false
+	_update_timer.autostart = false
+	_update_timer.wait_time = maxf(idle_check_interval_seconds, 0.05)
+	_update_timer.timeout.connect(_on_update_timer_timeout)
+	add_child(_update_timer)
+
+
+func _sync_update_timer_interval() -> void:
+	if _update_timer == null or not is_instance_valid(_update_timer):
+		return
+	var has_source := _get_active_progress_source() != null
+	var next_wait_time := update_interval_seconds if has_source else idle_check_interval_seconds
+	next_wait_time = maxf(next_wait_time, 0.05)
+	if is_equal_approx(_update_timer.wait_time, next_wait_time):
+		return
+	_update_timer.wait_time = next_wait_time
+	if not _update_timer.is_stopped():
+		_update_timer.start()
 
 
 func _resolve_refs() -> void:
