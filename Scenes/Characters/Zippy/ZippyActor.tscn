@@ -1,7 +1,7 @@
 [gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://Scripts/Characters/Zippy/ZippyActor.gd" id="1_zippy_actor"]
-[ext_resource type="Texture2D" uid="uid://bg6hpv52raosv" path="res://Assets/Characters/Zippy/Portraits/Zippy_Game_0001.png" id="2_zippy_texture"]
+[ext_resource type="Texture2D" uid="uid://bupbhbubnba8s" path="res://Assets/Characters/Zippy/Walk/Zippy_Game_Front.png" id="2_zippy_texture"]
 [ext_resource type="PackedScene" path="res://Scenes/Characters/Modules/AICharacterNeedsBundle.tscn" id="3_needs_bundle"]
 [ext_resource type="Script" path="res://Scripts/Characters/Modules/AICharacterSpriteFitModule.gd" id="4_sprite_fit"]
 
