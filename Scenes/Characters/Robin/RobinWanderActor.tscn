@@ -63,6 +63,7 @@ script = ExtResource("14_skills_module")
 [node name="RobinInventoryModule" type="Node" parent="."]
 script = ExtResource("7_inventory_module")
 initial_item_paths = PackedStringArray("res://Data/Items/Tools/Lapis_001.tres")
+owner_display_name = "ロビン"
 
 [node name="RobinRandomWanderModule" type="Node" parent="."]
 script = ExtResource("3_wander_module")
