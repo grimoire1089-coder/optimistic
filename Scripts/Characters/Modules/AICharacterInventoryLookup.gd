@@ -25,6 +25,10 @@ static func get_inventory_module(
 	if _is_inventory_compatible(legacy_node):
 		return legacy_node
 
+	var compatible_node := _get_first_inventory_like_node(actor)
+	if _is_inventory_compatible(compatible_node):
+		return compatible_node
+
 	return null
 
 
@@ -54,6 +58,15 @@ static func _get_child_inventory(actor: Node, child_name: StringName) -> Node:
 	if actor == null or child_name == &"":
 		return null
 	return actor.get_node_or_null(NodePath(String(child_name)))
+
+
+static func _get_first_inventory_like_node(actor: Node) -> Node:
+	if actor == null:
+		return null
+	for node in actor.get_children():
+		if node is Node and _is_inventory_compatible(node):
+			return node
+	return null
 
 
 static func _is_inventory_compatible(inventory: Node) -> bool:
