@@ -249,9 +249,9 @@ func _ensure_action_item_display_module() -> void:
 		return
 	action_item_display_module.name = "AICharacterActionItemDisplayModule"
 	action_item_display_module.hydrate_behavior_path = NodePath("../AICharacterTableSeatHydrateModule")
-action_item_display_module.sit_behavior_path = NodePath("../AICharacterReservedSitBehaviorModule")
-action_item_display_module.item_center_offset = Vector2(0.0, -18.0)
-action_item_display_module.item_display_size = Vector2(70.0, 70.0)
+	action_item_display_module.sit_behavior_path = NodePath("../AICharacterReservedSitBehaviorModule")
+	action_item_display_module.item_center_offset = Vector2(0.0, -18.0)
+	action_item_display_module.item_display_size = Vector2(70.0, 70.0)
 	add_child(action_item_display_module)
 
 
