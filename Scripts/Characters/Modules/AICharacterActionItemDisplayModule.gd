@@ -48,8 +48,8 @@ func setup(body: Node2D) -> void:
 		_update_timer.start()
 
 
-func show_item_icon(icon_path: String, global_center: Variant = null, owner: Node = null) -> void:
-	var display_owner := owner
+func show_item_icon(icon_path: String, global_center: Variant = null, item_owner: Node = null) -> void:
+	var display_owner := item_owner
 	if display_owner == null:
 		display_owner = _get_active_item_source()
 	_explicit_item_visible = not icon_path.is_empty()
@@ -61,8 +61,8 @@ func show_item_icon(icon_path: String, global_center: Variant = null, owner: Nod
 	_sync_update_timer_interval()
 
 
-func clear_item_icon(owner: Node = null) -> void:
-	if not _can_clear_explicit_item(owner):
+func clear_item_icon(item_owner: Node = null) -> void:
+	if not _can_clear_explicit_item(item_owner):
 		return
 	_clear_explicit_item_state()
 	_hide_item_rect()
@@ -142,30 +142,30 @@ func _apply_explicit_item_icon() -> void:
 		_item_rect.position = item_center_offset - item_display_size * 0.5
 
 
-func _set_explicit_item_owner(owner: Node) -> void:
-	_explicit_item_has_owner = owner != null and is_instance_valid(owner)
-	_explicit_item_owner_ref = weakref(owner) if _explicit_item_has_owner else null
+func _set_explicit_item_owner(item_owner: Node) -> void:
+	_explicit_item_has_owner = item_owner != null and is_instance_valid(item_owner)
+	_explicit_item_owner_ref = weakref(item_owner) if _explicit_item_has_owner else null
 
 
 func _get_explicit_item_owner() -> Node:
 	if not _explicit_item_has_owner or _explicit_item_owner_ref == null:
 		return null
-	var owner := _explicit_item_owner_ref.get_ref() as Node
-	if owner == null or not is_instance_valid(owner):
+	var item_owner := _explicit_item_owner_ref.get_ref() as Node
+	if item_owner == null or not is_instance_valid(item_owner):
 		return null
-	return owner
+	return item_owner
 
 
 func _is_explicit_item_owner_active() -> bool:
-	var owner := _get_explicit_item_owner()
-	if owner == null:
+	var item_owner := _get_explicit_item_owner()
+	if item_owner == null:
 		return false
-	if owner.has_method("is_action_item_display_visible"):
-		return owner.call("is_action_item_display_visible") == true
-	return owner.is_inside_tree()
+	if item_owner.has_method("is_action_item_display_visible"):
+		return item_owner.call("is_action_item_display_visible") == true
+	return item_owner.is_inside_tree()
 
 
-func _can_clear_explicit_item(owner: Node) -> bool:
+func _can_clear_explicit_item(request_owner: Node) -> bool:
 	if not _explicit_item_visible:
 		return true
 	if not _explicit_item_has_owner:
@@ -173,9 +173,9 @@ func _can_clear_explicit_item(owner: Node) -> bool:
 	var explicit_owner := _get_explicit_item_owner()
 	if explicit_owner == null:
 		return true
-	if owner == null:
+	if request_owner == null:
 		return not _is_explicit_item_owner_active()
-	return owner == explicit_owner
+	return request_owner == explicit_owner
 
 
 func _clear_explicit_item_state() -> void:
