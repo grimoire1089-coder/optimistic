@@ -67,7 +67,6 @@ func _ready() -> void:
 	_ensure_children()
 	_resolve_refs()
 	hide_work_stay()
-	set_process(true)
 
 
 func show_work_stay(job_id: StringName, job_display_name: String = "", worker_display_name: String = "") -> void:
@@ -85,6 +84,7 @@ func hide_work_stay() -> void:
 	_job_id = &""
 	_job_display_name = ""
 	_worker_display_name = ""
+	set_process(false)
 	queue_redraw()
 
 
@@ -95,6 +95,7 @@ func _show_location_stay(activity_kind: StringName, job_id: StringName, job_disp
 	_worker_display_name = worker_display_name
 	_active = true
 	visible = true
+	set_process(true)
 	_resolve_refs()
 	_sync_worker_sprite_texture()
 	_update_status_text()
@@ -104,6 +105,7 @@ func _show_location_stay(activity_kind: StringName, job_id: StringName, job_disp
 
 func _process(_delta: float) -> void:
 	if not _active:
+		set_process(false)
 		return
 	_resolve_refs()
 	if not _is_worker_activity_active():
