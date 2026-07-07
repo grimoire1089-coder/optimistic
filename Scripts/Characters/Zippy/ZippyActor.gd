@@ -9,7 +9,7 @@ const WANDER_SCRIPT := preload("res://Scripts/Characters/Modules/AICharacterRand
 const SIT_SCRIPT := preload("res://Scripts/Characters/Modules/AICharacterReservedSitBehaviorModule.gd")
 const HYDRATE_SCRIPT := preload("res://Scripts/Characters/Modules/AICharacterTableSeatHydrateModule.gd")
 const ITEM_DISPLAY_SCRIPT := preload("res://Scripts/Characters/Modules/AICharacterActionItemDisplayModule.gd")
-const INVENTORY_SCRIPT := preload("res://Scripts/Characters/Robin/Modules/RobinInventoryModule.gd")
+const INVENTORY_SCRIPT := preload("res://Scripts/Characters/Modules/AICharacterInventoryModule.gd")
 const MoveSlot := preload("res://Scripts/Characters/Modules/AICharacterMovementCoordinator.gd")
 
 @export var resident_id: StringName = &"zippy"
@@ -30,7 +30,7 @@ const MoveSlot := preload("res://Scripts/Characters/Modules/AICharacterMovementC
 @onready var need_planner: NeedDrivenAIPlanner = $AICharacterNeedsBundle/NeedDrivenAIPlanner
 
 var wander_module: AICharacterRandomWanderModule
-var inventory_module: RobinInventoryModule
+var inventory_module: AICharacterInventoryModule
 var hydrate_behavior_module: AICharacterTableSeatHydrateModule
 var sit_behavior_module: AICharacterReservedSitBehaviorModule
 var action_item_display_module: AICharacterActionItemDisplayModule
@@ -86,7 +86,7 @@ func get_need_planner() -> NeedDrivenAIPlanner:
 	return need_planner
 
 
-func get_inventory_module() -> RobinInventoryModule:
+func get_inventory_module() -> AICharacterInventoryModule:
 	return inventory_module
 
 
@@ -180,13 +180,13 @@ func _try_claim_move_slot() -> bool:
 
 
 func _ensure_inventory_module() -> void:
-	inventory_module = get_node_or_null("ZippyInventoryModule") as RobinInventoryModule
+	inventory_module = get_node_or_null("AICharacterInventoryModule") as AICharacterInventoryModule
 	if inventory_module != null:
 		return
-	inventory_module = INVENTORY_SCRIPT.new() as RobinInventoryModule
+	inventory_module = INVENTORY_SCRIPT.new() as AICharacterInventoryModule
 	if inventory_module == null:
 		return
-	inventory_module.name = "ZippyInventoryModule"
+	inventory_module.name = "AICharacterInventoryModule"
 	inventory_module.slots_per_category = 8
 	inventory_module.owner_display_name = display_name
 	inventory_module.initial_item_paths = PackedStringArray([DEFAULT_LAPIS_ITEM_PATH])
@@ -217,7 +217,7 @@ func _ensure_hydrate_behavior_module() -> void:
 	if hydrate_behavior_module == null:
 		return
 	hydrate_behavior_module.name = "AICharacterTableSeatHydrateModule"
-	hydrate_behavior_module.inventory_module_path = NodePath("../ZippyInventoryModule")
+	hydrate_behavior_module.inventory_module_path = NodePath("../AICharacterInventoryModule")
 	hydrate_behavior_module.actor_grid_footprint = actor_grid_footprint
 	hydrate_behavior_module.hydrate_request_ratio = 0.5
 	hydrate_behavior_module.nearby_refill_distance = 48.0
