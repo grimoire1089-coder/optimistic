@@ -68,11 +68,11 @@ func _has_other_ai_in_grid_area(top_left_cell: Vector2i, footprint: Vector2i) ->
 	var room_map := _get_room_map()
 	if room_map == null:
 		return false
+	var other_footprint := _get_safe_actor_grid_footprint()
 	for actor in _body.get_tree().get_nodes_in_group(ai_actor_group_name):
 		var other_actor := actor as Node2D
 		if other_actor == null or other_actor == _body:
 			continue
-		var other_footprint := _get_actor_footprint(other_actor)
 		var other_top_left := AICharacterGridMovementHelper.get_current_actor_top_left_grid_position(
 			room_map,
 			other_actor.global_position,
