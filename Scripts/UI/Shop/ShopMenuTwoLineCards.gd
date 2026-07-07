@@ -2,7 +2,7 @@ extends ShopMenu
 class_name ShopMenuTwoLineCards
 
 signal shop_layout_invalidated(shop_id: StringName)
-signal shop_database_layout_invalidated
+signal shop_database_layout_invalidated()
 
 var _last_purchase_multiplier: int = -1
 var _item_card_buttons: Dictionary = {}
@@ -481,7 +481,7 @@ func _attach_cached_item_cards(cache_key: String) -> void:
 func _detach_current_item_grid_to_cache() -> void:
 	if item_grid == null:
 		return
-	if _current_item_layout_key.is_empty() and item_grid.get_child_count() <= 0:
+	if item_grid.get_child_count() <= 0:
 		return
 
 	var cards: Array[Control] = []
