@@ -14,3 +14,9 @@ static var _is_prepared: bool = false
 
 static func prepare_default_database() -> ShopDatabase:
 	return prepare_database_path(SHOP_DATABASE_PATH)
+
+
+static func prepare_database_path(database_path: String) -> ShopDatabase:
+	if database_path.strip_edges().is_empty():
+		return null
+	return null
