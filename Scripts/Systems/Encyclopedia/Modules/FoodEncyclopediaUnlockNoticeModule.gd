@@ -71,10 +71,13 @@ class FoodEncyclopediaUnlockLogStyler extends Node:
 
 	var _message_log: Node
 	var _message_texts: Dictionary = {}
+	var _pending_message_texts: Dictionary = {}
 	var _played_message_texts: Dictionary = {}
 	var _message_list: VBoxContainer
 	var _tab_bar: TabBar
 	var _notice_sfx: AudioStream
+	var _gold_style: StyleBoxFlat
+	var _is_apply_queued := false
 
 
 	func setup(message_log: Node) -> void:
@@ -90,31 +93,42 @@ class FoodEncyclopediaUnlockLogStyler extends Node:
 		if key.is_empty():
 			return
 		_message_texts[key] = true
+		_pending_message_texts[key] = true
 		apply_gold_styles_deferred()
 
 
 	func apply_gold_styles_deferred() -> void:
+		if _is_apply_queued:
+			return
+		_is_apply_queued = true
 		call_deferred("apply_gold_styles")
 
 
 	func apply_gold_styles() -> void:
+		_is_apply_queued = false
 		if _message_log == null or not is_instance_valid(_message_log):
 			return
 		if int(_message_log.get("_current_channel")) != NORMAL_LOG_CHANNEL:
+			return
+		if _pending_message_texts.is_empty() and _message_texts.is_empty():
 			return
 
 		var list := _get_message_list()
 		if list == null:
 			return
 
-		for holder in list.get_children():
+		for index in range(list.get_child_count() - 1, -1, -1):
+			if _pending_message_texts.is_empty():
+				return
+			var holder := list.get_child(index)
 			var card := _find_panel_container(holder)
 			if card == null:
 				continue
 			var message_text := _find_message_text(card)
-			if message_text.is_empty() or not _message_texts.has(message_text):
+			if message_text.is_empty() or not _pending_message_texts.has(message_text):
 				continue
 			_apply_gold_style(card)
+			_pending_message_texts.erase(message_text)
 			_play_notice_for_message_if_needed(message_text)
 
 
@@ -141,6 +155,10 @@ class FoodEncyclopediaUnlockLogStyler extends Node:
 
 
 	func _on_log_tab_changed(_tab: int) -> void:
+		if _message_texts.is_empty():
+			return
+		for message_text in _message_texts.keys():
+			_pending_message_texts[String(message_text)] = true
 		apply_gold_styles_deferred()
 
 
@@ -196,17 +214,19 @@ class FoodEncyclopediaUnlockLogStyler extends Node:
 	func _apply_gold_style(card: PanelContainer) -> void:
 		if card == null:
 			return
-		card.add_theme_stylebox_override("panel", _make_gold_style())
+		card.add_theme_stylebox_override("panel", _get_gold_style())
 
 
-	func _make_gold_style() -> StyleBoxFlat:
-		var style := StyleBoxFlat.new()
-		style.bg_color = GOLD_BACKGROUND_COLOR
-		style.border_color = GOLD_BORDER_COLOR
-		style.set_border_width_all(GOLD_BORDER_WIDTH)
-		style.set_corner_radius_all(CARD_CORNER_RADIUS)
-		style.set_content_margin_all(0.0)
-		return style
+	func _get_gold_style() -> StyleBoxFlat:
+		if _gold_style != null:
+			return _gold_style
+		_gold_style = StyleBoxFlat.new()
+		_gold_style.bg_color = GOLD_BACKGROUND_COLOR
+		_gold_style.border_color = GOLD_BORDER_COLOR
+		_gold_style.set_border_width_all(GOLD_BORDER_WIDTH)
+		_gold_style.set_corner_radius_all(CARD_CORNER_RADIUS)
+		_gold_style.set_content_margin_all(0.0)
+		return _gold_style
 
 
 	func _load_food_unlock_notice_sfx() -> void:
