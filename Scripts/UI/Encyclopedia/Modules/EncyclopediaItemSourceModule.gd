@@ -5,7 +5,16 @@ const CATEGORY_FOODS := "foods"
 const CATEGORY_TOOLS := "tools"
 const CATEGORY_DRINKS := "drinks"
 const CATEGORY_INGREDIENTS := "ingredients"
-const VALID_CATEGORY_IDS := [CATEGORY_TOOLS, CATEGORY_FOODS, CATEGORY_DRINKS, CATEGORY_INGREDIENTS]
+const CATEGORY_MATERIALS := "materials"
+const CATEGORY_MISC := "misc"
+const VALID_CATEGORY_IDS := [
+	CATEGORY_TOOLS,
+	CATEGORY_FOODS,
+	CATEGORY_DRINKS,
+	CATEGORY_INGREDIENTS,
+	CATEGORY_MATERIALS,
+	CATEGORY_MISC,
+]
 const SUPPORTED_EXTENSIONS := ["tres", "res"]
 
 var _cached_item_paths_by_category: Dictionary = {}
