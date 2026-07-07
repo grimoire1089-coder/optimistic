@@ -72,6 +72,9 @@ side_ui_margin = 280.0
 movement_area_provider_path = NodePath("../RobinRoomMap")
 visual_half_extents = Vector2(48, 96)
 
+[node name="RobinWalkSpriteAnimator" type="Node" parent="."]
+script = ExtResource("4_animator")
+
 [node name="AICharacterSleepBehaviorModule" type="Node" parent="." groups=["ai_movement_behavior"]]
 script = ExtResource("8_sleep_behavior")
 needs_module_path = NodePath("../AICharacterNeedsBundle/CharacterNeedsModule")
