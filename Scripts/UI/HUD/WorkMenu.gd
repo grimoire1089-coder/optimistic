@@ -17,12 +17,10 @@ const MOVEMENT_LOCK_CONTROLLER_GROUP: StringName = &"hud_movement_lock_controlle
 @export var working_detail_text: String = "すでに仕事へ向かっているか勤務中です。"
 @export var work_unavailable_text: String = "今は仕事に行けません。"
 
-@onready var title_label: Label = $MarginContainer/Rows/Header/TitleLabel
 @onready var close_button: Button = $MarginContainer/Rows/Header/CloseButton
 @onready var job_001_button: Button = $MarginContainer/Rows/JobList/Job001Button
 @onready var detail_label: Label = $MarginContainer/Rows/DetailLabel
 
-var _refresh_timer: float = 0.0
 var _worker: Node
 var _connected_worker: Node
 var _is_work_processing: bool = false
@@ -39,20 +37,9 @@ func _ready() -> void:
 	_refresh()
 
 
-func _process(delta: float) -> void:
-	if not visible:
-		return
-	_refresh_timer -= delta
-	if _refresh_timer > 0.0:
-		return
-	_refresh_timer = 0.25
-	_refresh()
-
-
 func open_menu() -> void:
 	_apply_bottom_right_layout()
 	visible = true
-	_refresh_timer = 0.0
 	_refresh()
 
 
@@ -72,7 +59,6 @@ func is_work_processing() -> bool:
 
 
 func _refresh() -> void:
-	title_label.text = "仕事"
 	var rank := _get_first_job_rank()
 	var pay := _get_first_job_pay_for_rank(rank)
 	job_001_button.text = "%s\n%s / %s / ランク %d / 給与 CR %d" % [
@@ -82,16 +68,8 @@ func _refresh() -> void:
 		rank,
 		pay,
 	]
-	var sleeping := _is_worker_sleeping()
-	var working := is_work_processing()
-	job_001_button.disabled = sleeping or working
-	if sleeping:
-		detail_label.text = sleeping_detail_text
-		return
-	if working:
-		detail_label.text = working_detail_text
-		return
-	detail_label.text = "%s / %s: エントランスから出勤します。完了するとランクが上がります。MAX %d" % [
+	job_001_button.disabled = false
+	detail_label.text = "%s / %s: ボタンを押すとロビンに状況を確認してから、エントランスへ出勤します。完了するとランクが上がります。MAX %d" % [
 		first_job_name,
 		first_job_category_name,
 		_get_max_job_rank(),
@@ -99,19 +77,9 @@ func _refresh() -> void:
 
 
 func _on_job_001_pressed() -> void:
-	if _is_worker_sleeping():
-		_refresh()
-		_push_message(sleeping_detail_text)
-		return
-	if is_work_processing():
-		_refresh()
-		_push_message(working_detail_text)
-		return
-
 	var worker := _get_worker()
 	if worker == null or not worker.has_method("request_work_at_entrance"):
-		_refresh()
-		_push_message(work_unavailable_text)
+		_show_work_request_rejected(work_unavailable_text)
 		return
 
 	if worker.call("request_work_at_entrance", first_job_id, first_job_name, first_job_minutes) == true:
@@ -121,8 +89,29 @@ func _on_job_001_pressed() -> void:
 		return
 
 	_set_work_processing(false)
-	_refresh()
-	_push_message(work_unavailable_text)
+	_show_work_request_rejected(_get_worker_work_unavailable_message(worker))
+
+
+func _show_work_request_rejected(message: String) -> void:
+	var safe_message := message.strip_edges()
+	if safe_message.is_empty():
+		safe_message = work_unavailable_text
+	detail_label.text = safe_message
+	_push_message(safe_message)
+
+
+func _get_worker_work_unavailable_message(worker: Node) -> String:
+	if worker == null:
+		return work_unavailable_text
+	if worker.has_method("is_sleeping") and worker.call("is_sleeping") == true:
+		return sleeping_detail_text
+	if worker.has_method("is_working") and worker.call("is_working") == true:
+		return working_detail_text
+	if worker.has_method("get_current_action_display_text"):
+		var action_text := String(worker.call("get_current_action_display_text")).strip_edges()
+		if not action_text.is_empty():
+			return "今は%sなので、仕事には行けません。" % action_text
+	return work_unavailable_text
 
 
 func _set_work_processing(work_processing: bool) -> void:
@@ -134,15 +123,6 @@ func _set_work_processing(work_processing: bool) -> void:
 
 func _notify_movement_lock_controller() -> void:
 	get_tree().call_group(MOVEMENT_LOCK_CONTROLLER_GROUP, "refresh_movement_button_locks")
-
-
-func _is_worker_sleeping() -> bool:
-	var worker := _get_worker()
-	if worker == null:
-		return false
-	if not worker.has_method("is_sleeping"):
-		return false
-	return worker.call("is_sleeping") == true
 
 
 func _is_worker_working() -> bool:
@@ -211,7 +191,8 @@ func _on_worker_work_completed(job_id: StringName) -> void:
 			next_rank,
 			_get_max_job_rank(),
 		])
-	_refresh()
+	if visible:
+		_refresh()
 
 
 func _get_first_job_rank() -> int:
