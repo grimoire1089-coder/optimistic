@@ -3,7 +3,8 @@ class_name ShopMenu
 
 @export var shop_database: ShopDatabase
 @export var actor_path: NodePath = NodePath("../../Robin")
-@export var inventory_module_child_name: StringName = &"RobinInventoryModule"
+@export var inventory_module_child_name: StringName = &"AICharacterInventoryModule"
+@export var legacy_inventory_module_child_name: StringName = &"RobinInventoryModule"
 @export var room_map_path: NodePath = NodePath("../../RobinRoomMap")
 @export var map_travel_module_path: NodePath = NodePath("../../MainSceneMapTravelModule")
 @export var center_on_map_grid: bool = true
@@ -13,6 +14,7 @@ const SHOP_CARD_BORDER_WIDTH := 1
 const SHOP_CARD_HOVER_BORDER_WIDTH := 4
 const PURCHASE_BUTTON_BORDER_WIDTH := 1
 const PURCHASE_BUTTON_HOVER_BORDER_WIDTH := 3
+const InventoryLookup := preload("res://Scripts/Characters/Modules/AICharacterInventoryLookup.gd")
 
 @onready var title_label: Label = $MarginContainer/Rows/Header/TitleLabel
 @onready var back_button: Button = $MarginContainer/Rows/Header/BackButton
@@ -28,7 +30,7 @@ const PURCHASE_BUTTON_HOVER_BORDER_WIDTH := 3
 @onready var item_grid: GridContainer = $MarginContainer/Rows/ShopDetailView/ShopContent/ItemScroll/ItemGrid
 @onready var detail_label: Label = $MarginContainer/Rows/DetailLabel
 
-var _inventory_module: RobinInventoryModule
+var _inventory_module: Node
 var _book_library: Node
 var _shops: Array[ShopData] = []
 var _selected_shop_index: int = -1
@@ -206,11 +208,7 @@ func _resolve_inventory_module() -> void:
 		push_warning("ショップ用の購入先アクターが見つかりません: %s" % actor_path)
 		return
 
-	if actor.has_method("get_inventory_module"):
-		_inventory_module = actor.call("get_inventory_module") as RobinInventoryModule
-	else:
-		_inventory_module = actor.get_node_or_null(NodePath(String(inventory_module_child_name))) as RobinInventoryModule
-
+	_inventory_module = InventoryLookup.get_inventory_module(actor, inventory_module_child_name, legacy_inventory_module_child_name)
 	if _inventory_module == null:
 		push_warning("ショップ用のインベントリモジュールが見つかりません。")
 
@@ -706,7 +704,6 @@ func _on_buy_pressed(entry: ShopItemData) -> void:
 		_refresh_current_shop_detail()
 		detail_label.text = "インベントリに空きがありません。購入を取り消しました。"
 		return
-
 	_refresh_current_shop_detail()
 	detail_label.text = "購入しました: %s x%d" % [entry.get_display_name(), purchase_amount]
 
