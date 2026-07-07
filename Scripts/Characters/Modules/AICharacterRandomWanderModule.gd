@@ -6,7 +6,7 @@ const MoveSlot := preload("res://Scripts/Characters/Modules/AICharacterMovementC
 @export var ai_actor_group_name: StringName = &"ai_character_actor"
 @export var use_shared_move_slot: bool = true
 @export var avoid_ai_character_grids: bool = true
-@export var limit_path_to_one_grid_step: bool = true
+@export var keep_step_target_to_one_grid: bool = true
 
 
 func setup(body: Node2D) -> void:
@@ -38,17 +38,71 @@ func _can_step_now() -> bool:
 	return MoveSlot.request_move(_body)
 
 
-func _pick_random_walkable_top_left_excluding(excluded_cell: Vector2i) -> Vector2i:
-	if not limit_path_to_one_grid_step:
-		return super._pick_random_walkable_top_left_excluding(excluded_cell)
-	var candidates: Array[Vector2i] = []
-	for direction in [Vector2i.DOWN, Vector2i.RIGHT, Vector2i.UP, Vector2i.LEFT]:
-		var candidate := excluded_cell + direction
-		if _is_actor_grid_area_walkable(candidate):
-			candidates.append(candidate)
-	if candidates.is_empty():
-		return INVALID_GRID_POSITION
-	return candidates[_rng.randi_range(0, candidates.size() - 1)]
+func _update_grid_step_movement(delta: float) -> void:
+	if not keep_step_target_to_one_grid:
+		super._update_grid_step_movement(delta)
+		return
+
+	while true:
+		if _grid_step_active:
+			_grid_step_elapsed += maxf(delta, 0.0)
+			var ratio := 1.0
+			if _grid_step_duration > 0.0:
+				ratio = clampf(_grid_step_elapsed / _grid_step_duration, 0.0, 1.0)
+			_body.global_position = _grid_step_start_position.lerp(_grid_step_target_position, ratio)
+			if ratio < 1.0:
+				return
+			_body.global_position = _grid_step_target_position
+			_grid_step_active = false
+			if not _path_cells.is_empty():
+				var completed_waypoint_position := _get_actor_grid_area_center(_path_cells[0])
+				if _body.global_position.distance_squared_to(completed_waypoint_position) <= 0.001:
+					_path_cells.remove_at(0)
+			if _path_cells.is_empty():
+				_start_idle()
+			return
+
+		if _path_cells.is_empty():
+			_start_idle()
+			return
+
+		var waypoint_cell := _path_cells[0]
+		if not _is_actor_grid_area_inside(waypoint_cell):
+			_pick_next_action()
+			return
+
+		var waypoint_position := _get_actor_grid_area_center(waypoint_cell)
+		var to_waypoint := waypoint_position - _body.global_position
+		if to_waypoint.length_squared() <= 0.001:
+			_body.global_position = waypoint_position
+			_path_cells.remove_at(0)
+			continue
+
+		var step_target := _get_one_grid_step_target(_body.global_position, waypoint_position)
+		var to_step_target := step_target - _body.global_position
+		_direction = AICharacterGridMovementHelper.get_axis_aligned_direction(to_step_target)
+		_grid_step_start_position = _body.global_position
+		_grid_step_target_position = step_target
+		_grid_step_elapsed = 0.0
+		_grid_step_duration = maxf(to_step_target.length() / maxf(walk_speed, 1.0), 0.01)
+		_grid_step_active = true
+		continue
+
+
+func _get_one_grid_step_target(current_position: Vector2, waypoint_position: Vector2) -> Vector2:
+	var room_map := _get_room_map()
+	if room_map == null:
+		return AICharacterGridMovementHelper.get_axis_aligned_step_target(current_position, waypoint_position)
+	var cell_size := room_map.get_cell_size()
+	var to_waypoint := waypoint_position - current_position
+	var direction := AICharacterGridMovementHelper.get_axis_aligned_direction(to_waypoint)
+	if not is_zero_approx(direction.x):
+		var step_x := minf(absf(to_waypoint.x), cell_size.x) * signf(to_waypoint.x)
+		return Vector2(current_position.x + step_x, current_position.y)
+	if not is_zero_approx(direction.y):
+		var step_y := minf(absf(to_waypoint.y), cell_size.y) * signf(to_waypoint.y)
+		return Vector2(current_position.x, current_position.y + step_y)
+	return waypoint_position
 
 
 func _get_all_walkable_top_left_cells() -> Array[Vector2i]:
