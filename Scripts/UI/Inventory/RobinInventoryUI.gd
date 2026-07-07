@@ -7,6 +7,7 @@ const ITEM_ICON_SIZE := Vector2(64.0, 64.0)
 const SLOTS_PER_PAGE := 20
 const SORT_MODE_NAME: StringName = &"name"
 const SORT_MODE_AMOUNT: StringName = &"amount"
+const UNLIMITED_SLOT_LIMIT := -1
 
 @export var actor_path: NodePath = NodePath("../../Robin")
 @export var inventory_module_child_name: StringName = &"AICharacterInventoryModule"
@@ -27,7 +28,7 @@ const SORT_MODE_AMOUNT: StringName = &"amount"
 @onready var detail_label: Label = $MarginContainer/Rows/Footer/DetailLabel
 @onready var search_line_edit: LineEdit = $MarginContainer/Rows/Footer/SearchLineEdit
 
-var _inventory_module: AICharacterInventoryModule
+var _inventory_module
 var _categories: Array[Dictionary] = []
 var _current_category_index: int = 0
 var _current_page_index: int = 0
@@ -85,18 +86,25 @@ func _resolve_inventory_module() -> void:
 		return
 
 	if actor.has_method("get_inventory_module"):
-		_inventory_module = actor.call("get_inventory_module") as AICharacterInventoryModule
+		var inventory_value = actor.call("get_inventory_module")
+		if inventory_value is Node:
+			_inventory_module = inventory_value
 	else:
-		_inventory_module = actor.get_node_or_null(NodePath(String(inventory_module_child_name))) as AICharacterInventoryModule
+		_inventory_module = actor.get_node_or_null(NodePath(String(inventory_module_child_name)))
 		if _inventory_module == null and not legacy_inventory_module_child_name.is_empty():
-			_inventory_module = actor.get_node_or_null(NodePath(String(legacy_inventory_module_child_name))) as AICharacterInventoryModule
+			_inventory_module = actor.get_node_or_null(NodePath(String(legacy_inventory_module_child_name)))
 
 	if _inventory_module == null:
 		push_warning("AIキャラクターのインベントリモジュールが見つかりません。")
 		return
+	if not _inventory_module.has_method("get_categories") or not _inventory_module.has_method("get_items"):
+		push_warning("インベントリ互換のないノードです: %s" % _inventory_module.name)
+		_inventory_module = null
+		return
 
-	if not _inventory_module.inventory_changed.is_connected(_refresh):
-		_inventory_module.inventory_changed.connect(_refresh)
+	var refresh_callable := Callable(self, "_refresh")
+	if _inventory_module.has_signal("inventory_changed") and not _inventory_module.inventory_changed.is_connected(refresh_callable):
+		_inventory_module.inventory_changed.connect(refresh_callable)
 
 
 func _setup_tabs() -> void:
@@ -145,7 +153,9 @@ func _refresh() -> void:
 	var items := _inventory_module.get_items(category_id)
 	var visible_items := _get_search_filtered_items(items)
 	_sort_items(visible_items)
-	var slot_limit := _inventory_module.get_slot_limit(category_id)
+	var slot_limit := UNLIMITED_SLOT_LIMIT
+	if _inventory_module.has_method("get_slot_limit"):
+		slot_limit = int(_inventory_module.get_slot_limit(category_id))
 	var total_slot_count := _get_total_slot_count(slot_limit, visible_items.size(), _is_search_active())
 	var page_count := _get_page_count(total_slot_count)
 	_current_page_index = clampi(_current_page_index, 0, page_count - 1)
@@ -301,8 +311,11 @@ func _is_search_active() -> bool:
 func _get_total_slot_count(slot_limit: int, item_count: int, search_active: bool) -> int:
 	if search_active:
 		return max(item_count, SLOTS_PER_PAGE)
-	if slot_limit == AICharacterInventoryModule.UNLIMITED_SLOT_LIMIT:
-		return max(item_count, _inventory_module.get_slots_per_category(), SLOTS_PER_PAGE)
+	if slot_limit == UNLIMITED_SLOT_LIMIT:
+		var base_slot_count := SLOTS_PER_PAGE
+		if _inventory_module != null and _inventory_module.has_method("get_slots_per_category"):
+			base_slot_count = int(_inventory_module.get_slots_per_category())
+		return max(item_count, base_slot_count, SLOTS_PER_PAGE)
 	return max(slot_limit, item_count, SLOTS_PER_PAGE)
 
 
@@ -338,7 +351,7 @@ func _update_grid_minimum_size(slot_count: int) -> void:
 func _build_detail_text(category_name: String, item_count: int, visible_item_count: int, slot_limit: int) -> String:
 	if _is_search_active():
 		return "%s  検索 %d/%d" % [category_name, visible_item_count, item_count]
-	if slot_limit == AICharacterInventoryModule.UNLIMITED_SLOT_LIMIT:
+	if slot_limit == UNLIMITED_SLOT_LIMIT:
 		return "%s  %d/無制限" % [category_name, item_count]
 	return "%s  %d/%d" % [category_name, item_count, slot_limit]
 
