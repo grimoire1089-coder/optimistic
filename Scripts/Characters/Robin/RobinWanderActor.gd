@@ -13,6 +13,7 @@ const DEFAULT_CLICK_SFX_PATHS := [
 	"res://Assets/Audio/SFX/UI/button_click.ogg",
 	"res://Assets/Audio/SFX/UI/Click.ogg",
 ]
+const InventoryLookup := preload("res://Scripts/Characters/Modules/AICharacterInventoryLookup.gd")
 
 @export var start_at_movement_area_center: bool = true
 @export var snap_start_position_to_grid: bool = true
@@ -29,7 +30,7 @@ const DEFAULT_CLICK_SFX_PATHS := [
 @onready var mood_module: CharacterMoodModule = $AICharacterNeedsBundle/CharacterMoodModule
 @onready var need_planner: NeedDrivenAIPlanner = $AICharacterNeedsBundle/NeedDrivenAIPlanner
 @onready var skills_module: AICharacterSkillsModule = $AICharacterSkillsModule
-@onready var inventory_module: Node = $RobinInventoryModule
+@onready var inventory_module: Node = _get_inventory_module_node()
 @onready var wander_module: RobinRandomWanderModule = $RobinRandomWanderModule
 @onready var sleep_behavior_module: AICharacterSleepBehaviorModule = $AICharacterSleepBehaviorModule
 @onready var hydrate_behavior_module: AICharacterHydrateBehaviorModule = $AICharacterHydrateBehaviorModule
@@ -701,6 +702,17 @@ func _get_actor_top_left_grid_position(footprint: Vector2i) -> Vector2i:
 
 func _get_debug_actor_grid_footprint() -> Vector2i:
 	return AICharacterGridMovementHelper.get_safe_footprint(debug_actor_grid_footprint)
+
+
+func _get_inventory_module_node() -> Node:
+	var preferred_node := get_node_or_null("AICharacterInventoryModule")
+	if InventoryLookup.is_inventory_compatible(preferred_node):
+		return preferred_node
+	for child in get_children():
+		var node := child as Node
+		if node != null and InventoryLookup.is_inventory_compatible(node):
+			return node
+	return null
 
 
 func _get_room_map() -> RoomMapGridModule:
