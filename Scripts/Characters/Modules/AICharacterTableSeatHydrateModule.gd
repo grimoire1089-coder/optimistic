@@ -1,13 +1,67 @@
 extends AICharacterHydrateBehaviorModule
 class_name AICharacterTableSeatHydrateModule
 
+const HydrateInventoryResolver := preload("res://Scripts/Characters/Modules/AICharacterHydrateInventoryResolver.gd")
+const HydrateInventoryActions := preload("res://Scripts/Characters/Modules/AICharacterHydrateInventoryActions.gd")
+
 const CHAIR_CLAIMED_BY_META := &"ai_seat_reserved_by"
 const CHAIR_CLAIMED_NAME_META := &"ai_seat_reserved_name"
 const CHAIR_CLAIMED_REASON_META := &"ai_seat_reserved_reason"
 
+@export var legacy_inventory_module_path: NodePath = NodePath("../RobinInventoryModule")
+
+var _shared_inventory_module: Node
+
 
 func _exit_tree() -> void:
 	_clear_chair_claim(_target_dining_seat)
+
+
+func _resolve_refs() -> void:
+	super._resolve_refs()
+	_resolve_shared_inventory_module()
+
+
+func _create_water_bottle_for_drinking() -> FoodItemData:
+	var food_data := _get_water_bottle_item()
+	if food_data == null:
+		return null
+	var inventory := _resolve_shared_inventory_module()
+	if inventory == null:
+		return null
+	if not HydrateInventoryActions.add_food(inventory, food_data, 1):
+		return null
+	_record_bill_water_usage(1, "hydrate_refill")
+	return food_data
+
+
+func _has_water_bottle(food_data: FoodItemData) -> bool:
+	if food_data == null:
+		return false
+	var inventory := _resolve_shared_inventory_module()
+	return HydrateInventoryActions.has_food(inventory, food_data)
+
+
+func _consume_water_bottle(food_data: FoodItemData) -> bool:
+	if food_data == null:
+		return false
+	var inventory := _resolve_shared_inventory_module()
+	if not HydrateInventoryActions.remove_food(inventory, food_data, 1):
+		return false
+	_apply_water_bottle_need_effect(food_data)
+	return true
+
+
+func _resolve_shared_inventory_module() -> Node:
+	if _shared_inventory_module != null and is_instance_valid(_shared_inventory_module):
+		return _shared_inventory_module
+	_shared_inventory_module = HydrateInventoryResolver.resolve_inventory(
+		self,
+		_body,
+		inventory_module_path,
+		legacy_inventory_module_path
+	)
+	return _shared_inventory_module
 
 
 func _find_best_connected_dining_seat() -> Dictionary:
