@@ -1,0 +1,2 @@
+extends RobinRandomWanderModule
+class_name AICharacterRandomWanderModule
