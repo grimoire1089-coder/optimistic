@@ -2,6 +2,8 @@ extends ShopMenu
 class_name ShopMenuTwoLineCards
 
 var _last_purchase_multiplier: int = -1
+var _item_card_buttons: Dictionary = {}
+var _item_card_price_labels: Dictionary = {}
 
 
 func _process(_delta: float) -> void:
@@ -13,7 +15,7 @@ func _process(_delta: float) -> void:
 	if current_multiplier == _last_purchase_multiplier:
 		return
 	_last_purchase_multiplier = current_multiplier
-	_refresh_current_shop_detail()
+	_refresh_purchase_states()
 
 
 func _setup_item_popup() -> void:
@@ -212,7 +214,144 @@ func _create_item_card(entry: ShopItemData, credits: int) -> Control:
 	buy_button.pressed.connect(Callable(self, "_on_buy_pressed").bind(entry))
 	action_column.add_child(buy_button)
 
+	var state_key: int = _get_entry_state_key(entry)
+	_item_card_buttons[state_key] = buy_button
+	_item_card_price_labels[state_key] = price_label
+	_refresh_purchase_state_for_entry(entry, credits)
+
 	return card_panel
+
+
+func _on_buy_pressed(entry: ShopItemData) -> void:
+	if entry == null:
+		return
+	if entry.is_book_product():
+		_on_book_buy_pressed(entry)
+		return
+	_resolve_inventory_module()
+	if _inventory_module == null:
+		detail_label.text = "購入先のインベントリが見つかりません。"
+		return
+
+	var purchase_amount: int = _get_purchase_amount(entry)
+	var total_price: int = entry.get_unit_price() * purchase_amount
+	_is_purchase_refresh_suppressed = true
+	var did_spend: bool = _spend_credits(total_price, entry)
+	_is_purchase_refresh_suppressed = false
+	if not did_spend:
+		_refresh_purchase_states()
+		detail_label.text = "クレジットが足りません。必要: %d / 所持: %d" % [total_price, _get_wallet_credits()]
+		return
+
+	if not _add_entry_to_inventory(entry, purchase_amount):
+		_is_purchase_refresh_suppressed = true
+		_refund_credits(total_price, entry)
+		_is_purchase_refresh_suppressed = false
+		_refresh_purchase_states()
+		detail_label.text = "インベントリに空きがありません。購入を取り消しました。"
+		return
+	_refresh_purchase_states()
+	detail_label.text = "購入しました: %s x%d" % [entry.get_display_name(), purchase_amount]
+
+
+func _on_book_buy_pressed(entry: ShopItemData) -> void:
+	var book := entry.get_book_data()
+	if book == null:
+		_refresh_purchase_states()
+		detail_label.text = "書籍データが見つかりません。"
+		return
+
+	var library := _resolve_book_library()
+	if library == null or not library.has_method("add_book"):
+		_refresh_purchase_states()
+		detail_label.text = "書籍ライブラリが見つかりません。"
+		return
+
+	if _is_book_owned(entry):
+		_refresh_purchase_states()
+		detail_label.text = "購入済みです: %s" % entry.get_display_name()
+		return
+
+	var total_price := entry.get_unit_price()
+	_is_purchase_refresh_suppressed = true
+	var did_spend: bool = _spend_credits(total_price, entry)
+	_is_purchase_refresh_suppressed = false
+	if not did_spend:
+		_refresh_purchase_states()
+		detail_label.text = "クレジットが足りません。必要: %d / 所持: %d" % [total_price, _get_wallet_credits()]
+		return
+
+	_is_purchase_refresh_suppressed = true
+	var did_add_book: bool = library.call("add_book", book) == true
+	_is_purchase_refresh_suppressed = false
+	if not did_add_book:
+		_is_purchase_refresh_suppressed = true
+		_refund_credits(total_price, entry)
+		_is_purchase_refresh_suppressed = false
+		_refresh_purchase_states()
+		detail_label.text = "書籍の登録に失敗しました。購入を取り消しました。"
+		return
+
+	_refresh_purchase_states()
+	detail_label.text = "電子書籍を購入しました: %s" % entry.get_display_name()
+
+
+func _get_entry_state_key(entry: ShopItemData) -> int:
+	if entry == null:
+		return 0
+	return entry.get_instance_id()
+
+
+func _refresh_purchase_states() -> void:
+	if _selected_shop_index < 0 or _selected_shop_index >= _shops.size():
+		return
+
+	var shop: ShopData = _shops[_selected_shop_index]
+	var tab_id: StringName = _get_current_shop_tab_id(shop)
+	var entries: Array[ShopItemData] = shop.get_available_items_for_tab(tab_id)
+	var credits: int = _get_wallet_credits()
+	for entry in entries:
+		_refresh_purchase_state_for_entry(entry, credits)
+
+	detail_label.text = "所持クレジット: %d" % credits
+	_apply_purchase_guide_to_detail_label()
+
+
+func _refresh_purchase_state_for_entry(entry: ShopItemData, credits: int) -> void:
+	if entry == null:
+		return
+
+	var state_key: int = _get_entry_state_key(entry)
+	var buy_button: Button = _item_card_buttons.get(state_key) as Button
+	if buy_button == null or not is_instance_valid(buy_button):
+		return
+
+	var price_label: Label = _item_card_price_labels.get(state_key) as Label
+	var is_book: bool = entry.is_book_product()
+	var is_owned_book: bool = is_book and _is_book_owned(entry)
+	var purchase_amount: int = _get_purchase_amount(entry)
+	var total_price: int = entry.get_unit_price() * purchase_amount
+
+	if price_label != null and is_instance_valid(price_label):
+		price_label.text = "%d C" % total_price
+		price_label.visible = true
+		if is_owned_book:
+			price_label.text = ""
+			price_label.visible = false
+
+	if is_book:
+		buy_button.text = "購入済み" if is_owned_book else "購入"
+		buy_button.disabled = not entry.is_available or is_owned_book or total_price > credits
+		return
+
+	buy_button.text = "%d個購入" % purchase_amount
+	buy_button.disabled = not entry.is_available or total_price > credits
+
+
+func _clear_item_grid() -> void:
+	_item_card_buttons.clear()
+	_item_card_price_labels.clear()
+	super._clear_item_grid()
 
 
 func _apply_purchase_guide_to_detail_label() -> void:
