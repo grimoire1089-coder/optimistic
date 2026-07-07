@@ -8,7 +8,7 @@ const CHAIR_CLAIMED_BY_META := &"ai_seat_reserved_by"
 const CHAIR_CLAIMED_NAME_META := &"ai_seat_reserved_name"
 const CHAIR_CLAIMED_REASON_META := &"ai_seat_reserved_reason"
 
-@export var legacy_inventory_module_path: NodePath = NodePath("../RobinInventoryModule")
+@export var legacy_inventory_module_path: NodePath = NodePath("")
 
 var _shared_inventory_module: Node
 
