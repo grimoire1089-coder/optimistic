@@ -14,6 +14,11 @@ var _item_layout_cache: Dictionary = {}
 var _current_item_layout_key: String = ""
 
 
+func _ready() -> void:
+	super._ready()
+	set_process(false)
+
+
 func _process(_delta: float) -> void:
 	if not visible or _selected_shop_index < 0:
 		_last_purchase_multiplier = _get_purchase_multiplier()
@@ -24,6 +29,11 @@ func _process(_delta: float) -> void:
 		return
 	_last_purchase_multiplier = current_multiplier
 	_refresh_purchase_states()
+
+
+func close_menu() -> void:
+	set_process(false)
+	super.close_menu()
 
 
 func _setup_item_popup() -> void:
@@ -55,6 +65,7 @@ func _reload_shops() -> void:
 
 
 func _show_shop_list() -> void:
+	set_process(false)
 	_hide_item_popup()
 	_detach_current_item_grid_to_cache()
 	_restore_previous_bgm_if_needed()
@@ -145,6 +156,7 @@ func _show_shop_detail(shop_index: int) -> void:
 
 	_selected_shop_index = shop_index
 	_last_purchase_multiplier = _get_purchase_multiplier()
+	set_process(true)
 	var shop: ShopData = _shops[_selected_shop_index]
 	title_label.text = _single_line_shop_name(shop)
 	back_button.visible = true
