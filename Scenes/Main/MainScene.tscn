@@ -50,6 +50,7 @@
 [ext_resource type="PackedScene" path="res://Scenes/UI/City/CityPanel.tscn" id="47_city_panel"]
 [ext_resource type="PackedScene" path="res://Scenes/Characters/Zippy/ZippyActor.tscn" id="48_zippy_actor"]
 [ext_resource type="PackedScene" path="res://Scenes/UI/Debug/AIPositionDebugToggle.tscn" id="49_position_debug_toggle"]
+[ext_resource type="Script" path="res://Scripts/Scenes/Main/Modules/MainSceneInitialEncyclopediaRegistrationModule.gd" id="50_initial_encyclopedia_registration"]
 
 [sub_resource type="Environment" id="Environment_ctt6t"]
 glow_enabled = true
@@ -78,6 +79,9 @@ script = ExtResource("39_weather_ambience_module")
 registry = ExtResource("40_main_scene_weather_ambience_registry")
 
 [node name="MainSceneSleepFastForwardModule" parent="." unique_id=352965313 instance=ExtResource("22_sleep_fast_forward")]
+
+[node name="MainSceneInitialEncyclopediaRegistrationModule" type="Node" parent="."]
+script = ExtResource("50_initial_encyclopedia_registration")
 
 [node name="RobinRoomMap" type="Node2D" parent="." unique_id=723162854]
 z_index = -30
