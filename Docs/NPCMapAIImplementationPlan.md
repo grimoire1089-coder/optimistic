@@ -139,12 +139,19 @@ Scripts/Systems/Exploration/ExplorationLocationSystem.gd
 Scripts/Characters/Modules/AICharacterCraftBehaviorModule.gd
 ```
 
+旧名 fallback を空にしたもの:
+
+```text
+Scripts/UI/Inventory/RobinInventoryUI.gd
+Scripts/UI/Shop/ShopMenu.gd
+Scripts/UI/HUD/CraftMenu.gd
+Scripts/Characters/Modules/AICharacterCraftBehaviorModule.gd
+```
+
 削除前に残っている主な旧名参照:
 
 ```text
-Scripts/UI/Shop/ShopMenu.gd
 Scripts/Systems/Exploration/ExplorationLocationSystem.gd
-Scripts/Characters/Modules/AICharacterCraftBehaviorModule.gd
 Scripts/Characters/Modules/AICharacterHydrateBehaviorModule.gd
 Scripts/Characters/Robin/RobinWanderActor.gd
 Scenes/Characters/Robin/RobinWanderActor.tscn
@@ -153,8 +160,8 @@ Scripts/Characters/Robin/Modules/RobinInventoryModule.gd
 
 削除までの目安:
 
-1. UI/探索系の旧名fallbackを空にする。
-2. Craft/Hydrate行動モジュールの旧名・型依存を外す。
+1. 探索系の旧名fallbackを空にする。
+2. Hydrate行動モジュールの旧名・型依存を外す。
 3. `RobinWanderActor.gd` の `$RobinInventoryModule` 固定参照を外す。
 4. `RobinWanderActor.tscn` のノード名を `AICharacterInventoryModule` に変更する。
 5. 検索で旧名参照が互換alias本体だけになったら、最後に alias ファイルを削除する。
