@@ -1,4 +1,4 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://Scripts/UI/City/CityPanel.gd" id="1_city_panel"]
 
@@ -21,6 +21,18 @@ border_width_top = 1
 border_width_right = 1
 border_width_bottom = 1
 border_color = Color(0.18, 0.32, 0.38, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_page_card"]
+bg_color = Color(0.035, 0.04, 0.055, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.14, 0.8, 0.95, 0.75)
 corner_radius_top_left = 8
 corner_radius_top_right = 8
 corner_radius_bottom_right = 8
@@ -76,13 +88,93 @@ theme_override_constants/separation = 10
 [node name="GuideLabel" type="Label" parent="MarginContainer/Rows/Body/ContentRows"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
-text = "都市パネル（仮）"
+text = "街で確認したい項目を選んでください。"
 horizontal_alignment = 1
 
-[node name="DescriptionLabel" type="Label" parent="MarginContainer/Rows/Body/ContentRows"]
+[node name="PageButtonRow" type="HBoxContainer" parent="MarginContainer/Rows/Body/ContentRows"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="ResidentsPageButton" type="Button" parent="MarginContainer/Rows/Body/ContentRows/PageButtonRow"]
+custom_minimum_size = Vector2(0, 56)
+layout_mode = 2
+size_flags_horizontal = 3
+toggle_mode = true
+focus_mode = 0
+mouse_default_cursor_shape = 2
+text = "住人ページ"
+
+[node name="InvestmentPageButton" type="Button" parent="MarginContainer/Rows/Body/ContentRows/PageButtonRow"]
+custom_minimum_size = Vector2(0, 56)
+layout_mode = 2
+size_flags_horizontal = 3
+toggle_mode = true
+focus_mode = 0
+mouse_default_cursor_shape = 2
+text = "投資ページ"
+
+[node name="Pages" type="Control" parent="MarginContainer/Rows/Body/ContentRows"]
 layout_mode = 2
 size_flags_vertical = 3
-text = "ここにデカダンスの街メニューを追加していきます。"
-horizontal_alignment = 1
-vertical_alignment = 1
+
+[node name="ResidentsPage" type="PanelContainer" parent="MarginContainer/Rows/Body/ContentRows/Pages"]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_page_card")
+
+[node name="MarginContainer" type="MarginContainer" parent="MarginContainer/Rows/Body/ContentRows/Pages/ResidentsPage"]
+layout_mode = 2
+theme_override_constants/margin_left = 18
+theme_override_constants/margin_top = 18
+theme_override_constants/margin_right = 18
+theme_override_constants/margin_bottom = 18
+
+[node name="Rows" type="VBoxContainer" parent="MarginContainer/Rows/Body/ContentRows/Pages/ResidentsPage/MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="TitleLabel" type="Label" parent="MarginContainer/Rows/Body/ContentRows/Pages/ResidentsPage/MarginContainer/Rows"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "住人ページ"
+
+[node name="DescriptionLabel" type="Label" parent="MarginContainer/Rows/Body/ContentRows/Pages/ResidentsPage/MarginContainer/Rows"]
+layout_mode = 2
+text = "ここにデカダンスの住人一覧や関係情報を追加していきます。"
+autowrap_mode = 3
+
+[node name="InvestmentPage" type="PanelContainer" parent="MarginContainer/Rows/Body/ContentRows/Pages"]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_page_card")
+
+[node name="MarginContainer" type="MarginContainer" parent="MarginContainer/Rows/Body/ContentRows/Pages/InvestmentPage"]
+layout_mode = 2
+theme_override_constants/margin_left = 18
+theme_override_constants/margin_top = 18
+theme_override_constants/margin_right = 18
+theme_override_constants/margin_bottom = 18
+
+[node name="Rows" type="VBoxContainer" parent="MarginContainer/Rows/Body/ContentRows/Pages/InvestmentPage/MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="TitleLabel" type="Label" parent="MarginContainer/Rows/Body/ContentRows/Pages/InvestmentPage/MarginContainer/Rows"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "投資ページ"
+
+[node name="DescriptionLabel" type="Label" parent="MarginContainer/Rows/Body/ContentRows/Pages/InvestmentPage/MarginContainer/Rows"]
+layout_mode = 2
+text = "ここに街への投資、施設強化、解放要素を追加していきます。"
 autowrap_mode = 3
