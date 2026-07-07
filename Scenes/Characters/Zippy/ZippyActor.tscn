@@ -5,12 +5,9 @@
 [ext_resource type="PackedScene" path="res://Scenes/Characters/Modules/AICharacterNeedsBundle.tscn" id="3_needs_bundle"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_click_area"]
-size = Vector2(128, 192)
+size = Vector2(96, 144)
 
 [node name="Zippy" type="CharacterBody2D"]
-collision_layer = 0
-collision_mask = 0
-motion_mode = 1
 script = ExtResource("1_zippy_actor")
 resident_id = &"zippy"
 display_name = "ジッピー"
@@ -18,7 +15,7 @@ display_name = "ジッピー"
 [node name="Sprite2D" type="Sprite2D" parent="."]
 texture = ExtResource("2_zippy_texture")
 centered = true
-scale = Vector2(0.35, 0.35)
+scale = Vector2(0.18, 0.18)
 
 [node name="ClickArea2D" type="Area2D" parent="."]
 input_pickable = true
