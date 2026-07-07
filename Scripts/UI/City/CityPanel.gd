@@ -78,13 +78,9 @@ func _show_page(page_id: StringName) -> void:
 		investment_button.button_pressed = page_id == PAGE_INVESTMENT
 	if guide_label == null:
 		return
-	match page_id:
-		PAGE_RESIDENTS:
-			guide_label.text = "住人ページ"
-		PAGE_INVESTMENT:
-			guide_label.text = "投資ページ"
-		_:
-			guide_label.text = "街で確認したい項目を選んでください。"
+	guide_label.visible = page_id == PAGE_NONE
+	if page_id == PAGE_NONE:
+		guide_label.text = "街で確認したい項目を選んでください。"
 
 
 func _apply_map_center_layout() -> void:
