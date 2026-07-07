@@ -1,0 +1,29 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Characters/Zippy/ZippyActor.gd" id="1_zippy_actor"]
+[ext_resource type="Texture2D" uid="uid://bg6hpv52raosv" path="res://Assets/Characters/Zippy/Portraits/Zippy_Game_0001.png" id="2_zippy_texture"]
+[ext_resource type="PackedScene" path="res://Scenes/Characters/Modules/AICharacterNeedsBundle.tscn" id="3_needs_bundle"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_click_area"]
+size = Vector2(128, 192)
+
+[node name="Zippy" type="CharacterBody2D"]
+collision_layer = 0
+collision_mask = 0
+motion_mode = 1
+script = ExtResource("1_zippy_actor")
+resident_id = &"zippy"
+display_name = "ジッピー"
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture = ExtResource("2_zippy_texture")
+centered = true
+scale = Vector2(0.35, 0.35)
+
+[node name="ClickArea2D" type="Area2D" parent="."]
+input_pickable = true
+
+[node name="ClickCollisionShape2D" type="CollisionShape2D" parent="ClickArea2D"]
+shape = SubResource("RectangleShape2D_click_area")
+
+[node name="AICharacterNeedsBundle" parent="." instance=ExtResource("3_needs_bundle")]
