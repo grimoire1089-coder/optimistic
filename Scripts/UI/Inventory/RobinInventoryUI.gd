@@ -5,6 +5,8 @@ const BOTTOM_RIGHT_MARGIN := Vector2(24.0, 92.0)
 const PANEL_SIZE := Vector2(480.0, 456.0)
 const ITEM_ICON_SIZE := Vector2(64.0, 64.0)
 const SLOTS_PER_PAGE := 20
+const SORT_MODE_NAME: StringName = &"name"
+const SORT_MODE_AMOUNT: StringName = &"amount"
 
 @export var actor_path: NodePath = NodePath("../../Robin")
 @export var inventory_module_child_name: StringName = &"RobinInventoryModule"
@@ -18,7 +20,9 @@ const SLOTS_PER_PAGE := 20
 @onready var page_label: Label = $MarginContainer/Rows/Header/PageLabel
 @onready var next_page_button: Button = $MarginContainer/Rows/Header/NextPageButton
 @onready var tab_bar: TabBar = $MarginContainer/Rows/TabBar
-@onready var grid: GridContainer = $MarginContainer/Rows/ScrollContainer/Grid
+@onready var grid: GridContainer = $MarginContainer/Rows/InventoryBody/ScrollContainer/Grid
+@onready var sort_name_button: Button = $MarginContainer/Rows/InventoryBody/SortColumn/SortNameButton
+@onready var sort_amount_button: Button = $MarginContainer/Rows/InventoryBody/SortColumn/SortAmountButton
 @onready var detail_label: Label = $MarginContainer/Rows/Footer/DetailLabel
 @onready var search_line_edit: LineEdit = $MarginContainer/Rows/Footer/SearchLineEdit
 
@@ -27,6 +31,7 @@ var _categories: Array[Dictionary] = []
 var _current_category_index: int = 0
 var _current_page_index: int = 0
 var _search_query: String = ""
+var _sort_mode: StringName = SORT_MODE_NAME
 
 
 func _ready() -> void:
@@ -37,6 +42,8 @@ func _ready() -> void:
 	close_button.pressed.connect(close)
 	previous_page_button.pressed.connect(_on_previous_page_pressed)
 	next_page_button.pressed.connect(_on_next_page_pressed)
+	sort_name_button.pressed.connect(_on_sort_name_pressed)
+	sort_amount_button.pressed.connect(_on_sort_amount_pressed)
 	search_line_edit.text_changed.connect(_on_search_text_changed)
 	tab_bar.tab_changed.connect(_on_tab_changed)
 	_resolve_inventory_module()
@@ -114,6 +121,7 @@ func _refresh() -> void:
 	grid.add_theme_constant_override("h_separation", grid_separation)
 	grid.add_theme_constant_override("v_separation", grid_separation)
 	_update_grid_minimum_size(SLOTS_PER_PAGE)
+	_sync_sort_button_state()
 
 	if _inventory_module == null:
 		detail_label.text = "インベントリ未接続"
@@ -133,6 +141,7 @@ func _refresh() -> void:
 	var category_name := String(category.get("display_name", ""))
 	var items := _inventory_module.get_items(category_id)
 	var visible_items := _get_search_filtered_items(items)
+	_sort_items(visible_items)
 	var slot_limit := _inventory_module.get_slot_limit(category_id)
 	var total_slot_count := _get_total_slot_count(slot_limit, visible_items.size(), _is_search_active())
 	var page_count := _get_page_count(total_slot_count)
@@ -258,6 +267,30 @@ func _item_matches_search(item: Dictionary, query: String) -> bool:
 	return description.contains(query)
 
 
+func _sort_items(items: Array[Dictionary]) -> void:
+	match _sort_mode:
+		SORT_MODE_AMOUNT:
+			items.sort_custom(_compare_items_by_amount)
+		_:
+			items.sort_custom(_compare_items_by_name)
+
+
+func _compare_items_by_name(a: Dictionary, b: Dictionary) -> bool:
+	var a_name := String(a.get("display_name", "")).to_lower()
+	var b_name := String(b.get("display_name", "")).to_lower()
+	if a_name == b_name:
+		return String(a.get("id", &"")).to_lower() < String(b.get("id", &"")).to_lower()
+	return a_name < b_name
+
+
+func _compare_items_by_amount(a: Dictionary, b: Dictionary) -> bool:
+	var a_amount := int(a.get("amount", 0))
+	var b_amount := int(b.get("amount", 0))
+	if a_amount == b_amount:
+		return _compare_items_by_name(a, b)
+	return a_amount > b_amount
+
+
 func _is_search_active() -> bool:
 	return not _search_query.is_empty()
 
@@ -283,6 +316,11 @@ func _update_page_controls(total_slot_count: int) -> void:
 	previous_page_button.disabled = _current_page_index <= 0
 	next_page_button.disabled = _current_page_index >= page_count - 1
 	page_label.text = "%d/%d" % [_current_page_index + 1, page_count]
+
+
+func _sync_sort_button_state() -> void:
+	sort_name_button.set_pressed_no_signal(_sort_mode == SORT_MODE_NAME)
+	sort_amount_button.set_pressed_no_signal(_sort_mode == SORT_MODE_AMOUNT)
 
 
 func _update_grid_minimum_size(slot_count: int) -> void:
@@ -315,6 +353,18 @@ func _on_tab_changed(tab_index: int) -> void:
 
 func _on_search_text_changed(new_text: String) -> void:
 	_search_query = new_text.strip_edges()
+	_current_page_index = 0
+	_refresh()
+
+
+func _on_sort_name_pressed() -> void:
+	_sort_mode = SORT_MODE_NAME
+	_current_page_index = 0
+	_refresh()
+
+
+func _on_sort_amount_pressed() -> void:
+	_sort_mode = SORT_MODE_AMOUNT
 	_current_page_index = 0
 	_refresh()
 
