@@ -697,7 +697,7 @@ func _on_buy_pressed(entry: ShopItemData) -> void:
 	var purchase_amount: int = _get_purchase_amount(entry)
 	var total_price: int = entry.get_unit_price() * purchase_amount
 	_is_purchase_refresh_suppressed = true
-	var did_spend := _spend_credits(total_price, entry)
+	var did_spend: bool = _spend_credits(total_price, entry)
 	_is_purchase_refresh_suppressed = false
 	if not did_spend:
 		_refresh_current_shop_detail()
@@ -735,7 +735,7 @@ func _on_book_buy_pressed(entry: ShopItemData) -> void:
 
 	var total_price := entry.get_unit_price()
 	_is_purchase_refresh_suppressed = true
-	var did_spend := _spend_credits(total_price, entry)
+	var did_spend: bool = _spend_credits(total_price, entry)
 	_is_purchase_refresh_suppressed = false
 	if not did_spend:
 		_refresh_current_shop_detail()
@@ -743,7 +743,7 @@ func _on_book_buy_pressed(entry: ShopItemData) -> void:
 		return
 
 	_is_purchase_refresh_suppressed = true
-	var did_add_book := library.call("add_book", book) == true
+	var did_add_book: bool = library.call("add_book", book) == true
 	_is_purchase_refresh_suppressed = false
 	if not did_add_book:
 		_is_purchase_refresh_suppressed = true
