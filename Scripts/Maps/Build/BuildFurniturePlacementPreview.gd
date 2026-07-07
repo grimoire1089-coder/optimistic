@@ -35,33 +35,40 @@ var _was_active := false
 func _ready() -> void:
 	z_as_relative = false
 	_resolve_refs()
+	_connect_controller_signals()
 	set_process_unhandled_input(true)
+	_sync_process_enabled()
+
+
+func _exit_tree() -> void:
+	_disconnect_controller_signals()
 
 
 func _process(_delta: float) -> void:
 	_resolve_refs()
+	_connect_controller_signals()
 	var is_active := _active()
 	if not is_active:
-		if _was_active:
-			_hide_preview()
-			_cancel_move()
-			queue_redraw()
-		_was_active = false
+		_deactivate_preview_state()
+		_sync_process_enabled()
 		return
 	_was_active = true
 	_update_state()
 	queue_redraw()
+	_sync_process_enabled()
 
 
 func set_room_map_path(next_room_map_path: NodePath) -> void:
 	if room_map_path == next_room_map_path:
 		_resolve_refs()
+		_sync_process_enabled()
 		return
 	_cancel_move()
 	_hide_preview()
 	room_map_path = next_room_map_path
 	_room_map = null
 	_resolve_refs()
+	_sync_process_enabled()
 	queue_redraw()
 
 
@@ -298,6 +305,15 @@ func _hide_preview() -> void:
 		_preview_node.visible = false
 
 
+func _deactivate_preview_state() -> void:
+	if not _was_active:
+		return
+	_hide_preview()
+	_cancel_move()
+	_was_active = false
+	queue_redraw()
+
+
 func _clear_move() -> void:
 	_moving = null
 	_moving_footprint = Vector2i(1, 1)
@@ -321,6 +337,45 @@ func _push_build_message(message: String) -> void:
 	message_log.add_message(message)
 
 
+func _on_build_mode_changed(_enabled: bool) -> void:
+	_sync_process_enabled()
+	if not _active():
+		_deactivate_preview_state()
+		return
+	_was_active = true
+	_update_state()
+	queue_redraw()
+
+
+func _on_tool_mode_changed(_tool_mode: StringName) -> void:
+	_refresh_active_preview()
+
+
+func _on_furniture_selection_changed(_furniture_scene: PackedScene, _furniture_id: StringName, _footprint: Vector2i) -> void:
+	_refresh_active_preview()
+
+
+func _on_furniture_rotation_changed(_rotation_steps: int, _footprint: Vector2i) -> void:
+	_refresh_active_preview()
+
+
+func _refresh_active_preview() -> void:
+	_sync_process_enabled()
+	if not _active():
+		return
+	_update_state()
+	queue_redraw()
+
+
+func _sync_process_enabled() -> void:
+	if not is_inside_tree():
+		return
+	if _controller == null or _room_map == null or _placement == null:
+		set_process(true)
+		return
+	set_process(_controller.is_build_mode_enabled())
+
+
 func _active() -> bool:
 	return _controller != null and _room_map != null and _placement != null and _controller.is_build_mode_enabled()
 
@@ -336,3 +391,37 @@ func _resolve_refs() -> void:
 		_placement = get_node_or_null(furniture_placement_module_path) as FurniturePlacementModule
 	if _placement == null:
 		_placement = get_tree().get_first_node_in_group(&"furniture_placement_module") as FurniturePlacementModule
+
+
+func _connect_controller_signals() -> void:
+	if _controller == null:
+		return
+	var build_callable := Callable(self, "_on_build_mode_changed")
+	if not _controller.build_mode_changed.is_connected(build_callable):
+		_controller.build_mode_changed.connect(build_callable)
+	var tool_callable := Callable(self, "_on_tool_mode_changed")
+	if not _controller.tool_mode_changed.is_connected(tool_callable):
+		_controller.tool_mode_changed.connect(tool_callable)
+	var selection_callable := Callable(self, "_on_furniture_selection_changed")
+	if not _controller.furniture_selection_changed.is_connected(selection_callable):
+		_controller.furniture_selection_changed.connect(selection_callable)
+	var rotation_callable := Callable(self, "_on_furniture_rotation_changed")
+	if not _controller.furniture_rotation_changed.is_connected(rotation_callable):
+		_controller.furniture_rotation_changed.connect(rotation_callable)
+
+
+func _disconnect_controller_signals() -> void:
+	if _controller == null:
+		return
+	var build_callable := Callable(self, "_on_build_mode_changed")
+	if _controller.build_mode_changed.is_connected(build_callable):
+		_controller.build_mode_changed.disconnect(build_callable)
+	var tool_callable := Callable(self, "_on_tool_mode_changed")
+	if _controller.tool_mode_changed.is_connected(tool_callable):
+		_controller.tool_mode_changed.disconnect(tool_callable)
+	var selection_callable := Callable(self, "_on_furniture_selection_changed")
+	if _controller.furniture_selection_changed.is_connected(selection_callable):
+		_controller.furniture_selection_changed.disconnect(selection_callable)
+	var rotation_callable := Callable(self, "_on_furniture_rotation_changed")
+	if _controller.furniture_rotation_changed.is_connected(rotation_callable):
+		_controller.furniture_rotation_changed.disconnect(rotation_callable)
