@@ -60,3 +60,36 @@ func _get_effective_footprint(footprint_override: Vector2i) -> Vector2i:
 	if footprint_override.x > 0 and footprint_override.y > 0:
 		return AICharacterGridMovementHelper.get_safe_footprint(footprint_override)
 	return _get_safe_actor_grid_footprint()
+
+
+func _has_other_ai_in_grid_area(top_left_cell: Vector2i, footprint: Vector2i) -> bool:
+	if _body == null or _body.get_tree() == null:
+		return false
+	var room_map := _get_room_map()
+	if room_map == null:
+		return false
+	for actor in _body.get_tree().get_nodes_in_group(ai_actor_group_name):
+		var other_actor := actor as Node2D
+		if other_actor == null or other_actor == _body:
+			continue
+		var other_footprint := _get_actor_footprint(other_actor)
+		var other_top_left := AICharacterGridMovementHelper.get_current_actor_top_left_grid_position(
+			room_map,
+			other_actor.global_position,
+			other_footprint,
+			INVALID_GRID_POSITION
+		)
+		if not _is_valid_grid_position(other_top_left):
+			continue
+		if _grid_areas_overlap(top_left_cell, footprint, other_top_left, other_footprint):
+			return true
+	return false
+
+
+func _grid_areas_overlap(a_top_left: Vector2i, a_footprint: Vector2i, b_top_left: Vector2i, b_footprint: Vector2i) -> bool:
+	return (
+		a_top_left.x < b_top_left.x + b_footprint.x
+		and a_top_left.x + a_footprint.x > b_top_left.x
+		and a_top_left.y < b_top_left.y + b_footprint.y
+		and a_top_left.y + a_footprint.y > b_top_left.y
+	)
