@@ -16,6 +16,7 @@ const INVALID_DEBUG_GRID_POSITION := Vector2i(-999999, -999999)
 @export var fixed_grid_size: Vector2i = Vector2i.ZERO
 @export var fit_cell_size_to_visual_rect: bool = false
 @export var show_grid: bool = true
+@export var show_grid_border: bool = true
 @export var show_neon_frame: bool = false
 @export var grid_line_width: float = 1.0
 @export var grid_line_color: Color = Color(0.0, 1.2, 1.2, 0.22)
@@ -216,6 +217,9 @@ func _draw() -> void:
 	if show_ai_movement_debug_highlight:
 		_draw_ai_movement_debug_highlight()
 
+	if show_grid_border:
+		_draw_grid_border(grid_rect)
+
 
 func _draw_grid() -> void:
 	var grid_rect := get_grid_rect()
@@ -243,7 +247,23 @@ func _draw_grid() -> void:
 			grid_line_width
 		)
 
-	draw_rect(grid_rect, grid_border_color, false, grid_border_width)
+
+func _draw_grid_border(grid_rect: Rect2) -> void:
+	var border_width := maxf(grid_border_width, 0.0)
+	if border_width <= 0.0 or grid_rect.size.x <= 0.0 or grid_rect.size.y <= 0.0:
+		return
+	var half_width := border_width * 0.5
+	var left := grid_rect.position.x + half_width
+	var top := grid_rect.position.y + half_width
+	var right := grid_rect.end.x - half_width
+	var bottom := grid_rect.end.y - half_width
+	if right < left or bottom < top:
+		draw_rect(grid_rect, grid_border_color, false, border_width)
+		return
+	draw_line(Vector2(left, top), Vector2(right, top), grid_border_color, border_width)
+	draw_line(Vector2(right, top), Vector2(right, bottom), grid_border_color, border_width)
+	draw_line(Vector2(right, bottom), Vector2(left, bottom), grid_border_color, border_width)
+	draw_line(Vector2(left, bottom), Vector2(left, top), grid_border_color, border_width)
 
 
 func _draw_ai_movement_debug_highlight() -> void:
