@@ -78,6 +78,26 @@ static func get_items_for_shop_tab(shop: ShopData, tab_id: StringName) -> Array[
 	return _copy_shop_item_array(_items_by_shop_tab.get(tab_key, []))
 
 
+static func get_icon_for_entry(entry: ShopItemData) -> Texture2D:
+	if entry == null:
+		return null
+	var icon_path: String = entry.get_icon_path()
+	if icon_path.is_empty():
+		return null
+	var cached_icon: Texture2D = _icons_by_path.get(icon_path) as Texture2D
+	if cached_icon != null:
+		return cached_icon
+	return _get_texture_from_path(icon_path)
+
+
+static func get_shop_cache_key(shop: ShopData) -> String:
+	return _make_shop_cache_key(shop)
+
+
+static func get_tab_cache_key(shop: ShopData, tab_id: StringName) -> String:
+	return _make_tab_cache_key(shop, tab_id)
+
+
 static func _ensure_prepared(database: ShopDatabase) -> void:
 	if database != null:
 		prepare_database(database)
@@ -107,6 +127,9 @@ static func _rebuild_single_shop_cache(shop: ShopData) -> void:
 	var tabs: Array[ShopTabData] = shop.get_tabs()
 	for tab in tabs:
 		_cache_items_for_tab(shop, tab.tab_id)
+	var all_items: Array[ShopItemData] = shop.get_available_items()
+	for entry in all_items:
+		get_icon_for_entry(entry)
 
 
 static func _cache_items_for_tab(shop: ShopData, tab_id: StringName) -> void:
@@ -115,6 +138,19 @@ static func _cache_items_for_tab(shop: ShopData, tab_id: StringName) -> void:
 	var tab_key: String = _make_tab_cache_key(shop, tab_id)
 	var entries: Array[ShopItemData] = shop.get_available_items_for_tab(tab_id)
 	_items_by_shop_tab[tab_key] = entries
+
+
+static func _get_texture_from_path(icon_path: String) -> Texture2D:
+	if icon_path.is_empty():
+		return null
+	if _icons_by_path.has(icon_path):
+		return _icons_by_path.get(icon_path) as Texture2D
+	if not ResourceLoader.exists(icon_path):
+		return null
+	var texture: Texture2D = ResourceLoader.load(icon_path) as Texture2D
+	if texture != null:
+		_icons_by_path[icon_path] = texture
+	return texture
 
 
 static func _make_shop_cache_key(shop: ShopData) -> String:
