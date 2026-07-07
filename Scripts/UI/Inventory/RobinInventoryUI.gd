@@ -103,8 +103,8 @@ func _resolve_inventory_module() -> void:
 		return
 
 	var refresh_callable := Callable(self, "_refresh")
-	if _inventory_module.has_signal("inventory_changed") and not _inventory_module.inventory_changed.is_connected(refresh_callable):
-		_inventory_module.inventory_changed.connect(refresh_callable)
+	if _inventory_module.has_signal("inventory_changed") and not _inventory_module.is_connected("inventory_changed", refresh_callable):
+		_inventory_module.connect("inventory_changed", refresh_callable)
 
 
 func _setup_tabs() -> void:
@@ -114,7 +114,7 @@ func _setup_tabs() -> void:
 	if _inventory_module == null:
 		return
 
-	_categories = _inventory_module.get_categories()
+	_categories = _get_inventory_categories()
 	for category in _categories:
 		tab_bar.add_tab(String(category.get("display_name", "Tab")))
 
@@ -150,8 +150,8 @@ func _refresh() -> void:
 	var category := _categories[_current_category_index]
 	var category_id := category.get("id", &"") as StringName
 	var category_name := String(category.get("display_name", ""))
-	var items := _inventory_module.get_items(category_id)
-	var visible_items := _get_search_filtered_items(items)
+	var items: Array[Dictionary] = _get_inventory_items(category_id)
+	var visible_items: Array[Dictionary] = _get_search_filtered_items(items)
 	_sort_items(visible_items)
 	var slot_limit := UNLIMITED_SLOT_LIMIT
 	if _inventory_module.has_method("get_slot_limit"):
@@ -254,6 +254,30 @@ func _make_amount_badge_style() -> StyleBoxFlat:
 	style.set_corner_radius_all(6)
 	style.set_content_margin_all(1.0)
 	return style
+
+
+func _get_inventory_categories() -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	if _inventory_module == null or not _inventory_module.has_method("get_categories"):
+		return result
+	var raw_categories = _inventory_module.get_categories()
+	if raw_categories is Array:
+		for category in raw_categories:
+			if category is Dictionary:
+				result.append((category as Dictionary).duplicate(true))
+	return result
+
+
+func _get_inventory_items(category_id: StringName) -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	if _inventory_module == null or not _inventory_module.has_method("get_items"):
+		return result
+	var raw_items = _inventory_module.get_items(category_id)
+	if raw_items is Array:
+		for item in raw_items:
+			if item is Dictionary:
+				result.append((item as Dictionary).duplicate(true))
+	return result
 
 
 func _get_search_filtered_items(items: Array[Dictionary]) -> Array[Dictionary]:
