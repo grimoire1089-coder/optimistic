@@ -8,6 +8,7 @@ const SLOTS_PER_PAGE := 20
 const SORT_MODE_NAME: StringName = &"name"
 const SORT_MODE_AMOUNT: StringName = &"amount"
 const UNLIMITED_SLOT_LIMIT := -1
+const ITEM_ICON_CACHE_SCRIPT_PATH := "res://Scripts/UI/Inventory/ItemIconCacheModule.gd"
 
 @export var actor_path: NodePath = NodePath("../../Robin")
 @export var inventory_module_child_name: StringName = &"AICharacterInventoryModule"
@@ -15,6 +16,8 @@ const UNLIMITED_SLOT_LIMIT := -1
 @export var slot_size: Vector2 = Vector2(72.0, 72.0)
 @export var grid_columns: int = 5
 @export_range(0, 24, 1) var grid_separation: int = 6
+@export var icon_cache_child_name: StringName = &"ItemIconCacheModule"
+@export var icon_cache_limit: int = 64
 
 @onready var title_label: Label = $MarginContainer/Rows/Header/TitleLabel
 @onready var close_button: Button = $MarginContainer/Rows/Header/CloseButton
@@ -29,6 +32,7 @@ const UNLIMITED_SLOT_LIMIT := -1
 @onready var search_line_edit: LineEdit = $MarginContainer/Rows/Footer/SearchLineEdit
 
 var _inventory_module
+var _icon_cache: Node = null
 var _categories: Array[Dictionary] = []
 var _current_category_index: int = 0
 var _current_page_index: int = 0
@@ -41,6 +45,7 @@ func _ready() -> void:
 	add_to_group(&"inventory_ui")
 	_apply_bottom_right_layout()
 	call_deferred("_apply_bottom_right_layout")
+	_resolve_icon_cache_module()
 	close_button.pressed.connect(close)
 	previous_page_button.pressed.connect(_on_previous_page_pressed)
 	next_page_button.pressed.connect(_on_next_page_pressed)
@@ -56,6 +61,7 @@ func _ready() -> void:
 func open() -> void:
 	_apply_bottom_right_layout()
 	visible = true
+	_resolve_icon_cache_module()
 	_resolve_inventory_module()
 	_refresh()
 
@@ -68,6 +74,7 @@ func toggle() -> void:
 	visible = not visible
 	if visible:
 		_apply_bottom_right_layout()
+		_resolve_icon_cache_module()
 		_resolve_inventory_module()
 		_refresh()
 
@@ -213,11 +220,50 @@ func _apply_item_to_slot(slot_button: Button, item: Dictionary) -> void:
 	var icon_rect := slot_button.get_node_or_null("ItemIcon") as TextureRect
 	var icon_path := String(item.get("icon_path", ""))
 	if icon_rect != null:
-		icon_rect.texture = null
-		if icon_path != "" and ResourceLoader.exists(icon_path):
-			icon_rect.texture = load(icon_path) as Texture2D
+		icon_rect.texture = _get_item_icon_texture(icon_path)
 
 	_add_amount_badge(slot_button, amount)
+
+
+func _resolve_icon_cache_module() -> void:
+	if _icon_cache != null and is_instance_valid(_icon_cache):
+		if _icon_cache.has_method("set_max_cached_icons"):
+			_icon_cache.call("set_max_cached_icons", icon_cache_limit)
+		return
+
+	_icon_cache = get_node_or_null(NodePath(String(icon_cache_child_name)))
+	if _icon_cache == null:
+		var cache_resource := load(ITEM_ICON_CACHE_SCRIPT_PATH)
+		if cache_resource == null or not (cache_resource is Script):
+			push_warning("アイコンキャッシュモジュールが読み込めません: %s" % ITEM_ICON_CACHE_SCRIPT_PATH)
+			return
+		var cache_instance = (cache_resource as Script).new()
+		if not (cache_instance is Node):
+			push_warning("アイコンキャッシュモジュールをNodeとして作成できません。")
+			return
+		_icon_cache = cache_instance as Node
+		_icon_cache.name = icon_cache_child_name
+		add_child(_icon_cache)
+
+	if _icon_cache.has_method("set_max_cached_icons"):
+		_icon_cache.call("set_max_cached_icons", icon_cache_limit)
+
+
+func _get_item_icon_texture(icon_path: String) -> Texture2D:
+	var safe_icon_path := icon_path.strip_edges()
+	if safe_icon_path.is_empty():
+		return null
+
+	_resolve_icon_cache_module()
+	if _icon_cache != null and is_instance_valid(_icon_cache) and _icon_cache.has_method("get_texture"):
+		var cached_texture = _icon_cache.call("get_texture", safe_icon_path)
+		if cached_texture is Texture2D:
+			return cached_texture as Texture2D
+		return null
+
+	if ResourceLoader.exists(safe_icon_path):
+		return load(safe_icon_path) as Texture2D
+	return null
 
 
 func _build_item_tooltip(display_name: String, amount: int) -> String:
