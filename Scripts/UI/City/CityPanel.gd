@@ -1,9 +1,12 @@
 extends PanelContainer
 class_name CityPanel
 
+const ResidentsPagePresenter := preload("res://Scripts/UI/City/Modules/CityResidentsPagePresenter.gd")
+
 @export var room_map_path: NodePath = NodePath("../../RobinRoomMap")
 @export var map_travel_module_path: NodePath = NodePath("../../MainSceneMapTravelModule")
 @export var center_on_map_grid: bool = true
+@export var resident_data_paths: Array[String] = ["res://Data/NPC/Residents/Npc_Zippy.tres"]
 
 const MAP_CENTER_PANEL_SIZE := Vector2(760.0, 760.0)
 const PAGE_NONE := &""
@@ -16,11 +19,13 @@ const PAGE_INVESTMENT := &"investment"
 @onready var investment_button: Button = $MarginContainer/Rows/Body/ContentRows/PageButtonRow/InvestmentPageButton
 @onready var residents_page: Control = $MarginContainer/Rows/Body/ContentRows/Pages/ResidentsPage
 @onready var investment_page: Control = $MarginContainer/Rows/Body/ContentRows/Pages/InvestmentPage
+@onready var resident_list: VBoxContainer = $MarginContainer/Rows/Body/ContentRows/Pages/ResidentsPage/MarginContainer/Rows/ResidentScroll/ResidentList
 
 var _room_map: RoomMapGridModule
 var _map_travel_module: Node
 var _layout_room_map: RoomMapGridModule
 var _current_page: StringName = PAGE_NONE
+var _resident_cache: Array[NpcResidentData] = []
 
 
 func _ready() -> void:
@@ -35,6 +40,8 @@ func _ready() -> void:
 		residents_button.pressed.connect(_on_residents_page_pressed)
 	if investment_button != null:
 		investment_button.pressed.connect(_on_investment_page_pressed)
+	_reload_residents()
+	_refresh_residents_page()
 	_show_page(PAGE_NONE)
 
 
@@ -59,6 +66,7 @@ func _exit_tree() -> void:
 
 
 func _on_residents_page_pressed() -> void:
+	_refresh_residents_page()
 	_show_page(PAGE_RESIDENTS)
 
 
@@ -81,6 +89,25 @@ func _show_page(page_id: StringName) -> void:
 	guide_label.visible = page_id == PAGE_NONE
 	if page_id == PAGE_NONE:
 		guide_label.text = "街で確認したい項目を選んでください。"
+
+
+func _reload_residents() -> void:
+	_resident_cache.clear()
+	for data_path in resident_data_paths:
+		if data_path.is_empty():
+			continue
+		if not ResourceLoader.exists(data_path):
+			push_warning("Resident data not found: %s" % data_path)
+			continue
+		var resident := load(data_path) as NpcResidentData
+		if resident == null:
+			push_warning("Resident data is invalid: %s" % data_path)
+			continue
+		_resident_cache.append(resident)
+
+
+func _refresh_residents_page() -> void:
+	ResidentsPagePresenter.rebuild(resident_list, _resident_cache)
 
 
 func _apply_map_center_layout() -> void:
