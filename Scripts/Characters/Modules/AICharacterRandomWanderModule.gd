@@ -18,7 +18,8 @@ func get_velocity(delta: float) -> Vector2:
 	if _body == null:
 		return Vector2.ZERO
 	if use_shared_move_slot and not _can_step_now():
-		_start_idle()
+		if not is_moving():
+			_start_idle()
 		return Vector2.ZERO
 	var next_velocity := super.get_velocity(delta)
 	if use_shared_move_slot and not is_moving():
@@ -29,6 +30,8 @@ func get_velocity(delta: float) -> Vector2:
 func _can_step_now() -> bool:
 	if _body == null:
 		return false
+	if MoveSlot.can_move(_body) and is_moving():
+		return MoveSlot.request_move(_body)
 	if MoveSlot.is_other_actor_moving(_body, ai_actor_group_name):
 		return false
 	return MoveSlot.request_move(_body)
