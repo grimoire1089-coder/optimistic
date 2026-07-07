@@ -1,9 +1,10 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=7 format=3]
 
 [ext_resource type="Script" path="res://Scripts/Characters/Zippy/ZippyActor.gd" id="1_zippy_actor"]
 [ext_resource type="Texture2D" uid="uid://bupbhbubnba8s" path="res://Assets/Characters/Zippy/Walk/Zippy_Game_Front.png" id="2_zippy_texture"]
 [ext_resource type="PackedScene" path="res://Scenes/Characters/Modules/AICharacterNeedsBundle.tscn" id="3_needs_bundle"]
 [ext_resource type="Script" path="res://Scripts/Characters/Modules/AICharacterSpriteFitModule.gd" id="4_sprite_fit"]
+[ext_resource type="Script" path="res://Scripts/Characters/Modules/AICharacterDirectionalSpriteModule.gd" id="5_directional_sprite"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_click_area"]
 size = Vector2(96, 192)
@@ -30,3 +31,10 @@ script = ExtResource("4_sprite_fit")
 sprite_path = NodePath("../Sprite2D")
 target_display_size = Vector2(96, 192)
 preserve_aspect = true
+
+[node name="AICharacterDirectionalSpriteModule" type="Node" parent="."]
+script = ExtResource("5_directional_sprite")
+sprite_path = NodePath("../Sprite2D")
+direction_source_path = NodePath("../AICharacterRandomWanderModule")
+sprite_fit_module_path = NodePath("../AICharacterSpriteFitModule")
+front_texture_path = "res://Assets/Characters/Zippy/Walk/Zippy_Game_Front.png"
