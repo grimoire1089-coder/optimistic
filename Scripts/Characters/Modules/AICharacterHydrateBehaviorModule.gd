@@ -5,10 +5,11 @@ const INVALID_GRID_POSITION := Vector2i(-999999, -999999)
 const BUILD_LOCK_META := &"build_locked_by_sleep"
 const BUILD_LOCK_REASON_META := &"build_lock_reason"
 const DINING_LOCK_REASON := "DiningDrink"
+const InventoryLookup := preload("res://Scripts/Characters/Modules/AICharacterInventoryLookup.gd")
 
 @export var needs_module_path: NodePath = NodePath("../AICharacterNeedsBundle/CharacterNeedsModule")
 @export var need_planner_path: NodePath = NodePath("../AICharacterNeedsBundle/NeedDrivenAIPlanner")
-@export var inventory_module_path: NodePath = NodePath("../RobinInventoryModule")
+@export var inventory_module_path: NodePath = NodePath("../AICharacterInventoryModule")
 @export var furniture_root_path: NodePath = NodePath("../../RobinRoomMap/FurnitureRoot")
 @export var furniture_placement_module_path: NodePath = NodePath("../../FurniturePlacementModule")
 @export var room_map_path: NodePath = NodePath("../../RobinRoomMap")
@@ -38,7 +39,7 @@ const DINING_LOCK_REASON := "DiningDrink"
 var _body: CharacterBody2D
 var _needs_module: CharacterNeedsModule
 var _need_planner: NeedDrivenAIPlanner
-var _inventory_module: RobinInventoryModule
+var _inventory_module: Node
 var _furniture_root: Node
 var _furniture_placement_module: Node
 var _room_map: RoomMapGridModule
@@ -259,9 +260,9 @@ func _create_water_bottle_for_drinking() -> FoodItemData:
 	var food_data := _get_water_bottle_item()
 	if food_data == null:
 		return null
-	if _inventory_module == null:
+	if _inventory_module == null or not _inventory_module.has_method("add_food_item"):
 		return null
-	if not _inventory_module.add_food_item(food_data, 1):
+	if _inventory_module.call("add_food_item", food_data, 1) != true:
 		return null
 	_record_bill_water_usage(1, "hydrate_refill")
 	return food_data
@@ -445,9 +446,12 @@ func _get_drink_sfx() -> AudioStream:
 
 
 func _has_water_bottle(food_data: FoodItemData) -> bool:
-	if _inventory_module == null or food_data == null:
+	if _inventory_module == null or food_data == null or not _inventory_module.has_method("get_items"):
 		return false
-	var items := _inventory_module.get_items(food_data.category_id)
+	var items_value: Variant = _inventory_module.call("get_items", food_data.category_id)
+	if not (items_value is Array):
+		return false
+	var items: Array = items_value
 	for item in items:
 		if not (item is Dictionary):
 			continue
@@ -459,9 +463,9 @@ func _has_water_bottle(food_data: FoodItemData) -> bool:
 
 
 func _consume_water_bottle(food_data: FoodItemData) -> bool:
-	if _inventory_module == null or food_data == null:
+	if _inventory_module == null or food_data == null or not _inventory_module.has_method("remove_item"):
 		return false
-	if not _inventory_module.remove_item(food_data.category_id, food_data.item_id, 1):
+	if _inventory_module.call("remove_item", food_data.category_id, food_data.item_id, 1) != true:
 		return false
 	_apply_water_bottle_need_effect(food_data)
 	return true
@@ -1023,8 +1027,10 @@ func _resolve_refs() -> void:
 		_needs_module = get_node_or_null(needs_module_path) as CharacterNeedsModule
 	if _need_planner == null and not need_planner_path.is_empty():
 		_need_planner = get_node_or_null(need_planner_path) as NeedDrivenAIPlanner
-	if _inventory_module == null and not inventory_module_path.is_empty():
-		_inventory_module = get_node_or_null(inventory_module_path) as RobinInventoryModule
+	if _inventory_module == null or not is_instance_valid(_inventory_module):
+		_inventory_module = InventoryLookup.get_inventory_module_from_path(self, inventory_module_path)
+		if _inventory_module == null and _body != null:
+			_inventory_module = InventoryLookup.get_inventory_module(_body)
 	if _furniture_root == null and not furniture_root_path.is_empty():
 		_furniture_root = get_node_or_null(furniture_root_path)
 	if _furniture_placement_module == null and not furniture_placement_module_path.is_empty():
