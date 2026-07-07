@@ -5,6 +5,8 @@ signal selected(actor: ZippyActor)
 
 const DEFAULT_CLICK_SFX_PATH := "res://Assets/Audio/SFX/UI/UI_Click_001.ogg"
 const WANDER_SCRIPT := preload("res://Scripts/Characters/Modules/AICharacterRandomWanderModule.gd")
+const SIT_SCRIPT := preload("res://Scripts/Characters/Modules/AICharacterReservedSitBehaviorModule.gd")
+const MoveSlot := preload("res://Scripts/Characters/Modules/AICharacterMovementCoordinator.gd")
 
 @export var resident_id: StringName = &"zippy"
 @export var display_name: String = "ジッピー"
@@ -24,6 +26,7 @@ const WANDER_SCRIPT := preload("res://Scripts/Characters/Modules/AICharacterRand
 @onready var need_planner: NeedDrivenAIPlanner = $AICharacterNeedsBundle/NeedDrivenAIPlanner
 
 var wander_module: AICharacterRandomWanderModule
+var sit_behavior_module: AICharacterReservedSitBehaviorModule
 
 
 func _ready() -> void:
@@ -33,10 +36,13 @@ func _ready() -> void:
 	_load_default_click_sfx_if_needed()
 	_connect_click_area()
 	_ensure_wander_module()
+	_ensure_sit_behavior_module()
 	call_deferred("_finish_start_setup")
 
 
 func _physics_process(delta: float) -> void:
+	if _update_sit_behavior(delta):
+		return
 	if wander_module == null:
 		return
 	velocity = wander_module.get_velocity(delta)
@@ -49,6 +55,8 @@ func get_actor_grid_footprint() -> Vector2i:
 
 
 func is_ai_character_moving() -> bool:
+	if sit_behavior_module != null and sit_behavior_module.is_active() and velocity.length_squared() > 0.01:
+		return true
 	return wander_module != null and wander_module.is_moving()
 
 
@@ -71,12 +79,18 @@ func get_current_lowest_need_id() -> StringName:
 
 
 func get_current_need_action_id() -> StringName:
+	if sit_behavior_module != null and sit_behavior_module.is_active():
+		return &"sitting"
 	if need_planner == null:
 		return CharacterNeedActionIds.IDLE
 	return need_planner.get_next_action_id()
 
 
 func get_current_action_display_text() -> String:
+	if sit_behavior_module != null and sit_behavior_module.is_active():
+		if sit_behavior_module.is_sitting():
+			return "着席中"
+		return "椅子へ移動中"
 	if wander_module != null and wander_module.is_moving():
 		return "移動中"
 	var action_id := get_current_need_action_id()
@@ -97,6 +111,31 @@ func _register_existing_ai_actors() -> void:
 			node.add_to_group(&"ai_character_actor")
 
 
+func _update_sit_behavior(delta: float) -> bool:
+	if sit_behavior_module == null:
+		return false
+	var sit_velocity := sit_behavior_module.get_velocity(delta)
+	if not sit_behavior_module.is_active():
+		return false
+	velocity = sit_velocity
+	if velocity.length_squared() <= 0.0:
+		MoveSlot.release_move(self)
+		return true
+	if not _try_claim_move_slot():
+		velocity = Vector2.ZERO
+		return true
+	move_and_slide()
+	return true
+
+
+func _try_claim_move_slot() -> bool:
+	if MoveSlot.can_move(self):
+		return MoveSlot.request_move(self)
+	if MoveSlot.is_other_actor_moving(self, &"ai_character_actor"):
+		return false
+	return MoveSlot.request_move(self)
+
+
 func _ensure_wander_module() -> void:
 	wander_module = get_node_or_null("AICharacterRandomWanderModule") as AICharacterRandomWanderModule
 	if wander_module != null:
@@ -113,11 +152,28 @@ func _ensure_wander_module() -> void:
 	add_child(wander_module)
 
 
+func _ensure_sit_behavior_module() -> void:
+	sit_behavior_module = get_node_or_null("AICharacterReservedSitBehaviorModule") as AICharacterReservedSitBehaviorModule
+	if sit_behavior_module != null:
+		return
+	sit_behavior_module = SIT_SCRIPT.new() as AICharacterReservedSitBehaviorModule
+	if sit_behavior_module == null:
+		return
+	sit_behavior_module.name = "AICharacterReservedSitBehaviorModule"
+	sit_behavior_module.actor_grid_footprint = actor_grid_footprint
+	sit_behavior_module.idle_lapis_chance = 0.18
+	sit_behavior_module.sit_duration_range = Vector2(8.0, 16.0)
+	sit_behavior_module.retry_cooldown_range = Vector2(6.0, 12.0)
+	add_child(sit_behavior_module)
+
+
 func _finish_start_setup() -> void:
 	if snap_start_position_to_grid:
 		_snap_start_position_to_grid()
 	if wander_module != null:
 		wander_module.setup(self)
+	if sit_behavior_module != null:
+		sit_behavior_module.setup(self)
 
 
 func _snap_start_position_to_grid() -> void:
