@@ -9,6 +9,10 @@ const DEFAULT_CLICK_SFX_PATH := "res://Assets/Audio/SFX/UI/UI_Click_001.ogg"
 @export var display_name: String = "ジッピー"
 @export var click_sfx: AudioStream
 @export var click_sfx_volume_db: float = 0.0
+@export var room_map_path: NodePath = NodePath("../RobinRoomMap")
+@export var snap_start_position_to_grid: bool = true
+@export var start_grid_position: Vector2i = Vector2i(1, 6)
+@export var actor_grid_footprint: Vector2i = Vector2i(2, 4)
 
 @onready var sprite: Sprite2D = $Sprite2D
 @onready var click_area: Area2D = $ClickArea2D
@@ -22,6 +26,8 @@ func _ready() -> void:
 	input_pickable = false
 	_load_default_click_sfx_if_needed()
 	_connect_click_area()
+	if snap_start_position_to_grid:
+		call_deferred("_snap_start_position_to_grid")
 
 
 func get_needs_module() -> CharacterNeedsModule:
@@ -53,6 +59,15 @@ func get_current_action_display_text() -> String:
 	if action_id == CharacterNeedActionIds.IDLE:
 		return "待機中"
 	return String(action_id)
+
+
+func _snap_start_position_to_grid() -> void:
+	var room_map := get_node_or_null(room_map_path) as RoomMapGridModule
+	if room_map == null:
+		return
+	if not room_map.is_grid_area_inside(start_grid_position, actor_grid_footprint):
+		return
+	global_position = room_map.grid_to_world_area_center(start_grid_position, actor_grid_footprint)
 
 
 func _connect_click_area() -> void:
