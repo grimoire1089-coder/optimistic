@@ -120,14 +120,14 @@ AIキャラクター共通の正式名は `AICharacterInventoryModule` とする
 
 ```text
 AICharacterInventoryBaseModule
-  └ RobinInventoryModule
-      └ AICharacterInventoryModule
+  └ AICharacterInventoryModule
+      └ 旧ロビン用互換alias
 ```
 
 - `AICharacterInventoryBaseModule` は実装本体。
-- `RobinInventoryModule` は既存ロビン参照を壊さないための互換エイリアス。
 - `AICharacterInventoryModule` は新しい正式名。
-- `AICharacterInventoryLookup` は正式名優先、旧名fallbackでインベントリを探す共通ヘルパー。
+- 旧ロビン用互換aliasは、既存ロビン参照を壊さないための一時的な薄い別名。
+- `AICharacterInventoryLookup` は正式名優先でインベントリを探す共通ヘルパー。
 
 すでに共通ヘルパーへ寄せたもの:
 
@@ -144,7 +144,7 @@ Scripts/Characters/Modules/AICharacterCraftBehaviorModule.gd
 1. 新規AIキャラクターは `AICharacterInventoryModule` を使う。
 2. 既存コードは `AICharacterInventoryLookup` 経由で取得する。
 3. 大きい行動モジュールは1つずつ赤エラー確認しながら寄せる。
-4. `RobinInventoryModule` は互換エイリアスとして残し、削除しない。
+4. 旧ロビン用互換aliasへの参照がゼロになったら、そのファイルを削除する。
 
 ## 保留中
 
