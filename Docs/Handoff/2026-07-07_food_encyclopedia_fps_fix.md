@@ -4,23 +4,38 @@
 
 Reduce FPS drops when a food encyclopedia unlock notice is shown.
 
-## Main fix
+## Current main fix
 
-The old notice styler scanned existing message-log cards after notices were queued.
-The new flow styles only the newly entered message card through the message list child-entered signal.
+Food encyclopedia unlock notices no longer scan or track existing message-log cards.
+
+`MessageLogPanel.gd` now has a dedicated API:
+
+```gdscript
+add_food_encyclopedia_unlock_message(message, notice_stream, volume_db)
+```
+
+This queues a normal-log message with the `food_encyclopedia_unlock` style id.
+The message card is created as a gold encyclopedia card from the start.
 
 ## Current behavior
 
 - Food unlock message is still added to the normal message log.
-- Food unlock card still uses the gold style.
+- Food unlock card is gold at creation time.
 - Food unlock SFX still plays once for the new notice.
-- Existing log cards are not rescanned every time a notice is pushed.
+- No message-log card scan is needed.
+- No child-entered-tree styler is needed.
 
 ## Warmup
 
 `FoodEncyclopedia.gd` prepares the unlock notice module on ready.
 The notice module preloads the food unlock SFX through `prepare_runtime_cache()`.
 
+## Performance notes
+
+`MessageLogPanel.gd` also caches card StyleBoxFlat instances by channel and style id.
+This avoids creating a new StyleBoxFlat for every message card.
+
 ## Next step if FPS still drops
 
-Cache normal MessageLogPanel card StyleBoxFlat instances instead of creating a new StyleBoxFlat for every message card.
+Check message-card animation and queue timing next.
+Possible next mitigation: disable animation for encyclopedia unlock cards or batch unlock notices.
