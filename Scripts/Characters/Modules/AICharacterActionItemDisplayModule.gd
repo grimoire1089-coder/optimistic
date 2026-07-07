@@ -10,6 +10,7 @@ class_name AICharacterActionItemDisplayModule
 @export var item_z_index: int = 190
 @export var snap_standing_lapis_to_grid: bool = true
 @export var update_interval_seconds: float = 0.1
+@export var idle_check_interval_seconds: float = 0.35
 
 var _body: Node2D
 var _hydrate_behavior: Node
@@ -42,11 +43,19 @@ func _process(delta: float) -> void:
 	_update_timer -= maxf(delta, 0.0)
 	if _update_timer > 0.0:
 		return
-	_update_timer = maxf(update_interval_seconds, 0.05)
+	_update_timer = maxf(_get_next_update_interval(), 0.05)
 	_resolve_refs()
 	_snap_lapis_position_if_needed()
 	_request_display()
 	_update_display()
+
+
+func _get_next_update_interval() -> float:
+	if _get_active_item_source() != null:
+		return update_interval_seconds
+	if _is_standing_lapis_active() or _was_standing_lapis:
+		return update_interval_seconds
+	return idle_check_interval_seconds
 
 
 func _update_display() -> void:
