@@ -6,6 +6,8 @@ const PAGE_CONFIGS := [
 	{"page_path": NodePath("ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/FoodPage"), "page_name": "FoodPage"},
 	{"page_path": NodePath("ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/DrinkPage"), "page_name": "DrinkPage"},
 	{"page_path": NodePath("ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/IngredientPage"), "page_name": "IngredientPage"},
+	{"page_path": NodePath("ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/MaterialPage"), "page_name": "MaterialPage"},
+	{"page_path": NodePath("ScreenMargin/MainPanel/MainMargin/RootRows/CategoryTabs/MiscPage"), "page_name": "MiscPage"},
 ]
 const LEFT_NAMES := ["ListPanel", "FoodListPanel"]
 const RIGHT_NAMES := ["DetailPanel", "FoodDetailPanel"]
