@@ -21,14 +21,31 @@ const DEFAULT_CLICK_SFX_PATH := "res://Assets/Audio/SFX/UI/UI_Click_001.ogg"
 @onready var needs_module: CharacterNeedsModule = $AICharacterNeedsBundle/CharacterNeedsModule
 @onready var mood_module: CharacterMoodModule = $AICharacterNeedsBundle/CharacterMoodModule
 @onready var need_planner: NeedDrivenAIPlanner = $AICharacterNeedsBundle/NeedDrivenAIPlanner
+@onready var wander_module: AICharacterRandomWanderModule = $AICharacterRandomWanderModule
 
 
 func _ready() -> void:
 	input_pickable = false
+	add_to_group(&"ai_character_actor")
 	_load_default_click_sfx_if_needed()
 	_connect_click_area()
-	if snap_start_position_to_grid:
-		call_deferred("_snap_start_position_to_grid")
+	call_deferred("_finish_start_setup")
+
+
+func _physics_process(delta: float) -> void:
+	if wander_module == null:
+		return
+	velocity = wander_module.get_velocity(delta)
+	if velocity.length_squared() > 0.0:
+		move_and_slide()
+
+
+func get_actor_grid_footprint() -> Vector2i:
+	return actor_grid_footprint
+
+
+func is_ai_character_moving() -> bool:
+	return wander_module != null and wander_module.is_moving()
 
 
 func get_needs_module() -> CharacterNeedsModule:
@@ -56,10 +73,19 @@ func get_current_need_action_id() -> StringName:
 
 
 func get_current_action_display_text() -> String:
+	if wander_module != null and wander_module.is_moving():
+		return "移動中"
 	var action_id := get_current_need_action_id()
 	if action_id == CharacterNeedActionIds.IDLE:
 		return "待機中"
 	return String(action_id)
+
+
+func _finish_start_setup() -> void:
+	if snap_start_position_to_grid:
+		_snap_start_position_to_grid()
+	if wander_module != null:
+		wander_module.setup(self)
 
 
 func _snap_start_position_to_grid() -> void:
