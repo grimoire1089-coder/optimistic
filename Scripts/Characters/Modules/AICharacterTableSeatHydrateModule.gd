@@ -1,0 +1,2 @@
+extends AICharacterHydrateBehaviorModule
+class_name AICharacterTableSeatHydrateModule
