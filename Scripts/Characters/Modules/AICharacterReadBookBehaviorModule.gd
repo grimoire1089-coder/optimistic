@@ -14,6 +14,7 @@ const BUILD_LOCK_REASON_META := &"build_lock_reason"
 @export var furniture_root_path: NodePath = NodePath("../../RobinRoomMap/FurnitureRoot")
 @export var furniture_placement_module_path: NodePath = NodePath("../../FurniturePlacementModule")
 @export var room_map_path: NodePath = NodePath("../../RobinRoomMap")
+@export var action_item_display_path: NodePath = NodePath("../AICharacterActionItemDisplayModule")
 @export var idle_action_id: StringName = CharacterNeedActionIds.IDLE
 @export var play_action_id: StringName = CharacterNeedActionIds.PLAY
 @export var stool_ids: Array[StringName] = [&"stool"]
@@ -32,6 +33,7 @@ var _furniture_root: Node
 var _furniture_placement_module: Node
 var _room_map: RoomMapGridModule
 var _clock: GameClockSystem
+var _action_item_display: Node
 var _book: BookData
 var _target_stool: Node2D
 var _reading_stool: Node2D
@@ -235,6 +237,28 @@ func _begin_reading(sitting: bool) -> void:
 		_clear_reading_stool_lock()
 		_snap_body_to_current_grid_center()
 		_facing_direction = Vector2.DOWN
+	_show_read_item_display()
+
+
+func _show_read_item_display() -> void:
+	if _book == null:
+		return
+	var display := _get_action_item_display()
+	if display == null or not display.has_method("show_item_icon"):
+		return
+	display.call("show_item_icon", _book.get_icon_path(), null)
+
+
+func _hide_read_item_display() -> void:
+	var display := _get_action_item_display()
+	if display == null or not display.has_method("clear_item_icon"):
+		return
+	display.call("clear_item_icon")
+
+
+func _get_action_item_display() -> Node:
+	_resolve_refs()
+	return _action_item_display
 
 
 func _update_reading(delta: float) -> void:
@@ -311,6 +335,7 @@ func _interrupt_reading(show_message: bool) -> void:
 
 
 func _reset_action() -> void:
+	_hide_read_item_display()
 	_clear_reading_stool_lock()
 	_book = null
 	_target_stool = null
@@ -778,3 +803,7 @@ func _resolve_refs() -> void:
 		_room_map = get_node_or_null(room_map_path) as RoomMapGridModule
 	if _clock == null:
 		_clock = get_tree().get_first_node_in_group("game_clock") as GameClockSystem
+	if (_action_item_display == null or not is_instance_valid(_action_item_display)) and not action_item_display_path.is_empty():
+		_action_item_display = get_node_or_null(action_item_display_path)
+	if _action_item_display == null and _body != null:
+		_action_item_display = _body.get_node_or_null("AICharacterActionItemDisplayModule")
