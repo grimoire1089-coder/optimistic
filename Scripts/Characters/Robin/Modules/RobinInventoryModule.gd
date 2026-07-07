@@ -1,2 +1,2 @@
-extends AICharacterInventoryBaseModule
+extends AICharacterInventoryModule
 class_name RobinInventoryModule
