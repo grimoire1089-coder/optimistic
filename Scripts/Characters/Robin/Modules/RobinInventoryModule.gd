@@ -1,2 +1,0 @@
-extends AICharacterInventoryModule
-class_name RobinInventoryModule
