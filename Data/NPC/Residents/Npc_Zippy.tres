@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="NpcResidentData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Data/NPC/NpcResidentData.gd" id="1_npc_resident_data"]
+
+[resource]
+script = ExtResource("1_npc_resident_data")
+resident_id = &"zippy"
+display_name = "ジッピー"
+portrait_path = "res://Assets/Characters/Zippy/Portraits/Zippy_Head.png"
+location_text = "ロビンの部屋"
+mood_text = "ロビンを見守っている"
+status_text = "住人ページに最初に登録されたNPC。まずはUI表示用の軽量データだけで管理します。"
+relationship_text = "特別な存在"

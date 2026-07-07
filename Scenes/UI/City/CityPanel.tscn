@@ -145,8 +145,18 @@ text = "住人ページ"
 
 [node name="DescriptionLabel" type="Label" parent="MarginContainer/Rows/Body/ContentRows/Pages/ResidentsPage/MarginContainer/Rows"]
 layout_mode = 2
-text = "ここにデカダンスの住人一覧や関係情報を追加していきます。"
+text = "NPCの様子、生活状態、関係情報を軽量カードで確認します。"
 autowrap_mode = 3
+
+[node name="ResidentScroll" type="ScrollContainer" parent="MarginContainer/Rows/Body/ContentRows/Pages/ResidentsPage/MarginContainer/Rows"]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="ResidentList" type="VBoxContainer" parent="MarginContainer/Rows/Body/ContentRows/Pages/ResidentsPage/MarginContainer/Rows/ResidentScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
 
 [node name="InvestmentPage" type="PanelContainer" parent="MarginContainer/Rows/Body/ContentRows/Pages"]
 visible = false
