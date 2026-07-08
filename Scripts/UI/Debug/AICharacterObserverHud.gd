@@ -221,11 +221,11 @@ func _make_runner_text(actor: Node) -> String:
 			var action_id := _variant_to_string_name(runner.get("current_action_id"), &"")
 			return "接続済み / フェーズ: %s / Runner行動: %s" % [
 				_translate_runner_phase(phase),
-				_translate_action_id(action_id),
+				_translate_runner_action_id(action_id, actor),
 			]
 	if actor.has_method("get_ai_action_runner_action_id"):
 		var action_id := _call_string_name(actor, "get_ai_action_runner_action_id", &"")
-		return "接続済み / Runner行動: %s" % _translate_action_id(action_id)
+		return "接続済み / Runner行動: %s" % _translate_runner_action_id(action_id, actor)
 	return "未接続（既存行動のみ）"
 
 
@@ -336,6 +336,25 @@ func _translate_runner_phase(phase: StringName) -> String:
 			return "なし"
 		_:
 			return String(phase)
+
+
+func _translate_runner_action_id(action_id: StringName, actor: Node) -> String:
+	if String(action_id) != "":
+		return _translate_action_id(action_id)
+	var legacy_action_id := _call_string_name(actor, "get_current_need_action_id", &"")
+	match String(legacy_action_id):
+		"sitting", "sit":
+			return "なし（既存着席を優先）"
+		"hydrate", "hydration":
+			return "なし（既存水分補給を優先）"
+		"sleep":
+			return "なし（既存睡眠を優先）"
+		"hygiene":
+			return "なし（既存衛生行動を優先）"
+		"idle":
+			return "なし（待機中）"
+		_:
+			return "なし（待機中）"
 
 
 func _translate_action_id(action_id: StringName) -> String:
