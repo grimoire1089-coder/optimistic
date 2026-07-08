@@ -7,7 +7,7 @@ This folder is intentionally minimal.
 Current scope:
 
 - Adds an editor plugin entry.
-- Adds a simple dock placeholder.
+- Adds a simple bottom panel placeholder named `Robin Item Creator`.
 - Reserves a modules folder for future save, scan, validation, effect, tag, and prompt helpers.
 
 Not included yet:
