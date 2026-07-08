@@ -10,6 +10,7 @@ const SIT_SCRIPT := preload("res://Scripts/Characters/Modules/AICharacterReserve
 const HYDRATE_SCRIPT := preload("res://Scripts/Characters/Modules/AICharacterTableSeatHydrateModule.gd")
 const ITEM_DISPLAY_SCRIPT := preload("res://Scripts/Characters/Modules/AICharacterActionItemDisplayModule.gd")
 const INVENTORY_SCRIPT := preload("res://Scripts/Characters/Modules/AICharacterInventoryModule.gd")
+const ACTION_RUNNER_SCRIPT := preload("res://Scripts/Characters/Actions/Core/AICharacterActionRunner.gd")
 const MoveSlot := preload("res://Scripts/Characters/Modules/AICharacterMovementCoordinator.gd")
 
 @export var resident_id: StringName = &"zippy"
@@ -21,6 +22,7 @@ const MoveSlot := preload("res://Scripts/Characters/Modules/AICharacterMovementC
 @export var snap_start_position_to_grid: bool = true
 @export var start_grid_position: Vector2i = Vector2i(1, 6)
 @export var actor_grid_footprint: Vector2i = Vector2i(2, 4)
+@export var enable_action_runner_observer: bool = true
 
 @onready var sprite: Sprite2D = $Sprite2D
 @onready var click_area: Area2D = $ClickArea2D
@@ -34,6 +36,7 @@ var inventory_module
 var hydrate_behavior_module: AICharacterTableSeatHydrateModule
 var sit_behavior_module: AICharacterReservedSitBehaviorModule
 var action_item_display_module: AICharacterActionItemDisplayModule
+var action_runner: AICharacterActionRunner
 
 
 func _ready() -> void:
@@ -47,10 +50,16 @@ func _ready() -> void:
 	_ensure_hydrate_behavior_module()
 	_ensure_sit_behavior_module()
 	_ensure_action_item_display_module()
+	_setup_action_runner_observer()
 	call_deferred("_finish_start_setup")
 
 
+func _exit_tree() -> void:
+	_shutdown_action_runner_observer()
+
+
 func _physics_process(delta: float) -> void:
+	_update_action_runner_observer(delta)
 	if _update_hydrate_behavior(delta):
 		return
 	if _update_sit_behavior(delta):
@@ -88,6 +97,28 @@ func get_need_planner() -> NeedDrivenAIPlanner:
 
 func get_inventory_module():
 	return inventory_module
+
+
+func get_ai_action_runner() -> AICharacterActionRunner:
+	return action_runner
+
+
+func get_ai_action_runner_action_id() -> StringName:
+	if action_runner == null:
+		return &""
+	return action_runner.current_action_id
+
+
+func get_ai_action_runner_debug_summary() -> String:
+	var legacy_action_id := get_current_need_action_id()
+	var legacy_text := get_current_action_display_text()
+	if action_runner == null:
+		return "runner=disabled legacy_action=%s legacy_text=%s" % [String(legacy_action_id), legacy_text]
+	return "%s legacy_action=%s legacy_text=%s" % [
+		action_runner.get_debug_summary(),
+		String(legacy_action_id),
+		legacy_text,
+	]
 
 
 func get_current_lowest_need_id() -> StringName:
@@ -256,6 +287,29 @@ func _ensure_action_item_display_module() -> void:
 	action_item_display_module.item_center_offset = Vector2(0.0, -18.0)
 	action_item_display_module.item_display_size = Vector2(70.0, 70.0)
 	add_child(action_item_display_module)
+
+
+func _setup_action_runner_observer() -> void:
+	_shutdown_action_runner_observer()
+	if not enable_action_runner_observer:
+		return
+	action_runner = ACTION_RUNNER_SCRIPT.new() as AICharacterActionRunner
+	if action_runner == null:
+		return
+	action_runner.setup(self, [])
+
+
+func _update_action_runner_observer(delta: float) -> void:
+	if not enable_action_runner_observer or action_runner == null:
+		return
+	action_runner.physics_update(delta)
+
+
+func _shutdown_action_runner_observer() -> void:
+	if action_runner == null:
+		return
+	action_runner.shutdown()
+	action_runner = null
 
 
 func _finish_start_setup() -> void:
