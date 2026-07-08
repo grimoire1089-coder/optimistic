@@ -3,5 +3,5 @@
 [ext_resource type="Script" path="res://addons/robin_item_creator/ItemCreatorDock.gd" id="1_dock_script"]
 
 [node name="RobinItemCreatorDock" type="VBoxContainer"]
-custom_minimum_size = Vector2(320, 0)
+custom_minimum_size = Vector2(220, 0)
 script = ExtResource("1_dock_script")
