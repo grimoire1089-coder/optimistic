@@ -27,9 +27,8 @@ func bind(actor: Node) -> void:
 
 
 func unbind() -> void:
-	cleanup()
-	_action_node = null
 	super.unbind()
+	_action_node = null
 
 
 func can_start(context: AICharacterActionContext) -> bool:
@@ -82,7 +81,7 @@ func tick(context: AICharacterActionContext, delta: float) -> AICharacterActionR
 		return tick_value as AICharacterActionResult
 
 	if tick_value is Vector2:
-		var velocity := tick_value as Vector2
+		var velocity: Vector2 = tick_value
 		if complete_when_inactive and not _is_node_active(node):
 			return AICharacterActionResult.completed()
 		return AICharacterActionResult.moving(velocity, _get_facing_direction(node))
