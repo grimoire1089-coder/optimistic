@@ -69,7 +69,9 @@ static func normalize_id_text(text: String) -> String:
 				result += "_"
 			last_was_separator = true
 
-	result = result.strip_edges().trim_suffix("_")
+	result = result.strip_edges()
+	if result.ends_with("_"):
+		result = result.substr(0, result.length() - 1)
 	return result
 
 
