@@ -113,7 +113,7 @@ func _build_ui() -> void:
 
 	_title_label = Label.new()
 	_title_label.name = "TitleLabel"
-	_title_label.text = "AI OBSERVER  F2"
+	_title_label.text = "AIキャラクター観測  F2"
 	_title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_title_label.add_theme_color_override("font_color", Color(0.82, 1.0, 1.0, 1.0))
 	_title_label.add_theme_font_size_override("font_size", 17)
@@ -132,7 +132,7 @@ func _build_ui() -> void:
 
 	var hint := Label.new()
 	hint.name = "HintLabel"
-	hint.text = "F2: 開閉 / 1キャラ1ライン観測 / 表示中のみ更新"
+	hint.text = "F2: 開閉 / 1キャラ1行動を観測 / 表示中だけ更新"
 	hint.add_theme_color_override("font_color", Color(0.58, 0.78, 0.86, 1.0))
 	hint.add_theme_font_size_override("font_size", 12)
 	root.add_child(hint)
@@ -160,11 +160,11 @@ func _build_ui() -> void:
 func _refresh() -> void:
 	var actors := _collect_ai_actors()
 	if _title_label != null:
-		_title_label.text = "AI OBSERVER  F2  /  %d actors" % actors.size()
+		_title_label.text = "AIキャラクター観測  F2  /  %d体" % actors.size()
 	if _body_label == null:
 		return
 	if actors.is_empty():
-		_body_label.text = "AIキャラクターが見つかりません。group=%s" % String(actor_group_name)
+		_body_label.text = "AIキャラクターが見つかりません。グループ: %s" % String(actor_group_name)
 		return
 
 	var lines: Array[String] = []
@@ -192,30 +192,41 @@ func _sort_actor_by_name(a: Node, b: Node) -> bool:
 
 
 func _append_actor_lines(lines: Array[String], actor: Node, index: int) -> void:
-	var title := "[%02d] %s  node=%s" % [index + 1, _get_actor_display_name(actor), actor.name]
-	lines.append(title)
-	lines.append("  action=%s / text=%s / moving=%s" % [
-		String(_call_string_name(actor, "get_current_need_action_id", &"")),
-		_call_string(actor, "get_current_action_display_text", ""),
-		str(_call_bool(actor, "is_ai_character_moving", false)),
-	])
-	lines.append("  lowest_need=%s / pos=%s / vel=%s" % [
-		String(_call_string_name(actor, "get_current_lowest_need_id", &"")),
-		_format_actor_position(actor),
-		_format_actor_velocity(actor),
-	])
+	var action_id := _call_string_name(actor, "get_current_need_action_id", &"")
+	var lowest_need_id := _call_string_name(actor, "get_current_lowest_need_id", &"")
 
-	if actor.has_method("get_ai_action_runner_debug_summary"):
-		lines.append("  runner=%s" % _call_string(actor, "get_ai_action_runner_debug_summary", ""))
-	elif actor.has_method("get_ai_action_runner_action_id"):
-		lines.append("  runner_action=%s" % String(_call_string_name(actor, "get_ai_action_runner_action_id", &"")))
-	else:
-		lines.append("  runner=not connected")
+	lines.append("【%02d】%s（ノード: %s）" % [index + 1, _get_actor_display_name(actor), actor.name])
+	lines.append("  現在行動: %s" % _call_string(actor, "get_current_action_display_text", "不明"))
+	lines.append("  行動ID: %s / 移動中: %s" % [
+		_translate_action_id(action_id),
+		_bool_to_japanese(_call_bool(actor, "is_ai_character_moving", false)),
+	])
+	lines.append("  一番低い欲求: %s" % _translate_need_id(lowest_need_id))
+	lines.append("  位置: %s / 速度: %s" % [_format_actor_position(actor), _format_actor_velocity(actor)])
+	lines.append("  行動ライン: %s" % _make_runner_text(actor))
 
 	var needs_text := _make_needs_text(actor)
 	if not needs_text.is_empty():
-		lines.append("  needs: %s" % needs_text)
+		lines.append("  欲求: %s" % needs_text)
 	lines.append("")
+
+
+func _make_runner_text(actor: Node) -> String:
+	if actor == null:
+		return "未接続"
+	if actor.has_method("get_ai_action_runner"):
+		var runner := actor.call("get_ai_action_runner") as Object
+		if runner != null:
+			var phase := _variant_to_string_name(runner.get("current_phase"), &"")
+			var action_id := _variant_to_string_name(runner.get("current_action_id"), &"")
+			return "接続済み / フェーズ: %s / Runner行動: %s" % [
+				_translate_runner_phase(phase),
+				_translate_action_id(action_id),
+			]
+	if actor.has_method("get_ai_action_runner_action_id"):
+		var action_id := _call_string_name(actor, "get_ai_action_runner_action_id", &"")
+		return "接続済み / Runner行動: %s" % _translate_action_id(action_id)
+	return "未接続（既存行動のみ）"
 
 
 func _make_needs_text(actor: Node) -> String:
@@ -234,7 +245,7 @@ func _make_needs_text(actor: Node) -> String:
 			_get_need_display_name(need),
 			need.value,
 			need.definition.max_value,
-			String(need.get_state()),
+			_translate_need_state(need.get_state()),
 		])
 		count += 1
 		if count >= max_need_rows_per_actor:
@@ -253,7 +264,7 @@ func _get_need_display_name(need: NeedInstance) -> String:
 		return "?"
 	if not need.definition.display_name.is_empty():
 		return need.definition.display_name
-	return String(need.definition.need_id)
+	return _translate_need_id(need.definition.need_id)
 
 
 func _get_actor_display_name(actor: Node) -> String:
@@ -288,7 +299,16 @@ func _call_string(actor: Node, method_name: StringName, fallback: String) -> Str
 func _call_string_name(actor: Node, method_name: StringName, fallback: StringName) -> StringName:
 	if actor == null or not actor.has_method(method_name):
 		return fallback
-	var value: Variant = actor.call(method_name)
+	return _variant_to_string_name(actor.call(method_name), fallback)
+
+
+func _call_bool(actor: Node, method_name: StringName, fallback: bool) -> bool:
+	if actor == null or not actor.has_method(method_name):
+		return fallback
+	return bool(actor.call(method_name))
+
+
+func _variant_to_string_name(value: Variant, fallback: StringName) -> StringName:
 	if value is StringName:
 		return value
 	if value is String:
@@ -296,10 +316,92 @@ func _call_string_name(actor: Node, method_name: StringName, fallback: StringNam
 	return fallback
 
 
-func _call_bool(actor: Node, method_name: StringName, fallback: bool) -> bool:
-	if actor == null or not actor.has_method(method_name):
-		return fallback
-	return bool(actor.call(method_name))
+func _translate_runner_phase(phase: StringName) -> String:
+	match String(phase):
+		"idle":
+			return "待機"
+		"thinking":
+			return "思考中"
+		"starting":
+			return "開始準備"
+		"running":
+			return "実行中"
+		"completed":
+			return "完了"
+		"failed":
+			return "失敗"
+		"canceled":
+			return "中断"
+		"":
+			return "なし"
+		_:
+			return String(phase)
+
+
+func _translate_action_id(action_id: StringName) -> String:
+	var raw := String(action_id)
+	match raw:
+		"":
+			return "なし（観測のみ）"
+		"idle":
+			return "待機（idle）"
+		"sitting", "sit":
+			return "着席（%s）" % raw
+		"hydrate", "hydration":
+			return "水分補給（%s）" % raw
+		"sleep":
+			return "睡眠（sleep）"
+		"hygiene":
+			return "衛生（hygiene）"
+		"read_book", "reading":
+			return "読書（%s）" % raw
+		"craft", "crafting":
+			return "制作（%s）" % raw
+		"wander", "moving":
+			return "移動・徘徊（%s）" % raw
+		"entrance_travel":
+			return "入口移動（entrance_travel）"
+		_:
+			return raw
+
+
+func _translate_need_id(need_id: StringName) -> String:
+	var raw := String(need_id)
+	match raw:
+		"energy":
+			return "エネルギー（energy）"
+		"hydration":
+			return "水分（hydration）"
+		"satiety", "hunger", "fullness":
+			return "満腹度（%s）" % raw
+		"cleanliness", "hygiene":
+			return "清潔度（%s）" % raw
+		"fun", "entertainment":
+			return "娯楽度（%s）" % raw
+		"social", "relationship":
+			return "交流度（%s）" % raw
+		"":
+			return "なし"
+		_:
+			return raw
+
+
+func _translate_need_state(state: StringName) -> String:
+	match String(state):
+		"normal":
+			return "良好"
+		"low":
+			return "低下"
+		"critical":
+			return "危険"
+		"none", "":
+			return "なし"
+		_:
+			return String(state)
+
+
+func _bool_to_japanese(value: bool) -> String:
+	return "はい" if value else "いいえ"
 
 
 func _join_string_array(parts: Array[String], separator: String) -> String:
