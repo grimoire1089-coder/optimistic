@@ -28,3 +28,14 @@ func _build_minimal_layout() -> void:
 	note.text = "次の段階で、FoodItemData作成、タグ選択、効果入力をモジュールとして追加します。"
 	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	add_child(note)
+
+	var close_button := Button.new()
+	close_button.name = "CloseButton"
+	close_button.text = "閉じる"
+	close_button.tooltip_text = "Robin Item Creator Dockを閉じます。プラグインは有効なままです。"
+	close_button.pressed.connect(_on_close_button_pressed)
+	add_child(close_button)
+
+
+func _on_close_button_pressed() -> void:
+	visible = false
