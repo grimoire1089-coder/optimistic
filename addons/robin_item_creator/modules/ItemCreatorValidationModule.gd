@@ -73,8 +73,10 @@ static func validate_form(display_name: String, item_id: StringName, category_id
 
 
 static func format_result(result: Dictionary) -> String:
-	var messages: PackedStringArray = result.get("messages", PackedStringArray())
-	return "\n".join(messages)
+	var raw_messages: Variant = result.get("messages", PackedStringArray())
+	if raw_messages is PackedStringArray:
+		return "\n".join(raw_messages as PackedStringArray)
+	return ""
 
 
 static func _validate_item_id_text(item_id_text: String) -> String:
