@@ -3,9 +3,10 @@ extends VBoxContainer
 
 const PreviewModule := preload("res://addons/robin_item_creator/modules/ItemCreatorPreviewModule.gd")
 const ValidationModule := preload("res://addons/robin_item_creator/modules/ItemCreatorValidationModule.gd")
+const SaveModule := preload("res://addons/robin_item_creator/modules/ItemCreatorSaveModule.gd")
 
 const TITLE_TEXT := "Robin Item Creator"
-const STATUS_TEXT := "入力フォームのみです。まだ保存処理はありません。"
+const STATUS_TEXT := "FoodItemData.tres を作成できます。既存ファイルは上書きしません。"
 
 var _display_name_edit: LineEdit
 var _item_id_edit: LineEdit
@@ -18,6 +19,9 @@ var _water_spin: SpinBox
 var _save_path_preview: LineEdit
 var _summary_label: Label
 var _validation_label: Label
+var _save_button: Button
+var _save_status_label: Label
+var _last_validation_result: Dictionary = {}
 var _last_auto_item_id := ""
 var _is_updating_item_id := false
 
@@ -75,7 +79,7 @@ func _build_layout() -> void:
 
 	_description_edit = TextEdit.new()
 	_description_edit.custom_minimum_size = Vector2(0.0, 80.0)
-	_description_edit.placeholder_text = "説明文。まだ保存されません。"
+	_description_edit.placeholder_text = "説明文。"
 	_description_edit.text_changed.connect(_on_description_changed)
 	_add_large_form_row(form, "説明", _description_edit)
 
@@ -88,7 +92,7 @@ func _build_layout() -> void:
 	_sell_price_spin.value_changed.connect(_on_numeric_value_changed)
 	_add_form_row(form, "売却価格", _sell_price_spin)
 
-	_add_section_title(form, "効果プレビュー")
+	_add_section_title(form, "効果")
 	_hunger_spin = _create_float_spin_box(0.0, 999.0, 1.0)
 	_hunger_spin.value_changed.connect(_on_numeric_value_changed)
 	_add_form_row(form, "満腹 +", _hunger_spin)
@@ -97,7 +101,7 @@ func _build_layout() -> void:
 	_water_spin.value_changed.connect(_on_numeric_value_changed)
 	_add_form_row(form, "水分 +", _water_spin)
 
-	_add_section_title(form, "保存先プレビュー")
+	_add_section_title(form, "保存先")
 	_save_path_preview = LineEdit.new()
 	_save_path_preview.editable = false
 	_save_path_preview.placeholder_text = "保存先プレビュー"
@@ -114,15 +118,24 @@ func _build_layout() -> void:
 	_validation_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	form.add_child(_validation_label)
 
+	_add_section_title(form, "作成")
+	_save_status_label = Label.new()
+	_save_status_label.text = "未作成です。入力チェックのERRORが消えると作成できます。"
+	_save_status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_save_status_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	form.add_child(_save_status_label)
+
+	_save_button = Button.new()
+	_save_button.text = "FoodItemData.tres を作成"
+	_save_button.tooltip_text = "保存先にFoodItemData Resourceを作ります。既存ファイルは上書きしません。"
+	_save_button.disabled = true
+	_save_button.pressed.connect(_on_save_button_pressed)
+	form.add_child(_save_button)
+
 	var clear_button := Button.new()
 	clear_button.text = "入力をクリア"
 	clear_button.pressed.connect(_on_clear_button_pressed)
 	form.add_child(clear_button)
-
-	var save_placeholder := Button.new()
-	save_placeholder.text = "保存はまだ未実装"
-	save_placeholder.disabled = true
-	form.add_child(save_placeholder)
 
 
 func _create_title_label(text: String) -> Label:
@@ -258,6 +271,29 @@ func _on_clear_button_pressed() -> void:
 		_hunger_spin.value = 0.0
 	if _water_spin != null:
 		_water_spin.value = 0.0
+	if _save_status_label != null:
+		_save_status_label.text = "未作成です。入力チェックのERRORが消えると作成できます。"
+	_refresh_preview()
+
+
+func _on_save_button_pressed() -> void:
+	_refresh_preview()
+	if bool(_last_validation_result.get("has_error", true)):
+		_set_save_status("ERRORが残っているため作成できません。入力チェックを確認してください。")
+		return
+
+	var display_name := _get_display_name_text()
+	var item_id := _get_item_id()
+	var category_id := _get_selected_category_id()
+	var description := _get_description_text()
+	var buy_price := _get_spin_int_value(_buy_price_spin)
+	var sell_price := _get_spin_int_value(_sell_price_spin)
+	var hunger_value := _get_spin_float_value(_hunger_spin)
+	var water_value := _get_spin_float_value(_water_spin)
+	var save_path := PreviewModule.build_save_path(category_id, item_id)
+	var payload := SaveModule.build_food_payload(display_name, item_id, category_id, description, buy_price, sell_price, hunger_value, water_value)
+	var result := SaveModule.save_food_item(payload, save_path)
+	_set_save_status(String(result.get("message", "作成処理が終了しました。")))
 	_refresh_preview()
 
 
@@ -268,6 +304,12 @@ func _set_item_id_text(text: String, is_auto: bool) -> void:
 	_item_id_edit.text = text
 	_is_updating_item_id = false
 	_last_auto_item_id = text if is_auto else ""
+
+
+func _set_save_status(text: String) -> void:
+	if _save_status_label == null:
+		return
+	_save_status_label.text = text
 
 
 func _refresh_preview() -> void:
@@ -289,14 +331,33 @@ func _refresh_preview() -> void:
 func _refresh_validation(display_name: String, item_id: StringName, category_id: StringName, save_path: String, buy_price: int, sell_price: int, hunger_value: float, water_value: float) -> void:
 	if _validation_label == null:
 		return
-	var result := ValidationModule.validate_form(display_name, item_id, category_id, save_path, buy_price, sell_price, hunger_value, water_value)
-	_validation_label.text = ValidationModule.format_result(result)
+	_last_validation_result = ValidationModule.validate_form(display_name, item_id, category_id, save_path, buy_price, sell_price, hunger_value, water_value)
+	_validation_label.text = ValidationModule.format_result(_last_validation_result)
+	_refresh_save_button_state(save_path)
+
+
+func _refresh_save_button_state(save_path: String) -> void:
+	if _save_button == null:
+		return
+	var has_error := bool(_last_validation_result.get("has_error", true))
+	var already_exists := ResourceLoader.exists(save_path)
+	_save_button.disabled = has_error or already_exists
+	if already_exists:
+		_save_button.tooltip_text = "既存Resourceがあるため上書きしません: %s" % save_path
+	else:
+		_save_button.tooltip_text = "保存先にFoodItemData Resourceを作ります。既存ファイルは上書きしません。"
 
 
 func _get_display_name_text() -> String:
 	if _display_name_edit == null:
 		return ""
 	return _display_name_edit.text.strip_edges()
+
+
+func _get_description_text() -> String:
+	if _description_edit == null:
+		return ""
+	return _description_edit.text
 
 
 func _get_item_id() -> StringName:
