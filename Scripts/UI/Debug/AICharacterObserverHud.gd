@@ -171,7 +171,7 @@ func _refresh() -> void:
 	for index in range(actors.size()):
 		var actor := actors[index]
 		_append_actor_lines(lines, actor, index)
-	_body_label.text = "\n".join(lines)
+	_body_label.text = PackedStringArray(lines).join("\n")
 
 
 func _collect_ai_actors() -> Array[Node]:
@@ -239,7 +239,7 @@ func _make_needs_text(actor: Node) -> String:
 		count += 1
 		if count >= max_need_rows_per_actor:
 			break
-	return " | ".join(parts)
+	return PackedStringArray(parts).join(" | ")
 
 
 func _get_actor_needs_module(actor: Node) -> Node:
