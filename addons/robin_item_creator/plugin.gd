@@ -18,6 +18,8 @@ func _exit_tree() -> void:
 
 func _on_open_item_creator_requested() -> void:
 	_add_dock()
+	if _dock != null and is_instance_valid(_dock):
+		_dock.visible = true
 	_focus_dock_if_possible()
 
 
