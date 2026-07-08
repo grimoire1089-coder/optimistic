@@ -2,6 +2,7 @@
 extends VBoxContainer
 
 const PreviewModule := preload("res://addons/robin_item_creator/modules/ItemCreatorPreviewModule.gd")
+const ValidationModule := preload("res://addons/robin_item_creator/modules/ItemCreatorValidationModule.gd")
 
 const TITLE_TEXT := "Robin Item Creator"
 const STATUS_TEXT := "入力フォームのみです。まだ保存処理はありません。"
@@ -16,6 +17,7 @@ var _hunger_spin: SpinBox
 var _water_spin: SpinBox
 var _save_path_preview: LineEdit
 var _summary_label: Label
+var _validation_label: Label
 var _last_auto_item_id := ""
 var _is_updating_item_id := false
 
@@ -105,6 +107,12 @@ func _build_layout() -> void:
 	_summary_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_summary_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	form.add_child(_summary_label)
+
+	_add_section_title(form, "入力チェック")
+	_validation_label = Label.new()
+	_validation_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_validation_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	form.add_child(_validation_label)
 
 	var clear_button := Button.new()
 	clear_button.text = "入力をクリア"
@@ -272,8 +280,17 @@ func _refresh_preview() -> void:
 	var sell_price := _get_spin_int_value(_sell_price_spin)
 	var hunger_value := _get_spin_float_value(_hunger_spin)
 	var water_value := _get_spin_float_value(_water_spin)
-	_save_path_preview.text = PreviewModule.build_save_path(category_id, item_id)
+	var save_path := PreviewModule.build_save_path(category_id, item_id)
+	_save_path_preview.text = save_path
 	_summary_label.text = PreviewModule.get_preview_summary(display_name, item_id, category_id, buy_price, sell_price, hunger_value, water_value)
+	_refresh_validation(display_name, item_id, category_id, save_path, buy_price, sell_price, hunger_value, water_value)
+
+
+func _refresh_validation(display_name: String, item_id: StringName, category_id: StringName, save_path: String, buy_price: int, sell_price: int, hunger_value: float, water_value: float) -> void:
+	if _validation_label == null:
+		return
+	var result := ValidationModule.validate_form(display_name, item_id, category_id, save_path, buy_price, sell_price, hunger_value, water_value)
+	_validation_label.text = ValidationModule.format_result(result)
 
 
 func _get_display_name_text() -> String:
