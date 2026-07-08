@@ -168,7 +168,7 @@ func _refresh() -> void:
 		return
 
 	var lines: Array[String] = []
-	for index in actors.size():
+	for index in range(actors.size()):
 		var actor := actors[index]
 		_append_actor_lines(lines, actor, index)
 	_body_label.text = "\n".join(lines)
