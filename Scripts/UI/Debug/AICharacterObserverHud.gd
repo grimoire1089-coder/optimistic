@@ -171,7 +171,7 @@ func _refresh() -> void:
 	for index in range(actors.size()):
 		var actor := actors[index]
 		_append_actor_lines(lines, actor, index)
-	_body_label.text = PackedStringArray(lines).join("\n")
+	_body_label.text = _join_string_array(lines, "\n")
 
 
 func _collect_ai_actors() -> Array[Node]:
@@ -239,7 +239,7 @@ func _make_needs_text(actor: Node) -> String:
 		count += 1
 		if count >= max_need_rows_per_actor:
 			break
-	return PackedStringArray(parts).join(" | ")
+	return _join_string_array(parts, " | ")
 
 
 func _get_actor_needs_module(actor: Node) -> Node:
@@ -300,6 +300,15 @@ func _call_bool(actor: Node, method_name: StringName, fallback: bool) -> bool:
 	if actor == null or not actor.has_method(method_name):
 		return fallback
 	return bool(actor.call(method_name))
+
+
+func _join_string_array(parts: Array[String], separator: String) -> String:
+	if parts.is_empty():
+		return ""
+	var text := parts[0]
+	for index in range(1, parts.size()):
+		text += separator + parts[index]
+	return text
 
 
 func _on_close_pressed() -> void:
