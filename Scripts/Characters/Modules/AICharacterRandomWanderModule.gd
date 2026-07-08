@@ -28,6 +28,46 @@ func get_velocity(delta: float) -> Vector2:
 	return next_velocity
 
 
+func can_start_action_runner_wander() -> bool:
+	return _body != null and is_instance_valid(_body)
+
+
+func start_action_runner_wander() -> bool:
+	if not can_start_action_runner_wander():
+		return false
+	if not _body.is_in_group(ai_actor_group_name):
+		_body.add_to_group(ai_actor_group_name)
+	return true
+
+
+func cancel_action_runner_wander() -> void:
+	_release_action_runner_move_slot()
+	_path_cells.clear()
+	_clear_grid_step()
+	_start_idle()
+
+
+func cleanup_action_runner_wander() -> void:
+	_release_action_runner_move_slot()
+
+
+func get_action_runner_wander_debug_summary() -> String:
+	var state := "idle" if is_idle() else "moving"
+	return "wander state=%s moving=%s path=%d grid_step=%s" % [
+		state,
+		str(is_moving()),
+		_path_cells.size(),
+		str(_grid_step_active),
+	]
+
+
+func _release_action_runner_move_slot() -> void:
+	if _body == null:
+		return
+	if use_shared_move_slot:
+		MoveSlot.release_move(_body)
+
+
 func _can_step_now() -> bool:
 	if _body == null:
 		return false
