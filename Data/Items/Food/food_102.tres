@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="FoodItemData" format=3 uid="uid://bm5ktyafd1l03"]
+
+[ext_resource type="Texture2D" uid="uid://6y6t2d1cxmmv" path="res://Assets/Items/Icons/Food/Food_0024_512.png" id="1_58qce"]
+[ext_resource type="Script" uid="uid://dqu1j0kcoeff6" path="res://Scripts/Systems/Needs/NeedEffectData.gd" id="1_hiqr2"]
+[ext_resource type="Script" uid="uid://cgyi4b7bbmqn" path="res://Scripts/Items/Food/FoodItemData.gd" id="2_58qce"]
+
+[sub_resource type="Resource" id="Resource_225fo"]
+script = ExtResource("1_hiqr2")
+effect_id = &"food_102_need_values"
+display_name = "さつまいものはちみつバター 効果"
+values = {
+&"hunger": 2.0
+}
+
+[resource]
+script = ExtResource("2_58qce")
+item_id = &"food_102"
+display_name = "さつまいものはちみつバター"
+description = "未入力"
+icon = ExtResource("1_58qce")
+buy_price = 500
+nutrition_value = 2.0
+need_effect = SubResource("Resource_225fo")

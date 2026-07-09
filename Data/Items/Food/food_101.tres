@@ -1,6 +1,7 @@
 [gd_resource type="Resource" script_class="FoodItemData" format=3 uid="uid://dpc3qo23vccwf"]
 
 [ext_resource type="Script" uid="uid://dqu1j0kcoeff6" path="res://Scripts/Systems/Needs/NeedEffectData.gd" id="1_20kab"]
+[ext_resource type="Texture2D" uid="uid://gq1unvqls6qu" path="res://Assets/Items/Icons/Food/Food_0023_512.png" id="1_vyhp7"]
 [ext_resource type="Script" uid="uid://cgyi4b7bbmqn" path="res://Scripts/Items/Food/FoodItemData.gd" id="2_vyhp7"]
 
 [sub_resource type="Resource" id="Resource_747kx"]
@@ -16,7 +17,7 @@ script = ExtResource("2_vyhp7")
 item_id = &"food_101"
 display_name = "大学芋"
 description = "未入力"
-stack_max = 99
+icon = ExtResource("1_vyhp7")
 buy_price = 500
 nutrition_value = 2.0
 need_effect = SubResource("Resource_747kx")
