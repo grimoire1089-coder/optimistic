@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="FoodItemData" format=3]
+[gd_resource type="Resource" script_class="FoodItemData" format=3 uid="uid://bkf12e1ywqqnf"]
 
 [ext_resource type="Script" uid="uid://cgyi4b7bbmqn" path="res://Scripts/Items/Food/FoodItemData.gd" id="1_item_data"]
 [ext_resource type="Texture2D" uid="uid://dsnumiauoviid" path="res://Assets/Items/Icons/Tool/Lapis_001.png" id="2_lapis_icon"]

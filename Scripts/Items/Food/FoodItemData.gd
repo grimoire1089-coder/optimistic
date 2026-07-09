@@ -8,7 +8,7 @@ const DIRECT_NEED_EFFECT_SUFFIX := "need_values"
 @export_multiline var description: String = ""
 @export var icon: Texture2D
 @export var category_id: StringName = &"foods"
-@export_range(1, 999, 1) var stack_max: int = 99
+@export_range(1, 9999, 1) var stack_max: int = 9999
 @export_range(0, 999999, 1) var buy_price: int = 0
 @export_range(0, 999999, 1) var sell_price: int = 0
 @export var can_discard: bool = true

@@ -1,16 +1,16 @@
-[gd_resource type="Resource" script_class="FoodItemDatabase" load_steps=12 format=3]
+[gd_resource type="Resource" script_class="FoodItemDatabase" format=3 uid="uid://3t71o7ut1t6w"]
 
-[ext_resource type="Script" path="res://Scripts/Items/Food/FoodItemDatabase.gd" id="1_food_database"]
-[ext_resource type="Script" path="res://Scripts/Items/Food/FoodItemData.gd" id="2_food_data_script"]
-[ext_resource type="Resource" path="res://Data/Items/Food/Food_0001_Nikuman.tres" id="3_food_0001"]
-[ext_resource type="Resource" path="res://Data/Items/Food/Food_0008_WaterBottle.tres" id="4_food_0008"]
+[ext_resource type="Script" uid="uid://bgntoirayn1v8" path="res://Scripts/Items/Food/FoodItemDatabase.gd" id="1_food_database"]
+[ext_resource type="Script" uid="uid://cgyi4b7bbmqn" path="res://Scripts/Items/Food/FoodItemData.gd" id="2_food_data_script"]
+[ext_resource type="Resource" uid="uid://khpl6knsr1ao" path="res://Data/Items/Food/Food_0001_Nikuman.tres" id="3_food_0001"]
+[ext_resource type="Resource" uid="uid://bbcfo6cl1qi0" path="res://Data/Items/Food/Food_0008_WaterBottle.tres" id="4_food_0008"]
 [ext_resource type="Resource" path="res://Data/Items/Ingredients/Ingredients_0001_RawRice.tres" id="5_ingredient_0001"]
 [ext_resource type="Resource" path="res://Data/Items/Ingredients/Ingredients_0002_WheatFlour.tres" id="6_ingredient_0002"]
 [ext_resource type="Resource" path="res://Data/Items/Ingredients/Ingredients_0003_WhiteSugar.tres" id="7_ingredient_0003"]
 [ext_resource type="Resource" path="res://Data/Items/Ingredients/Ingredients_0004_Salt.tres" id="8_ingredient_0004"]
 [ext_resource type="Resource" path="res://Data/Items/Ingredients/Ingredients_0005_PinkRockSalt.tres" id="9_ingredient_0005"]
-[ext_resource type="Resource" path="res://Data/Items/Food/Food_0013_WhiteRice.tres" id="10_food_0013"]
-[ext_resource type="Resource" path="res://Data/Items/Food/Food_0016_FelicityClassicBurger.tres" id="11_food_0016"]
+[ext_resource type="Resource" uid="uid://cpms561gltt7f" path="res://Data/Items/Food/Food_0013_WhiteRice.tres" id="10_food_0013"]
+[ext_resource type="Resource" uid="uid://cw1jvr753g70c" path="res://Data/Items/Food/Food_0016_FelicityClassicBurger.tres" id="11_food_0016"]
 
 [resource]
 script = ExtResource("1_food_database")

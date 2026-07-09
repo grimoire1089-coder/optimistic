@@ -1,5 +1,6 @@
 [gd_resource type="Resource" script_class="FoodItemData" format=3 uid="uid://dh8757dxpq3jl"]
 
+[ext_resource type="Texture2D" uid="uid://da6ixhk1hlb6p" path="res://Assets/Items/Icons/Food/Food_0010.png" id="1_avidd"]
 [ext_resource type="Script" uid="uid://dqu1j0kcoeff6" path="res://Scripts/Systems/Needs/NeedEffectData.gd" id="1_d0jgn"]
 [ext_resource type="Script" uid="uid://cgyi4b7bbmqn" path="res://Scripts/Items/Food/FoodItemData.gd" id="2_avidd"]
 
@@ -16,6 +17,7 @@ script = ExtResource("2_avidd")
 item_id = &"food_100"
 display_name = "さつまいもとりんごの煮物"
 description = "未入力"
+icon = ExtResource("1_avidd")
 buy_price = 500
 nutrition_value = 2.0
 need_effect = SubResource("Resource_f22sv")

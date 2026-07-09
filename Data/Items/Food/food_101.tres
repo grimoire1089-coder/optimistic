@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="FoodItemData" format=3 uid="uid://dpc3qo23vccwf"]
+
+[ext_resource type="Script" uid="uid://dqu1j0kcoeff6" path="res://Scripts/Systems/Needs/NeedEffectData.gd" id="1_20kab"]
+[ext_resource type="Script" uid="uid://cgyi4b7bbmqn" path="res://Scripts/Items/Food/FoodItemData.gd" id="2_vyhp7"]
+
+[sub_resource type="Resource" id="Resource_747kx"]
+script = ExtResource("1_20kab")
+effect_id = &"food_101_need_values"
+display_name = "大学芋 効果"
+values = {
+&"hunger": 2.0
+}
+
+[resource]
+script = ExtResource("2_vyhp7")
+item_id = &"food_101"
+display_name = "大学芋"
+description = "未入力"
+stack_max = 99
+buy_price = 500
+nutrition_value = 2.0
+need_effect = SubResource("Resource_747kx")
