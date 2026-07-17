@@ -15,6 +15,7 @@ size = Vector2(96, 192)
 
 [node name="Zippy" type="CharacterBody2D" unique_id=2000054045]
 script = ExtResource("1_zippy_actor")
+ai_character_hud_path = NodePath("")
 
 [node name="Sprite2D" type="Sprite2D" parent="." unique_id=1160887765]
 texture = ExtResource("2_zippy_texture")
