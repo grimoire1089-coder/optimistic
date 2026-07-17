@@ -64,6 +64,7 @@ script = ExtResource("14_skills_module")
 script = ExtResource("7_inventory_module")
 initial_item_paths = PackedStringArray("res://Data/Items/Tools/Lapis_001.tres")
 owner_display_name = "ロビン"
+unlock_food_encyclopedia_on_acquire = true
 
 [node name="RobinRandomWanderModule" type="Node" parent="."]
 script = ExtResource("3_wander_module")
