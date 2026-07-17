@@ -26,6 +26,7 @@ const MoveSlot := preload("res://Scripts/Characters/Modules/AICharacterMovementC
 @export var enable_action_runner_observer: bool = true
 @export var enable_action_runner_wander: bool = true
 @export var enable_action_runner_sit: bool = true
+@export var action_runner_sit_rethink_interval_seconds: float = 0.5
 
 @onready var sprite: Sprite2D = $Sprite2D
 @onready var click_area: Area2D = $ClickArea2D
@@ -40,6 +41,7 @@ var hydrate_behavior_module: AICharacterTableSeatHydrateModule
 var sit_behavior_module: AICharacterReservedSitBehaviorModule
 var action_item_display_module: AICharacterActionItemDisplayModule
 var action_runner: AICharacterActionRunner
+var _action_runner_sit_rethink_timer := 0.0
 
 
 func _ready() -> void:
@@ -207,6 +209,9 @@ func _update_sit_behavior(delta: float) -> bool:
 func _update_action_runner_actions(delta: float) -> bool:
 	if action_runner == null:
 		return false
+	if enable_action_runner_sit and sit_behavior_module != null:
+		sit_behavior_module.update_action_runner_idle(delta)
+		_try_request_action_runner_sit(delta)
 	var runner_controls_actions := enable_action_runner_wander or enable_action_runner_sit
 	if not runner_controls_actions:
 		if enable_action_runner_observer:
@@ -216,6 +221,24 @@ func _update_action_runner_actions(delta: float) -> bool:
 	if action_runner.has_active_action():
 		return true
 	return enable_action_runner_wander
+
+
+func _try_request_action_runner_sit(delta: float) -> void:
+	if action_runner == null or sit_behavior_module == null or not enable_action_runner_sit:
+		_action_runner_sit_rethink_timer = 0.0
+		return
+	if not action_runner.has_active_action() or action_runner.get_active_action_id() != &"wander":
+		_action_runner_sit_rethink_timer = 0.0
+		return
+	if wander_module != null and wander_module.is_moving():
+		_action_runner_sit_rethink_timer = maxf(action_runner_sit_rethink_interval_seconds, 0.1)
+		return
+	_action_runner_sit_rethink_timer = maxf(_action_runner_sit_rethink_timer - maxf(delta, 0.0), 0.0)
+	if _action_runner_sit_rethink_timer > 0.0:
+		return
+	_action_runner_sit_rethink_timer = maxf(action_runner_sit_rethink_interval_seconds, 0.1)
+	if sit_behavior_module.can_start_action_runner_sit():
+		action_runner.cancel_current_action("sit action requested")
 
 
 func _update_legacy_wander(delta: float) -> void:
@@ -321,6 +344,7 @@ func _ensure_action_item_display_module() -> void:
 
 func _setup_action_runner_observer() -> void:
 	_shutdown_action_runner_observer()
+	_action_runner_sit_rethink_timer = 0.0
 	if not enable_action_runner_observer and not enable_action_runner_wander and not enable_action_runner_sit:
 		return
 	action_runner = ACTION_RUNNER_SCRIPT.new() as AICharacterActionRunner
@@ -363,8 +387,8 @@ func _build_action_runner_packages() -> Array[AICharacterActionPackage]:
 			wander_adapter.start_method = &"start_action_runner_wander"
 			wander_adapter.tick_method = &"get_velocity"
 			wander_adapter.tick_pass_delta = true
-			wander_adapter.active_check_method = &"is_moving"
-			wander_adapter.complete_when_inactive = true
+			wander_adapter.active_check_method = &""
+			wander_adapter.complete_when_inactive = false
 			wander_adapter.cancel_method_names = PackedStringArray(["cancel_action_runner_wander"])
 			wander_adapter.cleanup_method_names = PackedStringArray(["cleanup_action_runner_wander"])
 			wander_adapter.debug_summary_method = &"get_action_runner_wander_debug_summary"
@@ -373,6 +397,7 @@ func _build_action_runner_packages() -> Array[AICharacterActionPackage]:
 
 
 func _shutdown_action_runner_observer() -> void:
+	_action_runner_sit_rethink_timer = 0.0
 	if action_runner == null:
 		return
 	action_runner.shutdown()
