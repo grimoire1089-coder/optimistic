@@ -6,6 +6,7 @@ signal selected(actor: ZippyActor)
 const DEFAULT_CLICK_SFX_PATH := "res://Assets/Audio/SFX/UI/UI_Click_001.ogg"
 const DEFAULT_LAPIS_ITEM_PATH := "res://Data/Items/Tools/Lapis_001.tres"
 const WANDER_SCRIPT := preload("res://Scripts/Characters/Modules/AICharacterRandomWanderModule.gd")
+const SLEEP_SCRIPT := preload("res://Scripts/Characters/Modules/AICharacterActionRunnerSleepModule.gd")
 const SIT_SCRIPT := preload("res://Scripts/Characters/Modules/AICharacterReservedSitBehaviorModule.gd")
 const HYDRATE_SCRIPT := preload("res://Scripts/Characters/Modules/AICharacterTableSeatHydrateModule.gd")
 const ITEM_DISPLAY_SCRIPT := preload("res://Scripts/Characters/Modules/AICharacterActionItemDisplayModule.gd")
@@ -24,6 +25,7 @@ const MoveSlot := preload("res://Scripts/Characters/Modules/AICharacterMovementC
 @export var start_grid_position: Vector2i = Vector2i(1, 6)
 @export var actor_grid_footprint: Vector2i = Vector2i(2, 4)
 @export var enable_action_runner_observer: bool = true
+@export var enable_action_runner_sleep: bool = true
 @export var enable_action_runner_hydrate: bool = true
 @export var enable_action_runner_wander: bool = true
 @export var enable_action_runner_sit: bool = true
@@ -38,6 +40,7 @@ const MoveSlot := preload("res://Scripts/Characters/Modules/AICharacterMovementC
 
 var wander_module: AICharacterRandomWanderModule
 var inventory_module
+var sleep_behavior_module: AICharacterActionRunnerSleepModule
 var hydrate_behavior_module: AICharacterTableSeatHydrateModule
 var sit_behavior_module: AICharacterReservedSitBehaviorModule
 var action_item_display_module: AICharacterActionItemDisplayModule
@@ -53,6 +56,7 @@ func _ready() -> void:
 	_connect_click_area()
 	_ensure_inventory_module()
 	_ensure_wander_module()
+	_ensure_sleep_behavior_module()
 	_ensure_hydrate_behavior_module()
 	_ensure_sit_behavior_module()
 	_ensure_action_item_display_module()
@@ -65,6 +69,9 @@ func _exit_tree() -> void:
 
 
 func _physics_process(delta: float) -> void:
+	if not enable_action_runner_sleep and _update_sleep_behavior(delta):
+		_cancel_action_runner_current_action("sleep behavior active")
+		return
 	if not enable_action_runner_hydrate and _update_hydrate_behavior(delta):
 		_cancel_action_runner_current_action("hydrate behavior active")
 		return
@@ -81,6 +88,8 @@ func get_actor_grid_footprint() -> Vector2i:
 
 
 func is_ai_character_moving() -> bool:
+	if sleep_behavior_module != null and sleep_behavior_module.is_active() and velocity.length_squared() > 0.01:
+		return true
 	if hydrate_behavior_module != null and hydrate_behavior_module.is_active() and velocity.length_squared() > 0.01:
 		return true
 	if sit_behavior_module != null and sit_behavior_module.is_active() and velocity.length_squared() > 0.01:
@@ -133,6 +142,8 @@ func get_current_lowest_need_id() -> StringName:
 
 
 func get_current_need_action_id() -> StringName:
+	if sleep_behavior_module != null and sleep_behavior_module.is_active():
+		return CharacterNeedActionIds.REST
 	if hydrate_behavior_module != null and hydrate_behavior_module.is_active():
 		return CharacterNeedActionIds.HYDRATE
 	if sit_behavior_module != null and sit_behavior_module.is_active():
@@ -143,6 +154,12 @@ func get_current_need_action_id() -> StringName:
 
 
 func get_current_action_display_text() -> String:
+	if sleep_behavior_module != null and sleep_behavior_module.is_active():
+		if sleep_behavior_module.is_floor_sleeping():
+			return "床で睡眠中"
+		if sleep_behavior_module.is_sleeping():
+			return "睡眠中"
+		return "寝具へ移動中"
 	if hydrate_behavior_module != null and hydrate_behavior_module.is_active():
 		if hydrate_behavior_module.is_drinking():
 			return "水分補給中"
@@ -169,6 +186,23 @@ func _register_existing_ai_actors() -> void:
 			continue
 		if node is Node2D and node.has_method("get_needs_module"):
 			node.add_to_group(&"ai_character_actor")
+
+
+func _update_sleep_behavior(delta: float) -> bool:
+	if sleep_behavior_module == null:
+		return false
+	var sleep_velocity := sleep_behavior_module.get_velocity(delta)
+	if not sleep_behavior_module.is_active():
+		return false
+	velocity = sleep_velocity
+	if velocity.length_squared() <= 0.0:
+		MoveSlot.release_move(self)
+		return true
+	if not _try_claim_move_slot():
+		velocity = Vector2.ZERO
+		return true
+	move_and_slide()
+	return true
 
 
 func _update_hydrate_behavior(delta: float) -> bool:
@@ -213,7 +247,7 @@ func _update_action_runner_actions(delta: float) -> bool:
 	if enable_action_runner_sit and sit_behavior_module != null:
 		sit_behavior_module.update_action_runner_idle(delta)
 		_try_request_action_runner_sit(delta)
-	var runner_controls_actions := enable_action_runner_hydrate or enable_action_runner_wander or enable_action_runner_sit
+	var runner_controls_actions := enable_action_runner_sleep or enable_action_runner_hydrate or enable_action_runner_wander or enable_action_runner_sit
 	if not runner_controls_actions:
 		if enable_action_runner_observer:
 			action_runner.physics_update(delta)
@@ -294,6 +328,23 @@ func _ensure_wander_module() -> void:
 	add_child(wander_module)
 
 
+func _ensure_sleep_behavior_module() -> void:
+	sleep_behavior_module = get_node_or_null("AICharacterSleepBehaviorModule") as AICharacterActionRunnerSleepModule
+	if sleep_behavior_module != null:
+		sleep_behavior_module.action_runner_integration_enabled = enable_action_runner_sleep
+		return
+	sleep_behavior_module = SLEEP_SCRIPT.new() as AICharacterActionRunnerSleepModule
+	if sleep_behavior_module == null:
+		return
+	sleep_behavior_module.name = "AICharacterSleepBehaviorModule"
+	sleep_behavior_module.actor_grid_footprint = actor_grid_footprint
+	sleep_behavior_module.actor_visual_half_extents = Vector2(48.0, 96.0)
+	sleep_behavior_module.sleep_request_energy_ratio = 0.33
+	sleep_behavior_module.floor_sleep_energy_ratio = 0.01
+	sleep_behavior_module.action_runner_integration_enabled = enable_action_runner_sleep
+	add_child(sleep_behavior_module)
+
+
 func _ensure_hydrate_behavior_module() -> void:
 	hydrate_behavior_module = get_node_or_null("AICharacterTableSeatHydrateModule") as AICharacterTableSeatHydrateModule
 	if hydrate_behavior_module != null:
@@ -348,7 +399,7 @@ func _ensure_action_item_display_module() -> void:
 func _setup_action_runner_observer() -> void:
 	_shutdown_action_runner_observer()
 	_action_runner_sit_rethink_timer = 0.0
-	if not enable_action_runner_observer and not enable_action_runner_hydrate and not enable_action_runner_wander and not enable_action_runner_sit:
+	if not enable_action_runner_observer and not enable_action_runner_sleep and not enable_action_runner_hydrate and not enable_action_runner_wander and not enable_action_runner_sit:
 		return
 	action_runner = ACTION_RUNNER_SCRIPT.new() as AICharacterActionRunner
 	if action_runner == null:
@@ -358,6 +409,26 @@ func _setup_action_runner_observer() -> void:
 
 func _build_action_runner_packages() -> Array[AICharacterActionPackage]:
 	var packages: Array[AICharacterActionPackage] = []
+	if enable_action_runner_sleep and sleep_behavior_module != null:
+		var sleep_adapter := NODE_ACTION_ADAPTER_SCRIPT.new() as AICharacterNodeActionAdapter
+		if sleep_adapter != null:
+			sleep_adapter.action_id = CharacterNeedActionIds.REST
+			sleep_adapter.display_name = "睡眠中"
+			sleep_adapter.priority = 200
+			sleep_adapter.base_score = 200.0
+			sleep_adapter.action_node_path = NodePath("AICharacterSleepBehaviorModule")
+			sleep_adapter.can_start_method = &"can_start_action_runner_sleep"
+			sleep_adapter.score_method = &"get_action_runner_sleep_score"
+			sleep_adapter.start_method = &"start_action_runner_sleep"
+			sleep_adapter.tick_method = &"tick_action_runner_sleep"
+			sleep_adapter.tick_pass_delta = true
+			sleep_adapter.active_check_method = &""
+			sleep_adapter.complete_when_inactive = false
+			sleep_adapter.cancel_method_names = PackedStringArray(["cancel_action_runner_sleep"])
+			sleep_adapter.cleanup_method_names = PackedStringArray(["cleanup_action_runner_sleep"])
+			sleep_adapter.debug_summary_method = &"get_action_runner_sleep_debug_summary"
+			packages.append(sleep_adapter)
+
 	if enable_action_runner_hydrate and hydrate_behavior_module != null:
 		var hydrate_adapter := NODE_ACTION_ADAPTER_SCRIPT.new() as AICharacterNodeActionAdapter
 		if hydrate_adapter != null:
@@ -432,6 +503,8 @@ func _finish_start_setup() -> void:
 		_snap_start_position_to_grid()
 	if wander_module != null:
 		wander_module.setup(self)
+	if sleep_behavior_module != null:
+		sleep_behavior_module.setup(self)
 	if hydrate_behavior_module != null:
 		hydrate_behavior_module.setup(self)
 	if sit_behavior_module != null:
