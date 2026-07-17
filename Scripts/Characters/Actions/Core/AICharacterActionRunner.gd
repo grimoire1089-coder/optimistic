@@ -19,6 +19,8 @@ var _context := AICharacterActionContext.new()
 var _packages: Array[AICharacterActionPackage] = []
 var _active_package: AICharacterActionPackage
 var _idle_think_timer: float = 0.0
+var _rethink_requested := false
+var _rethink_reason: String = ""
 
 
 func setup(actor: Node, packages: Array[AICharacterActionPackage] = []) -> void:
@@ -28,6 +30,8 @@ func setup(actor: Node, packages: Array[AICharacterActionPackage] = []) -> void:
 	set_packages(packages)
 	current_phase = PHASE_IDLE
 	_idle_think_timer = 0.0
+	_rethink_requested = false
+	_rethink_reason = ""
 
 
 func shutdown() -> void:
@@ -43,6 +47,8 @@ func shutdown() -> void:
 	current_phase = PHASE_IDLE
 	last_fail_reason = ""
 	_idle_think_timer = 0.0
+	_rethink_requested = false
+	_rethink_reason = ""
 
 
 func set_packages(packages: Array[AICharacterActionPackage], duplicate_resources: bool = true) -> void:
@@ -69,11 +75,21 @@ func physics_update(delta: float) -> void:
 		return
 	_context.bind_actor(_actor, self)
 
+	if _rethink_requested:
+		_apply_rethink_request()
+		return
+
 	if _active_package == null:
 		_tick_idle(delta)
 		return
 
 	_tick_active(delta)
+
+
+func request_rethink(reason: String = "rethink requested") -> void:
+	_rethink_requested = true
+	_rethink_reason = reason
+	_idle_think_timer = 0.0
 
 
 func cancel_current_action(reason: String = "canceled") -> void:
@@ -109,6 +125,17 @@ func get_debug_summary() -> String:
 		String(current_phase),
 		_active_package.get_debug_summary(),
 	]
+
+
+func _apply_rethink_request() -> void:
+	var reason := _rethink_reason
+	_rethink_requested = false
+	_rethink_reason = ""
+	if _active_package != null:
+		_cancel_active_action(reason if not reason.is_empty() else "rethink requested")
+	_think_and_start_next_action()
+	if _active_package == null:
+		_idle_think_timer = idle_think_interval_seconds
 
 
 func _tick_idle(delta: float) -> void:
