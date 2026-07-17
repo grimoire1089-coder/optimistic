@@ -149,7 +149,8 @@ func _on_hydrate_need_changed(need_id: StringName, _old_value: float, _new_value
 	var runner := _get_action_runner()
 	if runner == null:
 		return
-	if runner.get_active_action_id() == hydrate_action_id:
+	var active_action_id := runner.get_active_action_id()
+	if active_action_id == hydrate_action_id or active_action_id == CharacterNeedActionIds.REST:
 		return
 	runner.request_rethink("water need became actionable")
 
