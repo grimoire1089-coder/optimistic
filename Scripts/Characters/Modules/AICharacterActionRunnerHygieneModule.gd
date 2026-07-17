@@ -2,6 +2,7 @@ extends AICharacterHygieneBehaviorModule
 class_name AICharacterActionRunnerHygieneModule
 
 const MoveSlot := preload("res://Scripts/Characters/Modules/AICharacterMovementCoordinator.gd")
+const SHOWER_PRESENTATION_SCRIPT := preload("res://Scripts/Characters/Modules/AICharacterShowerPresentationModule.gd")
 
 const BUILD_LOCK_META := &"build_locked_by_sleep"
 const BUILD_LOCK_REASON_META := &"build_lock_reason"
@@ -14,27 +15,43 @@ const SHOWER_LOCK_REASON := "シャワー使用中"
 @export var action_runner_integration_enabled: bool = false
 @export var action_runner_ai_actor_group_name: StringName = &"ai_character_actor"
 @export var action_runner_use_shared_move_slot: bool = true
+@export var shower_visual_node_path: NodePath = NodePath("Sprite2D")
+@export var shower_sfx_path: String = "res://Assets/Audio/SFX/Game/Shower.ogg"
+@export var shower_sfx_volume_db: float = 0.0
 
 var _action_runner_controlled := false
 var _hygiene_need_signal_source: CharacterNeedsModule
 var _layout_signal_source: Node
 var _hygiene_need_was_requested := false
 var _locked_shower: Node2D
+var _shower_presentation_module: AICharacterShowerPresentationModule
 
 
 func setup(body: CharacterBody2D) -> void:
 	_disconnect_hygiene_need_signal()
 	_disconnect_layout_signal()
 	super.setup(body)
+	_ensure_shower_presentation_module()
+	if _shower_presentation_module != null:
+		_shower_presentation_module.visual_node_path = shower_visual_node_path
+		_shower_presentation_module.shower_sfx_path = shower_sfx_path
+		_shower_presentation_module.shower_sfx_volume_db = shower_sfx_volume_db
+		_shower_presentation_module.ai_actor_group_name = action_runner_ai_actor_group_name
+		_shower_presentation_module.setup(
+			_body,
+			_room_map,
+			_furniture_placement_module,
+			actor_grid_footprint
+		)
 	_connect_hygiene_need_signal()
 	_connect_layout_signal()
 	_hygiene_need_was_requested = _is_hygiene_need_requested()
 
 
 func _exit_tree() -> void:
+	cancel_action_runner_hygiene()
 	_disconnect_hygiene_need_signal()
 	_disconnect_layout_signal()
-	cancel_action_runner_hygiene()
 
 
 func can_start_action_runner_hygiene() -> bool:
@@ -102,12 +119,13 @@ func cleanup_action_runner_hygiene() -> void:
 
 
 func get_action_runner_hygiene_debug_summary() -> String:
-	return "hygiene runner_controlled=%s showering=%s requested=%s reserved=%s locked=%s %s" % [
+	return "hygiene runner_controlled=%s showering=%s requested=%s reserved=%s locked=%s presenting=%s %s" % [
 		str(_action_runner_controlled),
 		str(_is_showering),
 		str(_is_hygiene_need_requested()),
 		str(_target_shower != null),
 		str(_locked_shower != null),
+		str(_shower_presentation_module != null and _shower_presentation_module.is_presenting()),
 		get_debug_movement_summary(),
 	]
 
@@ -119,10 +137,12 @@ func _has_action_runner_hygiene_commitment() -> bool:
 		or _is_showering
 		or _target_shower != null
 		or _locked_shower != null
+		or (_shower_presentation_module != null and _shower_presentation_module.is_presenting())
 	)
 
 
 func _reset_action_runner_hygiene_state() -> void:
+	_end_shower_presentation()
 	_is_showering = false
 	_shower_timer = 0.0
 	_shower_start_progress = 0.0
@@ -258,6 +278,12 @@ func _begin_showering(start_progress: float) -> void:
 	_claim_current_shower()
 	_lock_current_shower()
 	super._begin_showering(start_progress)
+	_begin_shower_presentation()
+
+
+func _complete_showering() -> void:
+	_end_shower_presentation()
+	super._complete_showering()
 
 
 func _can_use_shower(shower: Node2D) -> bool:
@@ -318,3 +344,28 @@ func _clear_shower_build_lock(shower: Node2D) -> void:
 				lock_target.remove_meta(SHOWER_BUILD_LOCK_OWNER_META)
 	if _locked_shower == lock_target:
 		_locked_shower = null
+
+
+func _ensure_shower_presentation_module() -> void:
+	if _shower_presentation_module != null and is_instance_valid(_shower_presentation_module):
+		return
+	_shower_presentation_module = get_node_or_null("AICharacterShowerPresentationModule") as AICharacterShowerPresentationModule
+	if _shower_presentation_module != null:
+		return
+	_shower_presentation_module = SHOWER_PRESENTATION_SCRIPT.new() as AICharacterShowerPresentationModule
+	if _shower_presentation_module == null:
+		return
+	_shower_presentation_module.name = "AICharacterShowerPresentationModule"
+	add_child(_shower_presentation_module)
+
+
+func _begin_shower_presentation() -> void:
+	if _shower_presentation_module == null or _target_shower == null:
+		return
+	_shower_presentation_module.begin_shower(_target_shower)
+
+
+func _end_shower_presentation() -> void:
+	if _shower_presentation_module == null:
+		return
+	_shower_presentation_module.end_shower()
