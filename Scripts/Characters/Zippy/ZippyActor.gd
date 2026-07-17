@@ -24,6 +24,7 @@ const MoveSlot := preload("res://Scripts/Characters/Modules/AICharacterMovementC
 @export var start_grid_position: Vector2i = Vector2i(1, 6)
 @export var actor_grid_footprint: Vector2i = Vector2i(2, 4)
 @export var enable_action_runner_observer: bool = true
+@export var enable_action_runner_hydrate: bool = true
 @export var enable_action_runner_wander: bool = true
 @export var enable_action_runner_sit: bool = true
 @export var action_runner_sit_rethink_interval_seconds: float = 0.5
@@ -64,7 +65,7 @@ func _exit_tree() -> void:
 
 
 func _physics_process(delta: float) -> void:
-	if _update_hydrate_behavior(delta):
+	if not enable_action_runner_hydrate and _update_hydrate_behavior(delta):
 		_cancel_action_runner_current_action("hydrate behavior active")
 		return
 	if not enable_action_runner_sit and _update_sit_behavior(delta):
@@ -212,7 +213,7 @@ func _update_action_runner_actions(delta: float) -> bool:
 	if enable_action_runner_sit and sit_behavior_module != null:
 		sit_behavior_module.update_action_runner_idle(delta)
 		_try_request_action_runner_sit(delta)
-	var runner_controls_actions := enable_action_runner_wander or enable_action_runner_sit
+	var runner_controls_actions := enable_action_runner_hydrate or enable_action_runner_wander or enable_action_runner_sit
 	if not runner_controls_actions:
 		if enable_action_runner_observer:
 			action_runner.physics_update(delta)
@@ -296,6 +297,7 @@ func _ensure_wander_module() -> void:
 func _ensure_hydrate_behavior_module() -> void:
 	hydrate_behavior_module = get_node_or_null("AICharacterTableSeatHydrateModule") as AICharacterTableSeatHydrateModule
 	if hydrate_behavior_module != null:
+		hydrate_behavior_module.action_runner_integration_enabled = enable_action_runner_hydrate
 		return
 	hydrate_behavior_module = HYDRATE_SCRIPT.new() as AICharacterTableSeatHydrateModule
 	if hydrate_behavior_module == null:
@@ -309,6 +311,7 @@ func _ensure_hydrate_behavior_module() -> void:
 	hydrate_behavior_module.apply_need_effect_after_refill = true
 	hydrate_behavior_module.drink_duration_seconds = 3.0
 	hydrate_behavior_module.snap_to_connected_dining_seat_when_drinking = true
+	hydrate_behavior_module.action_runner_integration_enabled = enable_action_runner_hydrate
 	add_child(hydrate_behavior_module)
 
 
@@ -345,7 +348,7 @@ func _ensure_action_item_display_module() -> void:
 func _setup_action_runner_observer() -> void:
 	_shutdown_action_runner_observer()
 	_action_runner_sit_rethink_timer = 0.0
-	if not enable_action_runner_observer and not enable_action_runner_wander and not enable_action_runner_sit:
+	if not enable_action_runner_observer and not enable_action_runner_hydrate and not enable_action_runner_wander and not enable_action_runner_sit:
 		return
 	action_runner = ACTION_RUNNER_SCRIPT.new() as AICharacterActionRunner
 	if action_runner == null:
@@ -355,6 +358,26 @@ func _setup_action_runner_observer() -> void:
 
 func _build_action_runner_packages() -> Array[AICharacterActionPackage]:
 	var packages: Array[AICharacterActionPackage] = []
+	if enable_action_runner_hydrate and hydrate_behavior_module != null:
+		var hydrate_adapter := NODE_ACTION_ADAPTER_SCRIPT.new() as AICharacterNodeActionAdapter
+		if hydrate_adapter != null:
+			hydrate_adapter.action_id = CharacterNeedActionIds.HYDRATE
+			hydrate_adapter.display_name = "水分補給中"
+			hydrate_adapter.priority = 100
+			hydrate_adapter.base_score = 100.0
+			hydrate_adapter.action_node_path = NodePath("AICharacterTableSeatHydrateModule")
+			hydrate_adapter.can_start_method = &"can_start_action_runner_hydrate"
+			hydrate_adapter.score_method = &"get_action_runner_hydrate_score"
+			hydrate_adapter.start_method = &"start_action_runner_hydrate"
+			hydrate_adapter.tick_method = &"tick_action_runner_hydrate"
+			hydrate_adapter.tick_pass_delta = true
+			hydrate_adapter.active_check_method = &""
+			hydrate_adapter.complete_when_inactive = false
+			hydrate_adapter.cancel_method_names = PackedStringArray(["cancel_action_runner_hydrate"])
+			hydrate_adapter.cleanup_method_names = PackedStringArray(["cleanup_action_runner_hydrate"])
+			hydrate_adapter.debug_summary_method = &"get_action_runner_hydrate_debug_summary"
+			packages.append(hydrate_adapter)
+
 	if enable_action_runner_sit and sit_behavior_module != null:
 		var sit_adapter := NODE_ACTION_ADAPTER_SCRIPT.new() as AICharacterNodeActionAdapter
 		if sit_adapter != null:
