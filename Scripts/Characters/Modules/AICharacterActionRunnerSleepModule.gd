@@ -1,4 +1,4 @@
-extends AICharacterSleepBehaviorModule
+extends AICharacterReservedSleepBehaviorModule
 class_name AICharacterActionRunnerSleepModule
 
 const MoveSlot := preload("res://Scripts/Characters/Modules/AICharacterMovementCoordinator.gd")
