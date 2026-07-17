@@ -1,6 +1,28 @@
 extends "res://Scripts/Scenes/Main/MainScene.gd"
 
 const RightHudLayout := preload("res://Scripts/UI/HUD/Modules/RightHudLayoutModule.gd")
+const AI_CHARACTER_SELECTION_CONTEXT_SCRIPT := preload("res://Scripts/Characters/Selection/AICharacterSelectionContextModule.gd")
+
+
+func _ready() -> void:
+	_ensure_ai_character_selection_context()
+	super._ready()
+
+
+func _connect_robin_selection() -> void:
+	pass
+
+
+func _ensure_ai_character_selection_context() -> Node:
+	var existing_context := get_node_or_null("AICharacterSelectionContextModule")
+	if existing_context != null:
+		return existing_context
+	var context := AI_CHARACTER_SELECTION_CONTEXT_SCRIPT.new() as Node
+	if context == null:
+		return null
+	context.name = "AICharacterSelectionContextModule"
+	add_child(context)
+	return context
 
 
 func _apply_reserved_bottom_hud_layout() -> void:
