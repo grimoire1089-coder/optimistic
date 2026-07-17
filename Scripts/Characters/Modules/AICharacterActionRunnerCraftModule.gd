@@ -127,6 +127,12 @@ func start_action_runner_craft() -> bool:
 	return false
 
 
+func get_velocity(delta: float) -> Vector2:
+	if _is_moving and not _can_action_runner_move_now():
+		return Vector2.ZERO
+	return super.get_velocity(delta)
+
+
 func tick_action_runner_craft(delta: float) -> AICharacterActionResult:
 	var next_velocity := get_velocity(delta)
 	if not is_active():
@@ -141,8 +147,6 @@ func tick_action_runner_craft(delta: float) -> AICharacterActionResult:
 	if next_velocity.length_squared() <= 0.0:
 		_release_action_runner_move_slot()
 		return AICharacterActionResult.running()
-	if not _can_action_runner_move_now():
-		return AICharacterActionResult.moving(Vector2.ZERO, get_facing_direction())
 	return AICharacterActionResult.moving(next_velocity, get_facing_direction())
 
 
