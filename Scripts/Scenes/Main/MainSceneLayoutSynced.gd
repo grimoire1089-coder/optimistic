@@ -7,6 +7,7 @@ const AI_CHARACTER_SELECTION_CONTEXT_SCRIPT := preload("res://Scripts/Characters
 func _ready() -> void:
 	_ensure_ai_character_selection_context()
 	super._ready()
+	_disconnect_legacy_robin_selection()
 
 
 func _connect_robin_selection() -> void:
@@ -23,6 +24,14 @@ func _ensure_ai_character_selection_context() -> Node:
 	context.name = "AICharacterSelectionContextModule"
 	add_child(context)
 	return context
+
+
+func _disconnect_legacy_robin_selection() -> void:
+	if robin == null:
+		return
+	var callable := Callable(self, "_on_robin_selected")
+	if robin.selected.is_connected(callable):
+		robin.selected.disconnect(callable)
 
 
 func _apply_reserved_bottom_hud_layout() -> void:
