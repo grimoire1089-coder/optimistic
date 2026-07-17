@@ -59,8 +59,12 @@ func request_read_skill_book(book: BookData) -> bool:
 	if _action_request_module.get_current_request_id() != request_id:
 		return true
 	var runner := _get_action_runner()
-	if runner != null and runner.get_active_action_id() != read_action_id:
-		runner.request_rethink("read book requested")
+	if runner == null:
+		return true
+	var active_action_id := runner.get_active_action_id()
+	if active_action_id == read_action_id or _is_higher_priority_need_action(active_action_id):
+		return true
+	runner.request_rethink("read book requested")
 	return true
 
 
@@ -403,6 +407,14 @@ func _is_active_request_current() -> bool:
 		_action_request_module != null
 		and _action_request_module.is_current_action(read_action_id)
 		and _action_request_module.get_current_request_id() == _active_request_id
+	)
+
+
+func _is_higher_priority_need_action(action_id: StringName) -> bool:
+	return (
+		action_id == CharacterNeedActionIds.REST
+		or action_id == CharacterNeedActionIds.HYDRATE
+		or action_id == CharacterNeedActionIds.MAINTAIN
 	)
 
 
