@@ -10,6 +10,7 @@ var _connected_actors: Array[WeakRef] = []
 
 func _ready() -> void:
 	_book_library_ui = get_parent()
+	_connect_existing_actors()
 	call_deferred("_connect_existing_actors")
 
 
