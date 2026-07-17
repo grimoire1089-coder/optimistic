@@ -37,6 +37,10 @@ func _ready() -> void:
 	_refresh()
 
 
+func _exit_tree() -> void:
+	_disconnect_worker_signals()
+
+
 func open_menu() -> void:
 	_apply_bottom_right_layout()
 	visible = true
@@ -58,6 +62,23 @@ func is_work_processing() -> bool:
 	return _is_work_processing or _is_worker_working()
 
 
+func set_worker_actor(worker: Node) -> bool:
+	if worker != null and not is_instance_valid(worker):
+		return false
+	if _worker == worker:
+		_connect_worker_signals()
+		return true
+	if is_work_processing():
+		return false
+	_disconnect_worker_signals()
+	_worker = worker
+	worker_path = get_path_to(worker) if worker != null else NodePath("")
+	_connect_worker_signals()
+	if visible:
+		_refresh()
+	return true
+
+
 func _refresh() -> void:
 	var rank := _get_first_job_rank()
 	var pay := _get_first_job_pay_for_rank(rank)
@@ -68,10 +89,10 @@ func _refresh() -> void:
 		rank,
 		pay,
 	]
-	job_001_button.disabled = false
-	detail_label.text = "%s / %s: ボタンを押すとロビンに状況を確認してから、エントランスへ出勤します。完了するとランクが上がります。MAX %d" % [
+	detail_label.text = "%s / %s: ボタンを押すと%sに状況を確認してから、エントランスへ出勤します。完了するとランクが上がります。MAX %d" % [
 		first_job_name,
 		first_job_category_name,
+		_get_worker_display_name(),
 		_get_max_job_rank(),
 	]
 
@@ -156,14 +177,19 @@ func _connect_worker_signals() -> void:
 		return
 	if _connected_worker == _worker:
 		return
-	if _connected_worker != null and is_instance_valid(_connected_worker):
-		var old_callable := Callable(self, "_on_worker_work_completed")
-		if _connected_worker.has_signal(&"work_completed") and _connected_worker.is_connected(&"work_completed", old_callable):
-			_connected_worker.disconnect(&"work_completed", old_callable)
+	_disconnect_worker_signals()
 	_connected_worker = _worker
 	var callable := Callable(self, "_on_worker_work_completed")
 	if _connected_worker.has_signal(&"work_completed") and not _connected_worker.is_connected(&"work_completed", callable):
 		_connected_worker.connect(&"work_completed", callable)
+
+
+func _disconnect_worker_signals() -> void:
+	if _connected_worker != null and is_instance_valid(_connected_worker):
+		var callable := Callable(self, "_on_worker_work_completed")
+		if _connected_worker.has_signal(&"work_completed") and _connected_worker.is_connected(&"work_completed", callable):
+			_connected_worker.disconnect(&"work_completed", callable)
+	_connected_worker = null
 
 
 func _on_worker_work_completed(job_id: StringName) -> void:
@@ -193,6 +219,16 @@ func _on_worker_work_completed(job_id: StringName) -> void:
 		])
 	if visible:
 		_refresh()
+
+
+func _get_worker_display_name() -> String:
+	var worker := _get_worker()
+	if worker == null:
+		return "キャラクター"
+	var display_name_value: Variant = worker.get("display_name")
+	if display_name_value != null and not String(display_name_value).strip_edges().is_empty():
+		return String(display_name_value)
+	return worker.name
 
 
 func _get_first_job_rank() -> int:
