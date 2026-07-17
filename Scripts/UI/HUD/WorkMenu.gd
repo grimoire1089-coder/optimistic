@@ -24,6 +24,7 @@ const MOVEMENT_LOCK_CONTROLLER_GROUP: StringName = &"hud_movement_lock_controlle
 var _worker: Node
 var _connected_worker: Node
 var _is_work_processing: bool = false
+var _pending_worker_ref: WeakRef
 
 
 func _ready() -> void:
@@ -35,6 +36,11 @@ func _ready() -> void:
 	_resolve_worker()
 	_connect_worker_signals()
 	_refresh()
+
+
+func _exit_tree() -> void:
+	_disconnect_worker_signals()
+	_pending_worker_ref = null
 
 
 func open_menu() -> void:
@@ -58,6 +64,31 @@ func is_work_processing() -> bool:
 	return _is_work_processing or _is_worker_working()
 
 
+func set_worker_actor(worker: Node) -> bool:
+	if worker != null and not is_instance_valid(worker):
+		return false
+	if _worker != null and not is_instance_valid(_worker):
+		_disconnect_worker_signals()
+		_worker = null
+		_is_work_processing = false
+		_notify_movement_lock_controller()
+	if _worker == worker:
+		_pending_worker_ref = null
+		_connect_worker_signals()
+		return true
+	if is_work_processing():
+		_pending_worker_ref = weakref(worker) if worker != null else null
+		return false
+	_pending_worker_ref = null
+	_disconnect_worker_signals()
+	_worker = worker
+	worker_path = get_path_to(worker) if worker != null else NodePath("")
+	_connect_worker_signals()
+	if visible:
+		_refresh()
+	return true
+
+
 func _refresh() -> void:
 	var rank := _get_first_job_rank()
 	var pay := _get_first_job_pay_for_rank(rank)
@@ -69,9 +100,10 @@ func _refresh() -> void:
 		pay,
 	]
 	job_001_button.disabled = false
-	detail_label.text = "%s / %s: ボタンを押すとロビンに状況を確認してから、エントランスへ出勤します。完了するとランクが上がります。MAX %d" % [
+	detail_label.text = "%s / %s: ボタンを押すと%sに状況を確認してから、エントランスへ出勤します。完了するとランクが上がります。MAX %d" % [
 		first_job_name,
 		first_job_category_name,
+		_get_worker_display_name(),
 		_get_max_job_rank(),
 	]
 
@@ -156,14 +188,19 @@ func _connect_worker_signals() -> void:
 		return
 	if _connected_worker == _worker:
 		return
-	if _connected_worker != null and is_instance_valid(_connected_worker):
-		var old_callable := Callable(self, "_on_worker_work_completed")
-		if _connected_worker.has_signal(&"work_completed") and _connected_worker.is_connected(&"work_completed", old_callable):
-			_connected_worker.disconnect(&"work_completed", old_callable)
+	_disconnect_worker_signals()
 	_connected_worker = _worker
 	var callable := Callable(self, "_on_worker_work_completed")
 	if _connected_worker.has_signal(&"work_completed") and not _connected_worker.is_connected(&"work_completed", callable):
 		_connected_worker.connect(&"work_completed", callable)
+
+
+func _disconnect_worker_signals() -> void:
+	if _connected_worker != null and is_instance_valid(_connected_worker):
+		var callable := Callable(self, "_on_worker_work_completed")
+		if _connected_worker.has_signal(&"work_completed") and _connected_worker.is_connected(&"work_completed", callable):
+			_connected_worker.disconnect(&"work_completed", callable)
+	_connected_worker = null
 
 
 func _on_worker_work_completed(job_id: StringName) -> void:
@@ -191,8 +228,30 @@ func _on_worker_work_completed(job_id: StringName) -> void:
 			next_rank,
 			_get_max_job_rank(),
 		])
+	_apply_pending_worker_change()
 	if visible:
 		_refresh()
+
+
+func _apply_pending_worker_change() -> void:
+	if _pending_worker_ref == null:
+		return
+	var pending_ref := _pending_worker_ref
+	_pending_worker_ref = null
+	var pending_worker := pending_ref.get_ref() as Node
+	if pending_worker == null or not is_instance_valid(pending_worker):
+		return
+	set_worker_actor(pending_worker)
+
+
+func _get_worker_display_name() -> String:
+	var worker := _get_worker()
+	if worker == null:
+		return "キャラクター"
+	var display_name_value: Variant = worker.get("display_name")
+	if display_name_value != null and not String(display_name_value).strip_edges().is_empty():
+		return String(display_name_value)
+	return worker.name
 
 
 func _get_first_job_rank() -> int:

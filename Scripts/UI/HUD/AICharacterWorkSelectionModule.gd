@@ -1,19 +1,17 @@
 extends Node
-class_name AICharacterCraftSelectionModule
+class_name AICharacterWorkSelectionModule
 
 const SELECTION_CONTEXT_GROUP: StringName = &"ai_character_selection_context"
 
-@export var craft_behavior_node_name: StringName = &"AICharacterCraftBehaviorModule"
-
-var _craft_menu: Node
+var _work_menu: Node
 var _selection_context: Node
-var _default_actor_path: NodePath
+var _default_worker_path: NodePath
 
 
 func _ready() -> void:
-	_craft_menu = get_parent()
-	if _craft_menu != null:
-		_default_actor_path = _craft_menu.get("actor_path")
+	_work_menu = get_parent()
+	if _work_menu != null:
+		_default_worker_path = _work_menu.get("worker_path")
 	_connect_selection_context()
 	call_deferred("_connect_selection_context")
 
@@ -57,18 +55,23 @@ func _apply_current_selection() -> void:
 
 
 func _on_selected_actor_changed(actor: Node) -> void:
-	if _craft_menu == null or not is_instance_valid(_craft_menu):
+	if _work_menu == null or not is_instance_valid(_work_menu):
 		return
-	if not _has_craft_request_target(actor):
-		_craft_menu.set("actor_path", _default_actor_path)
+	var worker := actor if _is_work_compatible(actor) else _get_default_worker()
+	if _work_menu.has_method("set_worker_actor"):
+		_work_menu.call("set_worker_actor", worker)
 		return
-	_craft_menu.set("actor_path", _craft_menu.get_path_to(actor))
+	if worker != null:
+		_work_menu.set("worker_path", _work_menu.get_path_to(worker))
+	else:
+		_work_menu.set("worker_path", _default_worker_path)
 
 
-func _has_craft_request_target(actor: Node) -> bool:
-	if actor == null or not is_instance_valid(actor):
-		return false
-	if actor.has_method("request_craft"):
-		return true
-	var behavior := actor.get_node_or_null(NodePath(String(craft_behavior_node_name)))
-	return behavior != null and behavior.has_method("request_craft")
+func _get_default_worker() -> Node:
+	if _work_menu == null or _default_worker_path.is_empty():
+		return null
+	return _work_menu.get_node_or_null(_default_worker_path)
+
+
+func _is_work_compatible(actor: Node) -> bool:
+	return actor != null and is_instance_valid(actor) and actor.has_method("request_work_at_entrance")
