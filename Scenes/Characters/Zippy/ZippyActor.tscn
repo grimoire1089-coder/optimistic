@@ -8,6 +8,7 @@
 [ext_resource type="Script" path="res://Scripts/Characters/Actions/Requests/AICharacterActionRequestModule.gd" id="6_action_request"]
 [ext_resource type="Script" path="res://Scripts/Characters/Modules/AICharacterSkillsModule.gd" id="7_skills"]
 [ext_resource type="Script" path="res://Scripts/Characters/Modules/AICharacterActionRunnerReadBookModule.gd" id="8_read_book"]
+[ext_resource type="Script" path="res://Scripts/Characters/Modules/AICharacterActionRunnerCraftModule.gd" id="9_craft"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_click_area"]
 size = Vector2(96, 192)
@@ -33,6 +34,10 @@ script = ExtResource("6_action_request")
 
 [node name="AICharacterReadBookBehaviorModule" type="Node" parent="." groups=["ai_movement_behavior"]]
 script = ExtResource("8_read_book")
+actor_grid_footprint = Vector2i(2, 4)
+
+[node name="AICharacterCraftBehaviorModule" type="Node" parent="." groups=["ai_movement_behavior"]]
+script = ExtResource("9_craft")
 actor_grid_footprint = Vector2i(2, 4)
 
 [node name="AICharacterSpriteFitModule" type="Node" parent="." unique_id=236025317]
