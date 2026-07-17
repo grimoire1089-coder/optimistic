@@ -6,12 +6,12 @@ const InventoryLookup := preload("res://Scripts/Characters/Modules/AICharacterIn
 const TITLE_LABEL_PATH := NodePath("MarginContainer/Rows/Header/TitleLabel")
 const SEARCH_LINE_EDIT_PATH := NodePath("MarginContainer/Rows/Footer/SearchLineEdit")
 const REFRESH_SIGNAL_TARGETS := [
-	{"path": NodePath("MarginContainer/Rows/Header/PreviousPageButton"), "signal": &"pressed"},
-	{"path": NodePath("MarginContainer/Rows/Header/NextPageButton"), "signal": &"pressed"},
-	{"path": NodePath("MarginContainer/Rows/TabBar"), "signal": &"tab_changed"},
-	{"path": NodePath("MarginContainer/Rows/InventoryBody/SortColumn/SortNameButton"), "signal": &"pressed"},
-	{"path": NodePath("MarginContainer/Rows/InventoryBody/SortColumn/SortAmountButton"), "signal": &"pressed"},
-	{"path": SEARCH_LINE_EDIT_PATH, "signal": &"text_changed"},
+	{"path": NodePath("MarginContainer/Rows/Header/PreviousPageButton"), "signal": &"pressed", "unbind": 0},
+	{"path": NodePath("MarginContainer/Rows/Header/NextPageButton"), "signal": &"pressed", "unbind": 0},
+	{"path": NodePath("MarginContainer/Rows/TabBar"), "signal": &"tab_changed", "unbind": 1},
+	{"path": NodePath("MarginContainer/Rows/InventoryBody/SortColumn/SortNameButton"), "signal": &"pressed", "unbind": 0},
+	{"path": NodePath("MarginContainer/Rows/InventoryBody/SortColumn/SortAmountButton"), "signal": &"pressed", "unbind": 0},
+	{"path": SEARCH_LINE_EDIT_PATH, "signal": &"text_changed", "unbind": 1},
 ]
 
 var _inventory_ui: Node
@@ -150,12 +150,14 @@ func _on_inventory_changed() -> void:
 func _connect_ui_refresh_signals() -> void:
 	if _inventory_ui == null or not is_instance_valid(_inventory_ui):
 		return
-	var callable := Callable(self, "_on_inventory_ui_refreshed")
-	if _inventory_ui.has_signal(&"visibility_changed") and not _inventory_ui.is_connected(&"visibility_changed", callable):
-		_inventory_ui.connect(&"visibility_changed", callable)
-	for target in REFRESH_SIGNAL_TARGETS:
+	var base_callable := Callable(self, "_on_inventory_ui_refreshed")
+	if _inventory_ui.has_signal(&"visibility_changed") and not _inventory_ui.is_connected(&"visibility_changed", base_callable):
+		_inventory_ui.connect(&"visibility_changed", base_callable)
+	for target_value in REFRESH_SIGNAL_TARGETS:
+		var target := target_value as Dictionary
 		var node := _inventory_ui.get_node_or_null(target.get("path", NodePath("")))
 		var signal_name: StringName = target.get("signal", &"")
+		var callable := _get_refresh_callable(base_callable, int(target.get("unbind", 0)))
 		if node == null or signal_name == &"" or not node.has_signal(signal_name):
 			continue
 		if not node.is_connected(signal_name, callable):
@@ -165,19 +167,27 @@ func _connect_ui_refresh_signals() -> void:
 func _disconnect_ui_refresh_signals() -> void:
 	if _inventory_ui == null or not is_instance_valid(_inventory_ui):
 		return
-	var callable := Callable(self, "_on_inventory_ui_refreshed")
-	if _inventory_ui.has_signal(&"visibility_changed") and _inventory_ui.is_connected(&"visibility_changed", callable):
-		_inventory_ui.disconnect(&"visibility_changed", callable)
-	for target in REFRESH_SIGNAL_TARGETS:
+	var base_callable := Callable(self, "_on_inventory_ui_refreshed")
+	if _inventory_ui.has_signal(&"visibility_changed") and _inventory_ui.is_connected(&"visibility_changed", base_callable):
+		_inventory_ui.disconnect(&"visibility_changed", base_callable)
+	for target_value in REFRESH_SIGNAL_TARGETS:
+		var target := target_value as Dictionary
 		var node := _inventory_ui.get_node_or_null(target.get("path", NodePath("")))
 		var signal_name: StringName = target.get("signal", &"")
+		var callable := _get_refresh_callable(base_callable, int(target.get("unbind", 0)))
 		if node == null or signal_name == &"" or not node.has_signal(signal_name):
 			continue
 		if node.is_connected(signal_name, callable):
 			node.disconnect(signal_name, callable)
 
 
-func _on_inventory_ui_refreshed(_value: Variant = null) -> void:
+func _get_refresh_callable(base_callable: Callable, unbind_count: int) -> Callable:
+	if unbind_count <= 0:
+		return base_callable
+	return base_callable.unbind(unbind_count)
+
+
+func _on_inventory_ui_refreshed() -> void:
 	call_deferred("_sync_title")
 
 
