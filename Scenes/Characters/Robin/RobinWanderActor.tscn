@@ -1,6 +1,6 @@
 [gd_scene load_steps=23 format=3 uid="uid://cb0fyv6e2f40m"]
 
-[ext_resource type="Script" path="res://Scripts/Characters/Robin/RobinWanderActor.gd" id="1_actor"]
+[ext_resource type="Script" path="res://Scripts/Characters/Robin/RobinGridClickActor.gd" id="1_actor"]
 [ext_resource type="Texture2D" path="res://Assets/Characters/Robin/Walk/robin_8dir_standing.png" id="2_standing_texture"]
 [ext_resource type="Script" path="res://Scripts/Characters/Robin/Modules/RobinRandomWanderModule.gd" id="3_wander_module"]
 [ext_resource type="Script" path="res://Scripts/Characters/Robin/Modules/RobinWalkSpriteAnimator.gd" id="4_animator"]
