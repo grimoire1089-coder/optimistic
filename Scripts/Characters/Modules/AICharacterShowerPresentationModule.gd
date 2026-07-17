@@ -50,11 +50,12 @@ func begin_shower(shower: Node2D) -> void:
 	_resolve_visual_node()
 	_return_world_position = _body.global_position
 	_return_grid_position = _get_body_top_left_grid_position(_return_world_position)
-	_return_visual_visible = _visual_node.visible if _visual_node != null else true
+	var has_valid_visual := _visual_node != null and is_instance_valid(_visual_node)
+	_return_visual_visible = _visual_node.visible if has_valid_visual else true
 	_is_presenting = true
 
 	_body.velocity = Vector2.ZERO
-	if _visual_node != null:
+	if has_valid_visual:
 		_visual_node.hide()
 	_body.global_position = shower.global_position
 	_body.reset_physics_interpolation()
@@ -135,7 +136,8 @@ func _get_actor_footprint(actor: Node2D) -> Vector2i:
 	if actor != null and actor.has_method("get_actor_grid_footprint"):
 		var value: Variant = actor.call("get_actor_grid_footprint")
 		if value is Vector2i:
-			return AICharacterGridMovementHelper.get_safe_footprint(value)
+			var typed_value: Vector2i = value
+			return AICharacterGridMovementHelper.get_safe_footprint(typed_value)
 	return _actor_grid_footprint
 
 
