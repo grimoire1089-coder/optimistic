@@ -1,10 +1,11 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://Scripts/UI/HUD/AICharacterHudLayoutSynced.gd" id="1_hud_script"]
 [ext_resource type="PackedScene" path="res://Scenes/UI/CharacterNeeds/CharacterNeedsPanel.tscn" id="2_needs_panel"]
 [ext_resource type="PackedScene" path="res://Scenes/UI/CharacterNeeds/CharacterMoodPanel.tscn" id="3_mood_panel"]
 [ext_resource type="Script" path="res://Scripts/UI/HUD/AICharacterActionQueuePanel.gd" id="4_action_queue_panel"]
 [ext_resource type="PackedScene" path="res://Scenes/UI/CharacterSkills/CharacterSkillsPanel.tscn" id="5_skills_panel"]
+[ext_resource type="Script" path="res://Scripts/UI/HUD/AICharacterHudSelectionModule.gd" id="6_selection_bridge"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ai_hud_panel"]
 bg_color = Color(0.015, 0.025, 0.035, 1)
@@ -35,6 +36,9 @@ grow_horizontal = 0
 grow_vertical = 0
 theme_override_styles/panel = SubResource("StyleBoxFlat_ai_hud_panel")
 script = ExtResource("1_hud_script")
+
+[node name="AICharacterHudSelectionModule" type="Node" parent="."]
+script = ExtResource("6_selection_bridge")
 
 [node name="MarginContainer" type="MarginContainer" parent="."]
 layout_mode = 2
