@@ -2,6 +2,7 @@ extends Node
 class_name AICharacterCraftSelectionModule
 
 @export var ai_actor_group_name: StringName = &"ai_character_actor"
+@export var craft_behavior_node_name: StringName = &"AICharacterCraftBehaviorModule"
 
 var _craft_menu: Node
 var _connected_actors: Array[WeakRef] = []
@@ -47,8 +48,15 @@ func _disconnect_actor_signals() -> void:
 func _on_actor_selected(actor: Node) -> void:
 	if _craft_menu == null or not is_instance_valid(_craft_menu):
 		return
-	if actor == null or not is_instance_valid(actor):
-		return
-	if not actor.has_method("request_craft"):
+	if not _has_craft_request_target(actor):
 		return
 	_craft_menu.set("actor_path", _craft_menu.get_path_to(actor))
+
+
+func _has_craft_request_target(actor: Node) -> bool:
+	if actor == null or not is_instance_valid(actor):
+		return false
+	if actor.has_method("request_craft"):
+		return true
+	var behavior := actor.get_node_or_null(NodePath(String(craft_behavior_node_name)))
+	return behavior != null and behavior.has_method("request_craft")
