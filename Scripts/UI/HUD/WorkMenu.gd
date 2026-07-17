@@ -67,7 +67,13 @@ func is_work_processing() -> bool:
 func set_worker_actor(worker: Node) -> bool:
 	if worker != null and not is_instance_valid(worker):
 		return false
+	if _worker != null and not is_instance_valid(_worker):
+		_disconnect_worker_signals()
+		_worker = null
+		_is_work_processing = false
+		_notify_movement_lock_controller()
 	if _worker == worker:
+		_pending_worker_ref = null
 		_connect_worker_signals()
 		return true
 	if is_work_processing():
