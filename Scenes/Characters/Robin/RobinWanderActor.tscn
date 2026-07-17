@@ -7,7 +7,7 @@
 [ext_resource type="Script" path="res://Scripts/Characters/Robin/Modules/RobinMovementAreaFrame.gd" id="5_movement_area_frame"]
 [ext_resource type="PackedScene" path="res://Scenes/Characters/Modules/AICharacterNeedsBundle.tscn" id="6_needs_bundle"]
 [ext_resource type="Script" path="res://Scripts/Characters/Modules/AICharacterInventoryModule.gd" id="7_inventory_module"]
-[ext_resource type="Script" path="res://Scripts/Characters/Modules/AICharacterSleepBehaviorModule.gd" id="8_sleep_behavior"]
+[ext_resource type="Script" path="res://Scripts/Characters/Modules/AICharacterReservedSleepBehaviorModule.gd" id="8_sleep_behavior"]
 [ext_resource type="Script" path="res://Scripts/Characters/Modules/AICharacterTableSeatHydrateModule.gd" id="9_hydrate_behavior"]
 [ext_resource type="Script" path="res://Scripts/Characters/Modules/AICharacterReservedSitBehaviorModule.gd" id="10_sit_behavior"]
 [ext_resource type="Script" path="res://Scripts/Characters/Modules/AICharacterActionProgressBarModule.gd" id="10_action_progress_bar"]
@@ -202,3 +202,6 @@ bar_size = Vector2(84, 10)
 script = ExtResource("11_action_item_display")
 hydrate_behavior_path = NodePath("../AICharacterHydrateBehaviorModule")
 craft_behavior_path = NodePath("../AICharacterCraftBehaviorModule")
+sit_behavior_path = NodePath("../AICharacterSitBehaviorModule")
+item_center_offset = Vector2(0, -18)
+item_display_size = Vector2(70, 70)
