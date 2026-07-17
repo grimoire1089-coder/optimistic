@@ -19,7 +19,7 @@
 [ext_resource type="Script" path="res://Scripts/Characters/Modules/AICharacterMovementDebugModule.gd" id="16_movement_debug"]
 [ext_resource type="Script" path="res://Scripts/Characters/Modules/AICharacterHygieneBehaviorModule.gd" id="17_hygiene_behavior"]
 [ext_resource type="Script" path="res://Scripts/Characters/Modules/AICharacterShowerFeedbackModule.gd" id="18_shower_feedback"]
-[ext_resource type="Script" path="res://Scripts/Characters/Modules/AICharacterReadBookBehaviorModule.gd" id="19_read_book_behavior"]
+[ext_resource type="Script" path="res://Scripts/Characters/Modules/AICharacterReservedReadBookBehaviorModule.gd" id="19_read_book_behavior"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_robin_collision"]
 size = Vector2(96, 96)

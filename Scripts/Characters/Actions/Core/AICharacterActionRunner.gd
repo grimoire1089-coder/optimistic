@@ -70,6 +70,44 @@ func set_packages(packages: Array[AICharacterActionPackage], duplicate_resources
 		_packages.append(runtime_package)
 
 
+func has_package(action_id: StringName) -> bool:
+	for package in _packages:
+		if package != null and package.action_id == action_id:
+			return true
+	return false
+
+
+func add_package(package: AICharacterActionPackage, duplicate_resource: bool = true) -> bool:
+	if package == null or package.action_id == &"" or has_package(package.action_id):
+		return false
+	var runtime_package := package
+	if duplicate_resource:
+		runtime_package = package.duplicate(true) as AICharacterActionPackage
+	if runtime_package == null:
+		return false
+	runtime_package.bind(_actor)
+	_packages.append(runtime_package)
+	_idle_think_timer = 0.0
+	return true
+
+
+func remove_package(action_id: StringName) -> bool:
+	if action_id == &"":
+		return false
+	if _active_package != null and _active_package.action_id == action_id:
+		_cancel_active_action("package removed")
+		current_phase = PHASE_CANCELED
+	for index in range(_packages.size() - 1, -1, -1):
+		var package := _packages[index]
+		if package == null or package.action_id != action_id:
+			continue
+		package.unbind()
+		_packages.remove_at(index)
+		_idle_think_timer = 0.0
+		return true
+	return false
+
+
 func physics_update(delta: float) -> void:
 	if _actor == null or not is_instance_valid(_actor):
 		return

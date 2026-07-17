@@ -1,6 +1,7 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://Scripts/UI/Books/BookLibraryUI.gd" id="1_book_library_ui"]
+[ext_resource type="Script" path="res://Scripts/UI/Books/AICharacterBookReaderSelectionModule.gd" id="2_reader_selection"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_book_panel"]
 bg_color = Color(0.015, 0.025, 0.035, 1)
@@ -31,6 +32,9 @@ grow_horizontal = 0
 grow_vertical = 0
 theme_override_styles/panel = SubResource("StyleBoxFlat_book_panel")
 script = ExtResource("1_book_library_ui")
+
+[node name="AICharacterBookReaderSelectionModule" type="Node" parent="."]
+script = ExtResource("2_reader_selection")
 
 [node name="MarginContainer" type="MarginContainer" parent="."]
 layout_mode = 2

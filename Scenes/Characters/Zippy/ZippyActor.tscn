@@ -5,6 +5,9 @@
 [ext_resource type="PackedScene" path="res://Scenes/Characters/Modules/AICharacterNeedsBundle.tscn" id="3_needs_bundle"]
 [ext_resource type="Script" uid="uid://cqjavm17kxesv" path="res://Scripts/Characters/Modules/AICharacterSpriteFitModule.gd" id="4_sprite_fit"]
 [ext_resource type="Script" uid="uid://mxpo0kl7vko3" path="res://Scripts/Characters/Modules/AICharacterDirectionalSpriteModule.gd" id="5_directional_sprite"]
+[ext_resource type="Script" path="res://Scripts/Characters/Actions/Requests/AICharacterActionRequestModule.gd" id="6_action_request"]
+[ext_resource type="Script" path="res://Scripts/Characters/Modules/AICharacterSkillsModule.gd" id="7_skills"]
+[ext_resource type="Script" path="res://Scripts/Characters/Modules/AICharacterActionRunnerReadBookModule.gd" id="8_read_book"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_click_area"]
 size = Vector2(96, 192)
@@ -21,6 +24,16 @@ texture = ExtResource("2_zippy_texture")
 shape = SubResource("RectangleShape2D_click_area")
 
 [node name="AICharacterNeedsBundle" parent="." unique_id=1700894545 instance=ExtResource("3_needs_bundle")]
+
+[node name="AICharacterSkillsModule" type="Node" parent="."]
+script = ExtResource("7_skills")
+
+[node name="AICharacterActionRequestModule" type="Node" parent="."]
+script = ExtResource("6_action_request")
+
+[node name="AICharacterReadBookBehaviorModule" type="Node" parent="." groups=["ai_movement_behavior"]]
+script = ExtResource("8_read_book")
+actor_grid_footprint = Vector2i(2, 4)
 
 [node name="AICharacterSpriteFitModule" type="Node" parent="." unique_id=236025317]
 script = ExtResource("4_sprite_fit")
