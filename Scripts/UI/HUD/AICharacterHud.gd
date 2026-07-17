@@ -8,6 +8,7 @@ const HUD_RIGHT_MARGIN := 24.0
 const HUD_BOTTOM_MARGIN := 92.0
 const NEED_BAR_WIDTH := 290.0
 const READ_ACTION_ID: StringName = &"read_book"
+const CRAFT_ACTION_ID: StringName = &"crafting"
 
 @onready var title_label: Label = $MarginContainer/Rows/Header/TitleLabel
 @onready var action_label: Label = $MarginContainer/Rows/ActionLabel
@@ -203,8 +204,8 @@ func _get_actor_lowest_need_id() -> StringName:
 
 func _get_actor_need_action_id() -> StringName:
 	var runner := _get_actor_action_runner()
-	if runner != null and runner.get_active_action_id() == READ_ACTION_ID:
-		return READ_ACTION_ID
+	if runner != null and _is_explicit_action_id(runner.get_active_action_id()):
+		return runner.get_active_action_id()
 	if _actor == null or not _actor.has_method("get_current_need_action_id"):
 		return CharacterNeedActionIds.IDLE
 	return StringName(String(_actor.call("get_current_need_action_id")))
@@ -212,11 +213,15 @@ func _get_actor_need_action_id() -> StringName:
 
 func _get_actor_action_text() -> String:
 	var runner := _get_actor_action_runner()
-	if runner != null and runner.get_active_action_id() == READ_ACTION_ID:
+	if runner != null and _is_explicit_action_id(runner.get_active_action_id()):
 		return runner.get_current_action_display_text()
 	if _actor == null or not _actor.has_method("get_current_action_display_text"):
 		return "-"
 	return str(_actor.call("get_current_action_display_text"))
+
+
+func _is_explicit_action_id(action_id: StringName) -> bool:
+	return action_id == READ_ACTION_ID or action_id == CRAFT_ACTION_ID
 
 
 func _get_actor_action_runner() -> AICharacterActionRunner:
