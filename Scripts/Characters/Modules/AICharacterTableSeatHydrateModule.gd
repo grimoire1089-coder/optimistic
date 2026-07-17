@@ -3,18 +3,187 @@ class_name AICharacterTableSeatHydrateModule
 
 const HydrateInventoryResolver := preload("res://Scripts/Characters/Modules/AICharacterHydrateInventoryResolver.gd")
 const HydrateInventoryActions := preload("res://Scripts/Characters/Modules/AICharacterHydrateInventoryActions.gd")
+const MoveSlot := preload("res://Scripts/Characters/Modules/AICharacterMovementCoordinator.gd")
 
 const CHAIR_CLAIMED_BY_META := &"ai_seat_reserved_by"
 const CHAIR_CLAIMED_NAME_META := &"ai_seat_reserved_name"
 const CHAIR_CLAIMED_REASON_META := &"ai_seat_reserved_reason"
 
 @export var legacy_inventory_module_path: NodePath = NodePath("")
+@export var action_runner_integration_enabled: bool = false
+@export var action_runner_ai_actor_group_name: StringName = &"ai_character_actor"
+@export var action_runner_use_shared_move_slot: bool = true
 
 var _shared_inventory_module: Node
+var _action_runner_controlled := false
+var _hydrate_need_signal_source: CharacterNeedsModule
+var _hydrate_need_was_requested := false
+
+
+func setup(body: CharacterBody2D) -> void:
+	_disconnect_hydrate_need_signal()
+	super.setup(body)
+	_connect_hydrate_need_signal()
+	_hydrate_need_was_requested = _is_hydrate_need_requested()
 
 
 func _exit_tree() -> void:
+	_disconnect_hydrate_need_signal()
+	cancel_action_runner_hydrate()
 	_clear_chair_claim(_target_dining_seat)
+
+
+func can_start_action_runner_hydrate() -> bool:
+	if not action_runner_integration_enabled:
+		return false
+	_resolve_refs()
+	if _body == null or not is_instance_valid(_body) or _needs_module == null:
+		return false
+	if _has_action_runner_hydrate_commitment():
+		return true
+	if _cooldown_timer > 0.0:
+		return false
+	return _should_hydrate_now()
+
+
+func get_action_runner_hydrate_score() -> float:
+	if _has_action_runner_hydrate_commitment():
+		return 1000.0
+	if _is_hydrate_need_requested():
+		return 500.0
+	if _should_hydrate_now():
+		return 400.0
+	return -INF
+
+
+func start_action_runner_hydrate() -> bool:
+	if not can_start_action_runner_hydrate():
+		return false
+	_action_runner_controlled = true
+	return true
+
+
+func tick_action_runner_hydrate(delta: float) -> AICharacterActionResult:
+	var next_velocity := get_velocity(delta)
+	if not is_active():
+		_release_action_runner_move_slot()
+		return AICharacterActionResult.completed("hydrate action finished")
+	if next_velocity.length_squared() <= 0.0:
+		_release_action_runner_move_slot()
+		return AICharacterActionResult.running()
+	if not _can_action_runner_move_now():
+		return AICharacterActionResult.moving(Vector2.ZERO, get_facing_direction())
+	return AICharacterActionResult.moving(next_velocity, get_facing_direction())
+
+
+func cancel_action_runner_hydrate() -> void:
+	_reset_action_runner_hydrate_state()
+	_action_runner_controlled = false
+	_release_action_runner_move_slot()
+
+
+func cleanup_action_runner_hydrate() -> void:
+	if _has_action_runner_hydrate_commitment():
+		_reset_action_runner_hydrate_state()
+	_action_runner_controlled = false
+	_release_action_runner_move_slot()
+
+
+func get_action_runner_hydrate_debug_summary() -> String:
+	return "hydrate runner_controlled=%s requested=%s %s" % [
+		str(_action_runner_controlled),
+		str(_is_hydrate_need_requested()),
+		get_debug_movement_summary(),
+	]
+
+
+func _has_action_runner_hydrate_commitment() -> bool:
+	return (
+		_action_runner_controlled
+		or _is_active
+		or _is_drinking
+		or _pending_drink_food_data != null
+		or _target_kitchen != null
+		or _target_dining_seat != null
+	)
+
+
+func _reset_action_runner_hydrate_state() -> void:
+	_is_drinking = false
+	_drink_food_data = null
+	_pending_drink_food_data = null
+	_drink_timer = 0.0
+	_drink_start_progress = 0.0
+	_drink_sfx_played = false
+	_action_progress_ratio = 0.0
+	_finish_hydrate_action()
+
+
+func _connect_hydrate_need_signal() -> void:
+	if _needs_module == null:
+		return
+	var callable := Callable(self, "_on_hydrate_need_changed")
+	if not _needs_module.need_changed.is_connected(callable):
+		_needs_module.need_changed.connect(callable)
+	_hydrate_need_signal_source = _needs_module
+
+
+func _disconnect_hydrate_need_signal() -> void:
+	if _hydrate_need_signal_source == null or not is_instance_valid(_hydrate_need_signal_source):
+		_hydrate_need_signal_source = null
+		return
+	var callable := Callable(self, "_on_hydrate_need_changed")
+	if _hydrate_need_signal_source.need_changed.is_connected(callable):
+		_hydrate_need_signal_source.need_changed.disconnect(callable)
+	_hydrate_need_signal_source = null
+
+
+func _on_hydrate_need_changed(need_id: StringName, _old_value: float, _new_value: float) -> void:
+	if need_id != water_need_id:
+		return
+	var hydrate_requested := _is_hydrate_need_requested()
+	var became_requested := hydrate_requested and not _hydrate_need_was_requested
+	_hydrate_need_was_requested = hydrate_requested
+	if not became_requested or not action_runner_integration_enabled:
+		return
+	var runner := _get_action_runner()
+	if runner == null:
+		return
+	if runner.get_active_action_id() == hydrate_action_id:
+		return
+	runner.request_rethink("water need became actionable")
+
+
+func _is_hydrate_need_requested() -> bool:
+	if _needs_module == null:
+		return false
+	return _needs_module.get_need_ratio(water_need_id, 1.0) <= hydrate_request_ratio
+
+
+func _get_action_runner() -> AICharacterActionRunner:
+	if _body == null or not is_instance_valid(_body):
+		return null
+	if not _body.has_method("get_ai_action_runner"):
+		return null
+	return _body.call("get_ai_action_runner") as AICharacterActionRunner
+
+
+func _can_action_runner_move_now() -> bool:
+	if _body == null:
+		return false
+	if not action_runner_use_shared_move_slot:
+		return true
+	if MoveSlot.can_move(_body):
+		return MoveSlot.request_move(_body)
+	if MoveSlot.is_other_actor_moving(_body, action_runner_ai_actor_group_name):
+		return false
+	return MoveSlot.request_move(_body)
+
+
+func _release_action_runner_move_slot() -> void:
+	if _body == null or not action_runner_use_shared_move_slot:
+		return
+	MoveSlot.release_move(_body)
 
 
 func _resolve_refs() -> void:
