@@ -2,12 +2,14 @@ extends "res://Scripts/Scenes/Main/MainScene.gd"
 
 const RightHudLayout := preload("res://Scripts/UI/HUD/Modules/RightHudLayoutModule.gd")
 const AI_CHARACTER_SELECTION_CONTEXT_SCRIPT := preload("res://Scripts/Characters/Selection/AICharacterSelectionContextModule.gd")
+const AI_CHARACTER_INVENTORY_SELECTION_SCRIPT := preload("res://Scripts/UI/Inventory/AICharacterInventorySelectionModule.gd")
 
 
 func _ready() -> void:
 	_ensure_ai_character_selection_context()
 	super._ready()
 	_disconnect_legacy_robin_selection()
+	_ensure_inventory_selection_module()
 
 
 func _connect_robin_selection() -> void:
@@ -24,6 +26,23 @@ func _ensure_ai_character_selection_context() -> Node:
 	context.name = "AICharacterSelectionContextModule"
 	add_child(context)
 	return context
+
+
+func _ensure_inventory_selection_module() -> Node:
+	if canvas_layer == null:
+		return null
+	var inventory_ui := canvas_layer.get_node_or_null("InventoryUI")
+	if inventory_ui == null:
+		return null
+	var existing_module := inventory_ui.get_node_or_null("AICharacterInventorySelectionModule")
+	if existing_module != null:
+		return existing_module
+	var module := AI_CHARACTER_INVENTORY_SELECTION_SCRIPT.new() as Node
+	if module == null:
+		return null
+	module.name = "AICharacterInventorySelectionModule"
+	inventory_ui.add_child(module)
+	return module
 
 
 func _disconnect_legacy_robin_selection() -> void:
