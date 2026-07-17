@@ -24,6 +24,7 @@ const MOVEMENT_LOCK_CONTROLLER_GROUP: StringName = &"hud_movement_lock_controlle
 var _worker: Node
 var _connected_worker: Node
 var _is_work_processing: bool = false
+var _pending_worker_ref: WeakRef
 
 
 func _ready() -> void:
@@ -39,6 +40,7 @@ func _ready() -> void:
 
 func _exit_tree() -> void:
 	_disconnect_worker_signals()
+	_pending_worker_ref = null
 
 
 func open_menu() -> void:
@@ -69,7 +71,9 @@ func set_worker_actor(worker: Node) -> bool:
 		_connect_worker_signals()
 		return true
 	if is_work_processing():
+		_pending_worker_ref = weakref(worker) if worker != null else null
 		return false
+	_pending_worker_ref = null
 	_disconnect_worker_signals()
 	_worker = worker
 	worker_path = get_path_to(worker) if worker != null else NodePath("")
@@ -89,6 +93,7 @@ func _refresh() -> void:
 		rank,
 		pay,
 	]
+	job_001_button.disabled = false
 	detail_label.text = "%s / %s: ボタンを押すと%sに状況を確認してから、エントランスへ出勤します。完了するとランクが上がります。MAX %d" % [
 		first_job_name,
 		first_job_category_name,
@@ -217,8 +222,20 @@ func _on_worker_work_completed(job_id: StringName) -> void:
 			next_rank,
 			_get_max_job_rank(),
 		])
+	_apply_pending_worker_change()
 	if visible:
 		_refresh()
+
+
+func _apply_pending_worker_change() -> void:
+	if _pending_worker_ref == null:
+		return
+	var pending_ref := _pending_worker_ref
+	_pending_worker_ref = null
+	var pending_worker := pending_ref.get_ref() as Node
+	if pending_worker == null or not is_instance_valid(pending_worker):
+		return
+	set_worker_actor(pending_worker)
 
 
 func _get_worker_display_name() -> String:
