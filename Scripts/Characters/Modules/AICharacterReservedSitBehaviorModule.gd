@@ -12,30 +12,45 @@ const SEAT_RESERVED_REASON_META := &"ai_seat_reserved_reason"
 @export var action_runner_use_shared_move_slot: bool = true
 
 var _action_runner_controlled := false
+var _action_runner_start_requested := false
 
 
 func _exit_tree() -> void:
-	_clear_reserved_stool(_target_stool)
-	_clear_sitting_stool_lock()
+	_action_runner_start_requested = false
+	cancel_sitting()
 	_release_action_runner_move_slot()
+
+
+func update_action_runner_idle(delta: float) -> void:
+	if _action_runner_controlled:
+		return
+	_tick_retry_cooldown(delta)
 
 
 func can_start_action_runner_sit() -> bool:
 	_resolve_refs()
 	if _body == null or not is_instance_valid(_body):
+		_action_runner_start_requested = false
 		return false
-	if _active or _has_lapis_action_commitment():
+	if _action_runner_start_requested:
 		return true
+	if _action_runner_controlled or _active or _has_lapis_action_commitment():
+		_action_runner_start_requested = true
+		return true
+	if _retry_cooldown > 0.0:
+		return false
 	var planned_action := _get_planned_action_id()
 	if planned_action == play_action_id:
+		_action_runner_start_requested = true
 		return true
 	if planned_action != idle_action_id:
 		return false
-	return _rng.randf() <= clampf(idle_lapis_chance, 0.0, 1.0)
+	_action_runner_start_requested = _rng.randf() <= clampf(idle_lapis_chance, 0.0, 1.0)
+	return _action_runner_start_requested
 
 
 func get_action_runner_sit_score() -> float:
-	if _active or _has_lapis_action_commitment():
+	if _action_runner_start_requested or _active or _has_lapis_action_commitment():
 		return 100.0
 	var planned_action := _get_planned_action_id()
 	if planned_action == play_action_id:
@@ -47,7 +62,9 @@ func get_action_runner_sit_score() -> float:
 
 func start_action_runner_sit() -> bool:
 	if _body == null or not is_instance_valid(_body):
+		_action_runner_start_requested = false
 		return false
+	_action_runner_start_requested = false
 	_action_runner_controlled = true
 	_retry_cooldown = 0.0
 	return true
@@ -67,6 +84,7 @@ func tick_action_runner_sit(delta: float) -> AICharacterActionResult:
 
 
 func cancel_action_runner_sit() -> void:
+	_action_runner_start_requested = false
 	cancel_sitting()
 	_release_action_runner_move_slot()
 
@@ -75,13 +93,15 @@ func cleanup_action_runner_sit() -> void:
 	if _action_runner_controlled and is_active():
 		cancel_sitting()
 	_action_runner_controlled = false
-	_retry_cooldown = 0.0
+	_action_runner_start_requested = false
 	_release_action_runner_move_slot()
 
 
 func get_action_runner_sit_debug_summary() -> String:
-	return "sit runner_controlled=%s %s" % [
+	return "sit runner_controlled=%s requested=%s cooldown=%.2f %s" % [
 		str(_action_runner_controlled),
+		str(_action_runner_start_requested),
+		_retry_cooldown,
 		get_debug_movement_summary(),
 	]
 
