@@ -238,12 +238,14 @@ func _ensure_floor_root() -> void:
 
 
 func _resolve_existing_floor_node() -> void:
-	if _floor_node != null and is_instance_valid(_floor_node):
+	if _floor_node != null and is_instance_valid(_floor_node) and not _floor_node.is_queued_for_deletion():
 		return
 	_floor_node = null
 	if _floor_root == null:
 		return
-	_floor_node = _floor_root.get_node_or_null(String(floor_node_name)) as Node2D
+	var named_floor := _floor_root.get_node_or_null(String(floor_node_name)) as Node2D
+	if named_floor != null and not named_floor.is_queued_for_deletion():
+		_floor_node = named_floor
 
 
 func _get_first_floor_node() -> Node2D:
@@ -251,7 +253,7 @@ func _get_first_floor_node() -> Node2D:
 		return null
 	for child in _floor_root.get_children():
 		var floor_candidate: Node2D = child as Node2D
-		if floor_candidate == null:
+		if floor_candidate == null or floor_candidate.is_queued_for_deletion():
 			continue
 		if floor_candidate.has_meta("floor_id"):
 			return floor_candidate
