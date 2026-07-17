@@ -9,6 +9,7 @@ const WANDER_SCRIPT := preload("res://Scripts/Characters/Modules/AICharacterRand
 const SLEEP_SCRIPT := preload("res://Scripts/Characters/Modules/AICharacterActionRunnerSleepModule.gd")
 const SIT_SCRIPT := preload("res://Scripts/Characters/Modules/AICharacterReservedSitBehaviorModule.gd")
 const HYDRATE_SCRIPT := preload("res://Scripts/Characters/Modules/AICharacterTableSeatHydrateModule.gd")
+const HYGIENE_SCRIPT := preload("res://Scripts/Characters/Modules/AICharacterActionRunnerHygieneModule.gd")
 const ITEM_DISPLAY_SCRIPT := preload("res://Scripts/Characters/Modules/AICharacterActionItemDisplayModule.gd")
 const INVENTORY_SCRIPT := preload("res://Scripts/Characters/Modules/AICharacterInventoryModule.gd")
 const ACTION_RUNNER_SCRIPT := preload("res://Scripts/Characters/Actions/Core/AICharacterActionRunner.gd")
@@ -27,6 +28,7 @@ const MoveSlot := preload("res://Scripts/Characters/Modules/AICharacterMovementC
 @export var enable_action_runner_observer: bool = true
 @export var enable_action_runner_sleep: bool = true
 @export var enable_action_runner_hydrate: bool = true
+@export var enable_action_runner_hygiene: bool = true
 @export var enable_action_runner_wander: bool = true
 @export var enable_action_runner_sit: bool = true
 @export var action_runner_sit_rethink_interval_seconds: float = 0.5
@@ -42,6 +44,7 @@ var wander_module: AICharacterRandomWanderModule
 var inventory_module
 var sleep_behavior_module: AICharacterActionRunnerSleepModule
 var hydrate_behavior_module: AICharacterTableSeatHydrateModule
+var hygiene_behavior_module: AICharacterActionRunnerHygieneModule
 var sit_behavior_module: AICharacterReservedSitBehaviorModule
 var action_item_display_module: AICharacterActionItemDisplayModule
 var action_runner: AICharacterActionRunner
@@ -58,6 +61,7 @@ func _ready() -> void:
 	_ensure_wander_module()
 	_ensure_sleep_behavior_module()
 	_ensure_hydrate_behavior_module()
+	_ensure_hygiene_behavior_module()
 	_ensure_sit_behavior_module()
 	_ensure_action_item_display_module()
 	_setup_action_runner_observer()
@@ -75,6 +79,9 @@ func _physics_process(delta: float) -> void:
 	if not enable_action_runner_hydrate and _update_hydrate_behavior(delta):
 		_cancel_action_runner_current_action("hydrate behavior active")
 		return
+	if not enable_action_runner_hygiene and _update_hygiene_behavior(delta):
+		_cancel_action_runner_current_action("hygiene behavior active")
+		return
 	if not enable_action_runner_sit and _update_sit_behavior(delta):
 		_cancel_action_runner_current_action("sit behavior active")
 		return
@@ -91,6 +98,8 @@ func is_ai_character_moving() -> bool:
 	if sleep_behavior_module != null and sleep_behavior_module.is_active() and velocity.length_squared() > 0.01:
 		return true
 	if hydrate_behavior_module != null and hydrate_behavior_module.is_active() and velocity.length_squared() > 0.01:
+		return true
+	if hygiene_behavior_module != null and hygiene_behavior_module.is_active() and velocity.length_squared() > 0.01:
 		return true
 	if sit_behavior_module != null and sit_behavior_module.is_active() and velocity.length_squared() > 0.01:
 		return true
@@ -146,6 +155,8 @@ func get_current_need_action_id() -> StringName:
 		return CharacterNeedActionIds.REST
 	if hydrate_behavior_module != null and hydrate_behavior_module.is_active():
 		return CharacterNeedActionIds.HYDRATE
+	if hygiene_behavior_module != null and hygiene_behavior_module.is_active():
+		return CharacterNeedActionIds.MAINTAIN
 	if sit_behavior_module != null and sit_behavior_module.is_active():
 		return &"sitting"
 	if need_planner == null:
@@ -164,6 +175,10 @@ func get_current_action_display_text() -> String:
 		if hydrate_behavior_module.is_drinking():
 			return "水分補給中"
 		return "水分補給へ移動中"
+	if hygiene_behavior_module != null and hygiene_behavior_module.is_active():
+		if hygiene_behavior_module.is_showering():
+			return "シャワー中"
+		return "シャワーへ移動中"
 	if sit_behavior_module != null and sit_behavior_module.is_active():
 		if sit_behavior_module.is_sitting():
 			return "着席中"
@@ -224,6 +239,25 @@ func _update_hydrate_behavior(delta: float) -> bool:
 	return true
 
 
+func _update_hygiene_behavior(delta: float) -> bool:
+	if hygiene_behavior_module == null:
+		return false
+	var hygiene_velocity := hygiene_behavior_module.get_velocity(delta)
+	if not hygiene_behavior_module.is_active():
+		return false
+	if sit_behavior_module != null and sit_behavior_module.is_active():
+		sit_behavior_module.cancel_sitting()
+	velocity = hygiene_velocity
+	if velocity.length_squared() <= 0.0:
+		MoveSlot.release_move(self)
+		return true
+	if not _try_claim_move_slot():
+		velocity = Vector2.ZERO
+		return true
+	move_and_slide()
+	return true
+
+
 func _update_sit_behavior(delta: float) -> bool:
 	if sit_behavior_module == null:
 		return false
@@ -247,7 +281,7 @@ func _update_action_runner_actions(delta: float) -> bool:
 	if enable_action_runner_sit and sit_behavior_module != null:
 		sit_behavior_module.update_action_runner_idle(delta)
 		_try_request_action_runner_sit(delta)
-	var runner_controls_actions := enable_action_runner_sleep or enable_action_runner_hydrate or enable_action_runner_wander or enable_action_runner_sit
+	var runner_controls_actions := enable_action_runner_sleep or enable_action_runner_hydrate or enable_action_runner_hygiene or enable_action_runner_wander or enable_action_runner_sit
 	if not runner_controls_actions:
 		if enable_action_runner_observer:
 			action_runner.physics_update(delta)
@@ -366,6 +400,23 @@ func _ensure_hydrate_behavior_module() -> void:
 	add_child(hydrate_behavior_module)
 
 
+func _ensure_hygiene_behavior_module() -> void:
+	hygiene_behavior_module = get_node_or_null("AICharacterHygieneBehaviorModule") as AICharacterActionRunnerHygieneModule
+	if hygiene_behavior_module != null:
+		hygiene_behavior_module.action_runner_integration_enabled = enable_action_runner_hygiene
+		return
+	hygiene_behavior_module = HYGIENE_SCRIPT.new() as AICharacterActionRunnerHygieneModule
+	if hygiene_behavior_module == null:
+		return
+	hygiene_behavior_module.name = "AICharacterHygieneBehaviorModule"
+	hygiene_behavior_module.actor_grid_footprint = actor_grid_footprint
+	hygiene_behavior_module.hygiene_request_ratio = 0.45
+	hygiene_behavior_module.shower_duration_seconds = 5.0
+	hygiene_behavior_module.shower_cooldown_seconds = 0.0
+	hygiene_behavior_module.action_runner_integration_enabled = enable_action_runner_hygiene
+	add_child(hygiene_behavior_module)
+
+
 func _ensure_sit_behavior_module() -> void:
 	sit_behavior_module = get_node_or_null("AICharacterReservedSitBehaviorModule") as AICharacterReservedSitBehaviorModule
 	if sit_behavior_module != null:
@@ -399,7 +450,7 @@ func _ensure_action_item_display_module() -> void:
 func _setup_action_runner_observer() -> void:
 	_shutdown_action_runner_observer()
 	_action_runner_sit_rethink_timer = 0.0
-	if not enable_action_runner_observer and not enable_action_runner_sleep and not enable_action_runner_hydrate and not enable_action_runner_wander and not enable_action_runner_sit:
+	if not enable_action_runner_observer and not enable_action_runner_sleep and not enable_action_runner_hydrate and not enable_action_runner_hygiene and not enable_action_runner_wander and not enable_action_runner_sit:
 		return
 	action_runner = ACTION_RUNNER_SCRIPT.new() as AICharacterActionRunner
 	if action_runner == null:
@@ -448,6 +499,26 @@ func _build_action_runner_packages() -> Array[AICharacterActionPackage]:
 			hydrate_adapter.cleanup_method_names = PackedStringArray(["cleanup_action_runner_hydrate"])
 			hydrate_adapter.debug_summary_method = &"get_action_runner_hydrate_debug_summary"
 			packages.append(hydrate_adapter)
+
+	if enable_action_runner_hygiene and hygiene_behavior_module != null:
+		var hygiene_adapter := NODE_ACTION_ADAPTER_SCRIPT.new() as AICharacterNodeActionAdapter
+		if hygiene_adapter != null:
+			hygiene_adapter.action_id = CharacterNeedActionIds.MAINTAIN
+			hygiene_adapter.display_name = "シャワー中"
+			hygiene_adapter.priority = 50
+			hygiene_adapter.base_score = 50.0
+			hygiene_adapter.action_node_path = NodePath("AICharacterHygieneBehaviorModule")
+			hygiene_adapter.can_start_method = &"can_start_action_runner_hygiene"
+			hygiene_adapter.score_method = &"get_action_runner_hygiene_score"
+			hygiene_adapter.start_method = &"start_action_runner_hygiene"
+			hygiene_adapter.tick_method = &"tick_action_runner_hygiene"
+			hygiene_adapter.tick_pass_delta = true
+			hygiene_adapter.active_check_method = &""
+			hygiene_adapter.complete_when_inactive = false
+			hygiene_adapter.cancel_method_names = PackedStringArray(["cancel_action_runner_hygiene"])
+			hygiene_adapter.cleanup_method_names = PackedStringArray(["cleanup_action_runner_hygiene"])
+			hygiene_adapter.debug_summary_method = &"get_action_runner_hygiene_debug_summary"
+			packages.append(hygiene_adapter)
 
 	if enable_action_runner_sit and sit_behavior_module != null:
 		var sit_adapter := NODE_ACTION_ADAPTER_SCRIPT.new() as AICharacterNodeActionAdapter
@@ -507,6 +578,8 @@ func _finish_start_setup() -> void:
 		sleep_behavior_module.setup(self)
 	if hydrate_behavior_module != null:
 		hydrate_behavior_module.setup(self)
+	if hygiene_behavior_module != null:
+		hygiene_behavior_module.setup(self)
 	if sit_behavior_module != null:
 		sit_behavior_module.setup(self)
 	if action_item_display_module != null:
