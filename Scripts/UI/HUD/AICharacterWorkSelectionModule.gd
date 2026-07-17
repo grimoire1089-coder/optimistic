@@ -58,12 +58,13 @@ func _on_selected_actor_changed(actor: Node) -> void:
 	if _work_menu == null or not is_instance_valid(_work_menu):
 		return
 	var worker := actor if _is_work_compatible(actor) else _get_default_worker()
+	if _work_menu.has_method("set_worker_actor"):
+		_work_menu.call("set_worker_actor", worker)
+		return
 	if worker != null:
 		_work_menu.set("worker_path", _work_menu.get_path_to(worker))
 	else:
 		_work_menu.set("worker_path", _default_worker_path)
-	if _work_menu.has_method("set_worker_actor"):
-		_work_menu.call("set_worker_actor", worker)
 
 
 func _get_default_worker() -> Node:
